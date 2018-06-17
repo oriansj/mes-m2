@@ -1,0 +1,13 @@
+*.M2
+*.S
+*.m2-out
+*.mes-out
+*.o
+*~
+/src/*.mes.environment.h
+/src/*.mes.environment.i
+/src/*.mes.h
+/src/*.mes.i
+/src/*.mes.symbol-names.i
+/src/*.mes.symbols.h
+/src/*.mes.symbols.i
