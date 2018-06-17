@@ -71,23 +71,6 @@ cpp -E \
     -D SCM=int\
     -D __MESC__\
     -D __M2_PLANET__\
-    -D TCHAR=0\
-    -D TCLOSURE=1\
-    -D TCONTINUATION=2\
-    -D TFUNCTION=3\
-    -D TKEYWORD=4\
-    -D TMACRO=5\
-    -D TNUMBER=6\
-    -D TPAIR=7\
-    -D TPORT=8\
-    -D TREF=9\
-    -D TSPECIAL=10\
-    -D TSTRING=11\
-    -D TSYMBOL=12\
-    -D TVALUES=13\
-    -D TVARIABLE=14\
-    -D TVECTOR=15\
-    -D TBROKEN_HEART=16\
     -D MODULEDIR=\"$MODULEDIR/\"\
     -D PREFIX=\"$PREFIX\"\
     -D VERSION=\"$VERSION\"\
@@ -100,6 +83,7 @@ cpp -E \
           -e 's,void qsort,#void qsort,g'\
           -e 's,size_t,int,g'\
           -e 's,int int,int,g'\
+          -e 's,^CONSTANT ,// CONSTANT ,g'\
     > $mes.M2
 
 if [ -n "$BUILD_DEBUG" ]; then

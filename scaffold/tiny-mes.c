@@ -32,16 +32,17 @@ int putchar (int c);
 int puts (char * s);
 char * itoa (int number);
 int open (char *,int,int);
+void *malloc (size_t size);
+void exit (int);
 
 #else
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <libmes.h>
 
 #endif
 
-void *malloc (size_t size);
-void exit (int);
 char *arena;
 
 typedef int SCM;
@@ -63,6 +64,24 @@ SCM r3;
 
 #if !__M2_PLANET__
 enum type_t {TCHAR, TCLOSURE, TCONTINUATION, TFUNCTION, TKEYWORD, TMACRO, TNUMBER, TPAIR, TPORT, TREF, TSPECIAL, TSTRING, TSYMBOL, TVALUES, TVARIABLE, TVECTOR, TBROKEN_HEART};
+#else
+CONSTANT TCHAR          0
+CONSTANT TCLOSURE       1
+CONSTANT TCONTINUATION  2
+CONSTANT TFUNCTION      3
+CONSTANT TKEYWORD       4
+CONSTANT TMACRO         5
+CONSTANT TNUMBER        6
+CONSTANT TPAIR          7
+CONSTANT TPORT          8
+CONSTANT TREF           9
+CONSTANT TSPECIAL      10
+CONSTANT TSTRING       11
+CONSTANT TSYMBOL       12
+CONSTANT TVALUES       13
+CONSTANT TVARIABLE     14
+CONSTANT TVECTOR       15
+CONSTANT TBROKEN_HEART 16
 #endif
 
 struct scm {
