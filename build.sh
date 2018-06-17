@@ -71,7 +71,7 @@ C_FILES="scaffold/main
 broken-scaffold/hello
 scaffold/milli-mes
 scaffold/micro-mes
-broken-scaffold/tiny-mes
+scaffold/tiny-mes
 broken-scaffold/cons-mes
 broken-scaffold/mini-mes
 broken-src/mes

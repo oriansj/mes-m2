@@ -22,14 +22,24 @@
 #error "POSIX not supported"
 #endif
 
+#if __M2_PLANET__
+
+int g_stdin;
+int eputs (char * s);
+int oputs (char * s);
+int getchar ();
+int putchar (int c);
+int puts (char * s);
+char * itoa (int number);
+int open (char *,int,int);
+
+#else
+
 #include <stdio.h>
 #include <libmes.h>
 
-#if __M2_PLANET__
-int open (char const*,int,int);
-#else
-int open (char const*,int,...);
 #endif
+
 void *malloc (size_t size);
 void exit (int);
 char *arena;
@@ -245,11 +255,11 @@ fill ()
   
   for (i=0; i<20; i)
     {
-      puts ("i[");
-      puts (itoa (i));
-      puts ("]: ");
-      puts (itoa (TYPE (i)));
-      puts ("\n");
+      oputs ("i[");
+      oputs (itoa (i));
+      oputs ("]: ");
+      oputs (itoa (TYPE (i)));
+      oputs ("\n");
       i = i + 1;
     }
 
@@ -261,87 +271,87 @@ display_ (SCM x)
 {
   if (g_debug != 0)
     {
-      puts ("<display>\n");
-      puts (itoa (TYPE (x)));
-      puts ("\n");
+      oputs ("<display>\n");
+      oputs (itoa (TYPE (x)));
+      oputs ("\n");
     }
   if (TYPE (x) == TCHAR)
     {
-      if (g_debug != 0) puts ("<char>\n");
-      puts ("#\\");
+      if (g_debug != 0) oputs ("<char>\n");
+      oputs ("#\\");
       putchar (VALUE (x));
     }
     else if (TYPE (x) == TFUNCTION)
     {
-      if (g_debug != 0) puts ("<function>\n");
+      if (g_debug != 0) oputs ("<function>\n");
       if (VALUE (x) == 0)
-        puts ("core:make-cell");
+        oputs ("core:make-cell");
       if (VALUE (x) == 1)
-        puts ("cons");
+        oputs ("cons");
       if (VALUE (x) == 2)
-        puts ("car");
+        oputs ("car");
       if (VALUE (x) == 3)
-        puts ("cdr");
+        oputs ("cdr");
     }
   else if (TYPE (x) == TNUMBER)
     {
-      if (g_debug != 0) puts ("<number>\n");
-      puts (itoa (VALUE (x)));
+      if (g_debug != 0) oputs ("<number>\n");
+      oputs (itoa (VALUE (x)));
     }
   else if (TYPE (x) == TPAIR)
     {
-      if (g_debug != 0) puts ("<pair>\n");
-      //if (cont != cell_f) puts "(");
-      puts ("(");
+      if (g_debug != 0) oputs ("<pair>\n");
+      //if (cont != cell_f) oputs "(");
+      oputs ("(");
       if (x != 0 && x != cell_nil) display_ (CAR (x));
       if (CDR (x) != 0 && CDR (x) != cell_nil)
         {
           if (TYPE (CDR (x)) != TPAIR)
-            puts (" . ");
+            oputs (" . ");
           display_ (CDR (x));
         }
-      //if (cont != cell_f) puts (")");
-      puts (")");
+      //if (cont != cell_f) oputs (")");
+      oputs (")");
     }
   else if (TYPE (x) == TSPECIAL)
     {
-      if (x == 1) puts ("()");
-      else if (x == 2) puts ("#f");
-      else if (x == 3) puts ("#t");
+      if (x == 1) oputs ("()");
+      else if (x == 2) oputs ("#f");
+      else if (x == 3) oputs ("#t");
       else
         {
-          puts ("<x:");
-          puts (itoa (x));
-          puts (">");
+          oputs ("<x:");
+          oputs (itoa (x));
+          oputs (">");
         }
     }
   else if (TYPE (x) == TSYMBOL)
     {
-      if (x == 11) puts (" . ");
-      else if (x == 12) puts ("lambda");
-      else if (x == 13) puts ("begin");
-      else if (x == 14) puts ("if");
-      else if (x == 15) puts ("quote");
-      else if (x == 37) puts ("car");
-      else if (x == 38) puts ("cdr");
-      else if (x == 39) puts ("null?");
-      else if (x == 40) puts ("eq?");
-      else if (x == 41) puts ("cons");
+      if (x == 11) oputs (" . ");
+      else if (x == 12) oputs ("lambda");
+      else if (x == 13) oputs ("begin");
+      else if (x == 14) oputs ("if");
+      else if (x == 15) oputs ("quote");
+      else if (x == 37) oputs ("car");
+      else if (x == 38) oputs ("cdr");
+      else if (x == 39) oputs ("null?");
+      else if (x == 40) oputs ("eq?");
+      else if (x == 41) oputs ("cons");
       else
         {
-          puts ("<s:");
-          puts (itoa (x));
-          puts (">");
+          oputs ("<s:");
+          oputs (itoa (x));
+          oputs (">");
         }
       }
   else
     {
-      if (g_debug != 0) puts ("<default>\n");
-      puts ("<");
-      puts (itoa (TYPE (x)));
-      puts (":");
-      puts (itoa (x));
-      puts (">");
+      if (g_debug != 0) oputs ("<default>\n");
+      oputs ("<");
+      oputs (itoa (TYPE (x)));
+      oputs (":");
+      oputs (itoa (x));
+      oputs (">");
     }
 
   return 0;
@@ -351,10 +361,10 @@ SCM
 bload_env (SCM a) ///((internal))
 {
 #if 1 //!__M2_PLANET__
-  puts ("reading: ");
+  oputs ("reading: ");
   char *mo = "module/mes/tiny-0-32.mo";
-  puts (mo);
-  puts ("\n");
+  oputs (mo);
+  oputs ("\n");
   g_stdin = open (mo, 0);
   if (g_stdin < 0) {eputs ("no such file: module/mes/tiny-0-32.mo\n");return 1;}
 
@@ -372,7 +382,7 @@ bload_env (SCM a) ///((internal))
   c = getchar ();
   putchar (c);
   if (c != 'S') exit (12);
-  puts (" *GOT MES*\n");
+  oputs (" *GOT MES*\n");
 
   // skip stack
   getchar ();
@@ -396,10 +406,10 @@ bload_env (SCM a) ///((internal))
       c = getchar ();
     }
 
-  puts ("read done\n");
+  oputs ("read done\n");
   display_ (10);
 
-  puts ("\n");
+  oputs ("\n");
 #endif
   return r2;
 }
@@ -414,9 +424,9 @@ main (int argc, char **argv)
   eputs ("Hello tiny-mes!\n");
   char *p = arena;
   //puts (p);
-  puts ("\n");
+  oputs ("\n");
   display_ (10);
-  puts ("\n");
+  oputs ("\n");
 
   SCM program = bload_env (r0);
 
