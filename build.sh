@@ -32,6 +32,8 @@ MES_SEED=${MES_SEED-../mes-seed}
 
 export BUILD_DEBUG HEX2 M1 M2_PLANET MES_PREFIX MES_SEED
 
+# Function and symbol snarfing was used by mes.c; copied here as a
+# temporary hack in the transition to mes.M2
 sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/gc.c
 sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/lib.c
 sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/math.c
@@ -40,6 +42,11 @@ sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/posix.c
 sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/reader.c
 sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/vector.c
 
+# The focus is on scaffold/*.c, building up to src/mes.c.
+# 
+# Therefore we start by cheating about the small Mes Lib C; part of
+# this effort is defining the minimal M2 library we need.  Also, it
+# will probably use bits from mescc-tools/m2-planet.
 mkdir -p lib/x86-mes
 $M1\
     --LittleEndian\
