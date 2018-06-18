@@ -51,7 +51,7 @@ int assert_fu;
 
 #endif
 
-char g_arena;
+char *g_arena;
 
 typedef int SCM;
 
@@ -145,7 +145,7 @@ SCM tmp_num2;
 #if __M2_PLANET__
 int ARENA_SIZE;
 #else
-int ARENA_SIZE = 300;
+int ARENA_SIZE = 20000;
 #endif
 
 #if __M2_PLANET__
@@ -180,6 +180,35 @@ struct function fun_cdr; # =  {&cdr,1,"cdr"};
 struct scm scm_cdr; # =  {TFUNCTION,0,0};
 SCM cell_cdr;
 #else //!__M2_PLANET__
+
+SCM make_cell_ (SCM type, SCM car, SCM cdr);
+struct function fun_make_cell_ = {&make_cell_,3,"core:make-cell"};
+struct scm scm_make_cell_ = {TFUNCTION,0,0};
+   //, "core:make-cell", 0};
+SCM cell_make_cell_;
+
+SCM cons (SCM x, SCM y);
+struct function fun_cons = {&cons,2,"cons"};
+struct scm scm_cons = {TFUNCTION,0,0};
+  // "cons", 0};
+SCM cell_cons;
+
+SCM car (SCM x);
+struct function fun_car = {&car,1,"car"};
+struct scm scm_car = {TFUNCTION,0,0};
+  // "car", 0};
+SCM cell_car;
+
+SCM cdr (SCM x);
+struct function fun_cdr = {&cdr,1,"cdr"};
+struct scm scm_cdr = {TFUNCTION,0,0};
+// "cdr", 0};
+SCM cell_cdr;
+
+// SCM eq_p (SCM x, SCM y);
+// struct function fun_eq_p = {&eq_p,2,"eq?"};
+// scm scm_eq_p = {TFUNCTION,0,0};
+// SCM cell_eq_p;
 
 #endif //!__M2_PLANET__
 
@@ -636,35 +665,68 @@ mes_builtins (SCM a)
 // #include "mes.environment.i"
 // #include "posix.environment.i"
 // #include "reader.environment.i"
-#elif 0
+#elif __M2_PLANET__
+
+  //mes_globals ();
+
+  scm_make_cell_->cdr = g_function;
+// g_functions[g_function] = fun_make_cell_;
+// cell_make_cell_ = g_free;
+// g_cells[cell_make_cell_] = scm_make_cell_;
+// g_function = g_function + 1;
+// g_free = g_free + 1;
+
+// scm_cons->cdr = g_function;
+// g_functions[g_function] = fun_cons;
+// cell_cons = g_free;
+// g_cells[cell_cons] = scm_cons;
+// g_function = g_function + 1;
+// g_free = g_free + 1;
+ 
+// scm_car->cdr = g_function;
+// g_functions[g_function] = fun_car;
+// cell_car = g_free;
+// g_cells[cell_car] = scm_car;
+// g_function = g_function + 1;
+// g_free = g_free + 1;
+ 
+// scm_cdr->cdr = g_function;
+// g_functions[g_function] = fun_cdr;
+// cell_cdr = g_free;
+// g_cells[cell_cdr] = scm_cdr;
+// g_function = g_function + 1;
+// g_free = g_free + 1;
+
+#else // ! __M2_PLANET__
+
 scm_make_cell_.cdr = g_function;
 g_functions[g_function] = fun_make_cell_;
 cell_make_cell_ = g_free;
 g_cells[cell_make_cell_] = scm_make_cell_;
-g_function = g_function + 1
+g_function = g_function + 1;
 g_free = g_free + 1;
 
 scm_cons.cdr = g_function;
 g_functions[g_function] = fun_cons;
 cell_cons = g_free;
 g_cells[cell_cons] = scm_cons;
-g_function = g_function + 1
+g_function = g_function + 1;
 g_free = g_free + 1;
- 
  
 scm_car.cdr = g_function;
 g_functions[g_function] = fun_car;
 cell_car = g_free;
 g_cells[cell_car] = scm_car;
-g_function = g_function + 1
+g_function = g_function + 1;
 g_free = g_free + 1;
  
 scm_cdr.cdr = g_function;
 g_functions[g_function] = fun_cdr;
 cell_cdr = g_free;
 g_cells[cell_cdr] = scm_cdr;
-g_function = g_function + 1
+g_function = g_function + 1;
 g_free = g_free + 1;
+ 
 #endif
   return a;
 }
@@ -837,12 +899,15 @@ display_ (SCM x)
 SCM
 simple_bload_env (SCM a) ///((internal))
 {
+  // BLOAD and tiny program dump just been resurrected on wip-gnu
+  // let's not test that just now and use `fill'
+#if 0 // BLOAD .. later
   oputs ("reading: ");
-  char *mo = "module/mes/tiny-0-32.mo";
+  char *mo = "module/mes/tiny-0.32-mo";
   oputs (mo);
   oputs ("\n");
   g_stdin = open (mo, 0);
-  if (g_stdin < 0) {eputs ("no such file: module/mes/tiny-0-32.mo\n");return 1;}
+  if (g_stdin < 0) {eputs ("no such file: module/mes/tiny-0.32-mo\n");return 1;}
 
   char *p = g_cells;
   int c;
@@ -872,14 +937,16 @@ simple_bload_env (SCM a) ///((internal))
   char *q = g_cells;
   g_free = (p-q) / sizeof (struct scm);
   
-  if (g_free != 15) exit (33);
+  if (g_free != 15)
+    exit (33);
   
   g_symbols = 1;
 
   g_stdin = STDIN;
   r0 = mes_builtins (r0);
   
-  if (g_free != 19) exit (34);
+  if (g_free != 19)
+    exit (34);
   
   oputs ("cells read: ");
   oputs (itoa (g_free));
@@ -894,6 +961,12 @@ simple_bload_env (SCM a) ///((internal))
   display_ (10);
   oputs ("\n");
 
+#else // !BLOAD
+  g_symbols = 1;
+  g_free = 15;
+  r0 = mes_builtins (r0);
+#endif // !BLOAD
+
   fill ();
   r2 = 10;
 
@@ -905,11 +978,9 @@ simple_bload_env (SCM a) ///((internal))
   oputs ("]: ");
 
   display_ (r2);
-  //display_ (14);
   oputs ("\n");
 
   r0 = 1;
-  //r2 = 10;
   return r2;
 }
 
@@ -929,45 +1000,45 @@ main (int argc, char **argv)
   g_stdin = STDIN;
 
 #if __M2_PLANET__
-  ARENA_SIZE = 300;
+  ARENA_SIZE = 3000;
   g_functions = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 #endif
-  g_arena = malloc (ARENA_SIZE);
+  g_arena = malloc (ARENA_SIZE * sizeof (struct scm));
   g_cells = g_arena;
 
-#if 0
+#if 1
   r0 = mes_environment ();
   
   SCM program = simple_bload_env (r0);
 
   oputs ("g_free=");
-  oputs (itoa(g_free));
+  oputs (itoa (g_free));
   oputs ("\n");
 
   push_cc (r2, cell_unspecified, r0, cell_unspecified);
 
   oputs ("g_free=");
-  oputs (itoa(g_free));
+  oputs (itoa (g_free));
   oputs ("\n");
 
   oputs ("g_stack=");
-  oputs (itoa(g_stack));
+  oputs (itoa (g_stack));
   oputs ("\n");
 
   oputs ("r0=");
-  oputs (itoa(r0));
+  oputs (itoa (r0));
   oputs ("\n");
 
   oputs ("r1=");
-  oputs (itoa(r1));
+  oputs (itoa (r1));
   oputs ("\n");
 
   oputs ("r2=");
-  oputs (itoa(r2));
+  oputs (itoa (r2));
   oputs ("\n");
 
   oputs ("r3=");
-  oputs (itoa(r3));
+  oputs (itoa (r3));
   oputs ("\n");
 
   r3 = cell_vm_apply;
@@ -977,4 +1048,3 @@ main (int argc, char **argv)
   eputs ("\n");
   return 0;
 }
-
