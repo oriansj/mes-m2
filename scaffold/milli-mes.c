@@ -20,6 +20,8 @@ CONSTANT TVECTOR       15
 CONSTANT TBROKEN_HEART 16
 #endif
 
+typedef int SCM;
+
 struct scm {
   enum type_t type;
   SCM car;

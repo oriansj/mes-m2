@@ -2,6 +2,7 @@
 *.S
 *.m2-out
 *.mes-out
+*.x86-mes-gcc-out
 *.o
 *~
 /src/*.mes.environment.h
