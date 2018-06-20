@@ -19,467 +19,386 @@
  */
 
 #include <ctype.h>
+#include <stdlib.h>
+#include "mes.h"
 
-SCM
-read_input_file_env_ (SCM e, SCM a)
+SCM read_input_file_env_ (SCM e, SCM a)
 {
-  if (e == cell_nil)
-    return e;
-  return cons (e, read_input_file_env_ (read_env (a), a));
+	if (e == cell_nil) return e;
+	return cons(e, read_input_file_env_ (read_env (a), a));
 }
 
-SCM
-read_input_file_env (SCM a)
+SCM read_input_file_env (SCM a)
 {
-  r0 = a;
-#if 0
-  if (assq_ref_env (cell_symbol_read_input_file, r0) != cell_undefined)
-    return apply (cell_symbol_read_input_file, cell_nil, r0);
-#endif
-  return read_input_file_env_ (read_env (r0), r0);
+	r0 = a;
+	return read_input_file_env_ (read_env (r0), r0);
 }
 
-int
-reader_read_line_comment (int c)
+int reader_read_line_comment ()
 {
-  if (c == '\n')
-    return c;
-  return reader_read_line_comment (readchar ());
+	int c = fgetc(g_stdin);
+	while(EOF != c)
+	{
+		if (c == '\n') return c;
+		c = fgetc(g_stdin);
+	}
+
+	/* Never should have gotten here */
+	fprintf(stderr, "Never should have reached this error\nreader line 46\n");
+	exit(EXIT_FAILURE);
 }
 
 SCM reader_read_block_comment (int s, int c);
 SCM reader_read_hash (int c, SCM a);
 SCM reader_read_list (int c, SCM a);
 
-int
-reader_identifier_p (int c)
+int reader_identifier_p (int c)
 {
-  return (c > ' ' && c <= '~' && c != '"' && c != ';' && c != '(' && c != ')' && c != EOF);
+	return (c > ' ' && c <= '~' && c != '"' && c != ';' && c != '(' && c != ')' && c != EOF);
 }
 
-int
-reader_end_of_word_p (int c)
+int reader_end_of_word_p (int c)
 {
-  return (c == '"' || c == ';' || c == '(' || c == ')' || isspace (c) || c == EOF);
+	return (c == '"' || c == ';' || c == '(' || c == ')' || isspace (c) || c == EOF);
 }
 
-SCM
-reader_read_identifier_or_number (int c)
+SCM process_number(int c)
 {
-  char buf[1024];
-  int i = 0;
-  int n = 0;
-  int negative_p = 0;
-  if (c == '+' && isdigit (peekchar ()))
-    c = readchar ();
-  else if (c == '-' && isdigit (peekchar ()))
-    {
-      negative_p = 1;
-      c = readchar ();
-    }
-  while (isdigit (c))
-    {
-      buf[i++] = c;
-      n *= 10;
-      n += c - '0';
-      c = readchar ();
-    }
-  if (reader_end_of_word_p (c))
-    {
-      unreadchar (c);
-      if (negative_p)
-        n = 0 - n;
-      return MAKE_NUMBER (n);
-    }
-  while (!reader_end_of_word_p (c))
-    {
-      buf[i++] = c;
-      c = readchar ();
-    }
-  unreadchar (c);
-  buf[i] = 0;
-  return lookup_symbol_ (cstring_to_list (buf));
+	int n = 0;
+	bool negative_p = false;
+	if(c == '+')
+	{
+		c = fgetc(g_stdin);
+	}
+	if(c == '-')
+	{
+		negative_p = true;
+		c = fgetc(g_stdin);
+	}
+
+	do
+	{
+		n = n * 10;
+		n = n + (c - '0');
+		c = fgetc(g_stdin);
+	}while (isdigit(c));
+	ungetc(c, g_stdin);
+
+	if (negative_p) n = 0 - n;
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-reader_read_sexp_ (int c, SCM a)
+SCM reader_read_identifier_or_number (int c)
 {
-  SCM s = cell_nil;
-  switch (c)
-    {
-    case EOF:
-      return cell_nil;
-    case ';':
-      reader_read_line_comment (c);
-    case ' ':
-    case '\t':
-    case '\n':
-    case '\f':
-      return reader_read_sexp_ (readchar (), a);
-    case '(':
-      return reader_read_list (readchar (), a);
-    case  ')':
-      return cell_nil;
-    case '#':
-      return reader_read_hash (readchar (), a);
-    case '`':
-      return cons (cell_symbol_quasiquote,
-                   cons (reader_read_sexp_ (readchar (), a), cell_nil));
-    case ',':
-      if (peekchar () == '@')
-        {
-          readchar ();
-          return cons (cell_symbol_unquote_splicing,
-                       cons (reader_read_sexp_ (readchar (), a), cell_nil));
-        }
-      return cons (cell_symbol_unquote,
-                   cons (reader_read_sexp_ (readchar (), a), cell_nil));
-    case '\'':
-      return cons (cell_symbol_quote,
-                   cons (reader_read_sexp_ (readchar (), a), cell_nil));
-    case '"':
-      return reader_read_string ();
-    case '.':
-      if (!reader_identifier_p (peekchar ()))
-        return cell_dot;
-    default:
-      return reader_read_identifier_or_number (c);
-    }
+	char buf[MAX_STRING];
+	int i = 0;
+
+	if (((c == '+') || (c == '-')) && isdigit (fpeek(g_stdin)))
+	{
+		return process_number(c);
+	}
+
+	do
+	{
+		buf[i] = c;
+		i = i + 1;
+		c = fgetc(g_stdin);
+	}while (!reader_end_of_word_p (c));
+	ungetc(c,g_stdin);
+	buf[i] = 0;
+	return lookup_symbol_(cstring_to_list(buf));
 }
 
-int
-reader_eat_whitespace (int c)
+SCM reader_read_string ();
+SCM reader_read_sexp_ (int c, SCM a)
 {
-  while (isspace (c))
-    c = readchar ();
-  if (c == ';')
-    return reader_eat_whitespace (reader_read_line_comment (c));
-  if (c == '#' && (peekchar () == '!' || peekchar () == '|'))
-    {
-      c=readchar ();
-      reader_read_block_comment (c, readchar ());
-      return reader_eat_whitespace (readchar ());
-    }
-  return c;
+reset_reader:
+	if(c == EOF) return cell_nil;
+	if(c == ';')
+	{
+		c = reader_read_line_comment ();
+		goto reset_reader;
+	}
+	if((c == ' ') || (c == '\t') || (c == '\n') || (c == '\f'))
+	{
+		c = fgetc(g_stdin);
+		goto reset_reader;
+	}
+	if(c == '(') return reader_read_list (fgetc(g_stdin), a);
+	if(c == ')') return cell_nil;
+	if(c == '#') return reader_read_hash (fgetc(g_stdin), a);
+	if(c == '`') return cons (cell_symbol_quasiquote, cons(reader_read_sexp_(fgetc(g_stdin), a), cell_nil));
+	if(c == ',')
+	{
+		if (fpeek(g_stdin) == '@')
+		{
+			fgetc(g_stdin);
+			return cons(cell_symbol_unquote_splicing, cons(reader_read_sexp_(fgetc(g_stdin), a), cell_nil));
+		}
+
+		return cons (cell_symbol_unquote, cons(reader_read_sexp_(fgetc(g_stdin), a), cell_nil));
+	}
+	if(c == '\'') return cons (cell_symbol_quote, cons(reader_read_sexp_(fgetc(g_stdin), a), cell_nil));
+	if(c == '"') return reader_read_string ();
+	if(c == '.' && (!reader_identifier_p(fpeek(g_stdin)))) return cell_dot;
+
+	return reader_read_identifier_or_number (c);
 }
 
-SCM
-reader_read_list (int c, SCM a)
+int reader_eat_whitespace (int c)
 {
-  c = reader_eat_whitespace (c);
-  if (c == ')')
-    return cell_nil;
-  if (c == EOF)
-    error (cell_symbol_not_a_pair, MAKE_STRING (cstring_to_list ("EOF in list")));
-    //return cell_nil;
-  SCM s = reader_read_sexp_ (c, a);
-  if (s == cell_dot)
-    return CAR (reader_read_list (readchar (), a));
-  return cons (s, reader_read_list (readchar (), a));
+	while (isspace (c)) c = fgetc(g_stdin);
+
+	if (c == ';') return reader_eat_whitespace(reader_read_line_comment());
+	if (c == '#' && (fpeek(g_stdin) == '!' || fpeek(g_stdin) == '|'))
+	{
+		c=fgetc(g_stdin);
+		reader_read_block_comment (c, fgetc(g_stdin));
+		return reader_eat_whitespace (fgetc(g_stdin));
+	}
+	return c;
 }
 
-SCM
-read_env (SCM a)
+SCM reader_read_list (int c, SCM a)
 {
-  return reader_read_sexp_ (readchar (), a);
+	c = reader_eat_whitespace (c);
+	if (c == ')') return cell_nil;
+	if (c == EOF) error (cell_symbol_not_a_pair, MAKE_STRING (cstring_to_list("EOF in list")));
+
+	SCM s = reader_read_sexp_ (c, a);
+	if (s == cell_dot) return CAR(reader_read_list(fgetc(g_stdin), a));
+
+	return cons(s, reader_read_list(fgetc(g_stdin), a));
 }
 
-SCM
-reader_read_block_comment (int s, int c)
+SCM read_env (SCM a)
 {
-  if (c == s && peekchar () == '#') return readchar ();
-  return reader_read_block_comment (s, readchar ());
+	return reader_read_sexp_ (fgetc(g_stdin), a);
 }
 
-SCM
-reader_read_hash (int c, SCM a)
+SCM reader_read_block_comment (int s, int c)
 {
-  switch (c)
-    {
-    case '!':
-      reader_read_block_comment (c, readchar ());
-      return reader_read_sexp_ (readchar (), a);
-    case '|':
-      reader_read_block_comment (c, readchar ());
-      return reader_read_sexp_ (readchar (), a);
-    case 'f':
-      return cell_f;
-    case 't':
-      return cell_t;
-    case ',':
-      if (peekchar () == '@')
-        {
-          readchar ();
-          return cons (cell_symbol_unsyntax_splicing,
-                       cons (reader_read_sexp_ (readchar (), a),
-                             cell_nil));
-        }
-      return cons (cell_symbol_unsyntax,
-                   cons (reader_read_sexp_ (readchar (), a), cell_nil));
-    case '\'':
-      return cons (cell_symbol_syntax,
-                   cons (reader_read_sexp_ (readchar (), a), cell_nil));
-    case '`':
-      return cons (cell_symbol_quasisyntax,
-                   cons (reader_read_sexp_ (readchar (), a), cell_nil));
-    case ':':
-    return MAKE_KEYWORD (CAR (reader_read_sexp_ (readchar (), a)));
-    case 'b':
-      return reader_read_binary ();
-    case 'o':
-      return reader_read_octal ();
-    case 'x':
-      return reader_read_hex ();
-    case '\\':
-      return reader_read_character ();
-    case '(':
-      return list_to_vector (reader_read_list (readchar (), a));
-    case ';':
-      reader_read_sexp_ (readchar (), a);
-      return reader_read_sexp_ (readchar (), a);
-    }
-  return reader_read_sexp_ (readchar (), a);
+	if (c == s && fpeek(g_stdin) == '#') return fgetc(g_stdin);
+	return reader_read_block_comment (s, fgetc(g_stdin));
 }
 
-SCM
-reader_read_sexp (SCM c, SCM s, SCM a)
+
+SCM reader_read_binary();
+SCM reader_read_octal();
+SCM reader_read_hex();
+SCM reader_read_character();
+SCM reader_read_hash (int c, SCM a)
 {
-  return reader_read_sexp_ (VALUE (c), a);
+	if(c == '!')
+	{
+		reader_read_block_comment (c, fgetc(g_stdin));
+		return reader_read_sexp_ (fgetc(g_stdin), a);
+	}
+	if(c == '|')
+	{
+		reader_read_block_comment (c, fgetc(g_stdin));
+		return reader_read_sexp_ (fgetc(g_stdin), a);
+	}
+	if(c == 'f') return cell_f;
+	if(c == 't') return cell_t;
+	if(c == ',')
+	{
+		if (fpeek(g_stdin) == '@')
+		{
+			fgetc(g_stdin);
+			return cons (cell_symbol_unsyntax_splicing, cons (reader_read_sexp_ (fgetc(g_stdin), a), cell_nil));
+		}
+
+		return cons (cell_symbol_unsyntax, cons (reader_read_sexp_ (fgetc(g_stdin), a), cell_nil));
+	}
+	if(c == '\'') return cons (cell_symbol_syntax, cons(reader_read_sexp_(fgetc(g_stdin), a), cell_nil));
+	if(c == '`') return cons (cell_symbol_quasisyntax, cons(reader_read_sexp_(fgetc(g_stdin), a), cell_nil));
+	if(c == ':') return MAKE_KEYWORD(CAR(reader_read_sexp_(fgetc(g_stdin), a)));
+	if(c == 'b') return reader_read_binary ();
+	if(c == 'o') return reader_read_octal ();
+	if(c == 'x') return reader_read_hex ();
+	if(c == '\\') return reader_read_character();
+	if(c == '(') return list_to_vector (reader_read_list (fgetc(g_stdin), a));
+	if(c == ';')
+	{
+		reader_read_sexp_ (fgetc(g_stdin), a);
+		return reader_read_sexp_ (fgetc(g_stdin), a);
+	}
+
+	return reader_read_sexp_ (fgetc(g_stdin), a);
 }
 
-SCM
-reader_read_character ()
+SCM reader_read_character ()
 {
-  int c = readchar ();
-  if (c >= '0' && c <= '7'
-      && peekchar () >= '0' && peekchar () <= '7')
-    {
-      c = c - '0';
-      while (peekchar () >= '0' && peekchar () <= '7')
-        {
-          c <<= 3;
-          c += readchar () - '0';
-        }
-    }
-  else if (((c >= 'a' && c <= 'z')
-            || c == '*')
-           && ((peekchar () >= 'a' && peekchar () <= 'z')
-               || peekchar () == '*'))
-    {
-      char buf[10];
-      char *p = buf;
-      *p++ = c;
-      while ((peekchar () >= 'a' && peekchar () <= 'z')
-             || peekchar () == '*')
-        {
-          *p++ = readchar ();
-        }
-      *p = 0;
-      if (!strcmp (buf, "*eof*")) c = EOF;
-      else if (!strcmp (buf, "nul")) c = '\0';
-      else if (!strcmp (buf, "alarm")) c = '\a';
-      else if (!strcmp (buf, "backspace")) c = '\b';
-      else if (!strcmp (buf, "tab")) c = '\t';
-      else if (!strcmp (buf, "linefeed")) c = '\n';
-      else if (!strcmp (buf, "newline")) c = '\n';
-      else if (!strcmp (buf, "vtab")) c = '\v';
-      else if (!strcmp (buf, "page")) c = '\f';
-#if 1 //__MESC__
-      //Nyacc bug
-      else if (!strcmp (buf, "return")) c = 13;
-      else if (!strcmp (buf, "esc")) c = 27;
-#else
-      else if (!strcmp (buf, "return")) c = '\r';
-      //Nyacc crash else if (!strcmp (buf, "esc")) c = '\e';
-#endif
-      else if (!strcmp (buf, "space")) c = ' ';
+	int c = fgetc(g_stdin);
+	int p = fpeek(g_stdin);
+	int i = 0;
+	if (c >= '0' && c <= '7' && p >= '0' && p <= '7')
+	{
+		c = c - '0';
+		while (p >= '0' && p <= '7')
+		{
+			c = c << 3;
+			c = c + (fgetc(g_stdin) - '0');
+			p = fpeek(g_stdin);
+		}
+	}
+	else if (((c >= 'a' && c <= 'z') || c == '*') && ((p >= 'a' && p <= 'z') || p == '*'))
+	{
+		char buf[10];
+ 		buf[i] = c;
+		i = i + 1;
+		while (p >= 'a' && p <= 'z') || p == '*')
+		{
+			buf[i] = fgetc(g_stdin);
+			i = i + 1;
+			p  = fpeek(g_stdin);
+		}
+		buf[i] = 0;
+		if (match(buf, "*eof*")) c = EOF;
+		else if (match(buf, "nul")) c = '\0';
+		else if (match(buf, "alarm")) c = '\a';
+		else if (match(buf, "backspace")) c = '\b';
+		else if (match(buf, "tab")) c = '\t';
+		else if (match(buf, "linefeed")) c = '\n';
+		else if (match(buf, "newline")) c = '\n';
+		else if (match(buf, "vtab")) c = '\v';
+		else if (match(buf, "page")) c = '\f';
+		else if (match(buf, "return")) c = '\r';
+		else if (match(buf, "esc")) c = '\e';
+		else if (match(buf, "space")) c = ' ';
+		else if (match(buf, "bel")) c = '\a';
+		else if (match(buf, "bs")) c = '\b';
+		else if (match(buf, "ht")) c = '\t';
+		else if (match(buf, "vt")) c = '\v';
+		else if (match(buf, "cr")) c = '\r';
+		else
+		{
+			fprintf(stderr, "char not supported: %s\n", buf);
+			exit(EXIT_FAILURE);
+		}
+	}
 
-#if 1 // Nyacc uses old abbrevs
-      else if (!strcmp (buf, "bel")) c = '\a';
-      else if (!strcmp (buf, "bs")) c = '\b';
-      else if (!strcmp (buf, "ht")) c = '\t';
-      else if (!strcmp (buf, "vt")) c = '\v';
-
-#if 1 //__MESC__
-      //Nyacc bug
-      else if (!strcmp (buf, "cr")) c = 13;
-#else
-      else if (!strcmp (buf, "cr")) c = '\r';
-#endif
-#endif // Nyacc uses old abbrevs
-
-      else
-        {
-          eputs ("char not supported: ");
-          eputs (buf);
-          eputs ("\n");
-#if !__MESC__
-          assert (!"char not supported");
-#endif
-        }
-    }
-  return MAKE_CHAR (c);
+	return MAKE_CHAR(c);
 }
 
-SCM
-reader_read_binary ()
+SCM reader_read_binary ()
 {
-  int n = 0;
-  int c = peekchar ();
-  int s = 1;
-  if (c == '-') {s = -1; readchar (); c = peekchar ();}
-  while (c == '0' || c == '1')
-    {
-      n <<= 1;
-      n+= c - '0';
-      readchar ();
-      c = peekchar ();
-    }
-  return MAKE_NUMBER (s*n);
+	int n = 0;
+	int c = fpeek(g_stdin);
+	int s = 1;
+	if (c == '-')
+	{
+		s = -1;
+		fgetc(g_stdin);
+		c = fpeek(g_stdin);
+	}
+
+	while (c == '0' || c == '1')
+	{
+		n = n << 1;
+		n = n + c - '0';
+		fgetc(g_stdin);
+		c = fpeek(g_stdin);
+	}
+	return MAKE_NUMBER (s*n);
 }
 
-SCM
-reader_read_octal ()
+SCM reader_read_octal ()
 {
-  int n = 0;
-  int c = peekchar ();
-  int s = 1;
-  if (c == '-') {s = -1;readchar (); c = peekchar ();}
-  while (c >= '0' && c <= '7')
-    {
-      n <<= 3;
-      n+= c - '0';
-      readchar ();
-      c = peekchar ();
-    }
-  return MAKE_NUMBER (s*n);
+	int n = 0;
+	int c = fpeek(g_stdin);
+	int s = 1;
+	if (c == '-')
+	{
+		s = -1;
+		fgetc(g_stdin);
+		c = fpeek(g_stdin);
+	}
+
+	while (c >= '0' && c <= '7')
+	{
+		n = n << 3;
+		n = n + c - '0';
+		fgetc(g_stdin);
+		c = fpeek(g_stdin);
+	}
+	return MAKE_NUMBER (s*n);
 }
 
-SCM
-reader_read_hex ()
+SCM reader_read_hex ()
 {
-  int n = 0;
-  int c = peekchar ();
-  int s = 1;
-  if (c == '-') {s = -1;readchar (); c = peekchar ();}
-  while ((c >= '0' && c <= '9')
-         || (c >= 'A' && c <= 'F')
-         || (c >= 'a' && c <= 'f'))
-    {
-      n <<= 4;
-      if (c >= 'a') n += c - 'a' + 10;
-      else if (c >= 'A') n += c - 'A' + 10;
-      else n+= c - '0';
-      readchar ();
-      c = peekchar ();
-    }
-  return MAKE_NUMBER (s*n);
+	int n = 0;
+	int c = fpeek(g_stdin);
+	int s = 1;
+	if (c == '-')
+	{
+		s = -1;
+		fgetc(g_stdin);
+		c = fpeek(g_stdin);
+	}
+
+	while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
+	{
+		n = n << 4;
+		if (c >= 'a') n += c - 'a' + 10;
+		else if (c >= 'A') n += c - 'A' + 10;
+		else n+= c - '0';
+		fgetc(g_stdin);
+		c = fpeek(g_stdin);
+	}
+	return MAKE_NUMBER (s*n);
 }
 
-SCM
-reader_read_string ()
+SCM reader_read_string ()
 {
-  char buf[1024];
-  SCM lst = cell_nil;
-  int i = 0;
-  int c = readchar ();
-  while (1)
-    {
-      if (c == '"' || i > 1022)
-        {
-          buf[i] = 0;
-          lst = append2 (lst, string_to_list (buf, i));
-          i = 0;
-          if (c == '"')
-            break;
-        }
-      if (c == '\\')
-        {
-          int p = peekchar ();
-          if (p == '\\' || p == '"')
-            buf[i++] = readchar ();
-          else if (p == '0')
-            {
-              readchar ();
-              buf[i++] = '\0';
-            }
-          else if (p == 'a')
-            {
-              readchar ();
-              buf[i++] = '\a';
-            }
-          else if (p == 'b')
-            {
-              readchar ();
-              buf[i++] = '\b';
-            }
-          else if (p == 't')
-            {
-              readchar ();
-              buf[i++] = '\t';
-            }
-          else if (p == 'n')
-            {
-              readchar ();
-              buf[i++] = '\n';
-            }
-          else if (p == 'v')
-            {
-              readchar ();
-              buf[i++] = '\v';
-            }
-          else if (p == 'f')
-            {
-              readchar ();
-              buf[i++] = '\f';
-            }
-          else if (p == 'r')
-            {
-              readchar ();
-              //Nyacc bug
-              //buf[i++] = '\r';
-              buf[i++] = 13;
-            }
-          else if (p == 'e')
-            {
-              readchar ();
-              //buf[i++] = '\e';
-              buf[i++] = 27;
-            }
-        }
-#if 0 // !__MESC__
-      else if (c == EOF)
-        assert (!"EOF in string");
-#endif
-      else
-        buf[i++] = c;
-    c = readchar ();
-  }
-  return MAKE_STRING (lst);
+	SCM lst = cell_nil;
+	int c;
+	do
+	{
+		c = fgetc(g_stdin);
+		if (c == '"') break;
+		if (c == '\\')
+		{
+			c = fgetc(g_stdin);
+			if (c == '\\' || c == '"') cons(MAKE_CHAR(c), lst);
+			else if (c == '0') cons(MAKE_CHAR('\0'), lst);
+			else if (c == 'a') cons(MAKE_CHAR('\a'), lst);
+			else if (c == 'b') cons(MAKE_CHAR('\b'), lst);
+			else if (c == 't') cons(MAKE_CHAR('\t'), lst);
+			else if (c == 'n') cons(MAKE_CHAR('\n'), lst);
+			else if (c == 'v') cons(MAKE_CHAR('\v'), lst);
+			else if (c == 'f') cons(MAKE_CHAR('\f'), lst);
+			else if (c == 'r') cons(MAKE_CHAR('\r'), lst);
+			else if (c == 'e') cons(MAKE_CHAR('\e'), lst);
+		}
+		else cons(MAKE_CHAR(c), lst);
+	} while(true);
+	return MAKE_STRING (reverse_x_(lst, cell_nil));
 }
 
-int
-dump ()
+int dump ()
 {
-  r1 = g_symbols;
-  gc_push_frame ();
-  gc ();
-  gc_peek_frame ();
-  char *p = (char*)g_cells;
-  putchar ('M');
-  putchar ('E');
-  putchar ('S');
-  putchar (g_stack >> 8);
-  putchar (g_stack % 256);
-  eputs ("dumping\n");
-  if (g_debug > 1)
-    {
-      eputs ("program r2=");
-      display_error_ (r2);
-      eputs ("\n");
-    }
+	r1 = g_symbols;
+	gc_push_frame ();
+	gc();
+	gc_peek_frame ();
+	char *p = (char*)g_cells;
+	fprintf(stdout, "MES%c%c dumping\n", (g_stack >> 8), (g_stack % 256));
 
-  for (int i=0; i<g_free * sizeof (struct scm); i++)
-    putchar (*p++);
-  return 0;
+	if (g_debug > 1)
+	{
+		fprintf(stderr,"program r2=");
+		display_error_ (r2);
+		fprintf(stderr,"\n");
+	}
+
+	int i = 0;
+	for (; i < g_free; i = i + 1)
+	{
+		fputc(p[0], stderr);
+		p = p + 1;
+	}
+	return 0;
 }
