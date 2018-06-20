@@ -247,9 +247,9 @@ SCM reader_read_character ()
 	else if (((c >= 'a' && c <= 'z') || c == '*') && ((p >= 'a' && p <= 'z') || p == '*'))
 	{
 		char buf[10];
- 		buf[i] = c;
+		buf[i] = c;
 		i = i + 1;
-		while (p >= 'a' && p <= 'z') || p == '*')
+		while ((p >= 'a' && p <= 'z') || p == '*')
 		{
 			buf[i] = fgetc(g_stdin);
 			i = i + 1;
