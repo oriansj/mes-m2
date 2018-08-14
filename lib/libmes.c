@@ -1,24 +1,25 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <libmes.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -31,7 +32,7 @@ isdigit (int c)
 int
 isxdigit (int c)
 {
-  return isdigit (c) || c >= 'a' && c <= 'f';
+  return isdigit (c) || (c >= 'a' && c <= 'f');
 }
 
 int
@@ -140,7 +141,6 @@ fdgetc (int fd)
   int i;
   if (_ungetc_pos == -1)
     {
-      _ungetc_fd = fd;
       int r = read (fd, &c, 1);
       if (r < 1)
         return -1;
@@ -148,13 +148,30 @@ fdgetc (int fd)
    }
   else
     {
-      if (_ungetc_fd != fd)
+      i = _ungetc_buf[_ungetc_pos];
+      if (_ungetc_fd != fd && i == 10)
         {
-          eputs (" ***MES LIB C*** fdgetc ungetc conflict\n");
+          // FIXME: Nyacc's ungetc exposes harmless libmec.c bug
+          // we need one unget position per FD
+          _ungetc_pos = -1;
+          _ungetc_fd = -1;
+          return fdgetc (fd);
+        }
+      else if (_ungetc_fd != fd)
+        {
+          eputs (" ***MES LIB C*** fdgetc ungetc conflict unget-fd=");
+          eputs (itoa (_ungetc_fd));
+          eputs (", fdgetc-fd=");
+          eputs (itoa (fd));
+          eputs (", c=");
+          eputs (itoa ( _ungetc_buf[_ungetc_pos]));
+          eputs ("\n");
           exit (1);
         }
       i = _ungetc_buf[_ungetc_pos];
       _ungetc_pos -= 1;
+      if (_ungetc_pos == -1)
+        _ungetc_fd = -1;
      }
   if (i < 0)
     i += 256;
@@ -180,6 +197,19 @@ fdputs (char const* s, int fd)
 int
 fdungetc (int c, int fd)
 {
+  if (c == -1)
+    return c;
+  if (_ungetc_pos == -1)
+    _ungetc_fd = fd;
+  else if (_ungetc_fd != fd)
+    {
+      eputs (" ***MES LIB C*** fdungetc ungetc conflict unget-fd=");
+      eputs (itoa (_ungetc_fd));
+      eputs (", fdungetc-fd=");
+      eputs (itoa (fd));
+      eputs ("\n");
+      exit (1);
+    }
   _ungetc_pos++;
   _ungetc_buf[_ungetc_pos] = c;
   return c;
@@ -191,13 +221,22 @@ _fdungetc_p (int fd)
   return _ungetc_pos > -1;
 }
 
-#if POSIX || __x86_64__
+#if POSIX
 #define STDERR 2
 int
 eputs (char const* s)
 {
   int i = strlen (s);
   write (STDERR, s, i);
+  return 0;
+}
+
+#define STDOUT 1
+int
+oputs (char const* s)
+{
+  int i = strlen (s);
+  write (STDOUT, s, i);
   return 0;
 }
 #endif

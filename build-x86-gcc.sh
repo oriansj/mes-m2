@@ -20,9 +20,7 @@
 
 set -e
 
-if [ -n "$BUILD_DEBUG" ]; then
-    set -x
-fi
+. build-aux/trace.sh
 
 # We need a 32bit gcc, here's what I do:
 # guix environment --system=i686-linux --ad-hoc gcc-toolchain@5
@@ -30,17 +28,18 @@ GCC32=${GCC32-i686-unknown-linux-gnu-gcc}
 MES_PREFIX=${MES_PREFIX-../mes}
 MES_SEED=${MES_SEED-../mes-seed}
 
+export MES_PREFIX
 unset C_INCLUDE_PATH LIBRARY_PATH
 
 # Function and symbol snarfing was used by mes.c; copied here as a
 # temporary hack in the transition to mes.M2
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/gc.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/lib.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/math.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/mes.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/posix.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/reader.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/vector.c
+trace "MES.SNARF  src/gc.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/gc.c
+trace "MES.SNARF  src/lib.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/lib.c
+trace "MES.SNARF  src/math.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/math.c
+trace "MES.SNARF  src/mes.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/mes.c
+trace "MES.SNARF  src/posix.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/posix.c
+trace "MES.SNARF  src/reader.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/reader.c
+trace "MES.SNARF  src/vector.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/vector.c
 
 # The focus is on scaffold/*.c, building up to src/mes.c.
 # 
@@ -48,27 +47,31 @@ sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/vector.c
 # this effort is defining the minimal M2 library we need.  Also, it
 # will probably use bits from mescc-tools/m2-planet.
 mkdir -p lib/x86-mes-gcc
-$GCC32\
+trace "CC32       crt1.c" $GCC32\
     -c\
     -o lib/x86-mes-gcc/crt1.o\
-    $MES_PREFIX/lib/crt1.c
+    lib/linux/x86-mes-gcc/crt1.c
 
-$GCC32\
+trace "CC32       libc.c" $GCC32\
     -I include\
-    -I $MES_PREFIX/include\
-    -I $MES_PREFIX/lib\
+    -I include\
+    -I lib\
     -c\
     -o lib/x86-mes-gcc/libc.o\
-    $MES_PREFIX/lib/libc.c
+    lib/libc.c
 
-C_FILES="scaffold/main
-broken-scaffold/hello
-scaffold/milli-mes
+C_FILES="
+scaffold/main
+scaffold/hello
+scaffold/m
+scaffold/argv
 scaffold/micro-mes
+scaffold/milli-mes
 scaffold/tiny-mes
 scaffold/cons-mes
-broken-scaffold/mini-mes
-broken-src/mes
+scaffold/load-mes
+scaffold/mini-mes
+src/mes
 "
 
 set +e
@@ -77,11 +80,22 @@ for t in $C_FILES; do
         echo $t: skip
         continue
     fi
-    $GCC32\
+    trace "CC32       $t.c" $GCC32\
+        -std=gnu99\
+        -O0\
+        -fno-builtin\
+        -fno-stack-protector\
+        -g\
+        -m32\
         -nostdinc\
         -nostdlib\
+        -Wno-discarded-qualifiers\
+        -Wno-int-to-pointer-cast\
+        -Wno-pointer-to-int-cast\
+        -Wno-pointer-sign\
+        -Wno-int-conversion\
+        -Wno-incompatible-pointer-types\
         -I include\
-        -I $MES_PREFIX/include\
         -I src\
         -D PREFIX=\"$MES_PREFIX\"\
         -D MODULEDIR=\"$MES_PREFIX/module\"\
@@ -91,7 +105,9 @@ for t in $C_FILES; do
         lib/x86-mes-gcc/crt1.o\
         lib/x86-mes-gcc/libc.o\
         $t.c
-    ./$t.x86-mes-gcc-out
+    # FIXME: to find boot-0.scm; rename to MES_DATADIR
+    trace "TEST       $t.x86-mes-gcc-out"
+    echo '(exit 42)' | MES_PREFIX=../mes/mes ./$t.x86-mes-gcc-out 2> $t.x86-mes-gcc-log
     r=$?
     e=0
     [ -f "$t".exit ] && e=$(cat "$t".exit)

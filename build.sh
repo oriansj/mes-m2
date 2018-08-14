@@ -20,9 +20,7 @@
 
 set -e
 
-if [ -n "$BUILD_DEBUG" ]; then
-    set -x
-fi
+. build-aux/trace.sh
 
 HEX2=${HEX2-hex2}
 M1=${M1-M1}
@@ -30,50 +28,53 @@ M2_PLANET=${M2_PLANET-M2-Planet}
 MES_PREFIX=${MES_PREFIX-../mes}
 MES_SEED=${MES_SEED-../mes-seed}
 
-export BUILD_DEBUG HEX2 M1 M2_PLANET MES_PREFIX MES_SEED
+export MES_PREFIX
+unset C_INCLUDE_PATH LIBRARY_PATH
 
 # Function and symbol snarfing was used by mes.c; copied here as a
 # temporary hack in the transition to mes.M2
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/gc.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/lib.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/math.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/mes.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/posix.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/reader.c
-sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/vector.c
+trace "MES.SNARF  src/gc.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/gc.c
+trace "MES.SNARF  src/lib.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/lib.c
+trace "MES.SNARF  src/math.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/math.c
+trace "MES.SNARF  src/mes.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/mes.c
+trace "MES.SNARF  src/posix.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/posix.c
+trace "MES.SNARF  src/reader.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/reader.c
+trace "MES.SNARF  src/vector.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src/vector.c
 
 # The focus is on scaffold/*.c, building up to src/mes.c.
 # 
 # Therefore we start by cheating about the small Mes Lib C; part of
 # this effort is defining the minimal M2 library we need.  Also, it
 # will probably use bits from mescc-tools/m2-planet.
+
+# Mes C Lib seed now included here
 mkdir -p lib/x86-mes
-$M1\
+trace "M1         crt1.S" $M1\
     --LittleEndian\
     --Architecture 1\
-    -f $MES_PREFIX/lib/x86-mes/x86.M1\
-    -f $MES_SEED/x86-mes/crt1.S\
+    -f lib/x86-mes/x86.M1\
+    -f lib/x86-mes/crt1.S\
     -o lib/x86-mes/crt1.o
     
-$M1\
+trace "M1         libc.S" $M1\
     --LittleEndian\
     --Architecture 1\
-    -f $MES_PREFIX/lib/x86-mes/x86.M1\
-    -f $MES_SEED/x86-mes/libc.S\
+    -f lib/x86-mes/x86.M1\
+    -f lib/x86-mes/libc.S\
     -o lib/x86-mes/libc.o
 
 
-BROKEN="
+C_FILES="
+scaffold/main
 scaffold/hello
-"
-
-C_FILES="scaffold/main
-broken-scaffold/hello
-scaffold/milli-mes
+broken-scaffold/m
+broken-scaffold/argv
 scaffold/micro-mes
+scaffold/milli-mes
 scaffold/tiny-mes
-broken-scaffold/cons-mes
-broken-scaffold/mini-mes
+scaffold/cons-mes
+scaffold/load-mes
+scaffold/mini-mes
 broken-src/mes
 "
 

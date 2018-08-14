@@ -1,6 +1,4 @@
-#if !__M2_PLANET__
-enum type_t {TCHAR, TCLOSURE, TCONTINUATION, TFUNCTION, TKEYWORD, TMACRO, TNUMBER, TPAIR, TREF, TSPECIAL, TSTRING, TSYMBOL, TVALUES, TVARIABLE, TVECTOR, TBROKEN_HEART};
-#else
+#if __M2_PLANET__
 CONSTANT TCHAR          0
 CONSTANT TCLOSURE       1
 CONSTANT TCONTINUATION  2
@@ -18,9 +16,11 @@ CONSTANT TVALUES       13
 CONSTANT TVARIABLE     14
 CONSTANT TVECTOR       15
 CONSTANT TBROKEN_HEART 16
-#endif
+#else // !__M2_PLANET__
+enum type_t {TCHAR, TCLOSURE, TCONTINUATION, TFUNCTION, TKEYWORD, TMACRO, TNUMBER, TPAIR, TPORT, TREF, TSPECIAL, TSTRING, TSYMBOL, TVALUES, TVARIABLE, TVECTOR, TBROKEN_HEART};
+#endif // !__M2_PLANET__
 
-typedef int SCM;
+typedef long SCM;
 
 struct scm {
   enum type_t type;
@@ -30,7 +30,7 @@ struct scm {
 
 struct scm *g_cells;
 
-int puts (char const *);
+int oputs (char const *);
 char const *itoa (int);
 void *malloc (int);
 
@@ -62,16 +62,16 @@ main (int argc, char **argv)
   CAR (i) = 0;
   CDR (i) = 0;
 
-  puts ("type 0:");
-  puts (itoa (TYPE (0)));
-  puts ("\n");
+  oputs ("type 0:");
+  oputs (itoa (TYPE (0)));
+  oputs ("\n");
 
-  puts ("setting type 2\n");
+  oputs ("setting type 2\n");
   if (argc > 1)
     TYPE (2) = TPAIR;
-  
-  puts ("type 0:");
-  puts (itoa (TYPE (0)));
-  puts ("\n");
+
+  oputs ("type 0:");
+  oputs (itoa (TYPE (0)));
+  oputs ("\n");
   return TYPE (0);
 }

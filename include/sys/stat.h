@@ -1,21 +1,21 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2017 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef __MES_SYS_STAT_H
 #define __MES_SYS_STAT_H 1lei
@@ -26,6 +26,7 @@
 
 #else // ! WITH_GLIBC
 
+#include <time.h>
 #include <sys/types.h>
 
 #ifndef __MES_MODE_T
@@ -45,11 +46,11 @@ struct stat
   long           st_size;
   unsigned int   st_blksize;
   unsigned int   st_blocks;
-  long           st_atime;
+  time_t         st_atime;
   unsigned long  st_atime_usec;
-  long           st_mtime;
+  time_t         st_mtime;
   unsigned long  st_mtime_usec;
-  long           st_ctime;
+  time_t         st_ctime;
   unsigned long  st_ctime_usec;
   unsigned int   __foo0;
   unsigned int   __foo1;

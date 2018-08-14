@@ -1,21 +1,21 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <sys/ioctl.h>
@@ -29,21 +29,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#if __MESC__
-
-#include <linux-mes.c>
-
-#else // !__MESC__
-
-#include <assert.h>
-
-#include <linux-gcc.c>
-
-#endif // !__MESC__
-
 #include <libc-mini.c>
 #include <libmes.c>
-#include <linux.c>
+
+#if __GNU__
+#include <hurd/libc.c>
+#elif __linux__
+#include <linux/libc.c>
+#else
+#error both __GNU__ and _linux__ are undefined, choose one
+#endif
 
 int g_stdin = 0;
 
@@ -62,6 +57,13 @@ __mes_debug ()
     }
   return __mes_debug;
 }
+
+
+#if !___GNU__
+#include <string/memcpy.c>
+#include <stdlib/malloc.c>
+#include <assert/assert.c>
+#endif
 
 int
 getchar ()
@@ -92,17 +94,6 @@ int
 putc (int c, FILE* stream)
 {
   return fdputc (c, (int)stream);
-}
-
-void
-assert_fail (char* s)
-{
-  eputs ("assert fail: ");
-  eputs (s);
-  eputs ("\n");
-  char *fail = s;
-  fail = 0;
-  *fail = 0;
 }
 
 int
@@ -144,29 +135,6 @@ strcpy (char *dest, char const *src)
   char *p = dest;
   while (*src) *p++ = *src++;
   *p = 0;
-  return dest;
-}
-
-char *g_brk = 0;
-
-void *
-malloc (size_t size)
-{
-  if (!g_brk)
-    g_brk = brk (0);
-  if (brk (g_brk + size) == (void*)-1)
-    return 0;
-  char *p = g_brk;
-  g_brk += size;
-  return p;
-}
-
-void *
-memcpy (void *dest, void const *src, size_t n)
-{
-  char* p = dest;
-  char const* q = src;
-  while (n--) *p++ = *q++;
   return dest;
 }
 

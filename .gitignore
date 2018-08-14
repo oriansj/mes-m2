@@ -1,10 +1,13 @@
 *.M2
 *.S
+*.m2-log
 *.m2-out
 *.mes-out
+*.x86-mes-gcc-log
 *.x86-mes-gcc-out
 *.o
 *~
+/build.log
 /src/*.mes.environment.h
 /src/*.mes.environment.i
 /src/*.mes.h

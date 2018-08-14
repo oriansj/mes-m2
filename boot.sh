@@ -1,28 +1,25 @@
 #! /bin/sh
 
-# Mes --- Maxwell Equations of Software
-# Copyright © 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+# GNU Mes --- Maxwell Equations of Software
+# Copyright © 2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 #
-# This file is part of Mes.
+# This file is part of GNU Mes.
 #
-# Mes is free software; you can redistribute it and/or modify it
+# GNU Mes is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or (at
 # your option) any later version.
 #
-# Mes is distributed in the hope that it will be useful, but
+# GNU Mes is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+# along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -e
-
-if [ -n "$BUILD_DEBUG" ]; then
-    set -x
-fi
+. build-aux/trace.sh
 
 MES_PREFIX=${MES_PREFIX-../mes}
 HEX2=${HEX2-hex2}
@@ -38,33 +35,27 @@ PREFIX=
 MODULEDIR=module
 VERSION=git
 
-mes=${1-src/mes}
+mes=${1-scaffold/cons-mes}
 
-if false; then
-    # verify mes.c stays working with gcc
-    i686-unknown-linux-gnu-gcc\
-    -nostdlib\
-    -I src\
-    -I include\
-    -I lib\
-    -o $mes.x86-mes-gcc\
-    --include=lib/libc-gcc.c\
-    -D MODULEDIR=\"$MODULEDIR/\"\
-    -D PREFIX=\"$PREFIX\"\
-    -D VERSION=\"$VERSION\"\
-    $TINYCC_SEED/x86-mes-gcc/crt1.o\
-    $mes.c
-fi
-
+rm -f $mes.M2
 rm -f $mes.S
 rm -f $mes.o
+rm -f $mes.m2-out
 
-cpp -E \
+trace "CPP        $mes.c" true
+i686-unknown-linux-gnu-cpp -E \
     -U __GNUC__\
     -D const=\
     -D enum=\
-    -D type_t=int\
+    -D functionn_t=FUNCTION\
+    -D gid_t=int\
+    -D intptr_t=int\
+    -D off_t=int\
+    -D pid_t=int\
+    -D ssize_t=int\
     -D size_t=int\
+    -D type_t=int\
+    -D uid_t=int\
     -D long=int\
     -D unsigned=\
     -D FILE=int\
@@ -77,35 +68,46 @@ cpp -E \
     -I src\
     -I include\
     $mes.c\
+    | grep -v double\
+    | grep -v float\
     | grep -v typedef\
     | grep -v '\.\.\.'\
     | sed \
+          -e 's,[*] *argv[][]],**argv,g'\
+          -e 's,[*] *env[][]],**env,g'\
+          -e 's,int atexit,#int atexit,g'\
+          -e 's,(char[*]),,g'\
+          -e 's,void [*] bsearch,#void * bsearch,g'\
           -e 's,void qsort,#void qsort,g'\
-          -e 's,size_t,int,g'\
           -e 's,int int,int,g'\
-          -e 's,^CONSTANT ,// CONSTANT ,g'\
+          -e 's,intptr_t,int,g'\
+          -e 's,ssize_t,int,g'\
+          -e 's,size_t,int,g'\
+          -e 's,pid_t,int,g'\
+          -e 's,off_t,int,g'\
+          -e 's,uid_t,int,g'\
     > $mes.M2
 
-if [ -n "$BUILD_DEBUG" ]; then
+if [ "$V" = 2 ]; then
     cat $mes.M2
 fi
 
-$M2_PLANET\
+trace "M2-Planet  $mes.M2" $M2_PLANET\
     -f $mes.M2 \
     -o $mes.S
 
 test -s $mes.S || exit 101
 
-$M1\
+trace "M1         $mes.M1" $M1\
     --LittleEndian\
     --Architecture 1\
-    -f $MES_PREFIX/lib/x86-mes/x86.M1\
+    -f lib/x86-mes/x86.M1\
     -f $X86_M1\
     -f $mes.S\
     -o $mes.o
 sed -i -e s,FUNCTION_,, $mes.o
 
-$HEX2\
+trace "HEX2       $mes.hex2" $HEX2\
     --LittleEndian\
     --Architecture 1\
     --BaseAddress 0x1000000\
@@ -116,4 +118,6 @@ $HEX2\
       --exec_enable\
       -o $mes.m2-out
 
-$mes.m2-out 
+# FIXME: to find boot-0.scm; rename to MES_DATADIR
+trace "TEST       $mes.m2-out"
+echo '(exit 42)' | MES_PREFIX=../mes/mes $mes.m2-out 2> $mes.m2-log

@@ -117,7 +117,10 @@ typedef int SCM;
 
 /* Imported functions from mes.c */
 SCM cons(SCM x, SCM y);
-SCM CAR(SCM x);
+/*SCM CAR(SCM x);
+  This cannot work for assignment:
+  CAR (x) = 1;
+*/
 SCM read_env(SCM a);
 SCM MAKE_NUMBER(int n);
 SCM MAKE_CHAR(char c);
@@ -139,7 +142,7 @@ SCM g_symbols;
 SCM* g_cells;
 int g_free;
 int g_debug;
-FILE* g_stdin;
+int g_stdin;
 
 /* Imported functions from vector.c */
 SCM list_to_vector (SCM x);
@@ -150,7 +153,10 @@ SCM gc();
 /* Imported functions from lib.c */
 SCM display_error_ (SCM x);
 
-/* Function that is needed by Reader but not moved yet */
+/* Function that is needed by Reader but not moved yet
+   Unused:
+   Mes uses readchar, unreadchar, peekchar indirections
+   for reading from string ports
 int fpeek(FILE *stream)
 {
 	int c;
@@ -158,6 +164,7 @@ int fpeek(FILE *stream)
 	ungetc(c, stream);
 	return c;
 }
+*/
 
 int match(char* a, char* b)
 {

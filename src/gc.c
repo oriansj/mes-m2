@@ -1,21 +1,21 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <errno.h>
@@ -73,7 +73,7 @@ gc_copy (SCM old) ///((internal))
   if (NTYPE (new) == TVECTOR)
     {
       NVECTOR (new) = g_free;
-      for (int i=0; i<LENGTH (old); i++)
+      for (long i=0; i<LENGTH (old); i++)
         g_news[g_free++] = g_cells[VECTOR (old)+i];
     }
   TYPE (old) = TBROKEN_HEART;
@@ -172,7 +172,7 @@ gc_ () ///((internal))
   g_free = 1;
 
 #if __MESC__
-  if (ARENA_SIZE < MAX_ARENA_SIZE && (int)g_news > 0)
+  if (ARENA_SIZE < MAX_ARENA_SIZE && (long)g_news > 0)
 #else
   if (ARENA_SIZE < MAX_ARENA_SIZE && g_news > 0)
 #endif
@@ -194,7 +194,7 @@ gc_ () ///((internal))
       gc_up_arena ();
     }
 
-  for (int i=g_free; i<g_symbol_max; i++)
+  for (long i=g_free; i<g_symbol_max; i++)
     gc_copy (i);
   g_symbols = gc_copy (g_symbols);
   g_macros = gc_copy (g_macros);

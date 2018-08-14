@@ -1,21 +1,21 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2017 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef __MES_STRING_H
 #define __MES_STRING_H 1
@@ -48,14 +48,17 @@ typedef long ssize_t;
 void *memcpy (void *dest, void const *src, size_t n);
 void *memmove (void *dest, void const *src, size_t n);
 void *memset (void *s, int c, size_t n);
+void * memchr (void const *block, int c, size_t size);
 int memcmp (void const *s1, void const *s2, size_t n);
 
 char *strcat (char *dest, char const *src);
 char *strchr (char const *s, int c);
+int strcasecmp (char const *s1, char const *s2);
 int strcmp (char const*, char const*);
 char *strcpy (char *dest, char const *src);
 size_t strlen (char const*);
 char *strncpy (char *to, char const *from, size_t size);
+int strncasecmp (char const *s1, char const *s2, size_t size);
 int strncmp (char const*, char const*, size_t);
 char *strrchr (char const *s, int c);
 char *strstr (char const *haystack, char const *needle);

@@ -1,48 +1,40 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #if POSIX
 #error "POSIX not supported"
 #endif
 
-#if __M2_PLANET__
-
-int g_stdin;
-int eputs (char * s);
-int oputs (char * s);
-int getchar ();
-int putchar (int c);
-int puts (char * s);
-char * itoa (int number);
-int open (char *,int,int);
-void *malloc (size_t size);
-void exit (int);
-
-#else
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <libmes.h>
 
-#endif
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+#if __M2_PLANET__
+int open (char const*,int,int);
+#else
+int open (char const*,int,...);
+#endif
+void *malloc (size_t size);
+void exit (int);
 char *arena;
 
 typedef int SCM;
@@ -62,9 +54,7 @@ SCM r2;
 /* continuation */
 SCM r3;
 
-#if !__M2_PLANET__
-enum type_t {TCHAR, TCLOSURE, TCONTINUATION, TFUNCTION, TKEYWORD, TMACRO, TNUMBER, TPAIR, TPORT, TREF, TSPECIAL, TSTRING, TSYMBOL, TVALUES, TVARIABLE, TVECTOR, TBROKEN_HEART};
-#else
+#if __M2_PLANET__
 CONSTANT TCHAR          0
 CONSTANT TCLOSURE       1
 CONSTANT TCONTINUATION  2
@@ -82,7 +72,9 @@ CONSTANT TVALUES       13
 CONSTANT TVARIABLE     14
 CONSTANT TVECTOR       15
 CONSTANT TBROKEN_HEART 16
-#endif
+#else // !__M2_PLANET__
+enum type_t {TCHAR, TCLOSURE, TCONTINUATION, TFUNCTION, TKEYWORD, TMACRO, TNUMBER, TPAIR, TPORT, TREF, TSPECIAL, TSTRING, TSYMBOL, TVALUES, TVARIABLE, TVECTOR, TBROKEN_HEART};
+#endif // !__M2_PLANET__
 
 struct scm {
   enum type_t type;
@@ -227,7 +219,7 @@ fill ()
   TYPE (10) = 0x00000007; //yeah, 7!
   TYPE (10) = 7;          //yeah, 7!
   TYPE (10) = TPAIR;      //yeah, 7!
-  
+
 #else
 
   TYPE (0) = 0x6c6c6168;
@@ -271,7 +263,7 @@ fill ()
   CAR (16) = 0x2d2d2d2d;
   CDR (16) = 0x2d2d2d2d;
 #endif
-  
+
   for (i=0; i<20; i)
     {
       oputs ("i[");

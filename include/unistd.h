@@ -1,21 +1,21 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef __MES_UNISTD_H
 #define __MES_UNISTD_H 1
@@ -29,6 +29,7 @@
 
 #else // ! WITH_GLIBC
 
+#include <sys/types.h>
 #ifndef NULL
 #define NULL 0
 #endif
@@ -45,42 +46,6 @@
 #define	STDERR_FILE_NO 2
 #endif // STDIN_FILE_NO
 
-#ifndef __MES_OFF_T
-#define __MES_OFF_T
-#undef off_t
-typedef unsigned long off_t;
-#endif
-
-#ifndef __MES_SIZE_T
-#define __MES_SIZE_T
-#undef size_t
-typedef unsigned long size_t;
-#endif
-
-#ifndef __MES_SSIZE_T
-#define __MES_SSIZE_T
-#undef ssize_t
-typedef long ssize_t;
-#endif
-
-#ifndef __MES_INTPTR_T
-#define __MES_INTPTR_T
-#undef intptr_t
-typedef long intptr_t;
-#endif
-
-#ifndef __MES_PTRDIFF_T
-#define __MES_PTRDIFF_T
-#undef ptrdiff_t
-typedef long ptrdiff_t;
-#endif
-
-#ifndef __MES_PID_T
-#define __MES_PID_T
-#undef pid_t
-typedef int pid_t;
-#endif
-
 #ifndef R_OK
 #define F_OK 0
 #define X_OK 1
@@ -94,8 +59,10 @@ int close (int fd);
 int execv (char const *file_name, char *const argv[]);
 int execve (char const *file, char *const argv[], char *const env[]);
 int execvp (char const *file, char *const argv[]);
-int fork ();
+int fork (void);
 char *getcwd (char *buf, size_t size);
+uid_t getgid (void);
+uid_t getuid (void);
 int isatty (int fd);
 int link (char const *oldname, char const *newname);
 off_t lseek (int fd, off_t offset, int whence);

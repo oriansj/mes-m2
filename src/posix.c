@@ -1,21 +1,21 @@
 /* -*-comment-start: "//";comment-end:""-*-
- * Mes --- Maxwell Equations of Software
+ * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
- * This file is part of Mes.
+ * This file is part of GNU Mes.
  *
- * Mes is free software; you can redistribute it and/or modify it
+ * GNU Mes is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or (at
  * your option) any later version.
  *
- * Mes is distributed in the hope that it will be useful, but
+ * GNU Mes is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <sys/stat.h>
@@ -270,18 +270,27 @@ primitive_fork ()
 SCM
 execl_ (SCM file_name, SCM args) ///((name . "execl"))
 {
-  char *c_argv[100];
+  char *c_argv[1000];           // POSIX minimum 4096
   int i = 0;
   int n = 0;
-  c_argv[i++] = string_to_cstring_ (file_name, string_to_cstring_buf+n);
+
+  if (length__ (args) > 1000)
+    error (cell_symbol_system_error,
+           cons (file_name,
+                 cons (MAKE_STRING (cstring_to_list ("too many arguments")),
+                       cons (file_name, args))));
+  c_argv[i++] = (char*)string_to_cstring_ (file_name, string_to_cstring_buf+n);
   n += length__ (STRING (file_name)) + 1;
   while (args != cell_nil)
     {
       assert (TYPE (CAR (args)) == TSTRING);
-      assert (i < 20);
-      c_argv[i++] = string_to_cstring_ (CAR (args), string_to_cstring_buf+n);
+      c_argv[i++] = (char*)string_to_cstring_ (CAR (args), string_to_cstring_buf+n);
       n += length__ (STRING (CAR (args))) + 1;
       args = CDR (args);
+      if (g_debug > 2)
+        {
+          eputs ("arg["); eputs (itoa (i)); eputs ("]: "); eputs (c_argv[i-1]); eputs ("\n");
+        }
     }
   c_argv[i] = 0;
   return MAKE_NUMBER (execv (c_argv[0], c_argv));
