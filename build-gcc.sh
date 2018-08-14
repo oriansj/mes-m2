@@ -24,7 +24,7 @@ set -e
 
 # We need a 32bit gcc, here's what I do:
 # guix environment --system=i686-linux --ad-hoc gcc-toolchain@5
-CC32=${CC32-i686-unknown-linux-gnu-gcc}
+CC64=${CC64-gcc}
 MES_PREFIX=${MES_PREFIX-../mes}
 MES_SEED=${MES_SEED-../mes-seed}
 
@@ -47,17 +47,17 @@ trace "MES.SNARF  src/vector.c" sh $MES_PREFIX/build-aux/mes-snarf.scm --mes src
 # this effort is defining the minimal M2 library we need.  Also, it
 # will probably use bits from mescc-tools/m2-planet.
 mkdir -p lib/x86-mes-gcc
-trace "CC32       crt1.c" $CC32\
+trace "CC         crt1.c" $CC64\
     -c\
-    -o lib/x86-mes-gcc/crt1.o\
-    lib/linux/x86-mes-gcc/crt1.c
+    -o lib/x86_64-mes-gcc/crt1.o\
+    lib/linux/x86_64-mes-gcc/crt1.c
 
-trace "CC32       libc.c" $CC32\
+trace "CC         libc.c" $CC64\
     -I include\
     -I include\
     -I lib\
     -c\
-    -o lib/x86-mes-gcc/libc.o\
+    -o lib/x86_64-mes-gcc/libc.o\
     lib/libc.c
 
 C_FILES="
@@ -70,7 +70,7 @@ scaffold/milli-mes
 scaffold/tiny-mes
 scaffold/cons-mes
 scaffold/load-mes
-scaffold/mini-mes
+broken-scaffold/mini-mes
 src/mes
 "
 
@@ -80,13 +80,13 @@ for t in $C_FILES; do
         echo $t: skip
         continue
     fi
-    trace "CC32       $t.c" $CC32\
+    trace "CC64       $t.c" $CC64\
         -std=gnu99\
         -O0\
         -fno-builtin\
         -fno-stack-protector\
         -g\
-        -m32\
+        -m64\
         -nostdinc\
         -nostdlib\
         -Wno-discarded-qualifiers\
@@ -100,14 +100,14 @@ for t in $C_FILES; do
         -D 'PREFIX=\"$MES_PREFIX\"'\
         -D 'MODULEDIR=\"$MES_PREFIX/module\"'\
         -D 'VERSION=\"git\"'\
-        -L lib/x86-mes-gcc\
-        -o $t.x86-mes-gcc-out\
-        lib/x86-mes-gcc/crt1.o\
-        lib/x86-mes-gcc/libc.o\
+        -L lib/x86_64-mes-gcc\
+        -o $t.x86_64-mes-gcc-out\
+        lib/x86_64-mes-gcc/crt1.o\
+        lib/x86_64-mes-gcc/libc.o\
         $t.c
     # FIXME: to find boot-0.scm; rename to MES_DATADIR
-    trace "TEST       $t.x86-mes-gcc-out"
-    echo '(exit 42)' | MES_PREFIX=../mes/mes ./$t.x86-mes-gcc-out 2> $t.x86-mes-gcc-log
+    trace "TEST       $t.x86_64-mes-gcc-out"
+    echo '(exit 42)' | MES_PREFIX=../mes/mes ./$t.x86_64-mes-gcc-out 2> $t.x86_64-mes-gcc-log
     r=$?
     e=0
     [ -f "$t".exit ] && e=$(cat "$t".exit)

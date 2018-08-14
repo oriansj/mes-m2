@@ -5,6 +5,8 @@
 *.mes-out
 *.x86-mes-gcc-log
 *.x86-mes-gcc-out
+*.x86_64-mes-gcc-log
+*.x86_64-mes-gcc-out
 *.o
 *~
 /build.log

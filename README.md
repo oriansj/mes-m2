@@ -1,9 +1,13 @@
 # mes-m2
 Making Mes.c M2-Planet friendly
 
-C sanity test build
+C sanity test build (you need to be on x86 or have i686-unknown-linux-gnu-gcc*)
 
     ./build-x86-gcc.sh
+
+Experimental 64-bit build (much less objdump mes-x86-compatible friendly...)
+
+    ./build-gcc.sh
 
 M2 build
 
@@ -46,3 +50,6 @@ which includes
 and uses
 
     lib/libc.c
+
+*) Use: cd mes && guix environment -l .guix.scm
+   or guix environment --system=i686-linux --ad-hoc gcc-toolchain@5
