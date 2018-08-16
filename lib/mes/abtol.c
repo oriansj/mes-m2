@@ -18,17 +18,27 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string/strlen.c>
-#include <mes/eputs.c>
-#include <mes/oputs.c>
-#include <stdlib/puts.c>
+#include <libmes.h>
 
-#if __GNU__
-#include <hurd/libc-mini.c>
-#elif __linux__
-#include <linux/libc-mini.c>
-#else
-#error both __GNU__ and _linux__ are undefined, choose one
-#endif
-
-#include <stdlib/exit.c>
+long
+abtol (char const **p, int base)
+{
+  char const *s = *p;
+  int i = 0;
+  int sign = 1;
+  if (!base) base = 10;
+  if (*s && *s == '-')
+    {
+      sign = -1;
+      s++;
+    }
+  while (isnumber (*s, base))
+    {
+      i *= base;
+      int m = *s > '9' ? 'a' - 10 : '0';
+      i += *s - m;
+      s++;
+    }
+  *p = s;
+  return i * sign;
+}

@@ -18,17 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string/strlen.c>
-#include <mes/eputs.c>
-#include <mes/oputs.c>
-#include <stdlib/puts.c>
+#include <unistd.h>
 
-#if __GNU__
-#include <hurd/libc-mini.c>
-#elif __linux__
-#include <linux/libc-mini.c>
-#else
-#error both __GNU__ and _linux__ are undefined, choose one
-#endif
-
-#include <stdlib/exit.c>
+int
+execv (char const *file_name, char *const argv[])
+{
+  return execve (file_name, argv, environ);
+}

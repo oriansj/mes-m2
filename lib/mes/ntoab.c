@@ -18,17 +18,32 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string/strlen.c>
-#include <mes/eputs.c>
-#include <mes/oputs.c>
-#include <stdlib/puts.c>
+#include <libmes.h>
 
-#if __GNU__
-#include <hurd/libc-mini.c>
-#elif __linux__
-#include <linux/libc-mini.c>
-#else
-#error both __GNU__ and _linux__ are undefined, choose one
-#endif
+char const*
+ntoab (long x, int base, int signed_p)
+{
+  static char itoa_buf[20];
+  char *p = itoa_buf + 11;
+  *p-- = 0;
 
-#include <stdlib/exit.c>
+  int sign = 0;
+  unsigned long u = x;
+  if (signed_p && x < 0)
+    {
+      sign = 1;
+      u = -x;
+    }
+
+  do
+     {
+       long i = u % base;
+       *p-- = i > 9 ? 'a' + i - 10 : '0' + i;
+       u = u / base;
+     } while (u);
+
+  if (sign && *(p + 1) != '0')
+    *p-- = '-';
+
+  return p+1;
+}

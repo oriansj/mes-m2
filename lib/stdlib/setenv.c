@@ -18,17 +18,27 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string/strlen.c>
-#include <mes/eputs.c>
-#include <mes/oputs.c>
-#include <stdlib/puts.c>
+#include <stdlib.h>
 
-#if __GNU__
-#include <hurd/libc-mini.c>
-#elif __linux__
-#include <linux/libc-mini.c>
-#else
-#error both __GNU__ and _linux__ are undefined, choose one
-#endif
-
-#include <stdlib/exit.c>
+int
+setenv (char const* s, char const* v, int overwrite_p)
+{
+  char **p = environ;
+  int length = strlen (s);
+  while (*p)
+    {
+      if (!strncmp (s, *p, length) && *(*p + length) == '=')
+        break;
+      p++;
+    }
+  char *entry = malloc (length + strlen (v) + 2);
+  int end_p = *p == 0;
+  *p = entry;
+  strcpy (entry, s);
+  strcpy (entry + length, "=");
+  strcpy (entry + length + 1, v);
+  *(entry + length + strlen (v) + 2) = 0;
+  if (end_p)
+    *++p = 0;
+  return 0;
+}

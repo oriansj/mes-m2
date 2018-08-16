@@ -18,17 +18,14 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string/strlen.c>
-#include <mes/eputs.c>
-#include <mes/oputs.c>
-#include <stdlib/puts.c>
+#include <libmes.h>
 
-#if __GNU__
-#include <hurd/libc-mini.c>
-#elif __linux__
-#include <linux/libc-mini.c>
-#else
-#error both __GNU__ and _linux__ are undefined, choose one
-#endif
+void (*__call_at_exit) (void);
 
-#include <stdlib/exit.c>
+void
+exit (int code)
+{
+  if (__call_at_exit)
+    (*__call_at_exit) ();
+  _exit (code);
+}

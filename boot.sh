@@ -65,6 +65,7 @@ i686-unknown-linux-gnu-cpp -E \
     -D MODULEDIR=\"$MODULEDIR/\"\
     -D PREFIX=\"$PREFIX\"\
     -D VERSION=\"$VERSION\"\
+    -I lib\
     -I src\
     -I include\
     $mes.c\

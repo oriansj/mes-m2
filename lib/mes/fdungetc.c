@@ -18,17 +18,31 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string/strlen.c>
-#include <mes/eputs.c>
-#include <mes/oputs.c>
-#include <stdlib/puts.c>
+#include <libmes.h>
 
-#if __GNU__
-#include <hurd/libc-mini.c>
-#elif __linux__
-#include <linux/libc-mini.c>
-#else
-#error both __GNU__ and _linux__ are undefined, choose one
-#endif
+int
+fdungetc (int c, int fd)
+{
+  if (c == -1)
+    return c;
+  if (_ungetc_pos == -1)
+    _ungetc_fd = fd;
+  else if (_ungetc_fd != fd)
+    {
+      eputs (" ***MES LIB C*** fdungetc ungetc conflict unget-fd=");
+      eputs (itoa (_ungetc_fd));
+      eputs (", fdungetc-fd=");
+      eputs (itoa (fd));
+      eputs ("\n");
+      exit (1);
+    }
+  _ungetc_pos++;
+  _ungetc_buf[_ungetc_pos] = c;
+  return c;
+}
 
-#include <stdlib/exit.c>
+int
+_fdungetc_p (int fd)
+{
+  return _ungetc_pos > -1;
+}

@@ -65,154 +65,24 @@ __mes_debug ()
 #include <assert/assert.c>
 #endif
 
-int
-getchar ()
-{
-  return fdgetc (g_stdin);
-}
+#include <stdio/getchar.c>
+#include <stdio/putchar.c>
+#include <stdio/fputc.c>
+#include <stdio/fputs.c>
+#include <stdio/putc.c>
+#include <stdio/getc.c>
+#include <stdio/fgetc.c>
+#include <stdio/ungetc.c>
 
-int
-putchar (int c)
-{
-  write (STDOUT, (char*)&c, 1);
-  return 0;
-}
+#include <string/strcmp.c>
+#include <string/strcpy.c>
+#include <string/strncmp.c>
 
-int
-fputc (int c, FILE* stream)
-{
-  return fdputc (c, (int)stream);
-}
+#include <stdlib/free.c>
+#include <stdlib/realloc.c>
+#include <stdlib/getenv.c>
+#include <stdlib/setenv.c>
 
-int
-fputs (char const* s, FILE* stream)
-{
-  return fdputs (s, (int)stream);
-}
-
-int
-putc (int c, FILE* stream)
-{
-  return fdputc (c, (int)stream);
-}
-
-int
-getc (FILE *stream)
-{
-  return fdgetc ((int)stream);
-}
-
-int
-fgetc (FILE *stream)
-{
-  return fdgetc ((int)stream);
-}
-
-void
-free (void *ptr)
-{
-}
-
-int
-ungetc (int c, FILE *stream)
-{
-  return fdungetc (c, (int)stream);
-}
-
-int
-strcmp (char const* a, char const* b)
-{
-  while (*a && *b && *a == *b)
-    {
-      a++;b++;
-    }
-  return *a - *b;
-}
-
-char *
-strcpy (char *dest, char const *src)
-{
-  char *p = dest;
-  while (*src) *p++ = *src++;
-  *p = 0;
-  return dest;
-}
-
-void *
-realloc (void *ptr, size_t size)
-{
-  void *new = malloc (size);
-  if (ptr && new)
-    {
-      memcpy (new, ptr, size);
-      free (ptr);
-    }
-  return new;
-}
-
-int
-strncmp (char const* a, char const* b, size_t size)
-{
-  if (!size)
-    return 0;
-  while (*a && *b && *a == *b && --size)
-    {
-      a++;
-      b++;
-    }
-  return *a - *b;
-}
-
-char *
-getenv (char const* s)
-{
-  char **p = environ;
-  int length = strlen (s);
-  while (*p)
-    {
-      if (!strncmp (s, *p, length) && *(*p + length) == '=') return (*p + length + 1);
-      p++;
-    }
-  return 0;
-}
-
-int
-setenv (char const* s, char const* v, int overwrite_p)
-{
-  char **p = environ;
-  int length = strlen (s);
-  while (*p)
-    {
-      if (!strncmp (s, *p, length) && *(*p + length) == '=')
-        break;
-      p++;
-    }
-  char *entry = malloc (length + strlen (v) + 2);
-  int end_p = *p == 0;
-  *p = entry;
-  strcpy (entry, s);
-  strcpy (entry + length, "=");
-  strcpy (entry + length + 1, v);
-  *(entry + length + strlen (v) + 2) = 0;
-  if (end_p)
-    *++p = 0;
-  return 0;
-}
-
-int
-isatty (int fd)
-{
-  return ioctl (fd, TCGETS, 0) & 0xf0;
-}
-
-int
-wait (int *status_ptr)
-{
-  return waitpid  (-1, status_ptr, 0);
-}
-
-int
-execv (char const *file_name, char *const argv[])
-{
-  return execve (file_name, argv, environ);
-}
+#include <posix/isatty.c>
+#include <posix/wait.c>
+#include <posix/execv.c>
