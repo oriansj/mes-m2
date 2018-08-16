@@ -18,6 +18,8 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
+
 #if __MESC__
 
 #include <linux/x86-mes/mini.c>

@@ -20,12 +20,18 @@
 
 #include <libmes.h>
 
+#if __M2_PLANET__
+FUNCTION __call_at_exit;
+#else // !__M2_PLANET__
 void (*__call_at_exit) (void);
+#endif // !__M2_PLANET__
 
 void
 exit (int code)
 {
+#if !__M2_PLANET__
   if (__call_at_exit)
     (*__call_at_exit) ();
+#endif // !__M2_PLANET__
   _exit (code);
 }

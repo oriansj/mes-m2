@@ -23,22 +23,24 @@
 long
 abtol (char const **p, int base)
 {
-  char const *s = *p;
+  char const *s = p[0];
   int i = 0;
   int sign = 1;
   if (!base) base = 10;
-  if (*s && *s == '-')
+  if (s[0] == '-')
     {
       sign = -1;
-      s++;
+      s = s + 1;
     }
-  while (isnumber (*s, base))
+  while (isnumber (s[0], base))
     {
-      i *= base;
-      int m = *s > '9' ? 'a' - 10 : '0';
-      i += *s - m;
-      s++;
+      i = i * base;
+      int m = '0';
+      if (s[0] > '9')
+        m = 'a' - 10;
+      i = i + s[0] - m;
+      s = s + 1;
     }
-  *p = s;
+  p[0] = s;
   return i * sign;
 }
