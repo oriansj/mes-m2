@@ -116,10 +116,10 @@ struct scm {
 };
 struct function {
 #if __M2_PLANET__
-  FUNCTION *function;
-#else
-  int (*function) (void);
-#endif
+  FUNCTION function;
+#else // !__M2_PLANET__
+  SCM (*function) (SCM);
+#endif // !__M2_PLANET__
   int arity;
   char *name;
 };
@@ -657,55 +657,74 @@ pairlis (SCM x, SCM y, SCM a)
 SCM
 call (SCM fn, SCM x)
 {
-  eputs ("call\n");
 #if __M2_PLANET__
   struct function *f = FUNCTION (fn);
 #else
   struct function *f = &FUNCTION (fn);
 #endif
   int arity = f->arity;
-
-  eputs ("fn="); eputs (itoa (fn)); eputs ("\n");
-  eputs ("arity="); eputs (itoa (arity)); eputs ("\n");
-  eputs ("name="); eputs (f->name); eputs ("\n");
-
   if ((arity > 0 || arity == -1)
       && x != cell_nil && TYPE (CAR (x)) == TVALUES)
     x = cons (CADAR (x), CDR (x));
   if ((arity > 1 || arity == -1)
       && x != cell_nil && TYPE (CDR (x)) == TPAIR && TYPE (CADR (x)) == TVALUES)
     x = cons (CAR (x), cons (CDADAR (x), CDR (x)));
+
 #if __M2_PLANET__
   FUNCTION fp = f->function;
   if (arity == 0)
     return fp ();
   else if (arity == 1)
-    return fp (car (x));
+    return fp (CAR (x));
   else if (arity == 2)
-    return fp (car (x), cadr (x));
+    return fp (CAR (x), CADR (x));
   else if (arity == 3)
-    return fp (car (x), cadr (x), car (cddr (x)));
+    return fp (CAR (x), CADR (x), CAR (CDDR (x)));
   else if (arity == -1)
     return fp (x);
-#else
-  switch (FUNCTION (fn).arity)
+#elif !POSIX
+  if (arity == 0)
     {
-#if __MESC__ || !_POSIX_SOURCE
-    case 0: return (FUNCTION (fn).function) ();
-    case 1: return ((SCM(*)(SCM))(FUNCTION (fn).function)) (CAR (x));
-    case 2: return ((SCM(*)(SCM,SCM))(FUNCTION (fn).function)) (CAR (x), CADR (x));
-    case 3: return ((SCM(*)(SCM,SCM,SCM))(FUNCTION (fn).function)) (CAR (x), CADR (x), CAR (CDDR (x)));
-    case -1: return ((SCM(*)(SCM))(FUNCTION (fn).function)) (x);
-    default: return ((SCM(*)(SCM))(FUNCTION (fn).function)) (x);
-#else
-    case 0: return FUNCTION (fn).function0 ();
-    case 1: return FUNCTION (fn).function1 (CAR (x));
-    case 2: return FUNCTION (fn).function2 (CAR (x), CADR (x));
-    case 3: return FUNCTION (fn).function3 (CAR (x), CADR (x), CAR (CDDR (x)));
-    case -1: return FUNCTION (fn).functionn (x);
-#endif
+      //function0_t fp = f->function;
+      SCM (*fp) (void) = f->function;
+      return fp ();
     }
-#endif //! __M2_PLANET__
+  else if (arity == 1)
+    {
+      //function1_t fp = f->function;
+      SCM (*fp) (SCM) = f->function;
+      return fp (CAR (x));
+    }
+  else if (arity == 2)
+    {
+      //function2_t fp = f->function;
+      SCM (*fp) (SCM, SCM) = f->function;
+      return fp (CAR (x), CADR (x));
+    }
+  else if (arity == 3)
+    {
+      //function3_t fp = f->function;
+      SCM (*fp) (SCM, SCM, SCM) = f->function;
+      return fp (CAR (x), CADR (x), CAR (CDDR (x)));
+    }
+  else if (arity == -1)
+    {
+      //functionn_t fp = f->function;
+      SCM (*fp) (SCM) = f->function;
+      return fp (x);
+    }
+#else
+  if (arity == 0)
+    return FUNCTION (fn).function0 ();
+  else if (arity == 1)
+    return FUNCTION (fn).function1 (CAR (x));
+  else if (arity == 2)
+    return FUNCTION (fn).function2 (CAR (x), CADR (x));
+  else if (arity == 3)
+    return FUNCTION (fn).function3 (CAR (x), CADR (x), CAR (CDDR (x)));
+  else if (arity == -1)
+    return FUNCTION (fn).functionn (x);
+#endif //! (__M2_PLANET__ || !POSIX)
   return cell_unspecified;
 }
 

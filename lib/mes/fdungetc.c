@@ -18,36 +18,31 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
+#include <libmes.h>
 
-#if __MESC__
-
-#include <linux/x86-mes/mini.c>
-
-#elif __i386__
-
-#include <linux/x86-mes-gcc/mini.c>
-
-#elif __x86_64__
-
-#include <linux/x86_64-mes-gcc/mini.c>
-
-#else
-
-#error arch not supported
-
-#endif
-
-ssize_t
-write (int filedes, void const *buffer, size_t size)
+int
+fdungetc (int c, int fd)
 {
-  int r = _write (filedes, buffer, size);
-  if (r < 0)
+  if (c == -1)
+    return c;
+  if (_ungetc_pos == -1)
+    _ungetc_fd = fd;
+  else if (_ungetc_fd != fd)
     {
-      errno = -r;
-      r = -1;
+      eputs (" ***MES LIB C*** fdungetc ungetc conflict unget-fd=");
+      eputs (itoa (_ungetc_fd));
+      eputs (", fdungetc-fd=");
+      eputs (itoa (fd));
+      eputs ("\n");
+      exit (1);
     }
-  else
-    errno = 0;
-  return r;
+  _ungetc_pos++;
+  _ungetc_buf[_ungetc_pos] = c;
+  return c;
+}
+
+int
+_fdungetc_p (int fd)
+{
+  return _ungetc_pos > -1;
 }

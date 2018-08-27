@@ -18,64 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
-
-#ifndef _SIZE_T
-#define _SIZE_T
-#ifndef __SIZE_T
-#define __SIZE_T
-#ifndef __MES_SIZE_T
-#define __MES_SIZE_T
-#undef size_t
-typedef unsigned long size_t;
-#endif
-#endif
-#endif
-
-#ifndef _SSIZE_T
-#define _SSIZE_T
-#ifndef __SSIZE_T
-#define __SSIZE_T
-#ifndef __MES_SSIZE_T
-#define __MES_SSIZE_T
-#undef ssize_t
-typedef long ssize_t;
-#endif
-#endif
-#endif
-
-ssize_t write (int filedes, void const *buffer, size_t size);
-
-size_t
-strlen (char const* s)
-{
-  int i = 0;
-  while (s[i]) i++;
-  return i;
-}
-
-int
-eputs (char const* s)
-{
-  int i = strlen (s);
-  write (2, s, i);
-  return 0;
-}
-
-int
-oputs (char const* s)
-{
-  int i = strlen (s);
-  write (1, s, i);
-  return 0;
-}
-
-int
-puts (char const* s)
-{
-  oputs (s);
-  return oputs ("\n");
-}
+#include <string/strlen.c>
+#include <mes/eputs.c>
+#include <mes/oputs.c>
+#include <stdlib/puts.c>
 
 #if __GNU__
 #include <hurd/libc-mini.c>
@@ -85,12 +31,4 @@ puts (char const* s)
 #error both __GNU__ and _linux__ are undefined, choose one
 #endif
 
-void (*__call_at_exit) (void);
-
-void
-exit (int code)
-{
-  if (__call_at_exit)
-    (*__call_at_exit) ();
-  _exit (code);
-}
+#include <stdlib/exit.c>

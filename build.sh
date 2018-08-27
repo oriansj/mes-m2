@@ -94,3 +94,6 @@ for t in $C_FILES; do
     fi
     echo "$t: pass"
 done
+
+# TODO:
+NOLINK=1 sh boot.sh lib/libc

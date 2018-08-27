@@ -65,6 +65,10 @@ i686-unknown-linux-gnu-cpp -E \
     -D MODULEDIR=\"$MODULEDIR/\"\
     -D PREFIX=\"$PREFIX\"\
     -D VERSION=\"$VERSION\"\
+    -D __call_at_exit=underscore_underscore_call_at_exit\
+    -D _exit=underscore_exit\
+    -D _write=underscore_write\
+    -I lib\
     -I src\
     -I include\
     $mes.c\
@@ -107,17 +111,19 @@ trace "M1         $mes.M1" $M1\
     -o $mes.o
 sed -i -e s,FUNCTION_,, $mes.o
 
-trace "HEX2       $mes.hex2" $HEX2\
-    --LittleEndian\
-    --Architecture 1\
-    --BaseAddress 0x1000000\
-      -f $X86_ELF\
-      -f lib/x86-mes/crt1.o\
-      -f lib/x86-mes/libc.o\
-      -f $mes.o\
-      --exec_enable\
-      -o $mes.m2-out
+if [ -z "$NOLINK" ]; then
+    trace "HEX2       $mes.hex2" $HEX2\
+          --LittleEndian\
+          --Architecture 1\
+          --BaseAddress 0x1000000\
+          -f $X86_ELF\
+          -f lib/x86-mes/crt1.o\
+          -f lib/x86-mes/libc.o\
+          -f $mes.o\
+          --exec_enable\
+          -o $mes.m2-out
 
-# FIXME: to find boot-0.scm; rename to MES_DATADIR
-trace "TEST       $mes.m2-out"
-echo '(exit 42)' | MES_PREFIX=../mes/mes $mes.m2-out 2> $mes.m2-log
+    # FIXME: to find boot-0.scm; rename to MES_DATADIR
+    trace "TEST       $mes.m2-out"
+    echo '(exit 42)' | MES_PREFIX=../mes/mes $mes.m2-out 2> $mes.m2-log
+fi

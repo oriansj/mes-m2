@@ -18,36 +18,20 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
+#include <libmes.h>
 
-#if __MESC__
+#if __M2_PLANET__
+FUNCTION __call_at_exit;
+#else // !__M2_PLANET__
+void (*__call_at_exit) (void);
+#endif // !__M2_PLANET__
 
-#include <linux/x86-mes/mini.c>
-
-#elif __i386__
-
-#include <linux/x86-mes-gcc/mini.c>
-
-#elif __x86_64__
-
-#include <linux/x86_64-mes-gcc/mini.c>
-
-#else
-
-#error arch not supported
-
-#endif
-
-ssize_t
-write (int filedes, void const *buffer, size_t size)
+void
+exit (int code)
 {
-  int r = _write (filedes, buffer, size);
-  if (r < 0)
-    {
-      errno = -r;
-      r = -1;
-    }
-  else
-    errno = 0;
-  return r;
+#if !__M2_PLANET__
+  if (__call_at_exit)
+    (*__call_at_exit) ();
+#endif // !__M2_PLANET__
+  _exit (code);
 }

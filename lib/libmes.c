@@ -23,226 +23,25 @@
 #include <string.h>
 #include <unistd.h>
 
-int
-isdigit (int c)
-{
-  return c >= '0' && c <= '9';
-}
+#include <ctype/isdigit.c>
+#include <ctype/isxdigit.c>
+#include <ctype/isspace.c>
+#include <ctype/isnumber.c>
 
-int
-isxdigit (int c)
-{
-  return isdigit (c) || (c >= 'a' && c <= 'f');
-}
-
-int
-isspace (int c)
-{
-  return (c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == ' ');
-}
-
-int
-isnumber (int c, int base)
-{
-  if (base == 2)
-    return (c >= '0') && (c <= '1');
-  if (base == 8)
-    return (c >= '0') && (c <= '7');
-  if (base == 10)
-    return isdigit (c);
-  if (base == 16)
-    return isxdigit (c);
-}
-
-int
-abtoi (char const **p, int base)
-{
-  char const *s = *p;
-  int i = 0;
-  int sign = 1;
-  if (!base) base = 10;
-  if (*s && *s == '-')
-    {
-      sign = -1;
-      s++;
-    }
-  while (isnumber (*s, base))
-    {
-      i *= base;
-      int m = *s > '9' ? 'a' - 10 : '0';
-      i += *s - m;
-      s++;
-    }
-  *p = s;
-  return i * sign;
-}
-
-int
-atoi (char const *s)
-{
-  char const *p = s;
-  return abtoi (&p, 0);
-}
-
-char const*
-number_to_ascii (int x, int base, int signed_p)
-{
-  static char itoa_buf[12];
-  char *p = itoa_buf + 11;
-  *p-- = 0;
-
-  int sign = 0;
-  unsigned u = x;
-  if (signed_p && x < 0)
-    {
-      sign = 1;
-      u = -x;
-    }
-
-  do
-     {
-       int i = u % base;
-       *p-- = i > 9 ? 'a' + i - 10 : '0' + i;
-       u = u / base;
-     } while (u);
-
-  if (sign && *(p + 1) != '0')
-    *p-- = '-';
-
-  return p+1;
-}
-
-char const*
-itoab (int x, int base)
-{
-  return number_to_ascii (x, base, 1);
-}
-
-char const*
-itoa (int x)
-{
-  return number_to_ascii (x, 10, 1);
-}
-
-char const*
-utoa (unsigned x)
-{
-  return number_to_ascii (x, 10, 0);
-}
-
-int _ungetc_pos = -1;
-int _ungetc_fd = -1;
-char _ungetc_buf[10];
-
-int
-fdgetc (int fd)
-{
-  char c;
-  int i;
-  if (_ungetc_pos == -1)
-    {
-      int r = read (fd, &c, 1);
-      if (r < 1)
-        return -1;
-      i = c;
-   }
-  else
-    {
-      i = _ungetc_buf[_ungetc_pos];
-      if (_ungetc_fd != fd && i == 10)
-        {
-          // FIXME: Nyacc's ungetc exposes harmless libmec.c bug
-          // we need one unget position per FD
-          _ungetc_pos = -1;
-          _ungetc_fd = -1;
-          return fdgetc (fd);
-        }
-      else if (_ungetc_fd != fd)
-        {
-          eputs (" ***MES LIB C*** fdgetc ungetc conflict unget-fd=");
-          eputs (itoa (_ungetc_fd));
-          eputs (", fdgetc-fd=");
-          eputs (itoa (fd));
-          eputs (", c=");
-          eputs (itoa ( _ungetc_buf[_ungetc_pos]));
-          eputs ("\n");
-          exit (1);
-        }
-      i = _ungetc_buf[_ungetc_pos];
-      _ungetc_pos -= 1;
-      if (_ungetc_pos == -1)
-        _ungetc_fd = -1;
-     }
-  if (i < 0)
-    i += 256;
-
-  return i;
-}
-
-int
-fdputc (int c, int fd)
-{
-  write (fd, (char*)&c, 1);
-  return 0;
-}
-
-int
-fdputs (char const* s, int fd)
-{
-  int i = strlen (s);
-  write (fd, s, i);
-  return 0;
-}
-
-int
-fdungetc (int c, int fd)
-{
-  if (c == -1)
-    return c;
-  if (_ungetc_pos == -1)
-    _ungetc_fd = fd;
-  else if (_ungetc_fd != fd)
-    {
-      eputs (" ***MES LIB C*** fdungetc ungetc conflict unget-fd=");
-      eputs (itoa (_ungetc_fd));
-      eputs (", fdungetc-fd=");
-      eputs (itoa (fd));
-      eputs ("\n");
-      exit (1);
-    }
-  _ungetc_pos++;
-  _ungetc_buf[_ungetc_pos] = c;
-  return c;
-}
-
-int
-_fdungetc_p (int fd)
-{
-  return _ungetc_pos > -1;
-}
+#include <mes/abtol.c>
+#include <stdlib/atoi.c>
+#include <mes/ntoab.c>
+#include <mes/ltoab.c>
+#include <mes/itoa.c>
+#include <mes/utoa.c>
+#include <mes/fdgetc.c>
+#include <mes/fdputc.c>
+#include <mes/fdputs.c>
+#include <mes/fdungetc.c>
 
 #if POSIX
-#define STDERR 2
-int
-eputs (char const* s)
-{
-  int i = strlen (s);
-  write (STDERR, s, i);
-  return 0;
-}
+#include <mes/eputs.c>
+#include <mes/oputs.c>
+#endif // POSIX
 
-#define STDOUT 1
-int
-oputs (char const* s)
-{
-  int i = strlen (s);
-  write (STDOUT, s, i);
-  return 0;
-}
-#endif
-
-int
-eputc (int c)
-{
-  return fdputc (c, STDERR);
-}
+#include <mes/eputc.c>

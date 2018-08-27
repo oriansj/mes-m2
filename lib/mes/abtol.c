@@ -18,36 +18,29 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
+#include <libmes.h>
 
-#if __MESC__
-
-#include <linux/x86-mes/mini.c>
-
-#elif __i386__
-
-#include <linux/x86-mes-gcc/mini.c>
-
-#elif __x86_64__
-
-#include <linux/x86_64-mes-gcc/mini.c>
-
-#else
-
-#error arch not supported
-
-#endif
-
-ssize_t
-write (int filedes, void const *buffer, size_t size)
+long
+abtol (char const **p, int base)
 {
-  int r = _write (filedes, buffer, size);
-  if (r < 0)
+  char const *s = p[0];
+  int i = 0;
+  int sign = 1;
+  if (!base) base = 10;
+  if (s[0] == '-')
     {
-      errno = -r;
-      r = -1;
+      sign = -1;
+      s = s + 1;
     }
-  else
-    errno = 0;
-  return r;
+  while (isnumber (s[0], base))
+    {
+      i = i * base;
+      int m = '0';
+      if (s[0] > '9')
+        m = 'a' - 10;
+      i = i + s[0] - m;
+      s = s + 1;
+    }
+  p[0] = s;
+  return i * sign;
 }

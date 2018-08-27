@@ -18,36 +18,27 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
+#include <stdlib.h>
 
-#if __MESC__
-
-#include <linux/x86-mes/mini.c>
-
-#elif __i386__
-
-#include <linux/x86-mes-gcc/mini.c>
-
-#elif __x86_64__
-
-#include <linux/x86_64-mes-gcc/mini.c>
-
-#else
-
-#error arch not supported
-
-#endif
-
-ssize_t
-write (int filedes, void const *buffer, size_t size)
+int
+setenv (char const* s, char const* v, int overwrite_p)
 {
-  int r = _write (filedes, buffer, size);
-  if (r < 0)
+  char **p = environ;
+  int length = strlen (s);
+  while (*p)
     {
-      errno = -r;
-      r = -1;
+      if (!strncmp (s, *p, length) && *(*p + length) == '=')
+        break;
+      p++;
     }
-  else
-    errno = 0;
-  return r;
+  char *entry = malloc (length + strlen (v) + 2);
+  int end_p = *p == 0;
+  *p = entry;
+  strcpy (entry, s);
+  strcpy (entry + length, "=");
+  strcpy (entry + length + 1, v);
+  *(entry + length + strlen (v) + 2) = 0;
+  if (end_p)
+    *++p = 0;
+  return 0;
 }

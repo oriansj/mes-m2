@@ -21,12 +21,48 @@
 #ifndef __MES_LIBMES_H
 #define __MES_LIBMES_H
 
+#ifndef _SIZE_T
+#define _SIZE_T
+#ifndef __SIZE_T
+#define __SIZE_T
+#ifndef __MES_SIZE_T
+#define __MES_SIZE_T
+#undef size_t
+typedef unsigned long size_t;
+#endif
+#endif
+#endif
+
+#ifndef _SSIZE_T
+#define _SSIZE_T
+#ifndef __SSIZE_T
+#define __SSIZE_T
+#ifndef __MES_SSIZE_T
+#define __MES_SSIZE_T
+#undef ssize_t
+typedef long ssize_t;
+#endif
+#endif
+#endif
+
+#ifndef STDIN
+#define STDIN 0
+#endif
+
+#ifndef STDOUT
+#define STDOUT 1
+#endif
+
+#ifndef STDERR
+#define STDERR 2
+#endif
+
 int __mes_debug ();
-char const* number_to_ascii (int number, int base, int signed_p);
+char const* ntoab (long number, int base, int signed_p);
 char const* itoa (int number);
-char const* utoa (unsigned int number);
-char const* itoab (int x, int base);
-int _atoi (char const **s, int base);
+char const* utoa (unsigned long number);
+char const* ltoab (long x, int base);
+int _atoi (char const**, int base);
 int atoi (char const *s);
 int eputc (int c);
 int eputs (char const* s);
@@ -34,9 +70,11 @@ int fdgetc (int fd);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
 int fdungetc (int c, int fd);
+int _fdungetc_p (int fd);
 int isdigit (int c);
 int isspace (int c);
 int isxdigit (int c);
 int oputs (char const* s);
+ssize_t write (int filedes, void const *buffer, size_t size);
 
 #endif //__MES_LIBMES_H

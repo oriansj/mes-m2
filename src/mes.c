@@ -90,7 +90,11 @@ struct scm {
   SCM cdr;
 };
 struct function {
-  functionn_t function;
+#if __M2_PLANET__
+  FUNCTION function;
+#else // !__M2_PLANET__
+  SCM (*function) (SCM);
+#endif // !__M2_PLANET__
   long arity;
   char *name;
 };
@@ -735,27 +739,32 @@ call (SCM fn, SCM x)
 #elif !POSIX
   if (arity == 0)
     {
-      function0_t fp = f->function;
+      //function0_t fp = f->function;
+      SCM (*fp) (void) = f->function;
       return fp ();
     }
   else if (arity == 1)
     {
-      function1_t fp = f->function;
+      //function1_t fp = f->function;
+      SCM (*fp) (SCM) = f->function;
       return fp (CAR (x));
     }
   else if (arity == 2)
     {
-      function2_t fp = f->function;
+      //function2_t fp = f->function;
+      SCM (*fp) (SCM, SCM) = f->function;
       return fp (CAR (x), CADR (x));
     }
   else if (arity == 3)
     {
-      function3_t fp = f->function;
+      //function3_t fp = f->function;
+      SCM (*fp) (SCM, SCM, SCM) = f->function;
       return fp (CAR (x), CADR (x), CAR (CDDR (x)));
     }
   else if (arity == -1)
     {
-      functionn_t fp = f->function;
+      //functionn_t fp = f->function;
+      SCM (*fp) (SCM) = f->function;
       return fp (x);
     }
 #else
@@ -769,7 +778,7 @@ call (SCM fn, SCM x)
     return FUNCTION (fn).function3 (CAR (x), CADR (x), CAR (CDDR (x)));
   else if (arity == -1)
     return FUNCTION (fn).functionn (x);
-#endif
+#endif //! (__M2_PLANET__ || !POSIX)
   return cell_unspecified;
 }
 

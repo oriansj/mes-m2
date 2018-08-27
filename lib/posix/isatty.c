@@ -18,36 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
+#include <unistd.h>
 
-#if __MESC__
-
-#include <linux/x86-mes/mini.c>
-
-#elif __i386__
-
-#include <linux/x86-mes-gcc/mini.c>
-
-#elif __x86_64__
-
-#include <linux/x86_64-mes-gcc/mini.c>
-
-#else
-
-#error arch not supported
-
-#endif
-
-ssize_t
-write (int filedes, void const *buffer, size_t size)
+int
+isatty (int fd)
 {
-  int r = _write (filedes, buffer, size);
-  if (r < 0)
-    {
-      errno = -r;
-      r = -1;
-    }
-  else
-    errno = 0;
-  return r;
+  return ioctl (fd, TCGETS, 0) & 0xf0;
 }
