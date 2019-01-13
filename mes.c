@@ -18,7 +18,7 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mes.h"
+#include "mes2.h"
 
 /* Imported Functions */
 SCM apply_builtin(SCM fn, SCM x);
