@@ -18,6 +18,24 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
+
+SCM make_symbol (SCM string);
+int eputs(char const* s);
+char *itoa (int number);
+SCM error(SCM key, SCM x);
+SCM car (SCM x);
+SCM cdr (SCM x);
+SCM cons (SCM x, SCM y);
+SCM alloc(long n);
+SCM make_cell__(long type, SCM car, SCM cdr);
+SCM write_error_ (SCM x);
+SCM hash_ref (SCM table, SCM key, SCM dflt);
+SCM hash_set_x (SCM table, SCM key, SCM value);
+int readchar();
+
 void assert_max_string(size_t i, char const* msg, char* string)
 {
 	if(i > MAX_STRING)
@@ -35,7 +53,6 @@ void assert_max_string(size_t i, char const* msg, char* string)
 char const* list_to_cstring(SCM list, size_t* size)
 {
 	size_t i = 0;
-	char *p = g_buf;
 
 	while(list != cell_nil)
 	{

@@ -77,3 +77,5 @@ struct scm
 struct scm *g_cells;
 struct scm *g_news;
 SCM vector_entry(SCM x);
+long MAX_STRING;
+char *g_buf;

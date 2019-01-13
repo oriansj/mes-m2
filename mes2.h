@@ -40,12 +40,13 @@ long JAM_SIZE = 20000;
 long GC_SAFETY = 2000;
 
 long MAX_STRING = 524288;
+char *g_buf = 0;
+
 
 char *g_arena = 0;
 int g_debug = 0;
 long g_free = 0;
 
-char *g_buf = 0;
 
 // src/gc.mes
 SCM gc_check ();
