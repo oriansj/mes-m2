@@ -151,9 +151,9 @@ SCM dup2_ (SCM old, SCM new);
 SCM delete_file (SCM file_name);
 // src/reader.mes
 SCM read_input_file_env_ (SCM e, SCM a);
-SCM read_input_file_env (SCM a);
+SCM read_input_file_env ();
 SCM read_env (SCM a);
-SCM reader_read_sexp (SCM c, SCM s, SCM a);
+SCM reader_read_sexp (SCM c, SCM a);
 SCM reader_read_character ();
 SCM reader_read_binary ();
 SCM reader_read_octal ();
