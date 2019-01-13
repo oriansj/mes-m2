@@ -30,18 +30,18 @@ int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
 int eputs (char const* s);
 
-long ARENA_SIZE = 10000000;
-long MAX_ARENA_SIZE = 100000000;
-long STACK_SIZE = 20000;
+long ARENA_SIZE;
+long MAX_ARENA_SIZE;
+long STACK_SIZE;
 
-long JAM_SIZE = 20000;
-long GC_SAFETY = 2000;
+long JAM_SIZE;
+long GC_SAFETY;
 
-long MAX_STRING = 524288;
+long MAX_STRING;
 char *g_buf = 0;
 
 char *g_arena = 0;
-int g_debug = 0;
+int g_debug;
 long g_free = 0;
 
 /* Imported Functions */
@@ -1784,8 +1784,8 @@ SCM mes_symbols()  ///((internal))
 	a = acons(cell_symbol_boot_module, cell_symbol_boot_module, a);
 	a = acons(cell_symbol_current_module, cell_symbol_current_module, a);
 	a = acons(cell_symbol_call_with_current_continuation, cell_call_with_current_continuation, a);
-	a = acons(cell_symbol_mes_version, MAKE_STRING0(VERSION), a);
-	a = acons(cell_symbol_mes_prefix, MAKE_STRING0(PREFIX), a);
+	a = acons(cell_symbol_mes_version, MAKE_STRING0("0.19"), a);
+	a = acons(cell_symbol_mes_prefix, MAKE_STRING0("/usr/local"), a);
 	a = acons(cell_type_bytes, MAKE_NUMBER(TBYTES), a);
 	a = acons(cell_type_char, MAKE_NUMBER(TCHAR), a);
 	a = acons(cell_type_closure, MAKE_NUMBER(TCLOSURE), a);
@@ -1813,10 +1813,7 @@ SCM mes_environment(int argc, char *argv[])
 	SCM a = mes_symbols();
 	char *compiler = "gnuc";
 	a = acons(cell_symbol_compiler, MAKE_STRING0(compiler), a);
-	char *arch = "x86";
-#if __x86_64__
-	arch = "x86_64";
-#endif
+	char *arch = "x86_64";
 	a = acons(cell_symbol_arch, MAKE_STRING0(arch), a);
 	SCM lst = cell_nil;
 
@@ -1877,7 +1874,7 @@ SCM builtin_p(SCM x)
 	return (TYPE(x) == TSTRUCT && struct_ref_(x, 2) == cell_symbol_builtin) ? cell_t : cell_f;
 }
 
-SCM builtin_printer(SCM builtin)
+void builtin_printer(SCM builtin)
 {
 	fdputs("#<procedure ", __stdout);
 	display_(builtin_name(builtin));
@@ -2165,9 +2162,9 @@ SCM read_boot()  ///((internal))
 
 	if(__stdin < 0)
 	{
-		char const *p = MODULEDIR "/mes/";
+		char const *p = "module/mes/";
 		strcpy(prefix, p);
-		__stdin = open_boot(prefix, boot, "MODULEDIR");
+		__stdin = open_boot(prefix, boot, "module");
 	}
 
 	if(__stdin < 0)
@@ -2195,6 +2192,13 @@ SCM read_boot()  ///((internal))
 	return r2;
 }
 
+int get_env_value(char* c, int alt)
+{
+	char* s = getenv(c);
+	if(NULL == s) return alt;
+	return atoi(s);
+}
+
 int main(int argc, char *argv[])
 {
 	g_continuations = 0;
@@ -2209,53 +2213,24 @@ int main(int argc, char *argv[])
 	g_ports = 1;
 	g_cells = 0;
 	g_news = 0;
-	char *p;
 
-	if(p = getenv("MES_DEBUG"))
-	{
-		g_debug = atoi(p);
-	}
+	g_debug = get_env_value("MES_DEBUG", 0);
 
 	if(g_debug > 1)
 	{
 		eputs(";;; MODULEDIR=");
-		eputs(MODULEDIR);
+		eputs("module");
 		eputs("\n");
 	}
 
-	if(p = getenv("MES_MAX_ARENA"))
-	{
-		MAX_ARENA_SIZE = atoi(p);
-	}
-
-	if(p = getenv("MES_ARENA"))
-	{
-		ARENA_SIZE = atoi(p);
-	}
-
+	MAX_ARENA_SIZE = get_env_value("MES_MAX_ARENA", 100000000);
+	ARENA_SIZE = get_env_value("MES_ARENA", 10000000);
 	JAM_SIZE = ARENA_SIZE / 10;
-
-	if(p = getenv("MES_JAM"))
-	{
-		JAM_SIZE = atoi(p);
-	}
-
+	JAM_SIZE = get_env_value("MES_JAM", 20000);
 	GC_SAFETY = ARENA_SIZE / 100;
-
-	if(p = getenv("MES_SAFETY"))
-	{
-		GC_SAFETY = atoi(p);
-	}
-
-	if(p = getenv("MES_STACK"))
-	{
-		STACK_SIZE = atoi(p);
-	}
-
-	if(p = getenv("MES_MAX_STRING"))
-	{
-		MAX_STRING = atoi(p);
-	}
+	GC_SAFETY = get_env_value("MES_SAFETY", 2000);
+	STACK_SIZE = get_env_value("MES_STACK", 20000);
+	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
 
 	SCM a = mes_environment(argc, argv);
 	a = mes_builtins(a);
@@ -2268,7 +2243,7 @@ int main(int argc, char *argv[])
 		module_printer(m0);
 	}
 
-	SCM program = read_boot();
+	read_boot();
 	push_cc(r2, cell_unspecified, r0, cell_unspecified);
 
 	if(g_debug > 2)
