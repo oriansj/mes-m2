@@ -18,9 +18,20 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
 #include <errno.h>
+#include <strings.h>
 
 size_t bytes_cells(size_t length);
+int eputs(char const* s);
+char *itoa (int number);
+SCM error(SCM key, SCM x);
+SCM cstring_to_symbol(char const *s);
+SCM write_error_ (SCM x);
+SCM gc_push_frame();
+SCM gc_pop_frame();
 
 SCM gc_up_arena()  ///((internal))
 {
@@ -144,7 +155,7 @@ void gc_loop(SCM scan)  ///((internal))
 	{
 		if(NTYPE(scan) == TBROKEN_HEART)
 		{
-			error(cell_symbol_system_error,  cstring_to_symbol("gc"));
+			error(cell_symbol_system_error, cstring_to_symbol("gc"));
 		}
 
 		if(NTYPE(scan) == TMACRO
@@ -185,6 +196,7 @@ void gc_loop(SCM scan)  ///((internal))
 	gc_flip();
 }
 
+SCM gc();
 SCM gc_check()
 {
 	if(g_free + GC_SAFETY > ARENA_SIZE)
