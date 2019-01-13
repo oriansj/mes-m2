@@ -1,6 +1,7 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2019 Jeremiah Orians
  *
  * This file is part of GNU Mes.
  *
@@ -20,7 +21,25 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define TYPE(x) g_cells[x].type
+#define VARIABLE(x) g_cells[x].car
+#define VALUE(x) g_cells[x].cdr
+#define LENGTH(x) g_cells[x].car
+#define REF(x) g_cells[x].car
+#define STRUCT(x) g_cells[x].cdr
+#define VECTOR(x) g_cells[x].cdr
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define CAAR(x) CAR (CAR (x))
+#define CADR(x) CAR (CDR (x))
+#define CDAR(x) CDR (CAR (x))
+#define CDDR(x) CDR (CDR (x))
+#define PORT(x) g_cells[x].car
+#define STRING(x) g_cells[x].cdr
+#define CBYTES(x) (char*)&g_cells[x].cdr
+#define CSTRING(x) CBYTES (STRING (x))
+
 
 // CONSTANT STRUCT_TYPE 0
 #define STRUCT_TYPE 0
@@ -408,7 +427,7 @@ SCM exit_(SCM x)  ///((name . "exit"))
 	exit(VALUE(x));
 }
 
-SCM frame_printer(SCM frame)
+void frame_printer(SCM frame)
 {
 	fdputs("#<", __stdout);
 	display_(struct_ref_(frame, 2));
@@ -428,7 +447,7 @@ SCM make_frame_type()  ///((internal))
 	return make_struct(record_type, fields, cell_unspecified);
 }
 
-SCM make_frame(SCM stack, long index)
+SCM make_frame(long index)
 {
 	SCM frame_type = make_frame_type();
 	long array_index = (STACK_SIZE - (index * FRAME_SIZE));
@@ -455,7 +474,7 @@ SCM make_stack_type()  ///((internal))
 	return make_struct(record_type, fields, cell_unspecified);
 }
 
-SCM make_stack(SCM stack)  ///((arity . n))
+SCM make_stack()  ///((arity . n))
 {
 	SCM stack_type = make_stack_type();
 	long size = (STACK_SIZE - g_stack) / FRAME_SIZE;
@@ -463,7 +482,7 @@ SCM make_stack(SCM stack)  ///((arity . n))
 
 	for(long i = 0; i < size; i++)
 	{
-		SCM frame = make_frame(stack, i);
+		SCM frame = make_frame(i);
 		vector_set_x_(frames, i, frame);
 	}
 
