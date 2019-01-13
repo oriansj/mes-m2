@@ -2055,7 +2055,6 @@ SCM read_boot()  ///((internal))
 #include "lib/math.c"
 #include "lib/lib.c"
 #include "lib/strings.c"
-#include "lib/struct.c"
 #include "lib/gc.c"
 #include "lib/reader.c"
 

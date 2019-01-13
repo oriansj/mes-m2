@@ -18,10 +18,18 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
+
 // CONSTANT STRUCT_TYPE 0
 #define STRUCT_TYPE 0
 // CONSTANT STRUCT_PRINTER 1
 #define STRUCT_PRINTER 1
+
+long length__(SCM x);
+SCM alloc(long n);
+SCM make_cell__(long type, SCM car, SCM cdr);
 
 SCM make_struct(SCM type, SCM fields, SCM printer)
 {
