@@ -2050,16 +2050,16 @@ SCM read_boot()  ///((internal))
 	return r2;
 }
 
-#include "hash.c"
-#include "module.c"
-#include "posix.c"
-#include "math.c"
-#include "lib.c"
-#include "vector.c"
-#include "strings.c"
-#include "struct.c"
-#include "gc.c"
-#include "reader.c"
+#include "lib/hash.c"
+#include "lib/module.c"
+#include "lib/posix.c"
+#include "lib/math.c"
+#include "lib/lib.c"
+#include "lib/vector.c"
+#include "lib/strings.c"
+#include "lib/struct.c"
+#include "lib/gc.c"
+#include "lib/reader.c"
 
 int main(int argc, char *argv[])
 {

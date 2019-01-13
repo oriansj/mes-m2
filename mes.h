@@ -488,7 +488,7 @@ struct scm *g_news = 0;
 // CONSTANT cell_test 118
 #define cell_test 118
 
-#include "builtins.h"
+#include "lib/builtins.h"
 
 #define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].car
