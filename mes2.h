@@ -20,7 +20,7 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-
+#include "mes_macros.h"
 
 int mes_open (char const *file_name, int flags, ...);
 #define open mes_open
@@ -42,49 +42,10 @@ long GC_SAFETY = 2000;
 long MAX_STRING = 524288;
 
 char *g_arena = 0;
-typedef long SCM;
-
 int g_debug = 0;
 long g_free = 0;
 
 char *g_buf = 0;
-
-SCM g_continuations = 0;
-SCM g_symbols = 0;
-SCM g_stack = 0;
-SCM *g_stack_array = 0;
-#define FRAME_SIZE 5
-#define FRAME_PROCEDURE 4
-// a/env
-SCM r0 = 0;
-// param 1
-SCM r1 = 0;
-// save 2
-SCM r2 = 0;
-// continuation
-SCM r3 = 0;
-// current-module
-SCM m0 = 0;
-// macro
-SCM g_macros = 0;
-SCM g_ports = 1;
-
-typedef SCM (*function0_t) (void);
-typedef SCM (*function1_t) (SCM);
-typedef SCM (*function2_t) (SCM, SCM);
-typedef SCM (*function3_t) (SCM, SCM, SCM);
-typedef SCM (*functionn_t) (SCM);
-
-struct scm
-{
-	long type;
-	SCM car;
-	SCM cdr;
-};
-
-struct scm *g_cells = 0;
-struct scm *g_news = 0;
-
 
 // src/gc.mes
 SCM gc_check ();
@@ -243,58 +204,3 @@ SCM vector_set_x (SCM x, SCM i, SCM e);
 SCM list_to_vector (SCM x);
 SCM vector_to_list (SCM v);
 
-#define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
-
-#define NTYPE(x) g_news[x].type
-#define NCAR(x) g_news[x].car
-#define NCDR(x) g_news[x].cdr
-
-#define BYTES(x) g_cells[x].car
-#define LENGTH(x) g_cells[x].car
-#define REF(x) g_cells[x].car
-#define START(x) (g_cells[x].car >> 16)
-#define LEN(x) (g_cells[x].car & 0xffff)
-#define VARIABLE(x) g_cells[x].car
-
-#define CLOSURE(x) g_cells[x].cdr
-#define CONTINUATION(x) g_cells[x].cdr
-
-#define CBYTES(x) (char*)&g_cells[x].cdr
-#define CSTRING_STRUCT(x) (char*)&g_cells[x.cdr].cdr
-
-#define MACRO(x) g_cells[x].car
-#define NAME(x) g_cells[x].cdr
-#define PORT(x) g_cells[x].car
-#define STRING(x) g_cells[x].cdr
-#define STRUCT(x) g_cells[x].cdr
-#define VALUE(x) g_cells[x].cdr
-#define VECTOR(x) g_cells[x].cdr
-
-#define NLENGTH(x) g_news[x].car
-#define NCBYTES(x) (char*)&g_news[x].cdr
-#define NVALUE(x) g_news[x].cdr
-#define NSTRING(x) g_news[x].cdr
-#define NVECTOR(x) g_news[x].cdr
-
-#define CSTRING(x) CBYTES (STRING (x))
-
-#define MAKE_BYTES0(x) make_bytes (x, strlen (x))
-#define NAME_SYMBOL(symbol,name) {size_t s = strlen (name); CAR (symbol) = s; CDR (symbol) = make_bytes (name, s);}
-
-#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
-#define MAKE_CONTINUATION(n) make_cell__ (TCONTINUATION, n, g_stack)
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define MAKE_REF(n) make_cell__ (TREF, n, 0)
-#define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_STRING_PORT(x) make_cell__ (TPORT, -length__ (g_ports) - 2, x)
-#define MAKE_MACRO(name, x) make_cell__ (TMACRO, x, STRING (name))
-
-#define CAAR(x) CAR (CAR (x))
-#define CADR(x) CAR (CDR (x))
-#define CDAR(x) CDR (CAR (x))
-#define CDDR(x) CDR (CDR (x))
-#define CADAR(x) CAR (CDR (CAR (x)))
-#define CADDR(x) CAR (CDR (CDR (x)))
-#define CDADAR(x) CAR (CDR (CAR (CDR (x))))

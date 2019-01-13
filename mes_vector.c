@@ -18,6 +18,17 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
+
+SCM alloc(long n);
+SCM make_cell__(long type, SCM car, SCM cdr);
+long length__(SCM x);
+SCM car (SCM x);
+SCM cdr (SCM x);
+SCM cons (SCM x, SCM y);
+
 SCM make_vector__(long k)
 {
 	SCM v = alloc(k);
