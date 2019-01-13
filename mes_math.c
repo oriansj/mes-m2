@@ -20,8 +20,13 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
 #include <limits.h>
+
+#define TYPE(x) g_cells[x].type
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define VALUE(x) g_cells[x].cdr
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 
 int eputs(char const* s);
 SCM error(SCM key, SCM x);
