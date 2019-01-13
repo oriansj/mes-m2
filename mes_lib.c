@@ -18,6 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
+
 // CONSTANT STRUCT_TYPE 0
 #define STRUCT_TYPE 0
 // CONSTANT STRUCT_PRINTER 1
@@ -25,6 +29,23 @@
 
 int g_depth;
 SCM fdisplay_(SCM, int, int);
+int fdputs(char const* s, int fd);
+int fdputc(int c, int fd);
+char *itoa (int number);
+SCM struct_ref_(SCM x, long i);
+SCM builtin_p (SCM x);
+SCM apply(SCM f, SCM x, SCM a);
+SCM car (SCM x);
+SCM cdr (SCM x);
+SCM cons (SCM x, SCM y);
+SCM make_struct (SCM type, SCM fields, SCM printer);
+SCM cstring_to_symbol(char const *s);
+SCM make_vector__(long k);
+SCM vector_set_x_(SCM x, long i, SCM e);
+SCM vector_length (SCM x);
+SCM vector_ref (SCM x, SCM i);
+SCM string_equal_p (SCM a, SCM b);
+SCM eq_p (SCM x, SCM y);
 
 SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 {
@@ -299,7 +320,7 @@ SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 		{
 			fdputs("#<", fd);
 			fdisplay_(STRUCT(x), fd, write_p);
-			SCM t = CAR(x);
+
 			long size = LENGTH(x);
 
 			for(long i = 2; i < size; i++)
@@ -314,7 +335,6 @@ SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	else if(t == TVECTOR)
 	{
 		fdputs("#(", fd);
-		SCM t = CAR(x);
 
 		for(long i = 0; i < LENGTH(x); i++)
 		{
