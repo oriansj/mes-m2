@@ -1,6 +1,7 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2019 Jeremiah Orians
  *
  * This file is part of GNU Mes.
  *
@@ -68,7 +69,7 @@ SCM module_ref (SCM module, SCM name);
 SCM module_define_x (SCM module, SCM name, SCM value);
 SCM open_input_file (SCM file_name);
 SCM set_current_input_port (SCM port);
-SCM read_input_file_env (SCM a);
+SCM read_input_file_env ();
 SCM string_equal_p (SCM a, SCM b);
 SCM symbol_to_string (SCM symbol);
 SCM make_struct (SCM type, SCM fields, SCM printer);
@@ -1400,7 +1401,7 @@ begin_expand_primitive_load:
 				}
 
 				push_cc(input, r2, r0, cell_vm_return);
-				x = read_input_file_env(r0);
+				x = read_input_file_env();
 
 				if(g_debug > 4)
 				{
@@ -1923,7 +1924,7 @@ void read_boot()  ///((internal))
 		exit(1);
 	}
 
-	r2 = read_input_file_env(r0);
+	r2 = read_input_file_env();
 	__stdin = STDIN;
 }
 

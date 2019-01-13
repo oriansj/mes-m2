@@ -21,8 +21,14 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
 #include <ctype.h>
+
+#define MAKE_STRING0(x) make_string (x, strlen (x))
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
+#define CAR(x) g_cells[x].car
+#define TYPE(x) g_cells[x].type
+#define VALUE(x) g_cells[x].cdr
+#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 
 void assert_max_string(size_t i, char const* msg, char* string);
 SCM read_env (SCM a);
@@ -56,7 +62,7 @@ SCM read_input_file_env_(SCM e, SCM a)
 	return cons(e, read_input_file_env_(read_env(a), a));
 }
 
-SCM read_input_file_env(SCM a)
+SCM read_input_file_env()
 {
 	//r0 = a;
 	//return read_input_file_env_ (read_env (r0), r0);
@@ -76,6 +82,7 @@ int reader_read_line_comment(int c)
 	}
 
 	error(cell_symbol_system_error, MAKE_STRING0("reader_read_line_comment"));
+	exit(1);
 }
 
 SCM reader_read_block_comment(int s, int c);
@@ -363,7 +370,7 @@ SCM reader_read_hash(int c, SCM a)
 	return reader_read_sexp_(readchar(), a);
 }
 
-SCM reader_read_sexp(SCM c, SCM s, SCM a)
+SCM reader_read_sexp(SCM c, SCM a)
 {
 	return reader_read_sexp_(VALUE(c), a);
 }
