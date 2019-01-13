@@ -2050,7 +2050,6 @@ SCM read_boot()  ///((internal))
 	return r2;
 }
 
-#include "lib/hash.c"
 #include "lib/module.c"
 #include "lib/posix.c"
 #include "lib/math.c"
