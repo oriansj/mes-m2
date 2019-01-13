@@ -2055,7 +2055,6 @@ SCM read_boot()  ///((internal))
 #include "lib/posix.c"
 #include "lib/math.c"
 #include "lib/lib.c"
-#include "lib/vector.c"
 #include "lib/strings.c"
 #include "lib/struct.c"
 #include "lib/gc.c"
@@ -2063,6 +2062,18 @@ SCM read_boot()  ///((internal))
 
 int main(int argc, char *argv[])
 {
+	g_continuations = 0;
+	g_symbols = 0;
+	g_stack = 0;
+	r0 = 0;
+	r1 = 0;
+	r2 = 0;
+	r3 = 0;
+	m0 = 0;
+	g_macros = 0;
+	g_ports = 1;
+	g_cells = 0;
+	g_news = 0;
 	char *p;
 
 	if(p = getenv("MES_DEBUG"))

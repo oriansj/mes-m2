@@ -27,7 +27,6 @@
 #include <string.h>
 #include <unistd.h>
 
-
 // CONSTANT STDIN 0
 #define STDIN 0
 // CONSTANT STDOUT 1
@@ -40,3 +39,41 @@ char **environ;
 int __stdin;
 int __stdout;
 int __stderr;
+
+typedef long SCM;
+SCM g_continuations;
+SCM g_symbols;
+SCM g_stack;
+SCM *g_stack_array;
+#define FRAME_SIZE 5
+#define FRAME_PROCEDURE 4
+// a/env
+SCM r0;
+// param 1
+SCM r1;
+// save 2
+SCM r2;
+// continuation
+SCM r3;
+// current-module
+SCM m0;
+// macro
+SCM g_macros;
+SCM g_ports;
+
+typedef SCM (*function0_t) (void);
+typedef SCM (*function1_t) (SCM);
+typedef SCM (*function2_t) (SCM, SCM);
+typedef SCM (*function3_t) (SCM, SCM, SCM);
+typedef SCM (*functionn_t) (SCM);
+
+struct scm
+{
+	long type;
+	SCM car;
+	SCM cdr;
+};
+
+struct scm *g_cells;
+struct scm *g_news;
+SCM vector_entry(SCM x);
