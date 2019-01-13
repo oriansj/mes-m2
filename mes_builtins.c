@@ -39,7 +39,7 @@ SCM hashq_ref (SCM table, SCM key, SCM dflt);
 SCM hash_ref (SCM table, SCM key, SCM dflt);
 SCM hashq_set_x (SCM table, SCM key, SCM value);
 SCM hash_set_x (SCM table, SCM key, SCM value);
-SCM hash_table_printer (SCM table);
+void hash_table_printer (SCM table);
 SCM make_hash_table (SCM x);
 // src/lib.mes
 SCM display_ (SCM x);
