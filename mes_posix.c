@@ -39,6 +39,19 @@ int readchar();
 int unreadchar();
 SCM write_byte (SCM x);
 SCM current_input_port ();
+int fdgetc (int fd);
+SCM make_string(char const* s, size_t length);
+int fdungetc (int c, int fd);
+SCM make_struct (SCM type, SCM fields, SCM printer);
+SCM make_cell__(long type, SCM car, SCM cdr);
+SCM car (SCM x);
+SCM cdr (SCM x);
+SCM cons (SCM x, SCM y);
+long length__(SCM x);
+SCM error(SCM key, SCM x);
+int eputs(char const* s);
+char *itoa (int number);
+SCM acons (SCM key, SCM value, SCM alist);
 
 int peekchar()
 {
