@@ -17,3 +17,4 @@
 /src/*.mes.symbol-names.i
 /src/*.mes.symbols.h
 /src/*.mes.symbols.i
+out-glibc/*
