@@ -2052,9 +2052,7 @@ SCM read_boot()  ///((internal))
 
 #include "lib/module.c"
 #include "lib/posix.c"
-#include "lib/math.c"
 #include "lib/lib.c"
-#include "lib/strings.c"
 #include "lib/gc.c"
 #include "lib/reader.c"
 

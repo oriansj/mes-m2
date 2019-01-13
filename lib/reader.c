@@ -20,6 +20,7 @@
  */
 
 #include <ctype.h>
+void assert_max_string(size_t i, char const* msg, char* string);
 
 SCM read_input_file_env_(SCM e, SCM a)
 {
