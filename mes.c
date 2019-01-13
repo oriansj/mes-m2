@@ -1529,7 +1529,7 @@ eval_apply ()
 
               push_cc (input, r2, r0, cell_vm_return);
               x = read_input_file_env (r0);
-              if (g_debug > 3)
+              if (g_debug > 4)
                 module_printer (m0);
               gc_pop_frame ();
               input = r1;
@@ -2293,7 +2293,7 @@ main (int argc, char *argv[])
   m0 = make_initial_module (a);
   g_macros = make_hash_table_ (0);
 
-  if (g_debug > 3)
+  if (g_debug > 4)
     module_printer (m0);
 
   SCM program = read_boot ();
@@ -2320,7 +2320,7 @@ main (int argc, char *argv[])
     }
   if (g_debug)
     {
-      if (g_debug > 3)
+      if (g_debug > 4)
         module_printer (m0);
 
       eputs ("\ngc stats: [");
@@ -2331,7 +2331,7 @@ main (int argc, char *argv[])
       eputs (" => ");
       eputs (itoa (g_free));
       eputs ("]\n");
-      if (g_debug > 3)
+      if (g_debug > 4)
         module_printer (m0);
       eputs ("\n");
 
@@ -2339,7 +2339,7 @@ main (int argc, char *argv[])
       eputs (" => ");
       eputs (itoa (g_free));
       eputs ("]\n");
-      if (g_debug > 3)
+      if (g_debug > 4)
         module_printer (m0);
       eputs ("\n");
 
@@ -2347,7 +2347,7 @@ main (int argc, char *argv[])
       eputs (" => ");
       eputs (itoa (g_free));
       eputs ("]\n");
-      if (g_debug > 3)
+      if (g_debug > 4)
         module_printer (m0);
       if (g_debug > 3)
         {
