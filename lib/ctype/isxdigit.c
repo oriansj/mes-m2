@@ -18,10 +18,9 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+int isdigit(int c);
 
-int
-isxdigit (int c)
+int isxdigit (int c)
 {
-  return isdigit (c) || (c >= 'a' && c <= 'f');
+	return isdigit (c) || (c >= 'a' && c <= 'f');
 }

@@ -19,16 +19,15 @@
  */
 
 #include <ctype.h>
+#include <stdlib.h>
+int eputs(char const* c);
 
-int
-isnumber (int c, int base)
+int isnumber (int c, int base)
 {
-  if (base == 2)
-    return (c >= '0') && (c <= '1');
-  if (base == 8)
-    return (c >= '0') && (c <= '7');
-  if (base == 10)
-    return isdigit (c);
-  if (base == 16)
-    return isxdigit (c);
+	if (base == 2) return (c >= '0') && (c <= '1');
+	if (base == 8) return (c >= '0') && (c <= '7');
+	if (base == 10) return isdigit (c);
+	if (base == 16) return isxdigit (c);
+	eputs("Recieved non-supported base in isnumber\n");
+	exit(1);
 }

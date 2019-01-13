@@ -18,7 +18,114 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+#ifndef __MES_LIBMES_H
+#define __MES_LIBMES_H
+
+#ifndef __MES_LIBMES_MINI_H
+#define __MES_LIBMES_MINI_H
+
+#if !WITH_GLIBC
+
+#ifndef _SIZE_T
+#define _SIZE_T
+#ifndef __SIZE_T
+#define __SIZE_T
+#ifndef __MES_SIZE_T
+#define __MES_SIZE_T
+#undef size_t
+typedef unsigned long size_t;
+#endif
+#endif
+#endif
+
+#ifndef _SSIZE_T
+#define _SSIZE_T
+#ifndef __SSIZE_T
+#define __SSIZE_T
+#ifndef __MES_SSIZE_T
+#define __MES_SSIZE_T
+#undef ssize_t
+#if __i386__
+typedef int ssize_t;
+#else
+typedef long ssize_t;
+#endif
+#endif
+#endif
+#endif
+
+#ifndef __MES_ERRNO_T
+#define __MES_ERRNO_T 1
+typedef int error_t;
+int errno;
+#endif // !__MES_ERRNO_T
+
+#endif //!WITH_LIBC
+
+// CONSTANT STDIN 0
+#ifndef STDIN
+#define STDIN 0
+#endif
+
+// CONSTANT STDOUT 1
+#ifndef STDOUT
+#define STDOUT 1
+#endif
+
+// CONSTANT STDERR 2
+#ifndef STDERR
+#define STDERR 2
+#endif
+
+char **environ;
+int __stdin;
+int __stdout;
+int __stderr;
+
+int eputs (char const* s);
+int puts (char const* s);
+int oputs (char const* s);
+
+#if !WITH_GLIBC
+size_t strlen (char const* s);
+ssize_t write (int filedes, void const *buffer, size_t size);
+#endif // !WITH_GLIBC
+
+#endif //__MES_LIBMES_MINI_H
+
+#if WITH_GLIBC
+int mes_open (char const *file_name, int flags, ...);
+#define open mes_open
+#endif
+
+int __mes_debug ();
+double abtod (char const** p, int base);
+long abtol (char const** p, int base);
+char *dtoab (double number, int base, int signed_p);
+char *itoa (int number);
+char *ltoa (long number);
+char *ltoab (long x, int base);
+char *ntoab (long number, int base, int signed_p);
+char *ultoa (unsigned long number);
+char *utoa (unsigned number);
+int atoi (char const *s);
+int eputc (int c);
+int fdgetc (int fd);
+int fdputc (int c, int fd);
+int fdputs (char const* s, int fd);
+int fdungetc (int c, int fd);
+int _fdungetc_p (int fd);
+int isdigit (int c);
+int isspace (int c);
+int isxdigit (int c);
+int _open3 (char const *file_name, int flags, int mask);
+int _open2 (char const *file_name, int flags);
+int oputc (int c);
+int oputs (char const* s);
+char *search_path (char const *file_name);
+
+#endif //__MES_LIBMES_H
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
