@@ -130,23 +130,23 @@ char *search_path (char const *file_name);
 #include <string.h>
 #include <unistd.h>
 
-#include <ctype/isdigit.c>
-#include <ctype/isxdigit.c>
-#include <ctype/isspace.c>
-#include <ctype/isnumber.c>
+#include "lib/ctype/isdigit.c"
+#include "lib/ctype/isxdigit.c"
+#include "lib/ctype/isspace.c"
+#include "lib/ctype/isnumber.c"
 
-#include <mes/abtol.c>
-#include <stdlib/atoi.c>
-#include <mes/ntoab.c>
-#include <mes/ltoab.c>
-#include <mes/itoa.c>
-#include <mes/ltoa.c>
-#include <mes/ultoa.c>
-#include <mes/utoa.c>
-#include <mes/fdgetc.c>
-#include <mes/fdputc.c>
-#include <mes/fdputs.c>
-#include <mes/fdungetc.c>
+#include "lib/mes/abtol.c"
+#include "lib/stdlib/atoi.c"
+#include "lib/mes/ntoab.c"
+#include "lib/mes/ltoab.c"
+#include "lib/mes/itoa.c"
+#include "lib/mes/ltoa.c"
+#include "lib/mes/ultoa.c"
+#include "lib/mes/utoa.c"
+#include "lib/mes/fdgetc.c"
+#include "lib/mes/fdputc.c"
+#include "lib/mes/fdputs.c"
+#include "lib/mes/fdungetc.c"
 
 #if WITH_GLIBC
 #undef open
@@ -174,9 +174,9 @@ int mes_open(char const *file_name, int flags, ...)
 	return r;
 }
 
-#include <mes/eputs.c>
-#include <mes/oputs.c>
+#include "lib/mes/eputs.c"
+#include "lib/mes/oputs.c"
 #endif // WITH_GLIBC
 
-#include <mes/eputc.c>
-#include <mes/oputc.c>
+#include "lib/mes/eputc.c"
+#include "lib/mes/oputc.c"
