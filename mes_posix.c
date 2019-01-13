@@ -18,9 +18,6 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mes.h"
-#include "mes_constants.h"
-#include "mes_macros.h"
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -29,6 +26,14 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
+
+int mes_open (char const *file_name, int flags, ...);
+#define open mes_open
+
 
 int readchar();
 int unreadchar();
