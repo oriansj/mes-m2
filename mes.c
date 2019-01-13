@@ -2053,7 +2053,6 @@ SCM read_boot()  ///((internal))
 
 #include "lib/posix.c"
 #include "lib/lib.c"
-#include "lib/gc.c"
 #include "lib/reader.c"
 
 int main(int argc, char *argv[])
