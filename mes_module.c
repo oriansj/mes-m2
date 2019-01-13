@@ -18,10 +18,28 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
+
 SCM struct_ref_(SCM x, long i);
 SCM struct_set_x_(SCM x, long i, SCM e);
 SCM cstring_to_symbol(char const *s);
 SCM make_hashq_type();
+SCM module_define_x (SCM module, SCM name, SCM value);
+SCM car (SCM x);
+SCM cdr (SCM x);
+SCM cons (SCM x, SCM y);
+SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_struct (SCM type, SCM fields, SCM printer);
+SCM acons (SCM key, SCM value, SCM alist);
+SCM make_hash_table_(long size);
+int fdputs(char const* s, int fd);
+SCM display_ (SCM x);
+int fdputc(int c, int fd);
+SCM assq (SCM x, SCM a);
+SCM hashq_get_handle (SCM table, SCM key, SCM dflt);
+SCM hashq_set_x (SCM table, SCM key, SCM value);
 
 SCM make_module_type()  ///(internal))
 {

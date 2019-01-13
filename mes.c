@@ -28,6 +28,7 @@ SCM make_bytes(char const* s, size_t length);
 SCM make_hash_table_(long size);
 SCM read_input_file_env(SCM);
 SCM string_equal_p(SCM a, SCM b);
+SCM make_initial_module(SCM a);
 
 SCM alloc(long n)
 {
@@ -2050,7 +2051,6 @@ SCM read_boot()  ///((internal))
 	return r2;
 }
 
-#include "lib/module.c"
 #include "lib/posix.c"
 #include "lib/lib.c"
 #include "lib/gc.c"
