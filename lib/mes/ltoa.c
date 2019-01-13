@@ -18,10 +18,9 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+char * ntoab (long x, int base, int signed_p);
 
-char *
-ltoa (long x)
+char * ltoa (long x)
 {
-  return ntoab (x, 10, 1);
+	return ntoab (x, 10, 1);
 }

@@ -18,12 +18,12 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+#include <unistd.h>
+unsigned long strlen(const char* c);
 
-int
-fdputs (char const* s, int fd)
+int fdputs (char const* s, int fd)
 {
-  int i = strlen (s);
-  write (fd, s, i);
-  return 0;
+	int i = strlen (s);
+	write (fd, s, i);
+	return 0;
 }

@@ -18,11 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+#include <unistd.h>
 
-int
-fdputc (int c, int fd)
+int fdputc (int c, int fd)
 {
-  write (fd, (char*)&c, 1);
-  return 0;
+	write (fd, (char*)&c, 1);
+	return 0;
 }

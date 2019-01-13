@@ -18,32 +18,28 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
-
-char *
-ntoab (long x, int base, int signed_p)
+char* ntoab (long x, int base, int signed_p)
 {
-  static char itoa_buf[20];
-  char *p = itoa_buf + 11;
-  *p-- = 0;
+	static char itoa_buf[20];
+	char *p = itoa_buf + 11;
+	*p-- = 0;
 
-  int sign_p = 0;
-  unsigned long u = x;
-  if (signed_p && x < 0)
-    {
-      sign_p = 1;
-      u = -x;
-    }
+	int sign_p = 0;
+	unsigned long u = x;
+	if (signed_p && x < 0)
+	{
+		sign_p = 1;
+		u = -x;
+	}
 
-  do
-     {
-       long i = u % base;
-       *p-- = i > 9 ? 'a' + i - 10 : '0' + i;
-       u = u / base;
-     } while (u);
+	do
+	{
+		long i = u % base;
+		*p-- = i > 9 ? 'a' + i - 10 : '0' + i;
+		u = u / base;
+	} while (u);
 
-  if (sign_p && *(p + 1) != '0')
-    *p-- = '-';
+	if (sign_p && *(p + 1) != '0') *p-- = '-';
 
-  return p+1;
+	return p+1;
 }

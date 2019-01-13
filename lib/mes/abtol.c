@@ -18,33 +18,44 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
 #include <ctype.h>
+int isnumber (int c, int base);
 
-long
-abtol (char const **p, int base)
+long abtol(char const **p, int base)
 {
-  char const *s = *p;
-  int i = 0;
-  int sign_p = 0;
-  if (!base)
-    base = 10;
-  while (isspace (*s))
-    s++;
-  if (*s && *s == '+')
-    s++;
-  if (*s && *s == '-')
-    {
-      sign_p = 1;
-      s++;
-    }
-  while (isnumber (*s, base))
-    {
-      i *= base;
-      int m = *s > '9' ? 'a' - 10 : '0';
-      i += *s - m;
-      s++;
-    }
-  *p = s;
-  return sign_p ? -i : i;
+	char const *s = *p;
+	int i = 0;
+	int sign_p = 0;
+
+	if(!base)
+	{
+		base = 10;
+	}
+
+	while(isspace(*s))
+	{
+		s++;
+	}
+
+	if(*s == '+')
+	{
+		s++;
+	}
+
+	if(*s == '-')
+	{
+		sign_p = 1;
+		s++;
+	}
+
+	while(isnumber(*s, base))
+	{
+		i *= base;
+		int m = *s > '9' ? 'a' - 10 : '0';
+		i += *s - m;
+		s++;
+	}
+
+	*p = s;
+	return sign_p ? -i : i;
 }

@@ -18,10 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+extern int __stderr;
+int fdputc (int c, int fd);
 
-int
-eputc (int c)
+int eputc (int c)
 {
-  return fdputc (c, __stderr);
+	return fdputc (c, __stderr);
 }
