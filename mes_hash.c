@@ -20,7 +20,18 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define TYPE(x) g_cells[x].type
+#define CBYTES(x) (char*)&g_cells[x].cdr
+#define STRING(x) g_cells[x].cdr
+#define CSTRING(x) CBYTES (STRING (x))
+#define MAKE_STRING0(x) make_string (x, strlen (x))
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
+#define VALUE(x) g_cells[x].cdr
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define LENGTH(x) g_cells[x].car
+#define CAAR(x) CAR (CAR (x))
 
 SCM make_vector__(long k);
 SCM vector_ref_(SCM x, long i);
@@ -225,7 +236,7 @@ SCM hash_set_x(SCM table, SCM key, SCM value)
 #endif
 }
 
-SCM hash_table_printer(SCM table)
+void hash_table_printer(SCM table)
 {
 	fdputs("#<", __stdout);
 	display_(struct_ref_(table, 2));
