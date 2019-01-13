@@ -50,19 +50,22 @@ int __stdin = STDIN;
 int __stdout = STDOUT;
 int __stderr = STDERR;
 
-int
-mes_open (char const *file_name, int flags, ...)
+int mes_open(char const *file_name, int flags, ...)
 {
-  va_list ap;
-  va_start (ap, flags);
-  int mask = va_arg (ap, int);
-  __ungetc_init ();
-  int r = open (file_name, flags, mask);
-  if (r > 2)
-    __ungetc_buf[r] = -1;
-  va_end (ap);
-  return r;
- }
+	va_list ap;
+	va_start(ap, flags);
+	int mask = va_arg(ap, int);
+	__ungetc_init();
+	int r = open(file_name, flags, mask);
+
+	if(r > 2)
+	{
+		__ungetc_buf[r] = -1;
+	}
+
+	va_end(ap);
+	return r;
+}
 
 #include <mes/eputs.c>
 #include <mes/oputs.c>
