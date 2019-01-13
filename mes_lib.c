@@ -34,7 +34,7 @@ int fdputc(int c, int fd);
 char *itoa (int number);
 SCM struct_ref_(SCM x, long i);
 SCM builtin_p (SCM x);
-SCM apply(SCM f, SCM x, SCM a);
+SCM apply(SCM f, SCM x);
 SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
@@ -314,7 +314,7 @@ SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 
 		if(TYPE(printer) == TCLOSURE || builtin_p(printer) == cell_t)
 		{
-			apply(printer, cons(x, cell_nil), r0);
+			apply(printer, cons(x, cell_nil));
 		}
 		else
 		{
