@@ -21,9 +21,9 @@
 #include <unistd.h>
 unsigned long strlen(const char* c);
 
-int fdputs (char const* s, int fd)
+int fdputs(char const* s, int fd)
 {
-	int i = strlen (s);
-	write (fd, s, i);
+	int i = strlen(s);
+	write(fd, s, i);
 	return 0;
 }

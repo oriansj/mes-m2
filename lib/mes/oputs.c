@@ -22,9 +22,9 @@
 extern int __stdout;
 unsigned long strlen(char const* s);
 
-int oputs (char const* s)
+int oputs(char const* s)
 {
-	int i = strlen (s);
-	write (__stdout, s, i);
+	int i = strlen(s);
+	write(__stdout, s, i);
 	return 0;
 }

@@ -19,7 +19,7 @@
  */
 
 #include <ctype.h>
-int isnumber (int c, int base);
+int isnumber(int c, int base);
 
 long abtol(char const **p, int base)
 {

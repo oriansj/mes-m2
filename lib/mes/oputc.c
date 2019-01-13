@@ -21,7 +21,7 @@
 extern int __stdout;
 int fdputc(int c, int fd);
 
-int oputc (int c)
+int oputc(int c)
 {
-	return fdputc (c, __stdout);
+	return fdputc(c, __stdout);
 }
