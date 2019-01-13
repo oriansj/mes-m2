@@ -22,9 +22,9 @@
 extern int __stderr;
 unsigned long strlen(const char* c);
 
-int eputs (char const* s)
+int eputs(char const* s)
 {
-	int i = strlen (s);
-	write (__stderr, s, i);
+	int i = strlen(s);
+	write(__stderr, s, i);
 	return 0;
 }

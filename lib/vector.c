@@ -18,97 +18,111 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-SCM
-make_vector__ (long k)
+SCM make_vector__(long k)
 {
-  SCM v = alloc (k);
-  SCM x = make_cell__ (TVECTOR, k, v);
-  for (long i=0; i<k; i++)
-    g_cells[v+i] = g_cells[vector_entry (cell_unspecified)];
-  return x;
+	SCM v = alloc(k);
+	SCM x = make_cell__(TVECTOR, k, v);
+
+	for(long i = 0; i < k; i++)
+	{
+		g_cells[v + i] = g_cells[vector_entry(cell_unspecified)];
+	}
+
+	return x;
 }
 
-SCM
-make_vector_ (SCM n)
+SCM make_vector_(SCM n)
 {
-  return make_vector__ (VALUE (n));
+	return make_vector__(VALUE(n));
 }
 
-SCM
-vector_length (SCM x)
+SCM vector_length(SCM x)
 {
-  assert (TYPE (x) == TVECTOR);
-  return MAKE_NUMBER (LENGTH (x));
+	assert(TYPE(x) == TVECTOR);
+	return MAKE_NUMBER(LENGTH(x));
 }
 
-SCM
-vector_ref_ (SCM x, long i)
+SCM vector_ref_(SCM x, long i)
 {
-  assert (TYPE (x) == TVECTOR);
-  assert (i < LENGTH (x));
-  SCM e = VECTOR (x) + i;
-  if (TYPE (e) == TREF)
-    e = REF (e);
-  if (TYPE (e) == TCHAR)
-    e = MAKE_CHAR (VALUE (e));
-  if (TYPE (e) == TNUMBER)
-    e = MAKE_NUMBER (VALUE (e));
-  return e;
+	assert(TYPE(x) == TVECTOR);
+	assert(i < LENGTH(x));
+	SCM e = VECTOR(x) + i;
+
+	if(TYPE(e) == TREF)
+	{
+		e = REF(e);
+	}
+
+	if(TYPE(e) == TCHAR)
+	{
+		e = MAKE_CHAR(VALUE(e));
+	}
+
+	if(TYPE(e) == TNUMBER)
+	{
+		e = MAKE_NUMBER(VALUE(e));
+	}
+
+	return e;
 }
 
-SCM
-vector_ref (SCM x, SCM i)
+SCM vector_ref(SCM x, SCM i)
 {
-  return vector_ref_ (x, VALUE (i));
+	return vector_ref_(x, VALUE(i));
 }
 
-SCM
-vector_entry (SCM x)
+SCM vector_entry(SCM x)
 {
-  if (TYPE (x) != TCHAR && TYPE (x) != TNUMBER)
-    x = MAKE_REF (x);
-  return x;
+	if(TYPE(x) != TCHAR && TYPE(x) != TNUMBER)
+	{
+		x = MAKE_REF(x);
+	}
+
+	return x;
 }
 
-SCM
-vector_set_x_ (SCM x, long i, SCM e)
+SCM vector_set_x_(SCM x, long i, SCM e)
 {
-  assert (TYPE (x) == TVECTOR);
-  assert (i < LENGTH (x));
-  g_cells[VECTOR (x)+i] = g_cells[vector_entry (e)];
-  return cell_unspecified;
+	assert(TYPE(x) == TVECTOR);
+	assert(i < LENGTH(x));
+	g_cells[VECTOR(x) + i] = g_cells[vector_entry(e)];
+	return cell_unspecified;
 }
 
-SCM
-vector_set_x (SCM x, SCM i, SCM e)
+SCM vector_set_x(SCM x, SCM i, SCM e)
 {
-  return vector_set_x_ (x, VALUE (i), e);
+	return vector_set_x_(x, VALUE(i), e);
 }
 
-SCM
-list_to_vector (SCM x)
+SCM list_to_vector(SCM x)
 {
+	SCM v = make_vector__(length__(x));
+	SCM p = VECTOR(v);
 
-  SCM v = make_vector__ (length__ (x));
-  SCM p = VECTOR (v);
-  while (x != cell_nil)
-    {
-      g_cells[p++] = g_cells[vector_entry (car (x))];
-      x = cdr (x);
-    }
-  return v;
+	while(x != cell_nil)
+	{
+		g_cells[p++] = g_cells[vector_entry(car(x))];
+		x = cdr(x);
+	}
+
+	return v;
 }
 
-SCM
-vector_to_list (SCM v)
+SCM vector_to_list(SCM v)
 {
-  SCM x = cell_nil;
-  for (long i = LENGTH (v); i; i--)
-    {
-      SCM e = VECTOR (v)+i-1;
-      if (TYPE (e) == TREF)
-        e = REF (e);
-      x = cons (e, x);
-    }
-  return x;
+	SCM x = cell_nil;
+
+	for(long i = LENGTH(v); i; i--)
+	{
+		SCM e = VECTOR(v) + i - 1;
+
+		if(TYPE(e) == TREF)
+		{
+			e = REF(e);
+		}
+
+		x = cons(e, x);
+	}
+
+	return x;
 }

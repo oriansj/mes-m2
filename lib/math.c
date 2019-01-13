@@ -20,200 +20,238 @@
 
 #include <limits.h>
 
-void
-assert_number (char const* name, SCM x)
+void assert_number(char const* name, SCM x)
 {
-  if (TYPE (x) != TNUMBER)
-    {
-      eputs (name);
-      error (cell_symbol_not_a_number, x);
-    }
+	if(TYPE(x) != TNUMBER)
+	{
+		eputs(name);
+		error(cell_symbol_not_a_number, x);
+	}
 }
 
-SCM
-greater_p (SCM x) ///((name . ">") (arity . n))
+SCM greater_p(SCM x)  ///((name . ">") (arity . n))
 {
-  if (x == cell_nil)
-    return cell_t;
-  assert_number ("greater_p", CAR (x));
-  long n = VALUE (CAR (x));
-  x = CDR (x);
-  while (x != cell_nil)
-    {
-      assert_number ("greater_p", CAR (x));
-      if (VALUE (car (x)) >= n)
-        return cell_f;
-      n = VALUE (car (x));
-      x = cdr (x);
-    }
-  return cell_t;
+	if(x == cell_nil)
+	{
+		return cell_t;
+	}
+
+	assert_number("greater_p", CAR(x));
+	long n = VALUE(CAR(x));
+	x = CDR(x);
+
+	while(x != cell_nil)
+	{
+		assert_number("greater_p", CAR(x));
+
+		if(VALUE(car(x)) >= n)
+		{
+			return cell_f;
+		}
+
+		n = VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return cell_t;
 }
 
-SCM
-less_p (SCM x) ///((name . "<") (arity . n))
+SCM less_p(SCM x)  ///((name . "<") (arity . n))
 {
-  if (x == cell_nil)
-    return cell_t;
-  assert_number ("less_p", CAR (x));
-  long n = VALUE (CAR (x));
-  x = CDR (x);
-  while (x != cell_nil)
-    {
-      assert_number ("less_p", CAR (x));
-      if (VALUE (car (x)) <= n)
-        return cell_f;
-      n = VALUE (car (x));
-      x = cdr (x);
-    }
-  return cell_t;
+	if(x == cell_nil)
+	{
+		return cell_t;
+	}
+
+	assert_number("less_p", CAR(x));
+	long n = VALUE(CAR(x));
+	x = CDR(x);
+
+	while(x != cell_nil)
+	{
+		assert_number("less_p", CAR(x));
+
+		if(VALUE(car(x)) <= n)
+		{
+			return cell_f;
+		}
+
+		n = VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return cell_t;
 }
 
-SCM
-is_p (SCM x) ///((name . "=") (arity . n))
+SCM is_p(SCM x)  ///((name . "=") (arity . n))
 {
-  if (x == cell_nil)
-    return cell_t;
-  assert_number ("is_p", CAR (x));
-  long n = VALUE (CAR (x));
-  x = cdr (x);
-  while (x != cell_nil)
-    {
-      if (VALUE (car (x)) != n)
-        return cell_f;
-      x = cdr (x);
-    }
-  return cell_t;
+	if(x == cell_nil)
+	{
+		return cell_t;
+	}
+
+	assert_number("is_p", CAR(x));
+	long n = VALUE(CAR(x));
+	x = cdr(x);
+
+	while(x != cell_nil)
+	{
+		if(VALUE(car(x)) != n)
+		{
+			return cell_f;
+		}
+
+		x = cdr(x);
+	}
+
+	return cell_t;
 }
 
-SCM
-minus (SCM x) ///((name . "-") (arity . n))
+SCM minus(SCM x)  ///((name . "-") (arity . n))
 {
-  assert_number ("minus", CAR (x));
-  long n = VALUE (CAR (x));
-  x = cdr (x);
-  if (x == cell_nil)
-    n = -n;
-  while (x != cell_nil)
-    {
-      assert_number ("minus", CAR (x));
-      n -= VALUE (car (x));
-      x = cdr (x);
-    }
-  return MAKE_NUMBER (n);
+	assert_number("minus", CAR(x));
+	long n = VALUE(CAR(x));
+	x = cdr(x);
+
+	if(x == cell_nil)
+	{
+		n = -n;
+	}
+
+	while(x != cell_nil)
+	{
+		assert_number("minus", CAR(x));
+		n -= VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-plus (SCM x) ///((name . "+") (arity . n))
+SCM plus(SCM x)  ///((name . "+") (arity . n))
 {
-  long n = 0;
-  while (x != cell_nil)
-    {
-      assert_number ("plus", CAR (x));
-      n += VALUE (car (x));
-      x = cdr (x);
-    }
-  return MAKE_NUMBER (n);
+	long n = 0;
+
+	while(x != cell_nil)
+	{
+		assert_number("plus", CAR(x));
+		n += VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-divide (SCM x) ///((name . "/") (arity . n))
+SCM divide(SCM x)  ///((name . "/") (arity . n))
 {
-  long n = 1;
-  if (x != cell_nil)
-    {
-      assert_number ("divide", CAR (x));
-      n = VALUE (car (x));
-      x = cdr (x);
-    }
-  while (x != cell_nil)
-    {
-      assert_number ("divide", CAR (x));
-      if (!n)
-        break;
-      n /= VALUE (car (x));
-      x = cdr (x);
-    }
-  return MAKE_NUMBER (n);
+	long n = 1;
+
+	if(x != cell_nil)
+	{
+		assert_number("divide", CAR(x));
+		n = VALUE(car(x));
+		x = cdr(x);
+	}
+
+	while(x != cell_nil)
+	{
+		assert_number("divide", CAR(x));
+
+		if(!n)
+		{
+			break;
+		}
+
+		n /= VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-modulo (SCM a, SCM b)
+SCM modulo(SCM a, SCM b)
 {
-  assert_number ("modulo", a);
-  assert_number ("modulo", b);
-  long x = VALUE (a);
-  while (x < 0)
-    x += VALUE (b);
-  x = x ? x % VALUE (b) : 0;
-  return MAKE_NUMBER (x);
+	assert_number("modulo", a);
+	assert_number("modulo", b);
+	long x = VALUE(a);
+
+	while(x < 0)
+	{
+		x += VALUE(b);
+	}
+
+	x = x ? x % VALUE(b) : 0;
+	return MAKE_NUMBER(x);
 }
 
-SCM
-multiply (SCM x) ///((name . "*") (arity . n))
+SCM multiply(SCM x)  ///((name . "*") (arity . n))
 {
-  long n = 1;
-  while (x != cell_nil)
-    {
-      assert_number ("multiply", CAR (x));
-      n *= VALUE (car (x));
-      x = cdr (x);
-    }
-  return MAKE_NUMBER (n);
+	long n = 1;
+
+	while(x != cell_nil)
+	{
+		assert_number("multiply", CAR(x));
+		n *= VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-logand (SCM x) ///((arity . n))
+SCM logand(SCM x)  ///((arity . n))
 {
-  long n = 0;
-  while (x != cell_nil)
-    {
-      assert_number ("multiply", CAR (x));
-      n &= VALUE (car (x));
-      x = cdr (x);
-    }
-  return MAKE_NUMBER (n);
+	long n = 0;
+
+	while(x != cell_nil)
+	{
+		assert_number("multiply", CAR(x));
+		n &= VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-logior (SCM x) ///((arity . n))
+SCM logior(SCM x)  ///((arity . n))
 {
-  long n = 0;
-  while (x != cell_nil)
-    {
-      assert_number ("logior", CAR (x));
-      n |= VALUE (car (x));
-      x = cdr (x);
-    }
-  return MAKE_NUMBER (n);
+	long n = 0;
+
+	while(x != cell_nil)
+	{
+		assert_number("logior", CAR(x));
+		n |= VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-lognot (SCM x)
+SCM lognot(SCM x)
 {
-  assert_number ("lognot", x);
-  long n = ~VALUE (x);
-  return MAKE_NUMBER (n);
+	assert_number("lognot", x);
+	long n = ~VALUE(x);
+	return MAKE_NUMBER(n);
 }
 
-SCM
-logxor (SCM x) ///((arity . n))
+SCM logxor(SCM x)  ///((arity . n))
 {
-  long n = 0;
-  while (x != cell_nil)
-    {
-      assert_number ("logxor", CAR (x));
-      n ^= VALUE (car (x));
-      x = cdr (x);
-    }
-  return MAKE_NUMBER (n);
+	long n = 0;
+
+	while(x != cell_nil)
+	{
+		assert_number("logxor", CAR(x));
+		n ^= VALUE(car(x));
+		x = cdr(x);
+	}
+
+	return MAKE_NUMBER(n);
 }
 
-SCM
-ash (SCM n, SCM count)
+SCM ash(SCM n, SCM count)
 {
-  assert_number ("ash", n);
-  assert_number ("ash", count);
-  long cn = VALUE (n);
-  long ccount = VALUE (count);
-  return MAKE_NUMBER ((ccount < 0) ? cn >> -ccount : cn << ccount);
+	assert_number("ash", n);
+	assert_number("ash", count);
+	long cn = VALUE(n);
+	long ccount = VALUE(count);
+	return MAKE_NUMBER((ccount < 0) ? cn >> -ccount : cn << ccount);
 }

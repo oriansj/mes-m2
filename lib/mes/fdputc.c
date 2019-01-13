@@ -20,8 +20,8 @@
 
 #include <unistd.h>
 
-int fdputc (int c, int fd)
+int fdputc(int c, int fd)
 {
-	write (fd, (char*)&c, 1);
+	write(fd, (char*)&c, 1);
 	return 0;
 }

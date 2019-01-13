@@ -18,9 +18,9 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-char* ntoab (long x, int base, int signed_p);
+char* ntoab(long x, int base, int signed_p);
 
-char * utoa (unsigned x)
+char * utoa(unsigned x)
 {
-	return ntoab (x, 10, 0);
+	return ntoab(x, 10, 0);
 }

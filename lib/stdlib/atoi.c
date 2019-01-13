@@ -20,8 +20,8 @@
 
 long abtol(char const **p, int base);
 
-int atoi (char const *string)
+int atoi(char const *string)
 {
 	char const *p = string;
-	return abtol (&p, 0);
+	return abtol(&p, 0);
 }

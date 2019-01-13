@@ -23,66 +23,74 @@
 // CONSTANT STRUCT_PRINTER 1
 #define STRUCT_PRINTER 1
 
-SCM
-make_struct (SCM type, SCM fields, SCM printer)
+SCM make_struct(SCM type, SCM fields, SCM printer)
 {
-  long size = 2 + length__ (fields);
-  SCM v = alloc (size);
-  SCM x = make_cell__ (TSTRUCT, size, v);
-  g_cells[v] = g_cells[vector_entry (type)];
-  g_cells[v+1] = g_cells[vector_entry (printer)];
-  for (long i=2; i<size; i++)
-    {
-      SCM e = cell_unspecified;
-      if (fields != cell_nil)
-        {
-          e = CAR (fields);
-          fields = CDR (fields);
-        }
-      g_cells[v+i] = g_cells[vector_entry (e)];
-    }
-  return x;
+	long size = 2 + length__(fields);
+	SCM v = alloc(size);
+	SCM x = make_cell__(TSTRUCT, size, v);
+	g_cells[v] = g_cells[vector_entry(type)];
+	g_cells[v + 1] = g_cells[vector_entry(printer)];
+
+	for(long i = 2; i < size; i++)
+	{
+		SCM e = cell_unspecified;
+
+		if(fields != cell_nil)
+		{
+			e = CAR(fields);
+			fields = CDR(fields);
+		}
+
+		g_cells[v + i] = g_cells[vector_entry(e)];
+	}
+
+	return x;
 }
 
-SCM
-struct_length (SCM x)
+SCM struct_length(SCM x)
 {
-  assert (TYPE (x) == TSTRUCT);
-  return MAKE_NUMBER (LENGTH (x));
+	assert(TYPE(x) == TSTRUCT);
+	return MAKE_NUMBER(LENGTH(x));
 }
 
-SCM
-struct_ref_ (SCM x, long i)
+SCM struct_ref_(SCM x, long i)
 {
-  assert (TYPE (x) == TSTRUCT);
-  assert (i < LENGTH (x));
-  SCM e = STRUCT (x) + i;
-  if (TYPE (e) == TREF)
-    e = REF (e);
-  if (TYPE (e) == TCHAR)
-    e = MAKE_CHAR (VALUE (e));
-  if (TYPE (e) == TNUMBER)
-    e = MAKE_NUMBER (VALUE (e));
-  return e;
+	assert(TYPE(x) == TSTRUCT);
+	assert(i < LENGTH(x));
+	SCM e = STRUCT(x) + i;
+
+	if(TYPE(e) == TREF)
+	{
+		e = REF(e);
+	}
+
+	if(TYPE(e) == TCHAR)
+	{
+		e = MAKE_CHAR(VALUE(e));
+	}
+
+	if(TYPE(e) == TNUMBER)
+	{
+		e = MAKE_NUMBER(VALUE(e));
+	}
+
+	return e;
 }
 
-SCM
-struct_set_x_ (SCM x, long i, SCM e)
+SCM struct_set_x_(SCM x, long i, SCM e)
 {
-  assert (TYPE (x) == TSTRUCT);
-  assert (i < LENGTH (x));
-  g_cells[STRUCT (x)+i] = g_cells[vector_entry (e)];
-  return cell_unspecified;
+	assert(TYPE(x) == TSTRUCT);
+	assert(i < LENGTH(x));
+	g_cells[STRUCT(x) + i] = g_cells[vector_entry(e)];
+	return cell_unspecified;
 }
 
-SCM
-struct_ref (SCM x, SCM i)
+SCM struct_ref(SCM x, SCM i)
 {
-  return struct_ref_ (x, VALUE (i));
+	return struct_ref_(x, VALUE(i));
 }
 
-SCM
-struct_set_x (SCM x, SCM i, SCM e)
+SCM struct_set_x(SCM x, SCM i, SCM e)
 {
-  return struct_set_x_ (x, VALUE (i), e);
+	return struct_set_x_(x, VALUE(i), e);
 }

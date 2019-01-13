@@ -18,7 +18,7 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-int isdigit (int c)
+int isdigit(int c)
 {
 	return c >= '0' && c <= '9';
 }
