@@ -18,6 +18,9 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -29,6 +32,8 @@
 
 int readchar();
 int unreadchar();
+SCM write_byte (SCM x);
+SCM current_input_port ();
 
 int peekchar()
 {

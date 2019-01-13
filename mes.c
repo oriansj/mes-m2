@@ -2051,8 +2051,6 @@ SCM read_boot()  ///((internal))
 	return r2;
 }
 
-#include "lib/posix.c"
-
 int main(int argc, char *argv[])
 {
 	g_continuations = 0;
