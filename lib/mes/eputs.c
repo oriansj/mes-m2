@@ -18,12 +18,13 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+#include <unistd.h>
+extern int __stderr;
+unsigned long strlen(const char* c);
 
-int
-eputs (char const* s)
+int eputs (char const* s)
 {
-  int i = strlen (s);
-  write (__stderr, s, i);
-  return 0;
+	int i = strlen (s);
+	write (__stderr, s, i);
+	return 0;
 }
