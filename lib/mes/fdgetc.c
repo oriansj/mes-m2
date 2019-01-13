@@ -19,50 +19,34 @@
  */
 
 #include <libmes.h>
+#include <limits.h>
+#include <sys/resource.h>
 
-int _ungetc_pos = -1;
-int _ungetc_fd = -1;
-char _ungetc_buf[10];
+int __ungetc_buf[RLIMIT_NOFILE+1] = {0};
+
+void
+__ungetc_init ()
+{
+  if (__ungetc_buf[RLIMIT_NOFILE] == 0)
+    memset (__ungetc_buf, -1, (RLIMIT_NOFILE+1)*sizeof (int));
+}
 
 int
 fdgetc (int fd)
 {
+  __ungetc_init ();
+
   char c;
-  int i;
-  if (_ungetc_pos == -1)
+  int i = __ungetc_buf[fd];
+  if (i >= 0)
+    __ungetc_buf[fd] = -1;
+  else
     {
       int r = read (fd, &c, 1);
       if (r < 1)
         return -1;
       i = c;
    }
-  else
-    {
-      i = _ungetc_buf[_ungetc_pos];
-      if (_ungetc_fd != fd && i == 10)
-        {
-          // FIXME: Nyacc's ungetc exposes harmless libmec.c bug
-          // we need one unget position per FD
-          _ungetc_pos = -1;
-          _ungetc_fd = -1;
-          return fdgetc (fd);
-        }
-      else if (_ungetc_fd != fd)
-        {
-          eputs (" ***MES C LIB*** fdgetc ungetc conflict unget-fd=");
-          eputs (itoa (_ungetc_fd));
-          eputs (", fdgetc-fd=");
-          eputs (itoa (fd));
-          eputs (", c=");
-          eputs (itoa ( _ungetc_buf[_ungetc_pos]));
-          eputs ("\n");
-          exit (1);
-        }
-      i = _ungetc_buf[_ungetc_pos];
-      _ungetc_pos -= 1;
-      if (_ungetc_pos == -1)
-        _ungetc_fd = -1;
-     }
   if (i < 0)
     i += 256;
 

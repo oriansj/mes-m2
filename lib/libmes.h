@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -21,51 +21,25 @@
 #ifndef __MES_LIBMES_H
 #define __MES_LIBMES_H
 
-#ifndef _SIZE_T
-#define _SIZE_T
-#ifndef __SIZE_T
-#define __SIZE_T
-#ifndef __MES_SIZE_T
-#define __MES_SIZE_T
-#undef size_t
-typedef unsigned long size_t;
-#endif
-#endif
-#endif
+#include <libmes-mini.h>
 
-#ifndef _SSIZE_T
-#define _SSIZE_T
-#ifndef __SSIZE_T
-#define __SSIZE_T
-#ifndef __MES_SSIZE_T
-#define __MES_SSIZE_T
-#undef ssize_t
-typedef long ssize_t;
-#endif
-#endif
-#endif
-
-#ifndef STDIN
-#define STDIN 0
-#endif
-
-#ifndef STDOUT
-#define STDOUT 1
-#endif
-
-#ifndef STDERR
-#define STDERR 2
+#if WITH_GLIBC
+int mes_open (char const *file_name, int flags, ...);
+#define open mes_open
 #endif
 
 int __mes_debug ();
-char const* ntoab (long number, int base, int signed_p);
-char const* itoa (int number);
-char const* utoa (unsigned long number);
-char const* ltoab (long x, int base);
-int _atoi (char const**, int base);
+double abtod (char const** p, int base);
+long abtol (char const** p, int base);
+char *dtoab (double number, int base, int signed_p);
+char *itoa (int number);
+char *ltoa (long number);
+char *ltoab (long x, int base);
+char *ntoab (long number, int base, int signed_p);
+char *ultoa (unsigned long number);
+char *utoa (unsigned number);
 int atoi (char const *s);
 int eputc (int c);
-int eputs (char const* s);
 int fdgetc (int fd);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
@@ -74,7 +48,10 @@ int _fdungetc_p (int fd);
 int isdigit (int c);
 int isspace (int c);
 int isxdigit (int c);
+int _open3 (char const *file_name, int flags, int mask);
+int _open2 (char const *file_name, int flags);
+int oputc (int c);
 int oputs (char const* s);
-ssize_t write (int filedes, void const *buffer, size_t size);
+char *search_path (char const *file_name);
 
 #endif //__MES_LIBMES_H

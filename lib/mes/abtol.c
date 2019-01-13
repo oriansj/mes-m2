@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -19,28 +19,32 @@
  */
 
 #include <libmes.h>
+#include <ctype.h>
 
 long
 abtol (char const **p, int base)
 {
-  char const *s = p[0];
+  char const *s = *p;
   int i = 0;
-  int sign = 1;
-  if (!base) base = 10;
-  if (s[0] == '-')
+  int sign_p = 0;
+  if (!base)
+    base = 10;
+  while (isspace (*s))
+    s++;
+  if (*s && *s == '+')
+    s++;
+  if (*s && *s == '-')
     {
-      sign = -1;
-      s = s + 1;
+      sign_p = 1;
+      s++;
     }
-  while (isnumber (s[0], base))
+  while (isnumber (*s, base))
     {
-      i = i * base;
-      int m = '0';
-      if (s[0] > '9')
-        m = 'a' - 10;
-      i = i + s[0] - m;
-      s = s + 1;
+      i *= base;
+      int m = *s > '9' ? 'a' - 10 : '0';
+      i += *s - m;
+      s++;
     }
-  p[0] = s;
-  return i * sign;
+  *p = s;
+  return sign_p ? -i : i;
 }

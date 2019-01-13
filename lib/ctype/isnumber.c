@@ -18,7 +18,7 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+#include <ctype.h>
 
 int
 isnumber (int c, int base)

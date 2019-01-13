@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -20,18 +20,18 @@
 
 #include <libmes.h>
 
-char const*
+char *
 ntoab (long x, int base, int signed_p)
 {
   static char itoa_buf[20];
   char *p = itoa_buf + 11;
   *p-- = 0;
 
-  int sign = 0;
+  int sign_p = 0;
   unsigned long u = x;
   if (signed_p && x < 0)
     {
-      sign = 1;
+      sign_p = 1;
       u = -x;
     }
 
@@ -42,7 +42,7 @@ ntoab (long x, int base, int signed_p)
        u = u / base;
      } while (u);
 
-  if (sign && *(p + 1) != '0')
+  if (sign_p && *(p + 1) != '0')
     *p-- = '-';
 
   return p+1;

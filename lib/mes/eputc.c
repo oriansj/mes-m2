@@ -23,5 +23,5 @@
 int
 eputc (int c)
 {
-  return fdputc (c, STDERR);
+  return fdputc (c, __stderr);
 }

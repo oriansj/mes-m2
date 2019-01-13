@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -21,8 +21,8 @@
 #include <libmes.h>
 
 int
-atoi (char const *s)
+atoi (char const *string)
 {
-  char const *p = s;
+  char const *p = string;
   return abtol (&p, 0);
 }

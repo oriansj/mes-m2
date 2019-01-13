@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -20,11 +20,8 @@
 
 #include <libmes.h>
 
-size_t
-strlen (char const* s)
+int
+oputc (int c)
 {
-  int i = 0;
-  while (s[i])
-    i = i + 1;
-  return i;
+  return fdputc (c, __stdout);
 }

@@ -23,26 +23,22 @@
 int
 fdungetc (int c, int fd)
 {
+  __ungetc_init ();
   if (c == -1)
     return c;
-  if (_ungetc_pos == -1)
-    _ungetc_fd = fd;
-  else if (_ungetc_fd != fd)
+  else if (__ungetc_buf[fd] != -1)
     {
-      eputs (" ***MES LIB C*** fdungetc ungetc conflict unget-fd=");
-      eputs (itoa (_ungetc_fd));
-      eputs (", fdungetc-fd=");
+      eputs (" ***MES C LIB*** fdungetc ungetc buffer overflow fd=");
       eputs (itoa (fd));
       eputs ("\n");
       exit (1);
     }
-  _ungetc_pos++;
-  _ungetc_buf[_ungetc_pos] = c;
+  __ungetc_buf[fd] = c;
   return c;
 }
 
 int
 _fdungetc_p (int fd)
 {
-  return _ungetc_pos > -1;
+  return __ungetc_buf[fd] >= 0;
 }

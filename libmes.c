@@ -33,15 +33,40 @@
 #include <mes/ntoab.c>
 #include <mes/ltoab.c>
 #include <mes/itoa.c>
+#include <mes/ltoa.c>
+#include <mes/ultoa.c>
 #include <mes/utoa.c>
 #include <mes/fdgetc.c>
 #include <mes/fdputc.c>
 #include <mes/fdputs.c>
 #include <mes/fdungetc.c>
 
-#if POSIX
+#if WITH_GLIBC
+#undef open
+#include <fcntl.h>
+#include <stdarg.h>
+// The Mes C Library defines and initializes these in crt1
+int __stdin = STDIN;
+int __stdout = STDOUT;
+int __stderr = STDERR;
+
+int
+mes_open (char const *file_name, int flags, ...)
+{
+  va_list ap;
+  va_start (ap, flags);
+  int mask = va_arg (ap, int);
+  __ungetc_init ();
+  int r = open (file_name, flags, mask);
+  if (r > 2)
+    __ungetc_buf[r] = -1;
+  va_end (ap);
+  return r;
+ }
+
 #include <mes/eputs.c>
 #include <mes/oputs.c>
-#endif // POSIX
+#endif // WITH_GLIBC
 
 #include <mes/eputc.c>
+#include <mes/oputc.c>

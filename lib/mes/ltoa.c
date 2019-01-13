@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -18,36 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
+#include <libmes.h>
 
-#if __MESC__
-
-#include <linux/x86-mes/mini.c>
-
-#elif __i386__
-
-#include <linux/x86-mes-gcc/mini.c>
-
-#elif __x86_64__
-
-#include <linux/x86_64-mes-gcc/mini.c>
-
-#else
-
-#error arch not supported
-
-#endif
-
-ssize_t
-write (int filedes, void const *buffer, size_t size)
+char *
+ltoa (long x)
 {
-  int r = _write (filedes, buffer, size);
-  if (r < 0)
-    {
-      errno = -r;
-      r = -1;
-    }
-  else
-    errno = 0;
-  return r;
+  return ntoab (x, 10, 1);
 }
