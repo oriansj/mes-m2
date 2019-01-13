@@ -19,8 +19,32 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
 #include <ctype.h>
+
 void assert_max_string(size_t i, char const* msg, char* string);
+SCM read_env (SCM a);
+SCM reader_read_binary ();
+SCM reader_read_octal ();
+SCM reader_read_hex ();
+SCM reader_read_string ();
+SCM reader_read_character ();
+SCM car (SCM x);
+SCM cdr (SCM x);
+SCM cons (SCM x, SCM y);
+int readchar();
+SCM error(SCM key, SCM x);
+SCM make_string(char const* s, size_t length);
+int peekchar();
+int unreadchar();
+SCM make_cell__(long type, SCM car, SCM cdr);
+SCM cstring_to_symbol(char const *s);
+SCM symbol_to_keyword (SCM symbol);
+SCM list_to_vector (SCM x);
+int eputs(char const* s);
+char *itoa (int number);
 
 SCM read_input_file_env_(SCM e, SCM a)
 {
