@@ -18,10 +18,7 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
-
-int
-isdigit (int c)
+int isdigit (int c)
 {
-  return c >= '0' && c <= '9';
+	return c >= '0' && c <= '9';
 }

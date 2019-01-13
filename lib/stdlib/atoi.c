@@ -18,11 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+long abtol(char const **p, int base);
 
-int
-atoi (char const *string)
+int atoi (char const *string)
 {
-  char const *p = string;
-  return abtol (&p, 0);
+	char const *p = string;
+	return abtol (&p, 0);
 }
