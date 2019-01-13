@@ -20,9 +20,19 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
 #include <errno.h>
 #include <strings.h>
+
+#define TYPE(x) g_cells[x].type
+#define NTYPE(x) g_news[x].type
+#define NVECTOR(x) g_news[x].cdr
+#define LENGTH(x) g_cells[x].car
+#define NLENGTH(x) g_news[x].car
+#define VECTOR(x) g_cells[x].cdr
+#define CBYTES(x) (char*)&g_cells[x].cdr
+#define NCBYTES(x) (char*)&g_news[x].cdr
+#define CAR(x) g_cells[x].car
+#define NVALUE(x) g_news[x].cdr
 
 size_t bytes_cells(size_t length);
 int eputs(char const* s);
@@ -196,7 +206,7 @@ void gc_loop(SCM scan)  ///((internal))
 	gc_flip();
 }
 
-SCM gc();
+void gc();
 SCM gc_check()
 {
 	if(g_free + GC_SAFETY > ARENA_SIZE)
@@ -219,7 +229,7 @@ SCM gc_init_news()  ///((internal))
 	return 0;
 }
 
-SCM gc_()  ///((internal))
+void gc_()  ///((internal))
 {
 	gc_init_news();
 
@@ -279,7 +289,7 @@ SCM gc_()  ///((internal))
 	gc_loop(1);
 }
 
-SCM gc()
+void gc()
 {
 	if(g_debug > 4)
 	{
