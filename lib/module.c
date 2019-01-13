@@ -21,6 +21,7 @@
 SCM struct_ref_(SCM x, long i);
 SCM struct_set_x_(SCM x, long i, SCM e);
 SCM cstring_to_symbol(char const *s);
+SCM make_hashq_type();
 
 SCM make_module_type()  ///(internal))
 {

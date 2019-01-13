@@ -18,9 +18,26 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes.h"
+#include "mes_constants.h"
+#include "mes_macros.h"
+
 SCM make_vector__(long k);
 SCM vector_ref_(SCM x, long i);
 SCM vector_set_x_(SCM x, long i, SCM e);
+SCM error(SCM key, SCM x);
+SCM cons (SCM x, SCM y);
+SCM make_string(char const* s, size_t length);
+SCM make_cell__(long type, SCM car, SCM cdr);
+SCM struct_ref_(SCM x, long i);
+SCM assq (SCM x, SCM a);
+SCM assoc (SCM x, SCM a);
+SCM acons (SCM key, SCM value, SCM alist);
+int fdputs (char const* s, int fd);
+SCM display_ (SCM x);
+int fdputc (int c, int fd);
+SCM write_ (SCM x);
+SCM make_struct (SCM type, SCM fields, SCM printer);
 
 int hash_cstring(char const* s, long size)
 {
@@ -38,13 +55,13 @@ int hash_cstring(char const* s, long size)
 
 int hashq_(SCM x, long size)
 {
-	if(TYPE(x) == TSPECIAL
-	        || TYPE(x) == TSYMBOL)
+	if(TYPE(x) == TSPECIAL || TYPE(x) == TSYMBOL)
 	{
 		return hash_cstring(CSTRING(x), size);    // FIXME: hash x directly
 	}
 
 	error(cell_symbol_system_error, cons(MAKE_STRING0("hashq_: not a symbol"), x));
+	exit(1);
 }
 
 int hash_(SCM x, long size)

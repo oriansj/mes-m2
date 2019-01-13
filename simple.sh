@@ -3,7 +3,7 @@
 set -eux
 rm -rf out-glibc/
 mkdir out-glibc
-gcc -ggdb -D WITH_GLIBC=1 -D VERSION=\"0.19\" -D MODULEDIR=\"module\" -D PREFIX=\"/usr/local\" mes_vector.c libmes.c mes.c -o out-glibc/mes
+gcc -ggdb -D WITH_GLIBC=1 -D VERSION=\"0.19\" -D MODULEDIR=\"module\" -D PREFIX=\"/usr/local\" mes_vector.c mes_hash.c libmes.c mes.c -o out-glibc/mes
 
 # Simplest of tests
 echo '(display "hello\n")' | MES_BOOT=boot-01.scm out-glibc/mes
