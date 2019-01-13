@@ -26,10 +26,8 @@ int mes_open (char const *file_name, int flags, ...);
 #define open mes_open
 
 char *itoa (int number);
-int fdgetc (int fd);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
-int fdungetc (int c, int fd);
 int eputs (char const* s);
 
 long ARENA_SIZE = 10000000;
@@ -42,19 +40,14 @@ long GC_SAFETY = 2000;
 long MAX_STRING = 524288;
 char *g_buf = 0;
 
-
 char *g_arena = 0;
 int g_debug = 0;
 long g_free = 0;
 
 /* Imported Functions */
 SCM apply_builtin(SCM fn, SCM x);
-SCM cstring_to_list(char const* s);
 SCM cstring_to_symbol(char const *s);
-SCM make_bytes(char const* s, size_t length);
 SCM make_hash_table_(long size);
-SCM read_input_file_env(SCM);
-SCM string_equal_p(SCM a, SCM b);
 SCM make_initial_module(SCM a);
 // src/gc.mes
 SCM gc_check ();
@@ -70,7 +63,6 @@ SCM hash_set_x (SCM table, SCM key, SCM value);
 SCM hash_table_printer (SCM table);
 SCM make_hash_table (SCM x);
 // src/lib.mes
-SCM procedure_name_ (SCM x);
 SCM display_ (SCM x);
 SCM display_error_ (SCM x);
 SCM display_port_ (SCM x, SCM p);
@@ -102,39 +94,10 @@ SCM lognot (SCM x);
 SCM logxor (SCM x);
 SCM ash (SCM n, SCM count);
 // src/mes.mes
-SCM make_cell_ (SCM type, SCM car, SCM cdr);
-SCM type_ (SCM x);
-SCM car_ (SCM x);
-SCM cdr_ (SCM x);
-SCM arity_ (SCM x);
-SCM cons (SCM x, SCM y);
-SCM car (SCM x);
-SCM cdr (SCM x);
-SCM list (SCM x);
-SCM null_p (SCM x);
-SCM eq_p (SCM x, SCM y);
-SCM values (SCM x);
-SCM acons (SCM key, SCM value, SCM alist);
-SCM length (SCM x);
-SCM error (SCM key, SCM x);
-SCM append2 (SCM x, SCM y);
-SCM append_reverse (SCM x, SCM y);
 SCM reverse_x_ (SCM x, SCM t);
-SCM pairlis (SCM x, SCM y, SCM a);
-SCM call (SCM fn, SCM x);
-SCM assq (SCM x, SCM a);
-SCM assoc (SCM x, SCM a);
-SCM set_car_x (SCM x, SCM e);
-SCM set_cdr_x (SCM x, SCM e);
-SCM set_env_x (SCM x, SCM e, SCM a);
-SCM macro_get_handle (SCM name);
-SCM add_formals (SCM formals, SCM x);
-SCM eval_apply ();
-SCM make_builtin_type ();
 SCM make_builtin (SCM builtin_type, SCM name, SCM arity, SCM function);
 SCM builtin_arity (SCM builtin);
 SCM builtin_p (SCM x);
-SCM builtin_printer (SCM builtin);
 
 // src/module.mes
 SCM make_module_type ();
@@ -359,7 +322,7 @@ SCM length(SCM x)
 	return MAKE_NUMBER(length__(x));
 }
 
-SCM apply(SCM, SCM, SCM);
+SCM apply(SCM, SCM);
 
 SCM error(SCM key, SCM x)
 {
@@ -367,7 +330,7 @@ SCM error(SCM key, SCM x)
 
 	if((throw = module_ref(r0, cell_symbol_throw)) != cell_undefined)
 	{
-		return apply(throw, cons(key, cons(x, cell_nil)), r0);
+		return apply(throw, cons(key, cons(x, cell_nil)));
 	}
 
 	display_error_(key);
@@ -689,7 +652,7 @@ SCM set_env_x(SCM x, SCM e, SCM a)
 	return set_cdr_x(p, e);
 }
 
-SCM call_lambda(SCM e, SCM x, SCM aa, SCM a)  ///((internal))
+SCM call_lambda(SCM e, SCM x)  ///((internal))
 {
 	SCM cl = cons(cons(cell_closure, x), x);
 	r1 = e;
@@ -1071,7 +1034,7 @@ apply:
 		aa = CDR(aa);
 		check_formals(CAR(r1), formals, CDR(r1));
 		p = pairlis(formals, args, aa);
-		call_lambda(body, p, aa, r0);
+		call_lambda(body, p);
 		goto begin;
 	}
 	else if(t == TCONTINUATION)
@@ -1151,7 +1114,7 @@ apply:
 			body = CDDR(CAR(r1));
 			p = pairlis(formals, CDR(r1), r0);
 			check_formals(r1, formals, args);
-			call_lambda(body, p, p, r0);
+			call_lambda(body, p);
 			goto begin;
 		}
 	}
@@ -1644,7 +1607,7 @@ vm_return:
 	goto eval_apply;
 }
 
-SCM apply(SCM f, SCM x, SCM a)  ///((internal))
+SCM apply(SCM f, SCM x)  ///((internal))
 {
 	push_cc(cons(f, x), cell_unspecified, r0, cell_unspecified);
 	r3 = cell_vm_apply;
