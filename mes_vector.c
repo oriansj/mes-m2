@@ -20,7 +20,15 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define VALUE(x) g_cells[x].cdr
+#define TYPE(x) g_cells[x].type
+#define LENGTH(x) g_cells[x].car
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
+#define VECTOR(x) g_cells[x].cdr
+#define REF(x) g_cells[x].car
+#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
+#define MAKE_REF(n) make_cell__ (TREF, n, 0)
 
 SCM alloc(long n);
 SCM make_cell__(long type, SCM car, SCM cdr);
