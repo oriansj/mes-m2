@@ -1960,6 +1960,7 @@ int get_env_value(char* c, int alt)
 
 int main(int argc, char *argv[])
 {
+	__ungetc_buf = calloc((RLIMIT_NOFILE + 1), sizeof(int));
 	g_continuations = 0;
 	g_symbols = 0;
 	g_stack = 0;
@@ -1972,6 +1973,9 @@ int main(int argc, char *argv[])
 	g_ports = 1;
 	g_cells = 0;
 	g_news = 0;
+	__stdin = STDIN;
+	__stdout = STDOUT;
+	__stderr = STDERR;
 
 	g_debug = get_env_value("MES_DEBUG", 0);
 

@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/resource.h>
 
 // CONSTANT STDIN 0
 #define STDIN 0
@@ -87,3 +88,4 @@ long MAX_ARENA_SIZE;
 long JAM_SIZE;
 long STACK_SIZE;
 SCM g_symbol_max;
+int* __ungetc_buf;
