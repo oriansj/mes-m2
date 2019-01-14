@@ -38,7 +38,7 @@ SCM vector_ref_(SCM x, long i);
 SCM vector_set_x_(SCM x, long i, SCM e);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
-SCM make_string(char const* s, size_t length);
+SCM make_string(char const* s, int length);
 SCM make_cell__(long type, SCM car, SCM cdr);
 SCM struct_ref_(SCM x, long i);
 SCM assq (SCM x, SCM a);

@@ -20,7 +20,18 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define TYPE(x) g_cells[x].type
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define LENGTH(x) g_cells[x].car
+#define VALUE(x) g_cells[x].cdr
+#define STRING(x) g_cells[x].cdr
+#define CBYTES(x) (char*)&g_cells[x].cdr
+#define CSTRING(x) CBYTES (STRING (x))
+#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
+#define MAKE_STRING0(x) make_string (x, strlen (x))
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 
 SCM make_symbol (SCM string);
 int eputs(char const* s);
@@ -36,7 +47,7 @@ SCM hash_ref (SCM table, SCM key, SCM dflt);
 SCM hash_set_x (SCM table, SCM key, SCM value);
 int readchar();
 
-void assert_max_string(size_t i, char const* msg, char* string)
+void assert_max_string(int i, char const* msg, char* string)
 {
 	if(i > MAX_STRING)
 	{
@@ -50,9 +61,9 @@ void assert_max_string(size_t i, char const* msg, char* string)
 	}
 }
 
-char const* list_to_cstring(SCM list, size_t* size)
+char const* list_to_cstring(SCM list, int* size)
 {
-	size_t i = 0;
+	int i = 0;
 
 	while(list != cell_nil)
 	{
@@ -95,7 +106,7 @@ SCM make_bytes(char const* s, size_t length)
 	return x;
 }
 
-SCM make_string(char const* s, size_t length)
+SCM make_string(char const* s, int length)
 {
 	if(length > MAX_STRING)
 	{
@@ -200,7 +211,7 @@ SCM string_to_list(SCM string)
 
 SCM list_to_string(SCM list)
 {
-	size_t size;
+	int size;
 	char const *s = list_to_cstring(list, &size);
 	return make_string(s, size);
 }
@@ -215,7 +226,7 @@ SCM read_string(SCM port)  ///((arity . n))
 	}
 
 	int c = readchar();
-	size_t i = 0;
+	int i = 0;
 
 	while(c != -1)
 	{
@@ -237,7 +248,7 @@ SCM string_append(SCM x)  ///((arity . n))
 {
 	char *p = g_buf;
 	g_buf[0] = 0;
-	size_t size = 0;
+	int size = 0;
 
 	while(x != cell_nil)
 	{
