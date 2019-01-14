@@ -136,7 +136,7 @@ SCM current_error_port ();
 SCM open_output_file (SCM x);
 SCM set_current_output_port (SCM port);
 SCM set_current_error_port (SCM port);
-SCM force_output (SCM p);
+SCM force_output ();
 SCM chmod_ (SCM file_name, SCM mode);
 SCM isatty_p (SCM port);
 SCM primitive_fork ();
