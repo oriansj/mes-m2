@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/time.h>

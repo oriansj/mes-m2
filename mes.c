@@ -21,6 +21,7 @@
 
 #include "mes.h"
 #include "mes_constants.h"
+#include <fcntl.h>
 
 #define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].car
@@ -1787,7 +1788,7 @@ SCM builtin_arity(SCM builtin)
 
 SCM (*builtin_function(SCM builtin))(SCM)
 {
-	return (function1_t)VALUE(struct_ref_(builtin, 5));
+	return (void*)VALUE(struct_ref_(builtin, 5));
 }
 
 SCM builtin_p(SCM x)
@@ -1841,31 +1842,31 @@ SCM apply_builtin(SCM fn, SCM x)  ///((internal))
 	if(arity == 0)
 	{
 		//function0_t fp = f->function;
-		SCM(*fp)(void) = (function0_t)builtin_function(fn);
+		SCM(*fp)(void) = (void*)builtin_function(fn);
 		return fp();
 	}
 	else if(arity == 1)
 	{
 		//function1_t fp = f->function;
-		SCM(*fp)(SCM) = (function1_t)builtin_function(fn);
+		SCM(*fp)(SCM) = (void*)builtin_function(fn);
 		return fp(CAR(x));
 	}
 	else if(arity == 2)
 	{
 		//function2_t fp = f->function;
-		SCM(*fp)(SCM, SCM) = (function2_t)builtin_function(fn);
+		SCM(*fp)(SCM, SCM) = (void*)builtin_function(fn);
 		return fp(CAR(x), CADR(x));
 	}
 	else if(arity == 3)
 	{
 		//function3_t fp = f->function;
-		SCM(*fp)(SCM, SCM, SCM) = (function3_t)builtin_function(fn);
+		SCM(*fp)(SCM, SCM, SCM) = (void*)builtin_function(fn);
 		return fp(CAR(x), CADR(x), CAR(CDDR(x)));
 	}
 	else if(arity == -1)
 	{
 		//functionn_t fp = f->function;
-		SCM(*fp)(SCM) = (function1_t)builtin_function(fn);
+		SCM(*fp)(SCM) = (void*)builtin_function(fn);
 		return fp(x);
 	}
 
