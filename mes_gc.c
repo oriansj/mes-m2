@@ -206,7 +206,7 @@ void gc_loop(SCM scan)  ///((internal))
 	gc_flip();
 }
 
-void gc();
+SCM gc();
 SCM gc_check()
 {
 	if(g_free + GC_SAFETY > ARENA_SIZE)
@@ -289,7 +289,7 @@ void gc_()  ///((internal))
 	gc_loop(1);
 }
 
-void gc()
+SCM gc()
 {
 	if(g_debug > 4)
 	{
@@ -314,4 +314,6 @@ void gc()
 		write_error_(r0);
 		eputs("\n");
 	}
+        return cell_unspecified;
 }
+

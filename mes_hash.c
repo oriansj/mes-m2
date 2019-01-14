@@ -236,7 +236,7 @@ SCM hash_set_x(SCM table, SCM key, SCM value)
 #endif
 }
 
-void hash_table_printer(SCM table)
+SCM hash_table_printer(SCM table)
 {
 	fdputs("#<", __stdout);
 	display_(struct_ref_(table, 2));
@@ -271,6 +271,7 @@ void hash_table_printer(SCM table)
 	}
 
 	fdputc('>', __stdout);
+        return cell_unspecified;
 }
 
 SCM make_hashq_type()  ///((internal))

@@ -87,7 +87,7 @@ SCM reverse_x_ (SCM x, SCM t);
 SCM make_builtin (SCM builtin_type, SCM name, SCM arity, SCM function);
 SCM builtin_arity (SCM builtin);
 SCM builtin_p (SCM x);
-void module_printer (SCM module);
+SCM module_printer (SCM module);
 SCM module_variable (SCM module, SCM name);
 SCM module_ref (SCM module, SCM name);
 SCM module_define_x (SCM module, SCM name, SCM value);
@@ -1796,7 +1796,7 @@ SCM builtin_p(SCM x)
 	return (TYPE(x) == TSTRUCT && struct_ref_(x, 2) == cell_symbol_builtin) ? cell_t : cell_f;
 }
 
-void builtin_printer(SCM builtin)
+SCM builtin_printer(SCM builtin)
 {
 	fdputs("#<procedure ", __stdout);
 	display_(builtin_name(builtin));
@@ -1823,6 +1823,7 @@ void builtin_printer(SCM builtin)
 	}
 
 	fdputc('>', __stdout);
+        return cell_unspecified;
 }
 
 SCM apply_builtin(SCM fn, SCM x)  ///((internal))
