@@ -21,7 +21,30 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define TYPE(x) g_cells[x].type
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define VALUE(x) g_cells[x].cdr
+#define VARIABLE(x) g_cells[x].car
+#define STRING(x) g_cells[x].cdr
+#define LENGTH(x) g_cells[x].car
+#define VECTOR(x) g_cells[x].cdr
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
+#define MAKE_STRING0(x) make_string (x, strlen (x))
+#define MAKE_MACRO(name, x) make_cell__ (TMACRO, x, STRING (name))
+#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
+#define MAKE_CONTINUATION(n) make_cell__ (TCONTINUATION, n, g_stack)
+#define CAAR(x) CAR (CAR (x))
+#define CADR(x) CAR (CDR (x))
+#define CDAR(x) CDR (CAR (x))
+#define CDDR(x) CDR (CDR (x))
+#define CADAR(x) CAR (CDR (CAR (x)))
+#define CADDR(x) CAR (CDR (CDR (x)))
+#define CDADAR(x) CAR (CDR (CAR (CDR (x))))
+#define MACRO(x) g_cells[x].car
+#define CLOSURE(x) g_cells[x].cdr
+#define CONTINUATION(x) g_cells[x].cdr
 
 int mes_open (char const *file_name, int flags, ...);
 #define open mes_open
