@@ -33,7 +33,7 @@ long STACK_SIZE;
 long JAM_SIZE;
 long GC_SAFETY;
 
-long MAX_STRING;
+int MAX_STRING;
 char *g_buf = 0;
 
 char *g_arena = 0;
@@ -250,7 +250,7 @@ SCM assert_defined(SCM x, SCM e)  ///((internal))
 	return e;
 }
 
-SCM make_string(char const* s, size_t length);
+SCM make_string(char const* s, int length);
 
 SCM check_formals(SCM f, SCM formals, SCM args)  ///((internal))
 {

@@ -53,7 +53,7 @@ int unreadchar();
 SCM write_byte (SCM x);
 SCM current_input_port ();
 int fdgetc (int fd);
-SCM make_string(char const* s, size_t length);
+SCM make_string(char const* s, int length);
 int fdungetc (int c, int fd);
 SCM make_struct (SCM type, SCM fields, SCM printer);
 SCM make_cell__(long type, SCM car, SCM cdr);

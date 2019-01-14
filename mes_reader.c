@@ -30,7 +30,7 @@
 #define VALUE(x) g_cells[x].cdr
 #define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 
-void assert_max_string(size_t i, char const* msg, char* string);
+void assert_max_string(int i, char const* msg, char* string);
 SCM read_env (SCM a);
 SCM reader_read_binary ();
 SCM reader_read_octal ();
@@ -42,7 +42,7 @@ SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 int readchar();
 SCM error(SCM key, SCM x);
-SCM make_string(char const* s, size_t length);
+SCM make_string(char const* s, int length);
 int peekchar();
 int unreadchar();
 SCM make_cell__(long type, SCM car, SCM cdr);
@@ -596,7 +596,7 @@ SCM reader_read_hex()
 
 SCM reader_read_string()
 {
-	size_t i = 0;
+	int i = 0;
 	int c;
 
 	do
