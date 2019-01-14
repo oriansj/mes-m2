@@ -20,7 +20,13 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define TYPE(x) g_cells[x].type
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define CAAR(x) CAR (CAR (x))
+#define CADR(x) CAR (CDR (x))
+#define CDAR(x) CDR (CAR (x))
 
 SCM struct_ref_(SCM x, long i);
 SCM struct_set_x_(SCM x, long i, SCM e);
@@ -82,7 +88,7 @@ SCM make_initial_module(SCM a)  ///((internal))
 	return module;
 }
 
-SCM module_printer(SCM module)
+void module_printer(SCM module)
 {
 	//module = m0;
 	fdputs("#<", __stdout);
