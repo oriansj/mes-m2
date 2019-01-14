@@ -82,25 +82,26 @@ SCM g_stack;
 SCM *g_stack_array;
 int MAX_STRING;
 char *g_buf;
-long g_free;
+SCM g_free;
 int g_debug;
-long GC_SAFETY;
-long ARENA_SIZE;
-long MAX_ARENA_SIZE;
-long JAM_SIZE;
-long STACK_SIZE;
+SCM GC_SAFETY;
+SCM ARENA_SIZE;
+SCM MAX_ARENA_SIZE;
+SCM JAM_SIZE;
+SCM STACK_SIZE;
 SCM g_symbol_max;
 int* __ungetc_buf;
-// a/env
+
+/* Mes core locals */
 SCM r0;
-// param 1
+/* param 1 */
 SCM r1;
-// save 2
+/* save 2 */
 SCM r2;
-// continuation
+/* continuation */
 SCM r3;
-// current-module
+/* current-module */
 SCM m0;
-// macro
+/* macro */
 SCM g_macros;
 SCM g_ports;
