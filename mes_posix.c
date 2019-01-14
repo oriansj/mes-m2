@@ -437,8 +437,9 @@ SCM set_current_error_port(SCM port)
 	return current_error_port();
 }
 
-SCM force_output()  ///((arity . n))
+SCM force_output(SCM port)  ///((arity . n))
 {
+  	(void)port;
 	return cell_unspecified;
 }
 
