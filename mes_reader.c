@@ -22,6 +22,7 @@
 #include "mes.h"
 #include "mes_constants.h"
 #include <ctype.h>
+#include <stdio.h>
 
 #define MAKE_STRING0(x) make_string (x, strlen (x))
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)

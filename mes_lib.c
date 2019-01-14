@@ -22,6 +22,8 @@
 #include "mes.h"
 #include "mes_constants.h"
 
+#define FRAME_SIZE 5
+
 #define TYPE(x) g_cells[x].type
 #define VARIABLE(x) g_cells[x].car
 #define VALUE(x) g_cells[x].cdr
