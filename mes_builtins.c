@@ -111,7 +111,7 @@ void builtin_printer(SCM builtin);
 
 // src/module.mes
 SCM make_module_type ();
-SCM module_printer (SCM module);
+void module_printer (SCM module);
 SCM module_variable (SCM module, SCM name);
 SCM module_ref (SCM module, SCM name);
 SCM module_define_x (SCM module, SCM name, SCM value);
