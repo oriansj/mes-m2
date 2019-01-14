@@ -29,7 +29,20 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define STRING(x) g_cells[x].cdr
+#define LENGTH(x) g_cells[x].car
+#define CBYTES(x) (char*)&g_cells[x].cdr
+#define CSTRING(x) CBYTES (STRING (x))
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
+#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
+#define TYPE(x) g_cells[x].type
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define VALUE(x) g_cells[x].cdr
+#define PORT(x) g_cells[x].car
+#define MAKE_STRING0(x) make_string (x, strlen (x))
+#define MAKE_STRING_PORT(x) make_cell__ (TPORT, -length__ (g_ports) - 2, x)
 
 int mes_open (char const *file_name, int flags, ...);
 #define open mes_open
@@ -288,7 +301,7 @@ SCM set_current_error_port(SCM port)
 	return current_error_port();
 }
 
-SCM force_output(SCM p)  ///((arity . n))
+SCM force_output()  ///((arity . n))
 {
 	return cell_unspecified;
 }
@@ -360,7 +373,7 @@ struct timespec g_start_time;
 SCM init_time(SCM a)  ///((internal))
 {
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &g_start_time);
-	a = acons(cell_symbol_internal_time_units_per_second, MAKE_NUMBER(TIME_UNITS_PER_SECOND), a);
+	return acons(cell_symbol_internal_time_units_per_second, MAKE_NUMBER(TIME_UNITS_PER_SECOND), a);
 }
 
 SCM current_time()
