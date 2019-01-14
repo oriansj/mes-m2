@@ -39,7 +39,7 @@ SCM hashq_ref (SCM table, SCM key, SCM dflt);
 SCM hash_ref (SCM table, SCM key, SCM dflt);
 SCM hashq_set_x (SCM table, SCM key, SCM value);
 SCM hash_set_x (SCM table, SCM key, SCM value);
-void hash_table_printer (SCM table);
+SCM hash_table_printer (SCM table);
 SCM make_hash_table (SCM x);
 // src/lib.mes
 SCM display_ (SCM x);
@@ -49,7 +49,7 @@ SCM write_ (SCM x);
 SCM write_error_ (SCM x);
 SCM write_port_ (SCM x, SCM p);
 SCM exit_ (SCM x);
-void frame_printer (SCM frame);
+SCM frame_printer (SCM frame);
 SCM make_stack ();
 SCM stack_length (SCM stack);
 SCM stack_ref (SCM stack, SCM index);
@@ -107,11 +107,11 @@ SCM set_cdr_x (SCM x, SCM e);
 SCM set_env_x (SCM x, SCM e, SCM a);
 SCM type_ (SCM x);
 SCM values (SCM x);
-void builtin_printer(SCM builtin);
+SCM builtin_printer(SCM builtin);
 
 // src/module.mes
 SCM make_module_type ();
-void module_printer (SCM module);
+SCM module_printer (SCM module);
 SCM module_variable (SCM module, SCM name);
 SCM module_ref (SCM module, SCM name);
 SCM module_define_x (SCM module, SCM name, SCM value);

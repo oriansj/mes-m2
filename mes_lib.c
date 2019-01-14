@@ -429,7 +429,7 @@ SCM exit_(SCM x)  ///((name . "exit"))
 	exit(VALUE(x));
 }
 
-void frame_printer(SCM frame)
+SCM frame_printer(SCM frame)
 {
 	fdputs("#<", __stdout);
 	display_(struct_ref_(frame, 2));
@@ -437,6 +437,7 @@ void frame_printer(SCM frame)
 	fdputs("procedure: ", __stdout);
 	display_(struct_ref_(frame, 3));
 	fdputc('>', __stdout);
+        return cell_unspecified;
 }
 
 SCM make_frame_type()  ///((internal))

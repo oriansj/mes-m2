@@ -88,7 +88,7 @@ SCM make_initial_module(SCM a)  ///((internal))
 	return module;
 }
 
-void module_printer(SCM module)
+SCM module_printer(SCM module)
 {
 	//module = m0;
 	fdputs("#<", __stdout);
@@ -104,6 +104,7 @@ void module_printer(SCM module)
 	fdputs("globals:\n  ", __stdout);
 	display_(table);
 	fdputc('>', __stdout);
+        return cell_unspecified;
 }
 
 SCM module_variable(SCM module, SCM name)
