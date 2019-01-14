@@ -20,7 +20,16 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include "mes_macros.h"
+
+#define TYPE(x) g_cells[x].type
+#define CAR(x) g_cells[x].car
+#define CDR(x) g_cells[x].cdr
+#define LENGTH(x) g_cells[x].car
+#define STRUCT(x) g_cells[x].cdr
+#define REF(x) g_cells[x].car
+#define VALUE(x) g_cells[x].cdr
+#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
+#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 
 // CONSTANT STRUCT_TYPE 0
 #define STRUCT_TYPE 0
