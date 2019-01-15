@@ -46,25 +46,6 @@
 #define MAKE_STRING0(x) make_string (x, strlen (x))
 #define MAKE_STRING_PORT(x) make_cell__ (TPORT, -length__ (g_ports) - 2, x)
 
-void __ungetc_init();
-// The Mes C Library defines and initializes these in crt1
-int mes_open(char const *file_name, int flags, ...)
-{
-	va_list ap;
-	va_start(ap, flags);
-	int mask = va_arg(ap, int);
-	__ungetc_init();
-	int r = open(file_name, flags, mask);
-
-	if(r > 2)
-	{
-		__ungetc_buf[r] = -1;
-	}
-
-	va_end(ap);
-	return r;
-}
-
 int readchar();
 int unreadchar();
 SCM write_byte (SCM x);
@@ -371,6 +352,24 @@ SCM current_input_port()
 	return CAR(x);
 }
 
+// The Mes C Library defines and initializes these in crt1
+int mes_open(char const *file_name, int flags, ...)
+{
+	va_list ap;
+	va_start(ap, flags);
+	int mask = va_arg(ap, int);
+	__ungetc_init();
+	int r = open(file_name, flags, mask);
+
+	if(r > 2)
+	{
+		__ungetc_buf[r] = -1;
+	}
+
+	va_end(ap);
+	return r;
+}
+
 SCM open_input_file(SCM file_name)
 {
 	return MAKE_NUMBER(mes_open(CSTRING(file_name), O_RDONLY));
@@ -437,7 +436,7 @@ SCM set_current_error_port(SCM port)
 
 SCM force_output(SCM port)  ///((arity . n))
 {
-  	(void)port;
+	(void)port;
 	return cell_unspecified;
 }
 
