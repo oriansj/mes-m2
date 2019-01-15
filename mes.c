@@ -24,13 +24,13 @@
 #include <fcntl.h>
 
 #define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
-#define VALUE(x) g_cells[x].cdr
-#define VARIABLE(x) g_cells[x].car
-#define STRING(x) g_cells[x].cdr
-#define LENGTH(x) g_cells[x].car
-#define VECTOR(x) g_cells[x].cdr
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
+#define VALUE(x) g_cells[x].rdc
+#define VARIABLE(x) g_cells[x].rac
+#define STRING(x) g_cells[x].rdc
+#define LENGTH(x) g_cells[x].rac
+#define VECTOR(x) g_cells[x].rdc
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 #define MAKE_STRING0(x) make_string (x, strlen (x))
 #define MAKE_MACRO(name, x) make_cell__ (TMACRO, x, STRING (name))
@@ -43,9 +43,9 @@
 #define CADAR(x) CAR (CDR (CAR (x)))
 #define CADDR(x) CAR (CDR (CDR (x)))
 #define CDADAR(x) CAR (CDR (CAR (CDR (x))))
-#define MACRO(x) g_cells[x].car
-#define CLOSURE(x) g_cells[x].cdr
-#define CONTINUATION(x) g_cells[x].cdr
+#define MACRO(x) g_cells[x].rac
+#define CLOSURE(x) g_cells[x].rdc
+#define CONTINUATION(x) g_cells[x].rdc
 
 SCM ARENA_SIZE;
 SCM MAX_ARENA_SIZE;
@@ -93,7 +93,7 @@ SCM set_current_input_port (SCM port);
 SCM read_input_file_env ();
 SCM string_equal_p (SCM a, SCM b);
 SCM symbol_to_string (SCM symbol);
-SCM make_struct (SCM type, SCM fields, SCM printer);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM init_time(SCM a);
 
 SCM alloc(SCM n)
@@ -744,7 +744,7 @@ SCM expand_variable(SCM x, SCM formals)  ///((internal))
 	return expand_variable_(x, formals, 1);
 }
 
-SCM struct_ref_(SCM x, SCM i);
+struct scm* struct_ref_(SCM x, SCM i);
 SCM vector_ref_(SCM x, SCM i);
 SCM make_vector__(SCM k);
 SCM vector_set_x_(SCM x, SCM i, SCM e);
@@ -1760,7 +1760,7 @@ SCM make_builtin_type()  ///(internal))
 	fields = cons(cstring_to_symbol("name"), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_builtin, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return GetSCM(make_struct(record_type, fields, cell_unspecified));
 }
 
 SCM make_builtin(SCM builtin_type, SCM name, SCM arity, SCM function)
@@ -1770,27 +1770,27 @@ SCM make_builtin(SCM builtin_type, SCM name, SCM arity, SCM function)
 	values = cons(arity, values);
 	values = cons(name, values);
 	values = cons(cell_symbol_builtin, values);
-	return make_struct(builtin_type, values, cstring_to_symbol("builtin-printer"));
+	return GetSCM(make_struct(builtin_type, values, cstring_to_symbol("builtin-printer")));
 }
 
 SCM builtin_name(SCM builtin)
 {
-	return struct_ref_(builtin, 3);
+	return GetSCM(struct_ref_(builtin, 3));
 }
 
 SCM builtin_arity(SCM builtin)
 {
-	return struct_ref_(builtin, 4);
+	return GetSCM(struct_ref_(builtin, 4));
 }
 
 SCM (*builtin_function(SCM builtin))(SCM)
 {
-	return (void*)VALUE(struct_ref_(builtin, 5));
+	return (void*)VALUE(GetSCM(struct_ref_(builtin, 5)));
 }
 
 SCM builtin_p(SCM x)
 {
-	return (TYPE(x) == TSTRUCT && struct_ref_(x, 2) == cell_symbol_builtin) ? cell_t : cell_f;
+	return (TYPE(x) == TSTRUCT && GetSCM(struct_ref_(x, 2)) == cell_symbol_builtin) ? cell_t : cell_f;
 }
 
 SCM builtin_printer(SCM builtin)

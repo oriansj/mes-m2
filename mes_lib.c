@@ -25,21 +25,21 @@
 #define FRAME_SIZE 5
 
 #define TYPE(x) g_cells[x].type
-#define VARIABLE(x) g_cells[x].car
-#define VALUE(x) g_cells[x].cdr
-#define LENGTH(x) g_cells[x].car
-#define REF(x) g_cells[x].car
-#define STRUCT(x) g_cells[x].cdr
-#define VECTOR(x) g_cells[x].cdr
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
+#define VARIABLE(x) g_cells[x].rac
+#define VALUE(x) g_cells[x].rdc
+#define LENGTH(x) g_cells[x].rac
+#define REF(x) g_cells[x].rac
+#define STRUCT(x) g_cells[x].rdc
+#define VECTOR(x) g_cells[x].rdc
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
 #define CAAR(x) CAR (CAR (x))
 #define CADR(x) CAR (CDR (x))
 #define CDAR(x) CDR (CAR (x))
 #define CDDR(x) CDR (CDR (x))
-#define PORT(x) g_cells[x].car
-#define STRING(x) g_cells[x].cdr
-#define CBYTES(x) (char*)&g_cells[x].cdr
+#define PORT(x) g_cells[x].rac
+#define STRING(x) g_cells[x].rdc
+#define CBYTES(x) (char*)&g_cells[x].rdc
 #define CSTRING(x) CBYTES (STRING (x))
 
 
@@ -53,13 +53,13 @@ SCM fdisplay_(SCM, int, int);
 int fdputs(char const* s, int fd);
 int fdputc(int c, int fd);
 char *itoa (int number);
-SCM struct_ref_(SCM x, long i);
+struct scm* struct_ref_(SCM x, long i);
 SCM builtin_p (SCM x);
 SCM apply(SCM f, SCM x);
 SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
-SCM make_struct (SCM type, SCM fields, SCM printer);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM cstring_to_symbol(char const *s);
 SCM make_vector__(long k);
 SCM vector_set_x_(SCM x, long i, SCM e);
@@ -326,7 +326,7 @@ SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	else if(t == TSTRUCT)
 	{
 		//SCM printer = STRUCT (x) + 1;
-		SCM printer = struct_ref_(x, STRUCT_PRINTER);
+		SCM printer = GetSCM(struct_ref_(x, STRUCT_PRINTER));
 
 		if(TYPE(printer) == TREF)
 		{
@@ -432,10 +432,10 @@ SCM exit_(SCM x)  ///((name . "exit"))
 SCM frame_printer(SCM frame)
 {
 	fdputs("#<", __stdout);
-	display_(struct_ref_(frame, 2));
+	display_(GetSCM(struct_ref_(frame, 2)));
 	fdputc(' ', __stdout);
 	fdputs("procedure: ", __stdout);
-	display_(struct_ref_(frame, 3));
+	display_(GetSCM(struct_ref_(frame, 3)));
 	fdputc('>', __stdout);
         return cell_unspecified;
 }
@@ -447,7 +447,7 @@ SCM make_frame_type()  ///((internal))
 	fields = cons(cell_symbol_procedure, fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_frame, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return GetSCM(make_struct(record_type, fields, cell_unspecified));
 }
 
 SCM make_frame(long index)
@@ -464,7 +464,7 @@ SCM make_frame(long index)
 	SCM values = cell_nil;
 	values = cons(procedure, values);
 	values = cons(cell_symbol_frame, values);
-	return make_struct(frame_type, values, cstring_to_symbol("frame-printer"));
+	return GetSCM(make_struct(frame_type, values, cstring_to_symbol("frame-printer")));
 }
 
 SCM make_stack_type()  ///((internal))
@@ -474,7 +474,7 @@ SCM make_stack_type()  ///((internal))
 	fields = cons(cstring_to_symbol("frames"), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_stack, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return GetSCM(make_struct(record_type, fields, cell_unspecified));
 }
 
 SCM make_stack()  ///((arity . n))
@@ -492,18 +492,18 @@ SCM make_stack()  ///((arity . n))
 	SCM values = cell_nil;
 	values = cons(frames, values);
 	values = cons(cell_symbol_stack, values);
-	return make_struct(stack_type, values, cell_unspecified);
+	return GetSCM(make_struct(stack_type, values, cell_unspecified));
 }
 
 SCM stack_length(SCM stack)
 {
-	SCM frames = struct_ref_(stack, 3);
+	SCM frames = GetSCM(struct_ref_(stack, 3));
 	return vector_length(frames);
 }
 
 SCM stack_ref(SCM stack, SCM index)
 {
-	SCM frames = struct_ref_(stack, 3);
+	SCM frames = GetSCM(struct_ref_(stack, 3));
 	return vector_ref(frames, index);
 }
 

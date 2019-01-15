@@ -26,9 +26,9 @@
 
 #define MAKE_STRING0(x) make_string (x, strlen (x))
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define CAR(x) g_cells[x].car
+#define CAR(x) g_cells[x].rac
 #define TYPE(x) g_cells[x].type
-#define VALUE(x) g_cells[x].cdr
+#define VALUE(x) g_cells[x].rdc
 #define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 
 void assert_max_string(int i, char const* msg, char* string);

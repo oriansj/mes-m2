@@ -23,9 +23,9 @@
 #include <limits.h>
 
 #define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
-#define VALUE(x) g_cells[x].cdr
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
+#define VALUE(x) g_cells[x].rdc
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 
 int eputs(char const* s);

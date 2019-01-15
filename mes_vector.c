@@ -21,12 +21,12 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-#define VALUE(x) g_cells[x].cdr
+#define VALUE(x) g_cells[x].rdc
 #define TYPE(x) g_cells[x].type
-#define LENGTH(x) g_cells[x].car
+#define LENGTH(x) g_cells[x].rac
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define VECTOR(x) g_cells[x].cdr
-#define REF(x) g_cells[x].car
+#define VECTOR(x) g_cells[x].rdc
+#define REF(x) g_cells[x].rac
 #define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 #define MAKE_REF(n) make_cell__ (TREF, n, 0)
 
@@ -36,6 +36,7 @@ long length__(SCM x);
 SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
+SCM vector_entry(SCM x);
 
 SCM make_vector__(long k)
 {

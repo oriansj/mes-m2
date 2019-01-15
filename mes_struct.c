@@ -22,12 +22,12 @@
 #include "mes_constants.h"
 
 #define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
-#define LENGTH(x) g_cells[x].car
-#define STRUCT(x) g_cells[x].cdr
-#define REF(x) g_cells[x].car
-#define VALUE(x) g_cells[x].cdr
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
+#define LENGTH(x) g_cells[x].rac
+#define STRUCT(x) g_cells[x].rdc
+#define REF(x) g_cells[x].rac
+#define VALUE(x) g_cells[x].rdc
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 #define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 
@@ -39,8 +39,9 @@
 long length__(SCM x);
 SCM alloc(long n);
 SCM make_cell__(long type, SCM car, SCM cdr);
+SCM vector_entry(SCM x);
 
-SCM make_struct(SCM type, SCM fields, SCM printer)
+struct scm* make_struct(SCM type, SCM fields, SCM printer)
 {
 	long size = 2 + length__(fields);
 	SCM v = alloc(size);
@@ -61,16 +62,16 @@ SCM make_struct(SCM type, SCM fields, SCM printer)
 		g_cells[v + i] = g_cells[vector_entry(e)];
 	}
 
-	return x;
+	return Getstructscm(x);
 }
 
-SCM struct_length(SCM x)
+struct scm* struct_length(SCM x)
 {
 	assert(TYPE(x) == TSTRUCT);
-	return MAKE_NUMBER(LENGTH(x));
+	return Getstructscm(MAKE_NUMBER(LENGTH(x)));
 }
 
-SCM struct_ref_(SCM x, long i)
+struct scm* struct_ref_(SCM x, long i)
 {
 	assert(TYPE(x) == TSTRUCT);
 	assert(i < LENGTH(x));
@@ -91,7 +92,7 @@ SCM struct_ref_(SCM x, long i)
 		e = MAKE_NUMBER(VALUE(e));
 	}
 
-	return e;
+	return Getstructscm(e);
 }
 
 SCM struct_set_x_(SCM x, long i, SCM e)
@@ -104,7 +105,7 @@ SCM struct_set_x_(SCM x, long i, SCM e)
 
 SCM struct_ref(SCM x, SCM i)
 {
-	return struct_ref_(x, VALUE(i));
+	return GetSCM(struct_ref_(x, VALUE(i)));
 }
 
 SCM struct_set_x(SCM x, SCM i, SCM e)
