@@ -64,8 +64,6 @@ int mes_open(char const *file_name, int flags, ...)
 	va_end(ap);
 	return r;
 }
-#define open mes_open
-
 
 int readchar();
 int unreadchar();
@@ -375,7 +373,7 @@ SCM current_input_port()
 
 SCM open_input_file(SCM file_name)
 {
-	return MAKE_NUMBER(open(CSTRING(file_name), O_RDONLY));
+	return MAKE_NUMBER(mes_open(CSTRING(file_name), O_RDONLY));
 }
 
 SCM open_input_string(SCM string)
@@ -422,7 +420,7 @@ SCM open_output_file(SCM x)  ///((arity . n))
 		mode = VALUE(car(x));
 	}
 
-	return MAKE_NUMBER(open(CSTRING(file_name), O_WRONLY | O_CREAT | O_TRUNC, mode));
+	return MAKE_NUMBER(mes_open(CSTRING(file_name), O_WRONLY | O_CREAT | O_TRUNC, mode));
 }
 
 SCM set_current_output_port(SCM port)
@@ -559,4 +557,29 @@ SCM delete_file(SCM file_name)
 {
 	unlink(CSTRING(file_name));
 	return cell_unspecified;
+}
+
+int open_boot(char *prefix, char const *boot, char const *location)
+{
+	strcpy(prefix + strlen(prefix), boot);
+
+	if(g_debug > 1)
+	{
+		eputs("mes: reading boot-0 [");
+		eputs(location);
+		eputs("]: ");
+		eputs(prefix);
+		eputs("\n");
+	}
+
+	int fd = mes_open(prefix, O_RDONLY);
+
+	if(g_debug && fd > 0)
+	{
+		eputs("mes: read boot-0: ");
+		eputs(prefix);
+		eputs("\n");
+	}
+
+	return fd;
 }

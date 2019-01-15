@@ -47,22 +47,19 @@
 #define CLOSURE(x) g_cells[x].cdr
 #define CONTINUATION(x) g_cells[x].cdr
 
-int mes_open (char const *file_name, int flags, ...);
-#define open mes_open
+SCM ARENA_SIZE;
+SCM MAX_ARENA_SIZE;
+SCM STACK_SIZE;
 
-long ARENA_SIZE;
-long MAX_ARENA_SIZE;
-long STACK_SIZE;
-
-long JAM_SIZE;
-long GC_SAFETY;
+SCM JAM_SIZE;
+SCM GC_SAFETY;
 
 int MAX_STRING;
 char *g_buf = 0;
 
 char *g_arena = 0;
 int g_debug;
-long g_free = 0;
+SCM g_free = 0;
 
 /* Imported Functions */
 char *itoa (int number);
@@ -72,7 +69,7 @@ int eputs (char const* s);
 SCM mes_builtins(SCM a);
 SCM apply_builtin(SCM fn, SCM x);
 SCM cstring_to_symbol(char const *s);
-SCM make_hash_table_(long size);
+SCM make_hash_table_(SCM size);
 SCM make_initial_module(SCM a);
 SCM gc_check ();
 SCM gc ();
@@ -99,7 +96,7 @@ SCM symbol_to_string (SCM symbol);
 SCM make_struct (SCM type, SCM fields, SCM printer);
 SCM init_time(SCM a);
 
-SCM alloc(long n)
+SCM alloc(SCM n)
 {
 	SCM x = g_free;
 	g_free += n;
@@ -112,7 +109,7 @@ SCM alloc(long n)
 	return x;
 }
 
-SCM make_cell__(long type, SCM car, SCM cdr)
+SCM make_cell__(SCM type, SCM car, SCM cdr)
 {
 	SCM x = alloc(1);
 	TYPE(x) = type;
@@ -124,7 +121,7 @@ SCM make_cell__(long type, SCM car, SCM cdr)
 SCM make_cell_(SCM type, SCM car, SCM cdr)
 {
 	assert(TYPE(type) == TNUMBER);
-	long t = VALUE(type);
+	SCM t = VALUE(type);
 
 	if(t == TCHAR || t == TNUMBER)
 	{
@@ -220,9 +217,9 @@ SCM acons(SCM key, SCM value, SCM alist)
 	return cons(cons(key, value), alist);
 }
 
-long length__(SCM x)  ///((internal))
+SCM length__(SCM x)  ///((internal))
 {
-	long n = 0;
+	SCM n = 0;
 
 	while(x != cell_nil)
 	{
@@ -278,8 +275,8 @@ SCM make_string(char const* s, int length);
 
 SCM check_formals(SCM f, SCM formals, SCM args)  ///((internal))
 {
-	long flen = (TYPE(formals) == TNUMBER) ? VALUE(formals) : length__(formals);
-	long alen = length__(args);
+	SCM flen = (TYPE(formals) == TNUMBER) ? VALUE(formals) : length__(formals);
+	SCM alen = length__(args);
 
 	if(alen != flen && alen != -1 && flen != -1)
 	{
@@ -747,10 +744,10 @@ SCM expand_variable(SCM x, SCM formals)  ///((internal))
 	return expand_variable_(x, formals, 1);
 }
 
-SCM struct_ref_(SCM x, long i);
-SCM vector_ref_(SCM x, long i);
-SCM make_vector__(long k);
-SCM vector_set_x_(SCM x, long i, SCM e);
+SCM struct_ref_(SCM x, SCM i);
+SCM vector_ref_(SCM x, SCM i);
+SCM make_vector__(SCM k);
+SCM vector_set_x_(SCM x, SCM i, SCM e);
 
 SCM eval_apply()
 {
@@ -772,7 +769,7 @@ SCM eval_apply()
 	int global_p;
 	int macro_p;
 	int t;
-	long c;
+	SCM c;
 eval_apply:
 
 	if(r3 == cell_vm_evlis2)
@@ -1552,7 +1549,7 @@ SCM g_symbol_max;
 
 SCM gc_init_cells()  ///((internal))
 {
-	long arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
+	SCM arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
 	void *p = malloc(arena_bytes + STACK_SIZE * sizeof(SCM));
 	g_cells = (struct scm *)p;
 	g_stack_array = (SCM*)(p + arena_bytes);
@@ -1567,7 +1564,7 @@ SCM gc_init_cells()  ///((internal))
 	return 0;
 }
 
-void init_symbol(long x, long type, char const* name)
+void init_symbol(SCM x, SCM type, char const* name)
 {
 	TYPE(x) = type;
 	int length = strlen(name);
@@ -1874,31 +1871,7 @@ SCM apply_builtin(SCM fn, SCM x)  ///((internal))
 	return cell_unspecified;
 }
 
-int open_boot(char *prefix, char const *boot, char const *location)
-{
-	strcpy(prefix + strlen(prefix), boot);
-
-	if(g_debug > 1)
-	{
-		eputs("mes: reading boot-0 [");
-		eputs(location);
-		eputs("]: ");
-		eputs(prefix);
-		eputs("\n");
-	}
-
-	int fd = open(prefix, O_RDONLY);
-
-	if(g_debug && fd > 0)
-	{
-		eputs("mes: read boot-0: ");
-		eputs(prefix);
-		eputs("\n");
-	}
-
-	return fd;
-}
-
+int open_boot(char *prefix, char const *boot, char const *location);
 void read_boot()  ///((internal))
 {
 	__stdin = -1;
