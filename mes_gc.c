@@ -25,14 +25,14 @@
 
 #define TYPE(x) g_cells[x].type
 #define NTYPE(x) g_news[x].type
-#define NVECTOR(x) g_news[x].cdr
-#define LENGTH(x) g_cells[x].car
-#define NLENGTH(x) g_news[x].car
-#define VECTOR(x) g_cells[x].cdr
-#define CBYTES(x) (char*)&g_cells[x].cdr
-#define NCBYTES(x) (char*)&g_news[x].cdr
-#define CAR(x) g_cells[x].car
-#define NVALUE(x) g_news[x].cdr
+#define NVECTOR(x) g_news[x].rdc
+#define LENGTH(x) g_cells[x].rac
+#define NLENGTH(x) g_news[x].rac
+#define VECTOR(x) g_cells[x].rdc
+#define CBYTES(x) (char*)&g_cells[x].rdc
+#define NCBYTES(x) (char*)&g_news[x].rdc
+#define CAR(x) g_cells[x].rac
+#define NVALUE(x) g_news[x].rdc
 
 size_t bytes_cells(size_t length);
 int eputs(char const* s);
@@ -99,7 +99,7 @@ SCM gc_copy(SCM old)  ///((internal))
 {
 	if(TYPE(old) == TBROKEN_HEART)
 	{
-		return g_cells[old].car;
+		return g_cells[old].rac;
 	}
 
 	SCM new = g_free++;
@@ -146,13 +146,13 @@ SCM gc_copy(SCM old)  ///((internal))
 
 SCM gc_relocate_car(SCM new, SCM car)  ///((internal))
 {
-	g_news[new].car = car;
+	g_news[new].rac = car;
 	return cell_unspecified;
 }
 
 SCM gc_relocate_cdr(SCM new, SCM cdr)  ///((internal))
 {
-	g_news[new].cdr = cdr;
+	g_news[new].rdc = cdr;
 	return cell_unspecified;
 }
 
@@ -174,7 +174,7 @@ void gc_loop(SCM scan)  ///((internal))
 		        || scan == 1 // null
 		        || NTYPE(scan) == TVARIABLE)
 		{
-			car = gc_copy(g_news[scan].car);
+			car = gc_copy(g_news[scan].rac);
 			gc_relocate_car(scan, car);
 		}
 
@@ -191,7 +191,7 @@ void gc_loop(SCM scan)  ///((internal))
 		        || NTYPE(scan) == TVALUES)
 		        && g_news[scan].cdr) // allow for 0 terminated list of symbols
 		{
-			cdr = gc_copy(g_news[scan].cdr);
+			cdr = gc_copy(g_news[scan].rdc);
 			gc_relocate_cdr(scan, cdr);
 		}
 

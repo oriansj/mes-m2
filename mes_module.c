@@ -22,13 +22,13 @@
 #include "mes_constants.h"
 
 #define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
 #define CAAR(x) CAR (CAR (x))
 #define CADR(x) CAR (CDR (x))
 #define CDAR(x) CDR (CAR (x))
 
-SCM struct_ref_(SCM x, long i);
+struct scm* struct_ref_(SCM x, long i);
 SCM struct_set_x_(SCM x, long i, SCM e);
 SCM cstring_to_symbol(char const *s);
 SCM make_hashq_type();
@@ -37,7 +37,7 @@ SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 SCM make_cell__(long type, SCM car, SCM cdr);
-SCM make_struct (SCM type, SCM fields, SCM printer);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM acons (SCM key, SCM value, SCM alist);
 SCM make_hash_table_(long size);
 int fdputs(char const* s, int fd);
@@ -56,7 +56,7 @@ SCM make_module_type()  ///(internal))
 	fields = cons(cstring_to_symbol("name"), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_module, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return GetSCM(make_struct(record_type, fields, cell_unspecified));
 }
 
 SCM make_initial_module(SCM a)  ///((internal))
@@ -73,7 +73,7 @@ SCM make_initial_module(SCM a)  ///((internal))
 	values = cons(locals, values);
 	values = cons(name, values);
 	values = cons(cell_symbol_module, values);
-	SCM module = make_struct(module_type, values, cstring_to_symbol("module-printer"));
+	SCM module = GetSCM(make_struct(module_type, values, cstring_to_symbol("module-printer")));
 	r0 = cell_nil;
 	r0 = cons(CADR(a), r0);
 	r0 = cons(CAR(a), r0);
@@ -92,19 +92,19 @@ SCM module_printer(SCM module)
 {
 	//module = m0;
 	fdputs("#<", __stdout);
-	display_(struct_ref_(module, 2));
+	display_(GetSCM(struct_ref_(module, 2)));
 	fdputc(' ', __stdout);
 	fdputs("name: ", __stdout);
-	display_(struct_ref_(module, 3));
+	display_(GetSCM(struct_ref_(module, 3)));
 	fdputc(' ', __stdout);
 	fdputs("locals: ", __stdout);
-	display_(struct_ref_(module, 4));
+	display_(GetSCM(struct_ref_(module, 4)));
 	fdputc(' ', __stdout);
-	SCM table = struct_ref_(module, 5);
+	SCM table = GetSCM(struct_ref_(module, 5));
 	fdputs("globals:\n  ", __stdout);
 	display_(table);
 	fdputc('>', __stdout);
-        return cell_unspecified;
+	return cell_unspecified;
 }
 
 SCM module_variable(SCM module, SCM name)
@@ -116,7 +116,7 @@ SCM module_variable(SCM module, SCM name)
 	if(x == cell_f)
 	{
 		module = m0;
-		SCM globals = struct_ref_(module, 5);
+		SCM globals = GetSCM(struct_ref_(module, 5));
 		x = hashq_get_handle(globals, name, cell_f);
 	}
 
@@ -138,6 +138,6 @@ SCM module_ref(SCM module, SCM name)
 SCM module_define_x(SCM module, SCM name, SCM value)
 {
 	module = m0;
-	SCM globals = struct_ref_(module, 5);
+	SCM globals = GetSCM(struct_ref_(module, 5));
 	return hashq_set_x(globals, name, value);
 }

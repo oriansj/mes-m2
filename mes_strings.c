@@ -22,12 +22,12 @@
 #include "mes_constants.h"
 
 #define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
-#define LENGTH(x) g_cells[x].car
-#define VALUE(x) g_cells[x].cdr
-#define STRING(x) g_cells[x].cdr
-#define CBYTES(x) (char*)&g_cells[x].cdr
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
+#define LENGTH(x) g_cells[x].rac
+#define VALUE(x) g_cells[x].rdc
+#define STRING(x) g_cells[x].rdc
+#define CBYTES(x) (char*)&g_cells[x].rdc
 #define CSTRING(x) CBYTES (STRING (x))
 #define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 #define MAKE_STRING0(x) make_string (x, strlen (x))

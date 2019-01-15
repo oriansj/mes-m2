@@ -173,8 +173,8 @@ SCM string_append (SCM x);
 SCM string_length (SCM string);
 SCM string_ref (SCM str, SCM k);
 // src/struct.mes
-SCM make_struct (SCM type, SCM fields, SCM printer);
-SCM struct_length (SCM x);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
+struct scm* struct_length (SCM x);
 SCM struct_ref (SCM x, SCM i);
 SCM struct_set_x (SCM x, SCM i, SCM e);
 // src/vector.mes

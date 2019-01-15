@@ -32,17 +32,17 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-#define STRING(x) g_cells[x].cdr
-#define LENGTH(x) g_cells[x].car
-#define CBYTES(x) (char*)&g_cells[x].cdr
+#define STRING(x) g_cells[x].rdc
+#define LENGTH(x) g_cells[x].rac
+#define CBYTES(x) (char*)&g_cells[x].rdc
 #define CSTRING(x) CBYTES (STRING (x))
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 #define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 #define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
-#define VALUE(x) g_cells[x].cdr
-#define PORT(x) g_cells[x].car
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
+#define VALUE(x) g_cells[x].rdc
+#define PORT(x) g_cells[x].rac
 #define MAKE_STRING0(x) make_string (x, strlen (x))
 #define MAKE_STRING_PORT(x) make_cell__ (TPORT, -length__ (g_ports) - 2, x)
 
@@ -53,7 +53,6 @@ SCM current_input_port ();
 int fdgetc (int fd);
 SCM make_string(char const* s, int length);
 int fdungetc (int c, int fd);
-SCM make_struct (SCM type, SCM fields, SCM printer);
 SCM make_cell__(long type, SCM car, SCM cdr);
 SCM car (SCM x);
 SCM cdr (SCM x);

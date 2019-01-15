@@ -22,15 +22,15 @@
 #include "mes_constants.h"
 
 #define TYPE(x) g_cells[x].type
-#define CBYTES(x) (char*)&g_cells[x].cdr
-#define STRING(x) g_cells[x].cdr
+#define CBYTES(x) (char*)&g_cells[x].rdc
+#define STRING(x) g_cells[x].rdc
 #define CSTRING(x) CBYTES (STRING (x))
 #define MAKE_STRING0(x) make_string (x, strlen (x))
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define VALUE(x) g_cells[x].cdr
-#define CAR(x) g_cells[x].car
-#define CDR(x) g_cells[x].cdr
-#define LENGTH(x) g_cells[x].car
+#define VALUE(x) g_cells[x].rdc
+#define CAR(x) g_cells[x].rac
+#define CDR(x) g_cells[x].rdc
+#define LENGTH(x) g_cells[x].rac
 #define CAAR(x) CAR (CAR (x))
 
 SCM make_vector__(long k);
@@ -40,7 +40,7 @@ SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
 SCM make_string(char const* s, int length);
 SCM make_cell__(long type, SCM car, SCM cdr);
-SCM struct_ref_(SCM x, long i);
+struct scm* struct_ref_(SCM x, long i);
 SCM assq (SCM x, SCM a);
 SCM assoc (SCM x, SCM a);
 SCM acons (SCM key, SCM value, SCM alist);
@@ -48,7 +48,7 @@ int fdputs (char const* s, int fd);
 SCM display_ (SCM x);
 int fdputc (int c, int fd);
 SCM write_ (SCM x);
-SCM make_struct (SCM type, SCM fields, SCM printer);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
 
 int hash_cstring(char const* s, long size)
 {
@@ -100,9 +100,9 @@ SCM hash(SCM x, SCM size)
 
 SCM hashq_get_handle(SCM table, SCM key, SCM dflt)
 {
-	long size = VALUE(struct_ref_(table, 3));
+	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
-	SCM buckets = struct_ref_(table, 4);
+	SCM buckets = GetSCM(struct_ref_(table, 4));
 	SCM bucket = vector_ref_(buckets, hash);
 	SCM x = cell_f;
 
@@ -124,9 +124,9 @@ SCM hashq_ref(SCM table, SCM key, SCM dflt)
 #if defined (INLINE)
 	SCM x = hashq_get_handle(table, key, dflt);
 #else
-	long size = VALUE(struct_ref_(table, 3));
+	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
-	SCM buckets = struct_ref_(table, 4);
+	SCM buckets = GetSCM(struct_ref_(table, 4));
 	SCM bucket = vector_ref_(buckets, hash);
 	SCM x = cell_f;
 
@@ -152,9 +152,9 @@ SCM hashq_ref(SCM table, SCM key, SCM dflt)
 
 SCM hash_ref(SCM table, SCM key, SCM dflt)
 {
-	long size = VALUE(struct_ref_(table, 3));
+	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hash_(key, size);
-	SCM buckets = struct_ref_(table, 4);
+	SCM buckets = GetSCM(struct_ref_(table, 4));
 	SCM bucket = vector_ref_(buckets, hash);
 	SCM x = cell_f;
 
@@ -196,12 +196,12 @@ SCM hash_set_x_(SCM table, unsigned hash, SCM key, SCM value)
 
 SCM hashq_set_x(SCM table, SCM key, SCM value)
 {
-	long size = VALUE(struct_ref_(table, 3));
+	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
 #if defined (INLINE)
 	return hash_set_x_(table, hash, key, value);
 #else
-	SCM buckets = struct_ref_(table, 4);
+	SCM buckets = GetSCM(struct_ref_(table, 4));
 	SCM bucket = vector_ref_(buckets, hash);
 
 	if(TYPE(bucket) != TPAIR)
@@ -217,12 +217,12 @@ SCM hashq_set_x(SCM table, SCM key, SCM value)
 
 SCM hash_set_x(SCM table, SCM key, SCM value)
 {
-	long size = VALUE(struct_ref_(table, 3));
+	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hash_(key, size);
 #if defined (INLINE)
 	return hash_set_x_(table, hash, key, value);
 #else
-	SCM buckets = struct_ref_(table, 4);
+	SCM buckets = GetSCM(struct_ref_(table, 4));
 	SCM bucket = vector_ref_(buckets, hash);
 
 	if(TYPE(bucket) != TPAIR)
@@ -239,12 +239,12 @@ SCM hash_set_x(SCM table, SCM key, SCM value)
 SCM hash_table_printer(SCM table)
 {
 	fdputs("#<", __stdout);
-	display_(struct_ref_(table, 2));
+	display_(GetSCM(struct_ref_(table, 2)));
 	fdputc(' ', __stdout);
 	fdputs("size: ", __stdout);
-	display_(struct_ref_(table, 3));
+	display_(GetSCM(struct_ref_(table, 3)));
 	fdputc(' ', __stdout);
-	SCM buckets = struct_ref_(table, 4);
+	SCM buckets = GetSCM(struct_ref_(table, 4));
 	fdputs("buckets: ", __stdout);
 
 	for(int i = 0; i < LENGTH(buckets); i++)
@@ -271,7 +271,7 @@ SCM hash_table_printer(SCM table)
 	}
 
 	fdputc('>', __stdout);
-        return cell_unspecified;
+	return cell_unspecified;
 }
 
 SCM make_hashq_type()  ///((internal))
@@ -282,7 +282,7 @@ SCM make_hashq_type()  ///((internal))
 	fields = cons(cell_symbol_size, fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_hashq_table, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return GetSCM(make_struct(record_type, fields, cell_unspecified));
 }
 
 SCM make_hash_table_(long size)
@@ -299,7 +299,7 @@ SCM make_hash_table_(long size)
 	values = cons(MAKE_NUMBER(size), values);
 	values = cons(cell_symbol_hashq_table, values);
 	//FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer");
-	return make_struct(hashq_type, values, cell_unspecified);
+	return GetSCM(make_struct(hashq_type, values, cell_unspecified));
 }
 
 SCM make_hash_table(SCM x)

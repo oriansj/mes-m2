@@ -46,7 +46,8 @@ struct scm
 	int type;
 	union
 	{
-		SCM car;
+		struct scm* car;
+		SCM rac;
 		int length;
 		SCM macro;
 		SCM port;
@@ -55,7 +56,8 @@ struct scm
 	};
 	union
 	{
-		SCM cdr;
+		struct scm* cdr;
+		SCM rdc;
 		char* cbytes;
 		SCM closure;
 		SCM continuation;
@@ -65,9 +67,6 @@ struct scm
 		SCM struc;
 	};
 };
-
-SCM vector_entry(SCM x);
-
 
 struct scm *g_cells;
 struct scm *g_news;
@@ -105,3 +104,8 @@ SCM m0;
 /* macro */
 SCM g_macros;
 SCM g_ports;
+
+
+/* Temp interface functions */
+SCM GetSCM(struct scm* a);
+struct scm* Getstructscm(SCM a);
