@@ -61,10 +61,10 @@ SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM cstring_to_symbol(char const *s);
-SCM make_vector__(long k);
-SCM vector_set_x_(SCM x, long i, SCM e);
-SCM vector_length (SCM x);
-SCM vector_ref (SCM x, SCM i);
+struct scm* make_vector__(long k);
+struct scm* vector_set_x_(SCM x, long i, SCM e);
+struct scm* vector_length (SCM x);
+struct scm* vector_ref (SCM x, SCM i);
 SCM string_equal_p (SCM a, SCM b);
 SCM eq_p (SCM x, SCM y);
 
@@ -481,7 +481,7 @@ SCM make_stack()  ///((arity . n))
 {
 	SCM stack_type = make_stack_type();
 	long size = (STACK_SIZE - g_stack) / FRAME_SIZE;
-	SCM frames = make_vector__(size);
+	SCM frames = GetSCM(make_vector__(size));
 
 	for(long i = 0; i < size; i++)
 	{
@@ -498,13 +498,13 @@ SCM make_stack()  ///((arity . n))
 SCM stack_length(SCM stack)
 {
 	SCM frames = GetSCM(struct_ref_(stack, 3));
-	return vector_length(frames);
+	return GetSCM(vector_length(frames));
 }
 
 SCM stack_ref(SCM stack, SCM index)
 {
 	SCM frames = GetSCM(struct_ref_(stack, 3));
-	return vector_ref(frames, index);
+	return GetSCM(vector_ref(frames, index));
 }
 
 SCM xassq(SCM x, SCM a)  ///for speed in core only

@@ -1,6 +1,7 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2019 Jeremiah Orians
  *
  * This file is part of GNU Mes.
  *
@@ -33,9 +34,9 @@
 #define LENGTH(x) g_cells[x].rac
 #define CAAR(x) CAR (CAR (x))
 
-SCM make_vector__(long k);
-SCM vector_ref_(SCM x, long i);
-SCM vector_set_x_(SCM x, long i, SCM e);
+struct scm* make_vector__(long k);
+struct scm* vector_ref_(SCM x, long i);
+struct scm* vector_set_x_(SCM x, long i, SCM e);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
 SCM make_string(char const* s, int length);
@@ -103,7 +104,7 @@ SCM hashq_get_handle(SCM table, SCM key, SCM dflt)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = vector_ref_(buckets, hash);
+	SCM bucket = GetSCM(vector_ref_(buckets, hash));
 	SCM x = cell_f;
 
 	if(TYPE(dflt) == TPAIR)
@@ -127,7 +128,7 @@ SCM hashq_ref(SCM table, SCM key, SCM dflt)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = vector_ref_(buckets, hash);
+	SCM bucket = GetSCM(vector_ref_(buckets, hash));
 	SCM x = cell_f;
 
 	if(TYPE(dflt) == TPAIR)
@@ -155,7 +156,7 @@ SCM hash_ref(SCM table, SCM key, SCM dflt)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hash_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = vector_ref_(buckets, hash);
+	SCM bucket = GetSCM(vector_ref_(buckets, hash));
 	SCM x = cell_f;
 
 	if(TYPE(dflt) == TPAIR)
@@ -202,7 +203,7 @@ SCM hashq_set_x(SCM table, SCM key, SCM value)
 	return hash_set_x_(table, hash, key, value);
 #else
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = vector_ref_(buckets, hash);
+	SCM bucket = GetSCM(vector_ref_(buckets, hash));
 
 	if(TYPE(bucket) != TPAIR)
 	{
@@ -223,7 +224,7 @@ SCM hash_set_x(SCM table, SCM key, SCM value)
 	return hash_set_x_(table, hash, key, value);
 #else
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = vector_ref_(buckets, hash);
+	SCM bucket = GetSCM(vector_ref_(buckets, hash));
 
 	if(TYPE(bucket) != TPAIR)
 	{
@@ -249,7 +250,7 @@ SCM hash_table_printer(SCM table)
 
 	for(int i = 0; i < LENGTH(buckets); i++)
 	{
-		SCM e = vector_ref_(buckets, i);
+		SCM e = GetSCM(vector_ref_(buckets, i));
 
 		if(e != cell_unspecified)
 		{
@@ -293,7 +294,7 @@ SCM make_hash_table_(long size)
 	}
 
 	SCM hashq_type = make_hashq_type();
-	SCM buckets = make_vector__(size);
+	SCM buckets = GetSCM(make_vector__(size));
 	SCM values = cell_nil;
 	values = cons(buckets, values);
 	values = cons(MAKE_NUMBER(size), values);
