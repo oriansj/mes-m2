@@ -126,12 +126,18 @@ struct scm* module_variable(SCM module, SCM name)
 struct scm* module_ref(SCM module, SCM name)
 {
 	SCM x = GetSCM(module_variable(module, name));
+	struct scm* y = module_variable(module, name);
 
+        if(GetSCM(y) == cell_f)
+	{
+		return Getstructscm(cell_undefined);
+	}
 	if(x == cell_f)
 	{
 		return Getstructscm(cell_undefined);
 	}
 
+	//return y->cdr;
 	return Getstructscm(CDR(x));
 }
 
