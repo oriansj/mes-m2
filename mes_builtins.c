@@ -27,7 +27,6 @@ SCM init_builtin(SCM builtin_type, char const* name, int arity, void* fun, SCM a
 SCM apply_builtin(SCM fn, SCM x);
 SCM cstring_to_symbol(char const *s);
 SCM make_hash_table_(long size);
-SCM make_initial_module(SCM a);
 // src/gc.mes
 SCM gc_check ();
 SCM gc ();
@@ -110,9 +109,9 @@ SCM values (SCM x);
 SCM builtin_printer(SCM builtin);
 
 // src/module.mes
-SCM make_module_type ();
-SCM module_printer (SCM module);
-SCM module_variable (SCM module, SCM name);
+struct scm* make_module_type ();
+struct scm* module_printer (SCM module);
+struct scm* module_variable (SCM module, SCM name);
 SCM module_ref (SCM module, SCM name);
 SCM module_define_x (SCM module, SCM name, SCM value);
 // src/posix.mes
@@ -175,8 +174,8 @@ SCM string_ref (SCM str, SCM k);
 // src/struct.mes
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* struct_length (SCM x);
-SCM struct_ref (SCM x, SCM i);
-SCM struct_set_x (SCM x, SCM i, SCM e);
+struct scm* struct_ref (SCM x, SCM i);
+struct scm* struct_set_x (SCM x, SCM i, SCM e);
 // src/vector.mes
 SCM make_vector_ (SCM n);
 SCM vector_length (SCM x);

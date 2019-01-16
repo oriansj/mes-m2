@@ -29,7 +29,6 @@
 #define CDAR(x) CDR (CAR (x))
 
 struct scm* struct_ref_(SCM x, long i);
-SCM struct_set_x_(SCM x, long i, SCM e);
 SCM cstring_to_symbol(char const *s);
 SCM make_hashq_type();
 SCM module_define_x (SCM module, SCM name, SCM value);
@@ -47,7 +46,7 @@ SCM assq (SCM x, SCM a);
 SCM hashq_get_handle (SCM table, SCM key, SCM dflt);
 SCM hashq_set_x (SCM table, SCM key, SCM value);
 
-SCM make_module_type()  ///(internal))
+struct scm* make_module_type()  ///(internal))
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
@@ -56,12 +55,12 @@ SCM make_module_type()  ///(internal))
 	fields = cons(cstring_to_symbol("name"), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_module, fields);
-	return GetSCM(make_struct(record_type, fields, cell_unspecified));
+	return make_struct(record_type, fields, cell_unspecified);
 }
 
-SCM make_initial_module(SCM a)  ///((internal))
+struct scm* make_initial_module(SCM a)  ///((internal))
 {
-	SCM module_type = make_module_type();
+	SCM module_type = GetSCM(make_module_type());
 	a = acons(cell_symbol_module, module_type, a);
 	SCM hashq_type = make_hashq_type();
 	a = acons(cell_symbol_hashq_table, hashq_type, a);
@@ -85,10 +84,10 @@ SCM make_initial_module(SCM a)  ///((internal))
 		a = CDR(a);
 	}
 
-	return module;
+	return Getstructscm(module);
 }
 
-SCM module_printer(SCM module)
+struct scm* module_printer(SCM module)
 {
 	//module = m0;
 	fdputs("#<", __stdout);
@@ -104,10 +103,10 @@ SCM module_printer(SCM module)
 	fdputs("globals:\n  ", __stdout);
 	display_(table);
 	fdputc('>', __stdout);
-	return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
 
-SCM module_variable(SCM module, SCM name)
+struct scm* module_variable(SCM module, SCM name)
 {
 	//SCM locals = struct_ref_ (module, 3);
 	SCM locals = module;
@@ -120,12 +119,12 @@ SCM module_variable(SCM module, SCM name)
 		x = hashq_get_handle(globals, name, cell_f);
 	}
 
-	return x;
+	return Getstructscm(x);
 }
 
 SCM module_ref(SCM module, SCM name)
 {
-	SCM x = module_variable(module, name);
+	SCM x = GetSCM(module_variable(module, name));
 
 	if(x == cell_f)
 	{
