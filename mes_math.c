@@ -45,11 +45,11 @@ void assert_number(char const* name, SCM x)
 	}
 }
 
-SCM greater_p(SCM x)  ///((name . ">") (arity . n))
+struct scm* greater_p(SCM x)  ///((name . ">") (arity . n))
 {
 	if(x == cell_nil)
 	{
-		return cell_t;
+		return Getstructscm(cell_t);
 	}
 
 	assert_number("greater_p", CAR(x));
@@ -62,21 +62,21 @@ SCM greater_p(SCM x)  ///((name . ">") (arity . n))
 
 		if(VALUE(car(x)) >= n)
 		{
-			return cell_f;
+			return Getstructscm(cell_f);
 		}
 
 		n = VALUE(car(x));
 		x = cdr(x);
 	}
 
-	return cell_t;
+	return Getstructscm(cell_t);
 }
 
-SCM less_p(SCM x)  ///((name . "<") (arity . n))
+struct scm* less_p(SCM x)  ///((name . "<") (arity . n))
 {
 	if(x == cell_nil)
 	{
-		return cell_t;
+		return Getstructscm(cell_t);
 	}
 
 	assert_number("less_p", CAR(x));
@@ -89,21 +89,21 @@ SCM less_p(SCM x)  ///((name . "<") (arity . n))
 
 		if(VALUE(car(x)) <= n)
 		{
-			return cell_f;
+			return Getstructscm(cell_f);
 		}
 
 		n = VALUE(car(x));
 		x = cdr(x);
 	}
 
-	return cell_t;
+	return Getstructscm(cell_t);
 }
 
-SCM is_p(SCM x)  ///((name . "=") (arity . n))
+struct scm* is_p(SCM x)  ///((name . "=") (arity . n))
 {
 	if(x == cell_nil)
 	{
-		return cell_t;
+		return Getstructscm(cell_t);
 	}
 
 	assert_number("is_p", CAR(x));
@@ -114,16 +114,16 @@ SCM is_p(SCM x)  ///((name . "=") (arity . n))
 	{
 		if(VALUE(car(x)) != n)
 		{
-			return cell_f;
+			return Getstructscm(cell_f);
 		}
 
 		x = cdr(x);
 	}
 
-	return cell_t;
+	return Getstructscm(cell_t);
 }
 
-SCM minus(SCM x)  ///((name . "-") (arity . n))
+struct scm* minus(SCM x)  ///((name . "-") (arity . n))
 {
 	assert_number("minus", CAR(x));
 	long n = VALUE(CAR(x));
@@ -141,10 +141,10 @@ SCM minus(SCM x)  ///((name . "-") (arity . n))
 		x = cdr(x);
 	}
 
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM plus(SCM x)  ///((name . "+") (arity . n))
+struct scm* plus(SCM x)  ///((name . "+") (arity . n))
 {
 	long n = 0;
 
@@ -155,10 +155,10 @@ SCM plus(SCM x)  ///((name . "+") (arity . n))
 		x = cdr(x);
 	}
 
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM divide(SCM x)  ///((name . "/") (arity . n))
+struct scm* divide(SCM x)  ///((name . "/") (arity . n))
 {
 	long n = 1;
 
@@ -182,10 +182,10 @@ SCM divide(SCM x)  ///((name . "/") (arity . n))
 		x = cdr(x);
 	}
 
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM modulo(SCM a, SCM b)
+struct scm* modulo(SCM a, SCM b)
 {
 	assert_number("modulo", a);
 	assert_number("modulo", b);
@@ -197,10 +197,10 @@ SCM modulo(SCM a, SCM b)
 	}
 
 	x = x ? x % VALUE(b) : 0;
-	return MAKE_NUMBER(x);
+	return Getstructscm(MAKE_NUMBER(x));
 }
 
-SCM multiply(SCM x)  ///((name . "*") (arity . n))
+struct scm* multiply(SCM x)  ///((name . "*") (arity . n))
 {
 	long n = 1;
 
@@ -211,10 +211,10 @@ SCM multiply(SCM x)  ///((name . "*") (arity . n))
 		x = cdr(x);
 	}
 
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM logand(SCM x)  ///((arity . n))
+struct scm* logand(SCM x)  ///((arity . n))
 {
 	long n = 0;
 
@@ -225,10 +225,10 @@ SCM logand(SCM x)  ///((arity . n))
 		x = cdr(x);
 	}
 
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM logior(SCM x)  ///((arity . n))
+struct scm* logior(SCM x)  ///((arity . n))
 {
 	long n = 0;
 
@@ -239,17 +239,17 @@ SCM logior(SCM x)  ///((arity . n))
 		x = cdr(x);
 	}
 
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM lognot(SCM x)
+struct scm* lognot(SCM x)
 {
 	assert_number("lognot", x);
 	long n = ~VALUE(x);
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM logxor(SCM x)  ///((arity . n))
+struct scm* logxor(SCM x)  ///((arity . n))
 {
 	long n = 0;
 
@@ -260,14 +260,14 @@ SCM logxor(SCM x)  ///((arity . n))
 		x = cdr(x);
 	}
 
-	return MAKE_NUMBER(n);
+	return Getstructscm(MAKE_NUMBER(n));
 }
 
-SCM ash(SCM n, SCM count)
+struct scm* ash(SCM n, SCM count)
 {
 	assert_number("ash", n);
 	assert_number("ash", count);
 	long cn = VALUE(n);
 	long ccount = VALUE(count);
-	return MAKE_NUMBER((ccount < 0) ? cn >> -ccount : cn << ccount);
+	return Getstructscm(MAKE_NUMBER((ccount < 0) ? cn >> -ccount : cn << ccount));
 }
