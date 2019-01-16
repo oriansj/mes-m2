@@ -70,7 +70,7 @@ SCM mes_builtins(SCM a);
 SCM apply_builtin(SCM fn, SCM x);
 SCM cstring_to_symbol(char const *s);
 SCM make_hash_table_(SCM size);
-SCM make_initial_module(SCM a);
+struct scm* make_initial_module(SCM a);
 SCM gc_check ();
 SCM gc ();
 SCM hashq_get_handle (SCM table, SCM key, SCM dflt);
@@ -84,8 +84,8 @@ SCM reverse_x_ (SCM x, SCM t);
 SCM make_builtin (SCM builtin_type, SCM name, SCM arity, SCM function);
 SCM builtin_arity (SCM builtin);
 SCM builtin_p (SCM x);
-SCM module_printer (SCM module);
-SCM module_variable (SCM module, SCM name);
+struct scm* module_printer (SCM module);
+struct scm* module_variable (SCM module, SCM name);
 SCM module_ref (SCM module, SCM name);
 SCM module_define_x (SCM module, SCM name, SCM value);
 SCM open_input_file (SCM file_name);
@@ -245,9 +245,9 @@ SCM apply(SCM, SCM);
 
 SCM error(SCM key, SCM x)
 {
-	SCM throw;
+	SCM throw= module_ref(r0, cell_symbol_throw);
 
-	if((throw = module_ref(r0, cell_symbol_throw)) != cell_undefined)
+	if(throw != cell_undefined)
 	{
 		return apply(throw, cons(key, cons(x, cell_nil)));
 	}
@@ -560,7 +560,7 @@ SCM set_env_x(SCM x, SCM e, SCM a)
 	}
 	else
 	{
-		p = assert_defined(x, module_variable(a, x));
+		p = assert_defined(x, GetSCM(module_variable(a, x)));
 	}
 
 	if(TYPE(p) != TPAIR)
@@ -723,7 +723,7 @@ SCM expand_variable_(SCM x, SCM formals, int top_p)  ///((internal))
 			        && CAR(x) != cell_symbol_primitive_load
 			        && !formal_p(CAR(x), formals))
 			{
-				SCM v = module_variable(r0, CAR(x));
+				SCM v = GetSCM(module_variable(r0, CAR(x)));
 
 				if(v != cell_f)
 				{
@@ -1139,7 +1139,7 @@ eval_macro_expand_expand:
 					}
 					else
 					{
-						entry = module_variable(r0, name);
+						entry = GetSCM(module_variable(r0, name));
 
 						if(entry == cell_f)
 						{
@@ -1187,7 +1187,7 @@ eval_define:
 				}
 				else if(global_p)
 				{
-					entry = module_variable(r0, name);
+					entry = GetSCM(module_variable(r0, name));
 					set_cdr_x(entry, r1);
 				}
 				else
@@ -1196,7 +1196,7 @@ eval_define:
 					aa = cons(entry, cell_nil);
 					set_cdr_x(aa, cdr(r0));
 					set_cdr_x(r0, aa);
-					cl = module_variable(r0, cell_closure);
+					cl = GetSCM(module_variable(r0, cell_closure));
 					set_cdr_x(cl, aa);
 				}
 
@@ -1306,20 +1306,24 @@ macro_expand_set_x:
 		goto vm_return;
 	}
 
-	if(TYPE(r1) == TPAIR
-	        && TYPE(CAR(r1)) == TSYMBOL
-	        && CAR(r1) != cell_symbol_begin
-	        && ((macro = macro_get_handle(cell_symbol_portable_macro_expand)) != cell_f)
-	        && ((expanders = module_ref(r0, cell_symbol_sc_expander_alist)) != cell_undefined)
-	        && ((macro = assq(CAR(r1), expanders)) != cell_f))
+	if(TYPE(r1) == TPAIR && TYPE(CAR(r1)) == TSYMBOL)
 	{
-		sc_expand = module_ref(r0, cell_symbol_macro_expand);
-		r2 = r1;
-
-		if(sc_expand != cell_undefined && sc_expand != cell_f)
+		macro = macro_get_handle(cell_symbol_portable_macro_expand);
+		expanders = module_ref(r0, cell_symbol_sc_expander_alist);
+		if((CAR(r1) != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
 		{
-			r1 = cons(sc_expand, cons(r1, cell_nil));
-			goto apply;
+			macro = assq(CAR(r1), expanders);
+			if(macro != cell_f)
+			{
+				sc_expand = module_ref(r0, cell_symbol_macro_expand);
+				r2 = r1;
+
+				if(sc_expand != cell_undefined && sc_expand != cell_f)
+				{
+					r1 = cons(sc_expand, cons(r1, cell_nil));
+					goto apply;
+				}
+			}
 		}
 	}
 
@@ -1973,7 +1977,7 @@ int main(int argc, char *argv[])
 	SCM a = mes_environment(argc, argv);
 	a = mes_builtins(a);
 	a = init_time(a);
-	m0 = make_initial_module(a);
+	m0 = GetSCM(make_initial_module(a));
 	g_macros = make_hash_table_(0);
 
 	if(g_debug > 4)
