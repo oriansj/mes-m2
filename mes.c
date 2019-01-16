@@ -68,7 +68,7 @@ int fdputs (char const* s, int fd);
 int eputs (char const* s);
 SCM mes_builtins(SCM a);
 SCM apply_builtin(SCM fn, SCM x);
-SCM cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char const *s);
 SCM make_hash_table_(SCM size);
 struct scm* make_initial_module(SCM a);
 SCM gc_check ();
@@ -91,8 +91,8 @@ struct scm* module_define_x (SCM module, SCM name, SCM value);
 SCM open_input_file (SCM file_name);
 SCM set_current_input_port (SCM port);
 SCM read_input_file_env ();
-SCM string_equal_p (SCM a, SCM b);
-SCM symbol_to_string (SCM symbol);
+struct scm* string_equal_p (SCM a, SCM b);
+struct scm* symbol_to_string (SCM symbol);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM init_time(SCM a);
 
@@ -133,7 +133,7 @@ SCM make_cell_(SCM type, SCM car, SCM cdr)
 
 SCM assoc_string(SCM x, SCM a)  ///((internal))
 {
-	while(a != cell_nil && (TYPE(CAAR(a)) != TSTRING || string_equal_p(x, CAAR(a)) == cell_f))
+	while(a != cell_nil && (TYPE(CAAR(a)) != TSTRING || GetSCM(string_equal_p(x, CAAR(a))) == cell_f))
 	{
 		a = CDR(a);
 	}
@@ -197,7 +197,7 @@ SCM eq_p(SCM x, SCM y)
 {
 	return (x == y
 	        || ((TYPE(x) == TKEYWORD && TYPE(y) == TKEYWORD
-	             && string_equal_p(x, y) == cell_t))
+	             && GetSCM(string_equal_p(x, y)) == cell_t))
 	        || (TYPE(x) == TCHAR && TYPE(y) == TCHAR
 	            && VALUE(x) == VALUE(y))
 	        || (TYPE(x) == TNUMBER && TYPE(y) == TNUMBER
@@ -271,7 +271,7 @@ SCM assert_defined(SCM x, SCM e)  ///((internal))
 	return e;
 }
 
-SCM make_string(char const* s, int length);
+struct scm* make_string(char const* s, int length);
 
 SCM check_formals(SCM f, SCM formals, SCM args)  ///((internal))
 {
@@ -287,7 +287,7 @@ SCM check_formals(SCM f, SCM formals, SCM args)  ///((internal))
 		eputs(itoa(alen));
 		eputs("\n");
 		write_error_(f);
-		SCM e = MAKE_STRING0(s);
+		SCM e = GetSCM(MAKE_STRING0(s));
 		return error(cell_symbol_wrong_number_of_args, cons(e, f));
 	}
 
@@ -351,7 +351,7 @@ SCM check_apply(SCM f, SCM e)  ///((internal))
 		eputs("[");
 		write_error_(e);
 		eputs("]\n");
-		SCM e = MAKE_STRING0(s);
+		SCM e = GetSCM(MAKE_STRING0(s));
 		return error(cell_symbol_wrong_type_arg, cons(e, f));
 	}
 
@@ -398,7 +398,7 @@ SCM append2(SCM x, SCM y)
 
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("append2")));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("append2"))));
 	}
 
 	SCM r = cell_nil;
@@ -421,7 +421,7 @@ SCM append_reverse(SCM x, SCM y)
 
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("append-reverse")));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("append-reverse"))));
 	}
 
 	while(x != cell_nil)
@@ -437,7 +437,7 @@ SCM reverse_x_(SCM x, SCM t)
 {
 	if(x != cell_nil && TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("core:reverse!")));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("core:reverse!"))));
 	}
 
 	SCM r = t;
@@ -496,7 +496,7 @@ assq(SCM x, SCM a)
 	}
 	else if(t == TKEYWORD)
 	{
-		while(a != cell_nil && string_equal_p(x, CAAR(a)) == cell_f)
+		while(a != cell_nil && GetSCM(string_equal_p(x, CAAR(a))) == cell_f)
 		{
 			a = CDR(a);
 		}
@@ -532,7 +532,7 @@ SCM set_car_x(SCM x, SCM e)
 {
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("set-car!")));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("set-car!"))));
 	}
 
 	CAR(x) = e;
@@ -543,7 +543,7 @@ SCM set_cdr_x(SCM x, SCM e)
 {
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("set-cdr!")));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("set-cdr!"))));
 	}
 
 	CDR(x) = e;
@@ -910,7 +910,7 @@ eval_apply:
 	}
 	else
 	{
-		error(cell_symbol_system_error, MAKE_STRING0("eval/apply unknown continuation"));
+		error(cell_symbol_system_error, GetSCM(MAKE_STRING0("eval/apply unknown continuation")));
 	}
 
 evlis:
@@ -1572,7 +1572,7 @@ void init_symbol(SCM x, SCM type, char const* name)
 {
 	TYPE(x) = type;
 	int length = strlen(name);
-	SCM string = make_string(name, length);
+	SCM string = GetSCM(make_string(name, length));
 	CAR(x) = length;
 	CDR(x) = STRING(string);
 	hash_set_x(g_symbols, string, x);
@@ -1707,8 +1707,8 @@ SCM mes_symbols()  ///((internal))
 	a = acons(cell_symbol_boot_module, cell_symbol_boot_module, a);
 	a = acons(cell_symbol_current_module, cell_symbol_current_module, a);
 	a = acons(cell_symbol_call_with_current_continuation, cell_call_with_current_continuation, a);
-	a = acons(cell_symbol_mes_version, MAKE_STRING0("0.19"), a);
-	a = acons(cell_symbol_mes_prefix, MAKE_STRING0("/usr/local"), a);
+	a = acons(cell_symbol_mes_version, GetSCM(MAKE_STRING0("0.19")), a);
+	a = acons(cell_symbol_mes_prefix, GetSCM(MAKE_STRING0("/usr/local")), a);
 	a = acons(cell_type_bytes, MAKE_NUMBER(TBYTES), a);
 	a = acons(cell_type_char, MAKE_NUMBER(TCHAR), a);
 	a = acons(cell_type_closure, MAKE_NUMBER(TCLOSURE), a);
@@ -1735,14 +1735,14 @@ SCM mes_environment(int argc, char *argv[])
 {
 	SCM a = mes_symbols();
 	char *compiler = "gnuc";
-	a = acons(cell_symbol_compiler, MAKE_STRING0(compiler), a);
+	a = acons(cell_symbol_compiler, GetSCM(MAKE_STRING0(compiler)), a);
 	char *arch = "x86_64";
-	a = acons(cell_symbol_arch, MAKE_STRING0(arch), a);
+	a = acons(cell_symbol_arch, GetSCM(MAKE_STRING0(arch)), a);
 	SCM lst = cell_nil;
 
 	for(int i = argc - 1; i >= 0; i--)
 	{
-		lst = cons(MAKE_STRING0(argv[i]), lst);
+		lst = cons(GetSCM(MAKE_STRING0(argv[i])), lst);
 	}
 
 	a = acons(cell_symbol_argv, lst, a);
@@ -1751,17 +1751,17 @@ SCM mes_environment(int argc, char *argv[])
 
 SCM init_builtin(SCM builtin_type, char const* name, int arity, SCM(*function)(SCM), SCM a)
 {
-	SCM s = cstring_to_symbol(name);
-	return acons(s, make_builtin(builtin_type, symbol_to_string(s), MAKE_NUMBER(arity), MAKE_NUMBER(function)), a);
+	SCM s = GetSCM(cstring_to_symbol(name));
+	return acons(s, make_builtin(builtin_type, GetSCM(symbol_to_string(s)), MAKE_NUMBER(arity), MAKE_NUMBER(function)), a);
 }
 
 SCM make_builtin_type()  ///(internal))
 {
 	SCM record_type = cell_symbol_record_type;
 	SCM fields = cell_nil;
-	fields = cons(cstring_to_symbol("address"), fields);
-	fields = cons(cstring_to_symbol("arity"), fields);
-	fields = cons(cstring_to_symbol("name"), fields);
+	fields = cons(GetSCM(cstring_to_symbol("address")), fields);
+	fields = cons(GetSCM(cstring_to_symbol("arity")), fields);
+	fields = cons(GetSCM(cstring_to_symbol("name")), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_builtin, fields);
 	return GetSCM(make_struct(record_type, fields, cell_unspecified));
@@ -1774,7 +1774,7 @@ SCM make_builtin(SCM builtin_type, SCM name, SCM arity, SCM function)
 	values = cons(arity, values);
 	values = cons(name, values);
 	values = cons(cell_symbol_builtin, values);
-	return GetSCM(make_struct(builtin_type, values, cstring_to_symbol("builtin-printer")));
+	return GetSCM(make_struct(builtin_type, values, GetSCM(cstring_to_symbol("builtin-printer"))));
 }
 
 SCM builtin_name(SCM builtin)

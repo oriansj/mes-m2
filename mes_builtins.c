@@ -25,7 +25,6 @@
 SCM make_builtin_type();
 SCM init_builtin(SCM builtin_type, char const* name, int arity, void* fun, SCM a);
 SCM apply_builtin(SCM fn, SCM x);
-SCM cstring_to_symbol(char const *s);
 SCM make_hash_table_(long size);
 // src/gc.mes
 SCM gc_check ();
@@ -159,18 +158,18 @@ SCM reader_read_octal ();
 SCM reader_read_hex ();
 SCM reader_read_string ();
 // src/strings.mes
-SCM string_equal_p (SCM a, SCM b);
-SCM symbol_to_string (SCM symbol);
-SCM symbol_to_keyword (SCM symbol);
-SCM keyword_to_string (SCM keyword);
-SCM string_to_symbol (SCM string);
-SCM make_symbol (SCM string);
-SCM string_to_list (SCM string);
-SCM list_to_string (SCM list);
-SCM read_string (SCM port);
-SCM string_append (SCM x);
-SCM string_length (SCM string);
-SCM string_ref (SCM str, SCM k);
+struct scm* string_equal_p (SCM a, SCM b);
+struct scm* symbol_to_string (SCM symbol);
+struct scm* symbol_to_keyword (SCM symbol);
+struct scm* keyword_to_string (SCM keyword);
+struct scm* string_to_symbol (SCM string);
+struct scm* make_symbol (SCM string);
+struct scm* string_to_list (SCM string);
+struct scm* list_to_string (SCM list);
+struct scm* read_string (SCM port);
+struct scm* string_append (SCM x);
+struct scm* string_length (SCM string);
+struct scm* string_ref (SCM str, SCM k);
 // src/struct.mes
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* struct_length (SCM x);

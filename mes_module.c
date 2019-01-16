@@ -30,7 +30,7 @@
 #define CDAR(x) CDR (CAR (x))
 
 struct scm* struct_ref_(SCM x, long i);
-SCM cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char const *s);
 SCM make_hashq_type();
 struct scm* module_define_x (SCM module, SCM name, SCM value);
 SCM car (SCM x);
@@ -51,9 +51,9 @@ struct scm* make_module_type()  ///(internal))
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
-	fields = cons(cstring_to_symbol("globals"), fields);
-	fields = cons(cstring_to_symbol("locals"), fields);
-	fields = cons(cstring_to_symbol("name"), fields);
+	fields = cons(GetSCM(cstring_to_symbol("globals")), fields);
+	fields = cons(GetSCM(cstring_to_symbol("locals")), fields);
+	fields = cons(GetSCM(cstring_to_symbol("name")), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_module, fields);
 	return make_struct(record_type, fields, cell_unspecified);
@@ -65,7 +65,7 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	a = acons(cell_symbol_module, module_type, a);
 	SCM hashq_type = make_hashq_type();
 	a = acons(cell_symbol_hashq_table, hashq_type, a);
-	SCM name = cons(cstring_to_symbol("boot"), cell_nil);
+	SCM name = cons(GetSCM(cstring_to_symbol("boot")), cell_nil);
 	SCM globals = make_hash_table_(0);
 	SCM locals = cell_nil;
 	SCM values = cell_nil;
@@ -73,7 +73,7 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	values = cons(locals, values);
 	values = cons(name, values);
 	values = cons(cell_symbol_module, values);
-	SCM module = GetSCM(make_struct(module_type, values, cstring_to_symbol("module-printer")));
+	SCM module = GetSCM(make_struct(module_type, values, GetSCM(cstring_to_symbol("module-printer"))));
 	r0 = cell_nil;
 	r0 = cons(CADR(a), r0);
 	r0 = cons(CAR(a), r0);

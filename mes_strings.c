@@ -34,7 +34,7 @@
 #define MAKE_STRING0(x) make_string (x, strlen (x))
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 
-SCM make_symbol (SCM string);
+struct scm* make_symbol (SCM string);
 int eputs(char const* s);
 char *itoa (int number);
 SCM error(SCM key, SCM x);
@@ -87,7 +87,7 @@ size_t bytes_cells(size_t length)
 	return (1 + sizeof(long) + sizeof(long) + length + sizeof(SCM)) / sizeof(SCM);
 }
 
-SCM make_bytes(char const* s, size_t length)
+struct scm* make_bytes(char const* s, size_t length)
 {
 	size_t size = bytes_cells(length);
 	SCM x = alloc(size);
@@ -104,10 +104,10 @@ SCM make_bytes(char const* s, size_t length)
 		memcpy(p, s, length + 1);
 	}
 
-	return x;
+	return Getstructscm(x);
 }
 
-SCM make_string(char const* s, int length)
+struct scm* make_string(char const* s, int length)
 {
 	if(length > MAX_STRING)
 	{
@@ -115,12 +115,12 @@ SCM make_string(char const* s, int length)
 	}
 
 	SCM x = make_cell__(TSTRING, length, 0);
-	SCM v = make_bytes(s, length);
+	SCM v = GetSCM(make_bytes(s, length));
 	CDR(x) = v;
-	return x;
+	return Getstructscm(x);
 }
 
-SCM string_equal_p(SCM a, SCM b)  ///((name . "string=?"))
+struct scm* string_equal_p(SCM a, SCM b)  ///((name . "string=?"))
 {
 	if(!((TYPE(a) == TSTRING && TYPE(b) == TSTRING) || (TYPE(a) == TKEYWORD || TYPE(b) == TKEYWORD)))
 	{
@@ -141,47 +141,47 @@ SCM string_equal_p(SCM a, SCM b)  ///((name . "string=?"))
 
 	if(a == b || STRING(a) == STRING(b) || (!LENGTH(a) && !LENGTH(b)) || (LENGTH(a) == LENGTH(b) && !memcmp(CSTRING(a), CSTRING(b), LENGTH(a))))
 	{
-		return cell_t;
+		return Getstructscm(cell_t);
 	}
 
-	return cell_f;
+	return Getstructscm(cell_f);
 }
 
-SCM symbol_to_string(SCM symbol)
+struct scm* symbol_to_string(SCM symbol)
 {
-	return make_cell__(TSTRING, CAR(symbol), CDR(symbol));
+	return Getstructscm(make_cell__(TSTRING, CAR(symbol), CDR(symbol)));
 }
 
-SCM symbol_to_keyword(SCM symbol)
+struct scm* symbol_to_keyword(SCM symbol)
 {
-	return make_cell__(TKEYWORD, CAR(symbol), CDR(symbol));
+	return Getstructscm(make_cell__(TKEYWORD, CAR(symbol), CDR(symbol)));
 }
 
-SCM keyword_to_string(SCM keyword)
+struct scm* keyword_to_string(SCM keyword)
 {
-	return make_cell__(TSTRING, CAR(keyword), CDR(keyword));
+	return Getstructscm(make_cell__(TSTRING, CAR(keyword), CDR(keyword)));
 }
 
-SCM string_to_symbol(SCM string)
+struct scm* string_to_symbol(SCM string)
 {
 	SCM x = hash_ref(g_symbols, string, cell_f);
 
 	if(x == cell_f)
 	{
-		x = make_symbol(string);
+		x = GetSCM(make_symbol(string));
 	}
 
-	return x;
+	return Getstructscm(x);
 }
 
-SCM make_symbol(SCM string)
+struct scm* make_symbol(SCM string)
 {
 	SCM x = make_cell__(TSYMBOL, LENGTH(string), STRING(string));
 	hash_set_x(g_symbols, string, x);
-	return x;
+	return Getstructscm(x);
 }
 
-SCM bytes_to_list(char const* s, size_t i)
+struct scm* bytes_to_list(char const* s, size_t i)
 {
 	SCM p = cell_nil;
 
@@ -191,33 +191,33 @@ SCM bytes_to_list(char const* s, size_t i)
 		p = cons(MAKE_CHAR(c), p);
 	}
 
-	return p;
+	return Getstructscm(p);
 }
 
-SCM cstring_to_list(char const* s)
+struct scm* cstring_to_list(char const* s)
 {
 	return bytes_to_list(s, strlen(s));
 }
 
-SCM cstring_to_symbol(char const *s)
+struct scm* cstring_to_symbol(char const *s)
 {
-	SCM string = MAKE_STRING0(s);
+	SCM string = GetSCM(MAKE_STRING0(s));
 	return string_to_symbol(string);
 }
 
-SCM string_to_list(SCM string)
+struct scm* string_to_list(SCM string)
 {
 	return bytes_to_list(CSTRING(string), LENGTH(string));
 }
 
-SCM list_to_string(SCM list)
+struct scm* list_to_string(SCM list)
 {
 	int size;
 	char const *s = list_to_cstring(list, &size);
 	return make_string(s, size);
 }
 
-SCM read_string(SCM port)  ///((arity . n))
+struct scm* read_string(SCM port)  ///((arity . n))
 {
 	int fd = __stdin;
 
@@ -245,7 +245,7 @@ SCM read_string(SCM port)  ///((arity . n))
 	return make_string(g_buf, i);
 }
 
-SCM string_append(SCM x)  ///((arity . n))
+struct scm* string_append(SCM x)  ///((arity . n))
 {
 	char *p = g_buf;
 	g_buf[0] = 0;
@@ -270,13 +270,13 @@ SCM string_append(SCM x)  ///((arity . n))
 	return make_string(g_buf, size);
 }
 
-SCM string_length(SCM string)
+struct scm* string_length(SCM string)
 {
 	assert(TYPE(string) == TSTRING);
-	return MAKE_NUMBER(LENGTH(string));
+	return Getstructscm(MAKE_NUMBER(LENGTH(string)));
 }
 
-SCM string_ref(SCM str, SCM k)
+struct scm* string_ref(SCM str, SCM k)
 {
 	assert(TYPE(str) == TSTRING);
 	assert(TYPE(k) == TNUMBER);
@@ -285,9 +285,9 @@ SCM string_ref(SCM str, SCM k)
 
 	if(i > size)
 	{
-		error(cell_symbol_system_error, cons(MAKE_STRING0("value out of range"), k));
+		error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("value out of range")), k));
 	}
 
 	char const *p = CSTRING(str);
-	return MAKE_CHAR(p[i]);
+	return Getstructscm(MAKE_CHAR(p[i]));
 }

@@ -43,12 +43,12 @@ SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 int readchar();
 SCM error(SCM key, SCM x);
-SCM make_string(char const* s, int length);
+struct scm* make_string(char const* s, int length);
 int peekchar();
 int unreadchar();
 SCM make_cell__(long type, SCM car, SCM cdr);
-SCM cstring_to_symbol(char const *s);
-SCM symbol_to_keyword (SCM symbol);
+struct scm* cstring_to_symbol(char const *s);
+struct scm* symbol_to_keyword (SCM symbol);
 struct scm* list_to_vector (SCM x);
 int eputs(char const* s);
 char *itoa (int number);
@@ -82,7 +82,7 @@ int reader_read_line_comment(int c)
 		c = readchar();
 	}
 
-	error(cell_symbol_system_error, MAKE_STRING0("reader_read_line_comment"));
+	error(cell_symbol_system_error, GetSCM(MAKE_STRING0("reader_read_line_comment")));
 	exit(1);
 }
 
@@ -145,7 +145,7 @@ SCM reader_read_identifier_or_number(int c)
 
 	unreadchar(c);
 	g_buf[i] = 0;
-	return cstring_to_symbol(g_buf);
+	return GetSCM(cstring_to_symbol(g_buf));
 }
 
 SCM reader_read_sexp_(int c, SCM a)
@@ -251,7 +251,7 @@ SCM reader_read_list(int c, SCM a)
 
 	if(c == EOF)
 	{
-		error(cell_symbol_not_a_pair, MAKE_STRING0("EOF in list"));
+		error(cell_symbol_not_a_pair, GetSCM(MAKE_STRING0("EOF in list")));
 	}
 
 	//return cell_nil;
@@ -331,10 +331,10 @@ SCM reader_read_hash(int c, SCM a)
 
 		if(TYPE(x) == TNUMBER)
 		{ /* READ error */
-			error(cell_symbol_system_error, cons(MAKE_STRING0("keyword perifx ':' not followed by a symbol: "), x));
+			error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("keyword perifx ':' not followed by a symbol: ")), x));
 		}
 
-		return symbol_to_keyword(x);
+		return GetSCM(symbol_to_keyword(x));
 	}
 
 	if(c == 'b')
@@ -488,7 +488,7 @@ SCM reader_read_character()
 			eputs("char not supported: ");
 			eputs(buf);
 			eputs("\n");
-			error(cell_symbol_system_error, MAKE_STRING0("char not supported"));
+			error(cell_symbol_system_error, GetSCM(MAKE_STRING0("char not supported")));
 		}
 	}
 
@@ -666,5 +666,5 @@ SCM reader_read_string()
 	} while(1);
 
 	g_buf[i] = 0;
-	return make_string(g_buf, i);
+	return GetSCM(make_string(g_buf, i));
 }
