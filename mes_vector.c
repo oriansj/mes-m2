@@ -1,6 +1,7 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2019 Jeremiah Orians
  *
  * This file is part of GNU Mes.
  *
@@ -36,33 +37,33 @@ long length__(SCM x);
 SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
-SCM vector_entry(SCM x);
+struct scm* vector_entry(SCM x);
 
-SCM make_vector__(long k)
+struct scm* make_vector__(long k)
 {
 	SCM v = alloc(k);
 	SCM x = make_cell__(TVECTOR, k, v);
 
 	for(long i = 0; i < k; i++)
 	{
-		g_cells[v + i] = g_cells[vector_entry(cell_unspecified)];
+		g_cells[v + i] = g_cells[GetSCM(vector_entry(cell_unspecified))];
 	}
 
-	return x;
+	return Getstructscm(x);
 }
 
-SCM make_vector_(SCM n)
+struct scm* make_vector_(SCM n)
 {
 	return make_vector__(VALUE(n));
 }
 
-SCM vector_length(SCM x)
+struct scm* vector_length(SCM x)
 {
 	assert(TYPE(x) == TVECTOR);
-	return MAKE_NUMBER(LENGTH(x));
+	return Getstructscm(MAKE_NUMBER(LENGTH(x)));
 }
 
-SCM vector_ref_(SCM x, long i)
+struct scm* vector_ref_(SCM x, long i)
 {
 	assert(TYPE(x) == TVECTOR);
 	assert(i < LENGTH(x));
@@ -83,52 +84,52 @@ SCM vector_ref_(SCM x, long i)
 		e = MAKE_NUMBER(VALUE(e));
 	}
 
-	return e;
+	return Getstructscm(e);
 }
 
-SCM vector_ref(SCM x, SCM i)
+struct scm* vector_ref(SCM x, SCM i)
 {
 	return vector_ref_(x, VALUE(i));
 }
 
-SCM vector_entry(SCM x)
+struct scm* vector_entry(SCM x)
 {
 	if(TYPE(x) != TCHAR && TYPE(x) != TNUMBER)
 	{
 		x = MAKE_REF(x);
 	}
 
-	return x;
+	return Getstructscm(x);
 }
 
-SCM vector_set_x_(SCM x, long i, SCM e)
+struct scm* vector_set_x_(SCM x, long i, SCM e)
 {
 	assert(TYPE(x) == TVECTOR);
 	assert(i < LENGTH(x));
-	g_cells[VECTOR(x) + i] = g_cells[vector_entry(e)];
-	return cell_unspecified;
+	g_cells[VECTOR(x) + i] = g_cells[GetSCM(vector_entry(e))];
+	return Getstructscm(cell_unspecified);
 }
 
-SCM vector_set_x(SCM x, SCM i, SCM e)
+struct scm* vector_set_x(SCM x, SCM i, SCM e)
 {
 	return vector_set_x_(x, VALUE(i), e);
 }
 
-SCM list_to_vector(SCM x)
+struct scm* list_to_vector(SCM x)
 {
-	SCM v = make_vector__(length__(x));
+	SCM v = GetSCM(make_vector__(length__(x)));
 	SCM p = VECTOR(v);
 
 	while(x != cell_nil)
 	{
-		g_cells[p++] = g_cells[vector_entry(car(x))];
+		g_cells[p++] = g_cells[GetSCM(vector_entry(car(x)))];
 		x = cdr(x);
 	}
 
-	return v;
+	return Getstructscm(v);
 }
 
-SCM vector_to_list(SCM v)
+struct scm* vector_to_list(SCM v)
 {
 	SCM x = cell_nil;
 
@@ -144,5 +145,5 @@ SCM vector_to_list(SCM v)
 		x = cons(e, x);
 	}
 
-	return x;
+	return Getstructscm(x);
 }

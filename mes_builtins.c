@@ -177,13 +177,13 @@ struct scm* struct_length (SCM x);
 struct scm* struct_ref (SCM x, SCM i);
 struct scm* struct_set_x (SCM x, SCM i, SCM e);
 // src/vector.mes
-SCM make_vector_ (SCM n);
-SCM vector_length (SCM x);
-SCM vector_ref (SCM x, SCM i);
-SCM vector_entry (SCM x);
-SCM vector_set_x (SCM x, SCM i, SCM e);
-SCM list_to_vector (SCM x);
-SCM vector_to_list (SCM v);
+struct scm* make_vector_ (SCM n);
+struct scm* vector_length (SCM x);
+struct scm* vector_ref (SCM x, SCM i);
+struct scm* vector_entry (SCM x);
+struct scm* vector_set_x (SCM x, SCM i, SCM e);
+struct scm* list_to_vector (SCM x);
+struct scm* vector_to_list (SCM v);
 SCM init_time(SCM a);
 
 SCM mes_builtins(SCM a)  ///((internal))

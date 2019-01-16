@@ -49,7 +49,7 @@ int unreadchar();
 SCM make_cell__(long type, SCM car, SCM cdr);
 SCM cstring_to_symbol(char const *s);
 SCM symbol_to_keyword (SCM symbol);
-SCM list_to_vector (SCM x);
+struct scm* list_to_vector (SCM x);
 int eputs(char const* s);
 char *itoa (int number);
 
@@ -359,7 +359,7 @@ SCM reader_read_hash(int c, SCM a)
 
 	if(c == '(')
 	{
-		return list_to_vector(reader_read_list(readchar(), a));
+		return GetSCM(list_to_vector(reader_read_list(readchar(), a)));
 	}
 
 	if(c == ';')
