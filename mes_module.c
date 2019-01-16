@@ -31,7 +31,7 @@
 struct scm* struct_ref_(SCM x, long i);
 SCM cstring_to_symbol(char const *s);
 SCM make_hashq_type();
-SCM module_define_x (SCM module, SCM name, SCM value);
+struct scm* module_define_x (SCM module, SCM name, SCM value);
 SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
@@ -122,21 +122,21 @@ struct scm* module_variable(SCM module, SCM name)
 	return Getstructscm(x);
 }
 
-SCM module_ref(SCM module, SCM name)
+struct scm* module_ref(SCM module, SCM name)
 {
 	SCM x = GetSCM(module_variable(module, name));
 
 	if(x == cell_f)
 	{
-		return cell_undefined;
+		return Getstructscm(cell_undefined);
 	}
 
-	return CDR(x);
+	return Getstructscm(CDR(x));
 }
 
-SCM module_define_x(SCM module, SCM name, SCM value)
+struct scm* module_define_x(SCM module, SCM name, SCM value)
 {
 	module = m0;
 	SCM globals = GetSCM(struct_ref_(module, 5));
-	return hashq_set_x(globals, name, value);
+	return Getstructscm(hashq_set_x(globals, name, value));
 }
