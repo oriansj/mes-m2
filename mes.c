@@ -86,8 +86,8 @@ SCM builtin_arity (SCM builtin);
 SCM builtin_p (SCM x);
 struct scm* module_printer (SCM module);
 struct scm* module_variable (SCM module, SCM name);
-SCM module_ref (SCM module, SCM name);
-SCM module_define_x (SCM module, SCM name, SCM value);
+struct scm* module_ref (SCM module, SCM name);
+struct scm* module_define_x (SCM module, SCM name, SCM value);
 SCM open_input_file (SCM file_name);
 SCM set_current_input_port (SCM port);
 SCM read_input_file_env ();
@@ -245,7 +245,7 @@ SCM apply(SCM, SCM);
 
 SCM error(SCM key, SCM x)
 {
-	SCM throw= module_ref(r0, cell_symbol_throw);
+	SCM throw= GetSCM(module_ref(r0, cell_symbol_throw));
 
 	if(throw != cell_undefined)
 	{
@@ -1233,7 +1233,7 @@ eval2:
 			goto vm_return;
 		}
 
-		r1 = assert_defined(r1, module_ref(r0, r1));
+		r1 = assert_defined(r1, GetSCM(module_ref(r0, r1)));
 		goto vm_return;
 	}
 	else if(t == TVARIABLE)
@@ -1309,13 +1309,13 @@ macro_expand_set_x:
 	if(TYPE(r1) == TPAIR && TYPE(CAR(r1)) == TSYMBOL)
 	{
 		macro = macro_get_handle(cell_symbol_portable_macro_expand);
-		expanders = module_ref(r0, cell_symbol_sc_expander_alist);
+		expanders = GetSCM(module_ref(r0, cell_symbol_sc_expander_alist));
 		if((CAR(r1) != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
 		{
 			macro = assq(CAR(r1), expanders);
 			if(macro != cell_f)
 			{
-				sc_expand = module_ref(r0, cell_symbol_macro_expand);
+				sc_expand = GetSCM(module_ref(r0, cell_symbol_macro_expand));
 				r2 = r1;
 
 				if(sc_expand != cell_undefined && sc_expand != cell_f)

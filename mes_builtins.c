@@ -112,8 +112,8 @@ SCM builtin_printer(SCM builtin);
 struct scm* make_module_type ();
 struct scm* module_printer (SCM module);
 struct scm* module_variable (SCM module, SCM name);
-SCM module_ref (SCM module, SCM name);
-SCM module_define_x (SCM module, SCM name, SCM value);
+struct scm* module_ref (SCM module, SCM name);
+struct scm* module_define_x (SCM module, SCM name, SCM value);
 // src/posix.mes
 SCM peek_byte ();
 SCM read_byte ();
