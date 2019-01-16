@@ -60,12 +60,12 @@ SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
-SCM cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char const *s);
 struct scm* make_vector__(long k);
 struct scm* vector_set_x_(SCM x, long i, SCM e);
 struct scm* vector_length (SCM x);
 struct scm* vector_ref (SCM x, SCM i);
-SCM string_equal_p (SCM a, SCM b);
+struct scm* string_equal_p (SCM a, SCM b);
 SCM eq_p (SCM x, SCM y);
 
 SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
@@ -464,14 +464,14 @@ SCM make_frame(long index)
 	SCM values = cell_nil;
 	values = cons(procedure, values);
 	values = cons(cell_symbol_frame, values);
-	return GetSCM(make_struct(frame_type, values, cstring_to_symbol("frame-printer")));
+	return GetSCM(make_struct(frame_type, values, GetSCM(cstring_to_symbol("frame-printer"))));
 }
 
 SCM make_stack_type()  ///((internal))
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
-	fields = cons(cstring_to_symbol("frames"), fields);
+	fields = cons(GetSCM(cstring_to_symbol("frames")), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_stack, fields);
 	return GetSCM(make_struct(record_type, fields, cell_unspecified));
@@ -532,7 +532,7 @@ SCM memq(SCM x, SCM a)
 	}
 	else if(t == TKEYWORD)
 	{
-		while(a != cell_nil && (TYPE(CAR(a)) != TKEYWORD || string_equal_p(x, CAR(a)) == cell_f))
+		while(a != cell_nil && (TYPE(CAR(a)) != TKEYWORD || GetSCM(string_equal_p(x, CAR(a))) == cell_f))
 		{
 			a = CDR(a);
 		}
@@ -571,7 +571,7 @@ equal2:
 
 	if(TYPE(a) == TSTRING && TYPE(b) == TSTRING)
 	{
-		return string_equal_p(a, b);
+		return GetSCM(string_equal_p(a, b));
 	}
 
 	if(TYPE(a) == TVECTOR && TYPE(b) == TVECTOR)

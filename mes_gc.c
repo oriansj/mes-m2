@@ -39,7 +39,7 @@ size_t bytes_cells(size_t length);
 int eputs(char const* s);
 char *itoa (int number);
 SCM error(SCM key, SCM x);
-SCM cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char const *s);
 SCM write_error_ (SCM x);
 SCM gc_push_frame();
 SCM gc_pop_frame();
@@ -166,7 +166,7 @@ void gc_loop(SCM scan)  ///((internal))
 	{
 		if(NTYPE(scan) == TBROKEN_HEART)
 		{
-			error(cell_symbol_system_error, cstring_to_symbol("gc"));
+			error(cell_symbol_system_error, GetSCM(cstring_to_symbol("gc")));
 		}
 
 		if(NTYPE(scan) == TMACRO

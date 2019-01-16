@@ -51,7 +51,7 @@ int unreadchar();
 SCM write_byte (SCM x);
 SCM current_input_port ();
 int fdgetc (int fd);
-SCM make_string(char const* s, int length);
+struct scm* make_string(char const* s, int length);
 int fdungetc (int c, int fd);
 SCM make_cell__(long type, SCM car, SCM cdr);
 SCM car (SCM x);
@@ -220,7 +220,7 @@ int readchar()
 
 	char const *p = CSTRING(string);
 	int c = *p++;
-	STRING(port) = make_string(p, length - 1);
+	STRING(port) = GetSCM(make_string(p, length - 1));
 	return c;
 }
 
@@ -236,7 +236,7 @@ int unreadchar(int c)
 	size_t length = LENGTH(string);
 	char *p = CSTRING(string);
 	p--;
-	string = make_string(p, length + 1);
+	string = GetSCM(make_string(p, length + 1));
 	p = CSTRING(string);
 	p[0] = c;
 	STRING(port) = string;
@@ -318,7 +318,7 @@ SCM getenv_(SCM s)  ///((name . "getenv"))
 {
 	char *p;
 	p = getenv(CSTRING(s));
-	return p ? MAKE_STRING0(p) : cell_f;
+	return p ? GetSCM(MAKE_STRING0(p)) : cell_f;
 }
 
 SCM setenv_(SCM s, SCM v)  ///((name . "setenv"))
@@ -462,7 +462,7 @@ SCM execl_(SCM file_name, SCM args)  ///((name . "execl"))
 
 	if(length__(args) > 1000)
 	{
-		error(cell_symbol_system_error, cons(file_name, cons(MAKE_STRING0("too many arguments"), cons(file_name, args))));
+		error(cell_symbol_system_error, cons(file_name, cons(GetSCM(MAKE_STRING0("too many arguments")), cons(file_name, args))));
 	}
 
 	c_argv[i++] = CSTRING(file_name);
@@ -537,7 +537,7 @@ SCM get_internal_run_time()
 SCM getcwd_()  ///((name . "getcwd"))
 {
 	char buf[PATH_MAX];
-	return MAKE_STRING0(getcwd(buf, PATH_MAX));
+	return GetSCM(MAKE_STRING0(getcwd(buf, PATH_MAX)));
 }
 
 SCM dup_(SCM port)  ///((name . "dup"))

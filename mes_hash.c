@@ -39,7 +39,7 @@ struct scm* vector_ref_(SCM x, long i);
 struct scm* vector_set_x_(SCM x, long i, SCM e);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
-SCM make_string(char const* s, int length);
+struct scm* make_string(char const* s, int length);
 SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* struct_ref_(SCM x, long i);
 SCM assq (SCM x, SCM a);
@@ -72,7 +72,7 @@ int hashq_(SCM x, long size)
 		return hash_cstring(CSTRING(x), size);    // FIXME: hash x directly
 	}
 
-	error(cell_symbol_system_error, cons(MAKE_STRING0("hashq_: not a symbol"), x));
+	error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("hashq_: not a symbol")), x));
 	exit(1);
 }
 
