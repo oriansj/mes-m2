@@ -25,20 +25,20 @@
 SCM make_builtin_type();
 SCM init_builtin(SCM builtin_type, char const* name, int arity, void* fun, SCM a);
 SCM apply_builtin(SCM fn, SCM x);
-SCM make_hash_table_(long size);
 // src/gc.mes
 SCM gc_check ();
 SCM gc ();
 // src/hash.mes
-SCM hashq (SCM x, SCM size);
-SCM hash (SCM x, SCM size);
-SCM hashq_get_handle (SCM table, SCM key, SCM dflt);
-SCM hashq_ref (SCM table, SCM key, SCM dflt);
-SCM hash_ref (SCM table, SCM key, SCM dflt);
-SCM hashq_set_x (SCM table, SCM key, SCM value);
-SCM hash_set_x (SCM table, SCM key, SCM value);
-SCM hash_table_printer (SCM table);
-SCM make_hash_table (SCM x);
+struct scm* hashq (SCM x, SCM size);
+struct scm* hash (SCM x, SCM size);
+struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
+struct scm* hashq_ref (SCM table, SCM key, SCM dflt);
+struct scm* hash_ref (SCM table, SCM key, SCM dflt);
+struct scm* hashq_set_x (SCM table, SCM key, SCM value);
+struct scm* hash_set_x (SCM table, SCM key, SCM value);
+struct scm* hash_table_printer (SCM table);
+struct scm* make_hash_table_(long size);
+struct scm* make_hash_table (SCM x);
 // src/lib.mes
 SCM display_ (SCM x);
 SCM display_error_ (SCM x);

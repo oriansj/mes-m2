@@ -69,13 +69,13 @@ int eputs (char const* s);
 SCM mes_builtins(SCM a);
 SCM apply_builtin(SCM fn, SCM x);
 struct scm* cstring_to_symbol(char const *s);
-SCM make_hash_table_(SCM size);
+struct scm* make_hash_table_(SCM size);
 struct scm* make_initial_module(SCM a);
 SCM gc_check ();
 SCM gc ();
-SCM hashq_get_handle (SCM table, SCM key, SCM dflt);
-SCM hashq_set_x (SCM table, SCM key, SCM value);
-SCM hash_set_x (SCM table, SCM key, SCM value);
+struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
+struct scm* hashq_set_x (SCM table, SCM key, SCM value);
+struct scm* hash_set_x (SCM table, SCM key, SCM value);
 SCM display_ (SCM x);
 SCM display_error_ (SCM x);
 SCM write_error_ (SCM x);
@@ -593,7 +593,7 @@ SCM macro_get_handle(SCM name)
 {
 	if(TYPE(name) == TSYMBOL)
 	{
-		return hashq_get_handle(g_macros, name, cell_nil);
+		return GetSCM(hashq_get_handle(g_macros, name, cell_nil));
 	}
 
 	return cell_f;
@@ -613,7 +613,7 @@ SCM get_macro(SCM name)  ///((internal))
 
 SCM macro_set_x(SCM name, SCM value)  ///((internal))
 {
-	return hashq_set_x(g_macros, name, value);
+	return GetSCM(hashq_set_x(g_macros, name, value));
 }
 
 SCM push_cc(SCM p1, SCM p2, SCM a, SCM c)  ///((internal))
@@ -1583,7 +1583,7 @@ SCM mes_symbols()  ///((internal))
 	gc_init_cells();
 	g_free = cell_symbol_test + 1;
 	g_symbol_max = g_free;
-	g_symbols = make_hash_table_(500);
+	g_symbols = GetSCM(make_hash_table_(500));
 	init_symbol(cell_nil, TSPECIAL, "()");
 	init_symbol(cell_f, TSPECIAL, "#f");
 	init_symbol(cell_t, TSPECIAL, "#t");
@@ -1978,7 +1978,7 @@ int main(int argc, char *argv[])
 	a = mes_builtins(a);
 	a = init_time(a);
 	m0 = GetSCM(make_initial_module(a));
-	g_macros = make_hash_table_(0);
+	g_macros = GetSCM(make_hash_table_(0));
 
 	if(g_debug > 4)
 	{

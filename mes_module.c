@@ -31,7 +31,7 @@
 
 struct scm* struct_ref_(SCM x, long i);
 struct scm* cstring_to_symbol(char const *s);
-SCM make_hashq_type();
+struct scm* make_hashq_type();
 struct scm* module_define_x (SCM module, SCM name, SCM value);
 SCM car (SCM x);
 SCM cdr (SCM x);
@@ -39,13 +39,13 @@ SCM cons (SCM x, SCM y);
 SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM acons (SCM key, SCM value, SCM alist);
-SCM make_hash_table_(long size);
+struct scm* make_hash_table_(long size);
 int fdputs(char const* s, int fd);
 SCM display_ (SCM x);
 int fdputc(int c, int fd);
 SCM assq (SCM x, SCM a);
-SCM hashq_get_handle (SCM table, SCM key, SCM dflt);
-SCM hashq_set_x (SCM table, SCM key, SCM value);
+struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
+struct scm* hashq_set_x (SCM table, SCM key, SCM value);
 
 struct scm* make_module_type()  ///(internal))
 {
@@ -63,10 +63,10 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 {
 	SCM module_type = GetSCM(make_module_type());
 	a = acons(cell_symbol_module, module_type, a);
-	SCM hashq_type = make_hashq_type();
+	SCM hashq_type = GetSCM(make_hashq_type());
 	a = acons(cell_symbol_hashq_table, hashq_type, a);
 	SCM name = cons(GetSCM(cstring_to_symbol("boot")), cell_nil);
-	SCM globals = make_hash_table_(0);
+	SCM globals = GetSCM(make_hash_table_(0));
 	SCM locals = cell_nil;
 	SCM values = cell_nil;
 	values = cons(globals, values);
@@ -117,7 +117,7 @@ struct scm* module_variable(SCM module, SCM name)
 	{
 		module = m0;
 		SCM globals = GetSCM(struct_ref_(module, 5));
-		x = hashq_get_handle(globals, name, cell_f);
+		x = GetSCM(hashq_get_handle(globals, name, cell_f));
 	}
 
 	return Getstructscm(x);
@@ -139,5 +139,5 @@ struct scm* module_define_x(SCM module, SCM name, SCM value)
 {
 	module = m0;
 	SCM globals = GetSCM(struct_ref_(module, 5));
-	return Getstructscm(hashq_set_x(globals, name, value));
+	return hashq_set_x(globals, name, value);
 }
