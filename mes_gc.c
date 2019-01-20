@@ -44,7 +44,7 @@ SCM write_error_ (SCM x);
 SCM gc_push_frame();
 SCM gc_pop_frame();
 
-SCM gc_up_arena()  ///((internal))
+struct scm* gc_up_arena()  ///((internal))
 {
 	long old_arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
 
@@ -76,7 +76,7 @@ SCM gc_up_arena()  ///((internal))
 	g_cells = (struct scm*)p;
 	memcpy(p + arena_bytes, p + old_arena_bytes, STACK_SIZE * sizeof(SCM));
 	g_cells++;
-	return 0;
+	return NULL;
 }
 
 void gc_flip()  ///((internal))
@@ -96,11 +96,11 @@ void gc_flip()  ///((internal))
 	memcpy(g_cells - 1, g_news - 1, (g_free + 2)*sizeof(struct scm));
 }
 
-SCM gc_copy(SCM old)  ///((internal))
+struct scm* gc_copy(SCM old)  ///((internal))
 {
 	if(TYPE(old) == TBROKEN_HEART)
 	{
-		return g_cells[old].rac;
+		return Getstructscm(g_cells[old].rac);
 	}
 
 	SCM new = g_free++;
@@ -142,19 +142,19 @@ SCM gc_copy(SCM old)  ///((internal))
 
 	TYPE(old) = TBROKEN_HEART;
 	CAR(old) = new;
-	return new;
+	return Getstructscm(new);
 }
 
-SCM gc_relocate_car(SCM new, SCM car)  ///((internal))
+struct scm* gc_relocate_car(SCM new, SCM car)  ///((internal))
 {
 	g_news[new].rac = car;
-	return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
 
-SCM gc_relocate_cdr(SCM new, SCM cdr)  ///((internal))
+struct scm* gc_relocate_cdr(SCM new, SCM cdr)  ///((internal))
 {
 	g_news[new].rdc = cdr;
-	return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
 
 void gc_loop(SCM scan)  ///((internal))
@@ -175,7 +175,7 @@ void gc_loop(SCM scan)  ///((internal))
 		        || scan == 1 // null
 		        || NTYPE(scan) == TVARIABLE)
 		{
-			car = gc_copy(g_news[scan].rac);
+			car = GetSCM(gc_copy(g_news[scan].rac));
 			gc_relocate_car(scan, car);
 		}
 
@@ -192,7 +192,7 @@ void gc_loop(SCM scan)  ///((internal))
 		        || NTYPE(scan) == TVALUES)
 		        && g_news[scan].cdr) // allow for 0 terminated list of symbols
 		{
-			cdr = gc_copy(g_news[scan].rdc);
+			cdr = GetSCM(gc_copy(g_news[scan].rdc));
 			gc_relocate_cdr(scan, cdr);
 		}
 
@@ -207,18 +207,18 @@ void gc_loop(SCM scan)  ///((internal))
 	gc_flip();
 }
 
-SCM gc();
-SCM gc_check()
+struct scm* gc();
+struct scm* gc_check()
 {
 	if(g_free + GC_SAFETY > ARENA_SIZE)
 	{
 		gc();
 	}
 
-	return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
 
-SCM gc_init_news()  ///((internal))
+struct scm* gc_init_news()  ///((internal))
 {
 	g_news = g_cells + g_free;
 	NTYPE(0) = TVECTOR;
@@ -227,7 +227,7 @@ SCM gc_init_news()  ///((internal))
 	g_news++;
 	NTYPE(0) = TCHAR;
 	NVALUE(0) = 'n';
-	return 0;
+	return NULL;
 }
 
 void gc_()  ///((internal))
@@ -277,20 +277,20 @@ void gc_()  ///((internal))
 		gc_copy(i);
 	}
 
-	g_symbols = gc_copy(g_symbols);
-	g_macros = gc_copy(g_macros);
-	g_ports = gc_copy(g_ports);
-	m0 = gc_copy(m0);
+	g_symbols = GetSCM(gc_copy(g_symbols));
+	g_macros = GetSCM(gc_copy(g_macros));
+	g_ports = GetSCM(gc_copy(g_ports));
+	m0 = GetSCM(gc_copy(m0));
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{
-		g_stack_array[i] = gc_copy(g_stack_array[i]);
+		g_stack_array[i] = GetSCM(gc_copy(g_stack_array[i]));
 	}
 
 	gc_loop(1);
 }
 
-SCM gc()
+struct scm* gc()
 {
 	if(g_debug > 4)
 	{
@@ -315,6 +315,5 @@ SCM gc()
 		write_error_(r0);
 		eputs("\n");
 	}
-        return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
-
