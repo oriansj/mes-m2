@@ -44,8 +44,8 @@ SCM cons (SCM x, SCM y);
 SCM alloc(long n);
 SCM make_cell__(long type, SCM car, SCM cdr);
 SCM write_error_ (SCM x);
-SCM hash_ref (SCM table, SCM key, SCM dflt);
-SCM hash_set_x (SCM table, SCM key, SCM value);
+struct scm* hash_ref (SCM table, SCM key, SCM dflt);
+struct scm* hash_set_x (SCM table, SCM key, SCM value);
 int readchar();
 
 void assert_max_string(int i, char const* msg, char* string)
@@ -164,7 +164,7 @@ struct scm* keyword_to_string(SCM keyword)
 
 struct scm* string_to_symbol(SCM string)
 {
-	SCM x = hash_ref(g_symbols, string, cell_f);
+	SCM x = GetSCM(hash_ref(g_symbols, string, cell_f));
 
 	if(x == cell_f)
 	{
