@@ -148,15 +148,15 @@ struct scm* dup_ (SCM port);
 struct scm* dup2_ (SCM old, SCM new);
 struct scm* delete_file (SCM file_name);
 // src/reader.mes
-SCM read_input_file_env_ (SCM e, SCM a);
-SCM read_input_file_env ();
-SCM read_env (SCM a);
-SCM reader_read_sexp (SCM c, SCM a);
-SCM reader_read_character ();
-SCM reader_read_binary ();
-SCM reader_read_octal ();
-SCM reader_read_hex ();
-SCM reader_read_string ();
+struct scm* read_input_file_env_ (SCM e, SCM a);
+struct scm* read_input_file_env ();
+struct scm* read_env (SCM a);
+struct scm* reader_read_sexp (SCM c, SCM a);
+struct scm* reader_read_character ();
+struct scm* reader_read_binary ();
+struct scm* reader_read_octal ();
+struct scm* reader_read_hex ();
+struct scm* reader_read_string ();
 // src/strings.mes
 struct scm* string_equal_p (SCM a, SCM b);
 struct scm* symbol_to_string (SCM symbol);
