@@ -67,7 +67,7 @@ int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
 int eputs (char const* s);
 struct scm* mes_builtins(SCM a);
-SCM apply_builtin(SCM fn, SCM x);
+struct scm* apply_builtin(SCM fn, SCM x);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_hash_table_(SCM size);
 struct scm* make_initial_module(SCM a);
@@ -940,7 +940,7 @@ apply:
 	if(t == TSTRUCT && builtin_p(CAR(r1)) == cell_t)
 	{
 		check_formals(CAR(r1), builtin_arity(CAR(r1)), CDR(r1));
-		r1 = apply_builtin(CAR(r1), CDR(r1));    /// FIXME: move into eval_apply
+		r1 = GetSCM(apply_builtin(CAR(r1), CDR(r1)));    /// FIXME: move into eval_apply
 		goto vm_return;
 	}
 	else if(t == TCLOSURE)
@@ -1787,7 +1787,7 @@ SCM builtin_arity(SCM builtin)
 	return GetSCM(struct_ref_(builtin, 4));
 }
 
-SCM (*builtin_function(SCM builtin))(SCM)
+void* builtin_function(SCM builtin)
 {
 	return (void*)VALUE(GetSCM(struct_ref_(builtin, 5)));
 }
@@ -1797,7 +1797,7 @@ SCM builtin_p(SCM x)
 	return (TYPE(x) == TSTRUCT && GetSCM(struct_ref_(x, 2)) == cell_symbol_builtin) ? cell_t : cell_f;
 }
 
-SCM builtin_printer(SCM builtin)
+struct scm* builtin_printer(SCM builtin)
 {
 	fdputs("#<procedure ", __stdout);
 	display_(builtin_name(builtin));
@@ -1824,10 +1824,10 @@ SCM builtin_printer(SCM builtin)
 	}
 
 	fdputc('>', __stdout);
-        return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
 
-SCM apply_builtin(SCM fn, SCM x)  ///((internal))
+struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 {
 	int arity = VALUE(builtin_arity(fn));
 
@@ -1844,35 +1844,35 @@ SCM apply_builtin(SCM fn, SCM x)  ///((internal))
 	if(arity == 0)
 	{
 		//function0_t fp = f->function;
-		SCM(*fp)(void) = (void*)builtin_function(fn);
-		return fp();
+		SCM (*fp)(void) = builtin_function(fn);
+		return Getstructscm(fp());
 	}
 	else if(arity == 1)
 	{
 		//function1_t fp = f->function;
-		SCM(*fp)(SCM) = (void*)builtin_function(fn);
-		return fp(CAR(x));
+		SCM(*fp)(SCM) = builtin_function(fn);
+		return Getstructscm(fp(CAR(x)));
 	}
 	else if(arity == 2)
 	{
 		//function2_t fp = f->function;
-		SCM(*fp)(SCM, SCM) = (void*)builtin_function(fn);
-		return fp(CAR(x), CADR(x));
+		SCM(*fp)(SCM, SCM) = builtin_function(fn);
+		return Getstructscm(fp(CAR(x), CADR(x)));
 	}
 	else if(arity == 3)
 	{
 		//function3_t fp = f->function;
-		SCM(*fp)(SCM, SCM, SCM) = (void*)builtin_function(fn);
-		return fp(CAR(x), CADR(x), CAR(CDDR(x)));
+		SCM(*fp)(SCM, SCM, SCM) = builtin_function(fn);
+		return Getstructscm(fp(CAR(x), CADR(x), CAR(CDDR(x))));
 	}
 	else if(arity == -1)
 	{
 		//functionn_t fp = f->function;
-		SCM(*fp)(SCM) = (void*)builtin_function(fn);
-		return fp(x);
+		SCM(*fp)(SCM) = builtin_function(fn);
+		return Getstructscm(fp(x));
 	}
 
-	return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
 
 int open_boot(char *prefix, char const *boot, char const *location);

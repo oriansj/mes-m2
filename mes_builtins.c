@@ -24,7 +24,6 @@
 /* Imported Functions */
 SCM make_builtin_type();
 SCM init_builtin(SCM builtin_type, char const* name, int arity, void* fun, SCM a);
-SCM apply_builtin(SCM fn, SCM x);
 // src/gc.mes
 struct scm* gc_check ();
 struct scm* gc ();
@@ -105,7 +104,8 @@ SCM set_cdr_x (SCM x, SCM e);
 SCM set_env_x (SCM x, SCM e, SCM a);
 SCM type_ (SCM x);
 SCM values (SCM x);
-SCM builtin_printer(SCM builtin);
+struct scm* builtin_printer(SCM builtin);
+struct scm* apply_builtin(SCM fn, SCM x);
 
 // src/module.mes
 struct scm* make_module_type ();
