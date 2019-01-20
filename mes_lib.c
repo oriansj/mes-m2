@@ -49,7 +49,7 @@
 #define STRUCT_PRINTER 1
 
 int g_depth;
-SCM fdisplay_(SCM, int, int);
+struct scm* fdisplay_(SCM, int, int);
 int fdputs(char const* s, int fd);
 int fdputc(int c, int fd);
 char *itoa (int number);
@@ -66,15 +66,15 @@ struct scm* vector_set_x_(SCM x, long i, SCM e);
 struct scm* vector_length (SCM x);
 struct scm* vector_ref (SCM x, SCM i);
 struct scm* string_equal_p (SCM a, SCM b);
-SCM eq_p (SCM x, SCM y);
+struct scm* eq_p (SCM x, SCM y);
 
-SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
+struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 {
 	fdputs(sep, fd);
 
 	if(g_depth == 0)
 	{
-		return cell_unspecified;
+		return Getstructscm(cell_unspecified);
 	}
 
 	g_depth = g_depth - 1;
@@ -381,55 +381,55 @@ SCM display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	return 0;
 }
 
-SCM display_(SCM x)
+struct scm* display_(SCM x)
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", __stdout, 0);
 }
 
-SCM display_error_(SCM x)
+struct scm* display_error_(SCM x)
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", __stderr, 0);
 }
 
-SCM display_port_(SCM x, SCM p)
+struct scm* display_port_(SCM x, SCM p)
 {
 	assert(TYPE(p) == TNUMBER);
 	return fdisplay_(x, VALUE(p), 0);
 }
 
-SCM write_(SCM x)
+struct scm* write_(SCM x)
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", __stdout, 1);
 }
 
-SCM write_error_(SCM x)
+struct scm* write_error_(SCM x)
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", __stderr, 1);
 }
 
-SCM write_port_(SCM x, SCM p)
+struct scm* write_port_(SCM x, SCM p)
 {
 	assert(TYPE(p) == TNUMBER);
 	return fdisplay_(x, VALUE(p), 1);
 }
 
-SCM fdisplay_(SCM x, int fd, int write_p)  ///((internal))
+struct scm* fdisplay_(SCM x, int fd, int write_p)  ///((internal))
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", fd, write_p);
 }
 
-SCM exit_(SCM x)  ///((name . "exit"))
+void exit_(SCM x)  ///((name . "exit"))
 {
 	assert(TYPE(x) == TNUMBER);
 	exit(VALUE(x));
 }
 
-SCM frame_printer(SCM frame)
+struct scm* frame_printer(SCM frame)
 {
 	fdputs("#<", __stdout);
 	display_(GetSCM(struct_ref_(frame, 2)));
@@ -437,22 +437,22 @@ SCM frame_printer(SCM frame)
 	fdputs("procedure: ", __stdout);
 	display_(GetSCM(struct_ref_(frame, 3)));
 	fdputc('>', __stdout);
-        return cell_unspecified;
+	return Getstructscm(cell_unspecified);
 }
 
-SCM make_frame_type()  ///((internal))
+struct scm* make_frame_type()  ///((internal))
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
 	fields = cons(cell_symbol_procedure, fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_frame, fields);
-	return GetSCM(make_struct(record_type, fields, cell_unspecified));
+	return make_struct(record_type, fields, cell_unspecified);
 }
 
-SCM make_frame(long index)
+struct scm* make_frame(long index)
 {
-	SCM frame_type = make_frame_type();
+	SCM frame_type = GetSCM(make_frame_type());
 	long array_index = (STACK_SIZE - (index * FRAME_SIZE));
 	SCM procedure = g_stack_array[array_index + FRAME_PROCEDURE];
 
@@ -464,60 +464,60 @@ SCM make_frame(long index)
 	SCM values = cell_nil;
 	values = cons(procedure, values);
 	values = cons(cell_symbol_frame, values);
-	return GetSCM(make_struct(frame_type, values, GetSCM(cstring_to_symbol("frame-printer"))));
+	return make_struct(frame_type, values, GetSCM(cstring_to_symbol("frame-printer")));
 }
 
-SCM make_stack_type()  ///((internal))
+struct scm* make_stack_type()  ///((internal))
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
 	fields = cons(GetSCM(cstring_to_symbol("frames")), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_stack, fields);
-	return GetSCM(make_struct(record_type, fields, cell_unspecified));
+	return make_struct(record_type, fields, cell_unspecified);
 }
 
-SCM make_stack()  ///((arity . n))
+struct scm* make_stack()  ///((arity . n))
 {
-	SCM stack_type = make_stack_type();
+	SCM stack_type = GetSCM(make_stack_type());
 	long size = (STACK_SIZE - g_stack) / FRAME_SIZE;
 	SCM frames = GetSCM(make_vector__(size));
 
 	for(long i = 0; i < size; i++)
 	{
-		SCM frame = make_frame(i);
+		SCM frame = GetSCM(make_frame(i));
 		vector_set_x_(frames, i, frame);
 	}
 
 	SCM values = cell_nil;
 	values = cons(frames, values);
 	values = cons(cell_symbol_stack, values);
-	return GetSCM(make_struct(stack_type, values, cell_unspecified));
+	return make_struct(stack_type, values, cell_unspecified);
 }
 
-SCM stack_length(SCM stack)
+struct scm* stack_length(SCM stack)
 {
 	SCM frames = GetSCM(struct_ref_(stack, 3));
-	return GetSCM(vector_length(frames));
+	return vector_length(frames);
 }
 
-SCM stack_ref(SCM stack, SCM index)
+struct scm* stack_ref(SCM stack, SCM index)
 {
 	SCM frames = GetSCM(struct_ref_(stack, 3));
-	return GetSCM(vector_ref(frames, index));
+	return vector_ref(frames, index);
 }
 
-SCM xassq(SCM x, SCM a)  ///for speed in core only
+struct scm* xassq(SCM x, SCM a)  ///for speed in core only
 {
 	while(a != cell_nil && x != CDAR(a))
 	{
 		a = CDR(a);
 	}
 
-	return a != cell_nil ? CAR(a) : cell_f;
+	return a != cell_nil ? Getstructscm(CAR(a)) : Getstructscm(cell_f);
 }
 
-SCM memq(SCM x, SCM a)
+struct scm* memq(SCM x, SCM a)
 {
 	int t = TYPE(x);
 
@@ -545,40 +545,40 @@ SCM memq(SCM x, SCM a)
 		}
 	}
 
-	return a != cell_nil ? a : cell_f;
+	return a != cell_nil ? Getstructscm(a) : Getstructscm(cell_f);
 }
 
-SCM equal2_p(SCM a, SCM b)
+struct scm* equal2_p(SCM a, SCM b)
 {
 equal2:
 
 	if(a == b)
 	{
-		return cell_t;
+		return Getstructscm(cell_t);
 	}
 
 	if(TYPE(a) == TPAIR && TYPE(b) == TPAIR)
 	{
-		if(equal2_p(CAR(a), CAR(b)) == cell_t)
+		if(equal2_p(CAR(a), CAR(b)) == Getstructscm(cell_t))
 		{
 			a = CDR(a);
 			b = CDR(b);
 			goto equal2;
 		}
 
-		return cell_f;
+		return Getstructscm(cell_f);
 	}
 
 	if(TYPE(a) == TSTRING && TYPE(b) == TSTRING)
 	{
-		return GetSCM(string_equal_p(a, b));
+		return string_equal_p(a, b);
 	}
 
 	if(TYPE(a) == TVECTOR && TYPE(b) == TVECTOR)
 	{
 		if(LENGTH(a) != LENGTH(b))
 		{
-			return cell_f;
+			return Getstructscm(cell_f);
 		}
 
 		for(long i = 0; i < LENGTH(a); i++)
@@ -596,29 +596,29 @@ equal2:
 				bi = REF(bi);
 			}
 
-			if(equal2_p(ai, bi) == cell_f)
+			if(equal2_p(ai, bi) == Getstructscm(cell_f))
 			{
-				return cell_f;
+				return Getstructscm(cell_f);
 			}
 		}
 
-		return cell_t;
+		return Getstructscm(cell_t);
 	}
 
 	return eq_p(a, b);
 }
 
-SCM last_pair(SCM x)
+struct scm* last_pair(SCM x)
 {
 	while(x != cell_nil && CDR(x) != cell_nil)
 	{
 		x = CDR(x);
 	}
 
-	return x;
+	return Getstructscm(x);
 }
 
-SCM pair_p(SCM x)
+struct scm* pair_p(SCM x)
 {
-	return TYPE(x) == TPAIR ? cell_t : cell_f;
+	return TYPE(x) == TPAIR ? Getstructscm(cell_t) : Getstructscm(cell_f);
 }

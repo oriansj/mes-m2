@@ -41,7 +41,7 @@ struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM acons (SCM key, SCM value, SCM alist);
 struct scm* make_hash_table_(long size);
 int fdputs(char const* s, int fd);
-SCM display_ (SCM x);
+struct scm* display_ (SCM x);
 int fdputc(int c, int fd);
 SCM assq (SCM x, SCM a);
 struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);

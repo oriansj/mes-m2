@@ -46,7 +46,7 @@ SCM assq (SCM x, SCM a);
 SCM assoc (SCM x, SCM a);
 SCM acons (SCM key, SCM value, SCM alist);
 int fdputs (char const* s, int fd);
-SCM display_ (SCM x);
+struct scm* display_ (SCM x);
 int fdputc (int c, int fd);
 SCM write_ (SCM x);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
