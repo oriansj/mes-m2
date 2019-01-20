@@ -32,42 +32,42 @@
 #define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 
 void assert_max_string(int i, char const* msg, char* string);
-SCM read_env (SCM a);
-SCM reader_read_binary ();
-SCM reader_read_octal ();
-SCM reader_read_hex ();
-SCM reader_read_string ();
-SCM reader_read_character ();
+struct scm* read_env (SCM a);
+struct scm* reader_read_binary ();
+struct scm* reader_read_octal ();
+struct scm* reader_read_hex ();
+struct scm* reader_read_string ();
+struct scm* reader_read_character ();
 SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 int readchar();
-SCM error(SCM key, SCM x);
+struct scm* error(SCM key, SCM x);
 struct scm* make_string(char const* s, int length);
 int peekchar();
 int unreadchar();
-SCM make_cell__(long type, SCM car, SCM cdr);
+struct scm* make_cell__(long type, SCM car, SCM cdr);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* symbol_to_keyword (SCM symbol);
 struct scm* list_to_vector (SCM x);
 int eputs(char const* s);
 char *itoa (int number);
 
-SCM read_input_file_env_(SCM e, SCM a)
+struct scm* read_input_file_env_(SCM e, SCM a)
 {
 	if(e == cell_nil)
 	{
-		return e;
+		return Getstructscm(e);
 	}
 
-	return cons(e, read_input_file_env_(read_env(a), a));
+	return Getstructscm(cons(e, GetSCM(read_input_file_env_(GetSCM(read_env(a)), a))));
 }
 
-SCM read_input_file_env()
+struct scm* read_input_file_env()
 {
 	//r0 = a;
 	//return read_input_file_env_ (read_env (r0), r0);
-	return read_input_file_env_(read_env(cell_nil), cell_nil);
+	return read_input_file_env_(GetSCM(read_env(cell_nil)), cell_nil);
 }
 
 int reader_read_line_comment(int c)
@@ -86,9 +86,9 @@ int reader_read_line_comment(int c)
 	exit(1);
 }
 
-SCM reader_read_block_comment(int s, int c);
-SCM reader_read_hash(int c, SCM a);
-SCM reader_read_list(int c, SCM a);
+int reader_read_block_comment(int s, int c);
+struct scm* reader_read_hash(int c, SCM a);
+struct scm* reader_read_list(int c, SCM a);
 
 int reader_identifier_p(int c)
 {
@@ -100,7 +100,7 @@ int reader_end_of_word_p(int c)
 	return (c == '"' || c == ';' || c == '(' || c == ')' || isspace(c) || c == EOF);
 }
 
-SCM reader_read_identifier_or_number(int c)
+struct scm* reader_read_identifier_or_number(int c)
 {
 	int i = 0;
 	long n = 0;
@@ -145,16 +145,16 @@ SCM reader_read_identifier_or_number(int c)
 
 	unreadchar(c);
 	g_buf[i] = 0;
-	return GetSCM(cstring_to_symbol(g_buf));
+	return cstring_to_symbol(g_buf);
 }
 
-SCM reader_read_sexp_(int c, SCM a)
+struct scm* reader_read_sexp_(int c, SCM a)
 {
 reset_reader:
 
 	if(c == EOF)
 	{
-		return cell_nil;
+		return Getstructscm(cell_nil);
 	}
 
 	if(c == ';')
@@ -176,7 +176,7 @@ reset_reader:
 
 	if(c == ')')
 	{
-		return cell_nil;
+		return Getstructscm(cell_nil);
 	}
 
 	if(c == '#')
@@ -186,7 +186,7 @@ reset_reader:
 
 	if(c == '`')
 	{
-		return cons(cell_symbol_quasiquote, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return Getstructscm(cons(cell_symbol_quasiquote, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 	}
 
 	if(c == ',')
@@ -194,15 +194,15 @@ reset_reader:
 		if(peekchar() == '@')
 		{
 			readchar();
-			return cons(cell_symbol_unquote_splicing, cons(reader_read_sexp_(readchar(), a), cell_nil));
+			return Getstructscm(cons(cell_symbol_unquote_splicing, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 		}
 
-		return cons(cell_symbol_unquote, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return Getstructscm(cons(cell_symbol_unquote, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 	}
 
 	if(c == '\'')
 	{
-		return cons(cell_symbol_quote, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return Getstructscm(cons(cell_symbol_quote, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 	}
 
 	if(c == '"')
@@ -212,7 +212,7 @@ reset_reader:
 
 	if(c == '.' && (!reader_identifier_p(peekchar())))
 	{
-		return cell_dot;
+		return Getstructscm(cell_dot);
 	}
 
 	return reader_read_identifier_or_number(c);
@@ -240,13 +240,13 @@ int reader_eat_whitespace(int c)
 	return c;
 }
 
-SCM reader_read_list(int c, SCM a)
+struct scm* reader_read_list(int c, SCM a)
 {
 	c = reader_eat_whitespace(c);
 
 	if(c == ')')
 	{
-		return cell_nil;
+		return Getstructscm(cell_nil);
 	}
 
 	if(c == EOF)
@@ -255,22 +255,22 @@ SCM reader_read_list(int c, SCM a)
 	}
 
 	//return cell_nil;
-	SCM s = reader_read_sexp_(c, a);
+	SCM s = GetSCM(reader_read_sexp_(c, a));
 
 	if(s == cell_dot)
 	{
-		return CAR(reader_read_list(readchar(), a));
+		return Getstructscm(CAR(GetSCM(reader_read_list(readchar(), a))));
 	}
 
-	return cons(s, reader_read_list(readchar(), a));
+	return Getstructscm(cons(s, GetSCM(reader_read_list(readchar(), a))));
 }
 
-SCM read_env(SCM a)
+struct scm* read_env(SCM a)
 {
 	return reader_read_sexp_(readchar(), a);
 }
 
-SCM reader_read_block_comment(int s, int c)
+int reader_read_block_comment(int s, int c)
 {
 	if(c == s && peekchar() == '#')
 	{
@@ -280,7 +280,7 @@ SCM reader_read_block_comment(int s, int c)
 	return reader_read_block_comment(s, readchar());
 }
 
-SCM reader_read_hash(int c, SCM a)
+struct scm* reader_read_hash(int c, SCM a)
 {
 	if(c == '!')
 	{
@@ -296,12 +296,12 @@ SCM reader_read_hash(int c, SCM a)
 
 	if(c == 'f')
 	{
-		return cell_f;
+		return Getstructscm(cell_f);
 	}
 
 	if(c == 't')
 	{
-		return cell_t;
+		return Getstructscm(cell_t);
 	}
 
 	if(c == ',')
@@ -309,32 +309,32 @@ SCM reader_read_hash(int c, SCM a)
 		if(peekchar() == '@')
 		{
 			readchar();
-			return cons(cell_symbol_unsyntax_splicing, cons(reader_read_sexp_(readchar(), a), cell_nil));
+			return Getstructscm(cons(cell_symbol_unsyntax_splicing, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 		}
 
-		return cons(cell_symbol_unsyntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return Getstructscm(cons(cell_symbol_unsyntax, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 	}
 
 	if(c == '\'')
 	{
-		return cons(cell_symbol_syntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return Getstructscm(cons(cell_symbol_syntax, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 	}
 
 	if(c == '`')
 	{
-		return cons(cell_symbol_quasisyntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return Getstructscm(cons(cell_symbol_quasisyntax, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
 	}
 
 	if(c == ':')
 	{
-		SCM x = reader_read_identifier_or_number(readchar());
+		SCM x = GetSCM(reader_read_identifier_or_number(readchar()));
 
 		if(TYPE(x) == TNUMBER)
 		{ /* READ error */
 			error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("keyword perifx ':' not followed by a symbol: ")), x));
 		}
 
-		return GetSCM(symbol_to_keyword(x));
+		return symbol_to_keyword(x);
 	}
 
 	if(c == 'b')
@@ -359,7 +359,7 @@ SCM reader_read_hash(int c, SCM a)
 
 	if(c == '(')
 	{
-		return GetSCM(list_to_vector(reader_read_list(readchar(), a)));
+		return list_to_vector(GetSCM(reader_read_list(readchar(), a)));
 	}
 
 	if(c == ';')
@@ -371,12 +371,12 @@ SCM reader_read_hash(int c, SCM a)
 	return reader_read_sexp_(readchar(), a);
 }
 
-SCM reader_read_sexp(SCM c, SCM a)
+struct scm* reader_read_sexp(SCM c, SCM a)
 {
 	return reader_read_sexp_(VALUE(c), a);
 }
 
-SCM reader_read_character()
+struct scm* reader_read_character()
 {
 	int c = readchar();
 	int p = peekchar();
@@ -395,7 +395,7 @@ SCM reader_read_character()
 	}
 	else if(c == 'x' && ((p >= '0' && p <= '9') || (p >= 'a' && p <= 'f') || (p >= 'F' && p <= 'F')))
 	{
-		c = VALUE(reader_read_hex());
+		c = VALUE(GetSCM(reader_read_hex()));
 		eputs("reading hex c=");
 		eputs(itoa(c));
 		eputs("\n");
@@ -495,7 +495,7 @@ SCM reader_read_character()
 	return MAKE_CHAR(c);
 }
 
-SCM reader_read_binary()
+struct scm* reader_read_binary()
 {
 	long n = 0;
 	int c = peekchar();
@@ -524,7 +524,7 @@ SCM reader_read_binary()
 	return MAKE_NUMBER(n);
 }
 
-SCM reader_read_octal()
+struct scm* reader_read_octal()
 {
 	long n = 0;
 	int c = peekchar();
@@ -553,7 +553,7 @@ SCM reader_read_octal()
 	return MAKE_NUMBER(n);
 }
 
-SCM reader_read_hex()
+struct scm* reader_read_hex()
 {
 	long n = 0;
 	int c = peekchar();
@@ -595,7 +595,7 @@ SCM reader_read_hex()
 	return MAKE_NUMBER(n);
 }
 
-SCM reader_read_string()
+struct scm* reader_read_string()
 {
 	int i = 0;
 	int c;
@@ -658,7 +658,7 @@ SCM reader_read_string()
 			}
 			else if(c == 'x')
 			{
-				c = VALUE(reader_read_hex());
+				c = VALUE(GetSCM(reader_read_hex()));
 			}
 		}
 
@@ -666,5 +666,5 @@ SCM reader_read_string()
 	} while(1);
 
 	g_buf[i] = 0;
-	return GetSCM(make_string(g_buf, i));
+	return make_string(g_buf, i);
 }
