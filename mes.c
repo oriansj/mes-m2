@@ -66,12 +66,12 @@ char *itoa (int number);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
 int eputs (char const* s);
-SCM mes_builtins(SCM a);
+struct scm* mes_builtins(SCM a);
 SCM apply_builtin(SCM fn, SCM x);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_hash_table_(SCM size);
 struct scm* make_initial_module(SCM a);
-SCM gc_check ();
+struct scm* gc_check ();
 SCM gc ();
 struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
 struct scm* hashq_set_x (SCM table, SCM key, SCM value);
@@ -1975,7 +1975,7 @@ int main(int argc, char *argv[])
 	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
 
 	SCM a = mes_environment(argc, argv);
-	a = mes_builtins(a);
+	a = GetSCM(mes_builtins(a));
 	a = init_time(a);
 	m0 = GetSCM(make_initial_module(a));
 	g_macros = GetSCM(make_hash_table_(0));

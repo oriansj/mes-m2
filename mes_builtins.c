@@ -26,8 +26,8 @@ SCM make_builtin_type();
 SCM init_builtin(SCM builtin_type, char const* name, int arity, void* fun, SCM a);
 SCM apply_builtin(SCM fn, SCM x);
 // src/gc.mes
-SCM gc_check ();
-SCM gc ();
+struct scm* gc_check ();
+struct scm* gc ();
 // src/hash.mes
 struct scm* hashq (SCM x, SCM size);
 struct scm* hash (SCM x, SCM size);
@@ -114,39 +114,39 @@ struct scm* module_variable (SCM module, SCM name);
 struct scm* module_ref (SCM module, SCM name);
 struct scm* module_define_x (SCM module, SCM name, SCM value);
 // src/posix.mes
-SCM peek_byte ();
-SCM read_byte ();
-SCM unread_byte (SCM i);
-SCM peek_char ();
-SCM read_char (SCM port);
-SCM unread_char (SCM i);
-SCM write_char (SCM i);
-SCM write_byte (SCM x);
-SCM getenv_ (SCM s);
-SCM setenv_ (SCM s, SCM v);
-SCM access_p (SCM file_name, SCM mode);
-SCM current_input_port ();
-SCM open_input_file (SCM file_name);
-SCM open_input_string (SCM string);
-SCM set_current_input_port (SCM port);
-SCM current_output_port ();
-SCM current_error_port ();
-SCM open_output_file (SCM x);
-SCM set_current_output_port (SCM port);
-SCM set_current_error_port (SCM port);
-SCM force_output (SCM port);
-SCM chmod_ (SCM file_name, SCM mode);
-SCM isatty_p (SCM port);
-SCM primitive_fork ();
-SCM execl_ (SCM file_name, SCM args);
-SCM waitpid_ (SCM pid, SCM options);
-SCM current_time ();
-SCM gettimeofday_ ();
-SCM get_internal_run_time ();
-SCM getcwd_ ();
-SCM dup_ (SCM port);
-SCM dup2_ (SCM old, SCM new);
-SCM delete_file (SCM file_name);
+struct scm* peek_byte ();
+struct scm* read_byte ();
+struct scm* unread_byte (SCM i);
+struct scm* peek_char ();
+struct scm* read_char (SCM port);
+struct scm* unread_char (SCM i);
+struct scm* write_char (SCM i);
+struct scm* write_byte (SCM x);
+struct scm* getenv_ (SCM s);
+struct scm* setenv_ (SCM s, SCM v);
+struct scm* access_p (SCM file_name, SCM mode);
+struct scm* current_input_port ();
+struct scm* open_input_file (SCM file_name);
+struct scm* open_input_string (SCM string);
+struct scm* set_current_input_port (SCM port);
+struct scm* current_output_port ();
+struct scm* current_error_port ();
+struct scm* open_output_file (SCM x);
+struct scm* set_current_output_port (SCM port);
+struct scm* set_current_error_port (SCM port);
+struct scm* force_output (SCM port);
+struct scm* chmod_ (SCM file_name, SCM mode);
+struct scm* isatty_p (SCM port);
+struct scm* primitive_fork ();
+struct scm* execl_ (SCM file_name, SCM args);
+struct scm* waitpid_ (SCM pid, SCM options);
+struct scm* current_time ();
+struct scm* gettimeofday_ ();
+struct scm* get_internal_run_time ();
+struct scm* getcwd_ ();
+struct scm* dup_ (SCM port);
+struct scm* dup2_ (SCM old, SCM new);
+struct scm* delete_file (SCM file_name);
 // src/reader.mes
 SCM read_input_file_env_ (SCM e, SCM a);
 SCM read_input_file_env ();
@@ -185,7 +185,7 @@ struct scm* list_to_vector (SCM x);
 struct scm* vector_to_list (SCM v);
 SCM init_time(SCM a);
 
-SCM mes_builtins(SCM a)  ///((internal))
+struct scm* mes_builtins(SCM a)  ///((internal))
 {
 	// TODO minimal: cons, car, cdr, list, null_p, eq_p minus, plus
 	// display_, display_error_, getenv
@@ -343,5 +343,5 @@ SCM mes_builtins(SCM a)  ///((internal))
 	a = init_builtin(builtin_type, "vector-set!", 3, &vector_set_x, a);
 	a = init_builtin(builtin_type, "list->vector", 1, &list_to_vector, a);
 	a = init_builtin(builtin_type, "vector->list", 1, &vector_to_list, a);
-	return a;
+	return Getstructscm(a);
 }
