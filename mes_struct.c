@@ -47,8 +47,8 @@ struct scm* make_struct(SCM type, SCM fields, SCM printer)
 	long size = 2 + length__(fields);
 	SCM v = alloc(size);
 	SCM x = make_cell__(TSTRUCT, size, v);
-	g_cells[v] = g_cells[GetSCM(vector_entry(type))];
-	g_cells[v + 1] = g_cells[GetSCM(vector_entry(printer))];
+	g_cells[v] = *vector_entry(type);
+	g_cells[v + 1] = *vector_entry(printer);
 
 	for(long i = 2; i < size; i++)
 	{
@@ -60,7 +60,7 @@ struct scm* make_struct(SCM type, SCM fields, SCM printer)
 			fields = CDR(fields);
 		}
 
-		g_cells[v + i] = g_cells[GetSCM(vector_entry(e))];
+		g_cells[v + i] = *vector_entry(e);
 	}
 
 	return Getstructscm(x);
@@ -100,7 +100,7 @@ struct scm* struct_set_x_(SCM x, long i, SCM e)
 {
 	assert(TYPE(x) == TSTRUCT);
 	assert(i < LENGTH(x));
-	g_cells[STRUCT(x) + i] = g_cells[GetSCM(vector_entry(e))];
+	g_cells[STRUCT(x) + i] = *vector_entry(e);
 	return Getstructscm(cell_unspecified);
 }
 
