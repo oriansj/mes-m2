@@ -964,7 +964,7 @@ apply:
 		{
 			for(t = 0; t < LENGTH(v); t++)
 			{
-				g_stack_array[STACK_SIZE - LENGTH(v) + t] = GetSCM(vector_ref_(v, t));
+				g_stack_array[STACK_SIZE - LENGTH(v) + t] = GetSCM(good2bad(vector_ref_(v, t), g_cells));
 			}
 
 			g_stack = STACK_SIZE - LENGTH(v);
@@ -1490,7 +1490,7 @@ if_expr:
 call_with_current_continuation:
 	gc_push_frame();
 	x = MAKE_CONTINUATION(g_continuations++);
-	v = GetSCM(make_vector__(STACK_SIZE - g_stack));
+	v = GetSCM(good2bad(make_vector__(STACK_SIZE - g_stack), g_cells));
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{
@@ -1502,7 +1502,7 @@ call_with_current_continuation:
 	push_cc(cons(CAR(r1), cons(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
-	v = GetSCM(make_vector__(STACK_SIZE - g_stack));
+	v = GetSCM(good2bad(make_vector__(STACK_SIZE - g_stack), g_cells));
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{

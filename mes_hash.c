@@ -36,7 +36,7 @@
 
 struct scm* make_vector__(long k);
 struct scm* vector_ref_(SCM x, long i);
-struct scm* vector_set_x_(SCM x, long i, SCM e);
+void vector_set_x_(SCM x, long i, SCM e);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
 struct scm* make_string(char const* s, int length);
@@ -105,7 +105,7 @@ struct scm* hashq_get_handle(SCM table, SCM key, SCM dflt)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = GetSCM(vector_ref_(buckets, hash));
+	SCM bucket = GetSCM(good2bad(vector_ref_(buckets, hash), g_cells));
 	struct scm* x = &g_cells[cell_f];
 
 	struct scm* ydflt = Getstructscm2(dflt, g_cells);
@@ -131,7 +131,7 @@ struct scm* hashq_ref(SCM table, SCM key, SCM dflt)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = GetSCM(vector_ref_(buckets, hash));
+	SCM bucket = GetSCM(good2bad(vector_ref_(buckets, hash), g_cells));
 	struct scm* x = &g_cells[cell_f];
 
 	struct scm* ydflt = Getstructscm2(dflt, g_cells);
@@ -161,7 +161,7 @@ struct scm* hash_ref(SCM table, SCM key, SCM dflt)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hash_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = GetSCM(vector_ref_(buckets, hash));
+	SCM bucket = GetSCM(good2bad(vector_ref_(buckets, hash), g_cells));
 	SCM x = cell_f;
 
 	struct scm* ydflt = Getstructscm2(dflt, g_cells);
@@ -190,7 +190,7 @@ struct scm* hashq_set_x(SCM table, SCM key, SCM value)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hashq_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = GetSCM(vector_ref_(buckets, hash));
+	SCM bucket = GetSCM(good2bad(vector_ref_(buckets, hash), g_cells));
 
 	struct scm* ybucket = Getstructscm2(bucket, g_cells);
 	if(ybucket->type != TPAIR)
@@ -208,7 +208,7 @@ struct scm* hash_set_x(SCM table, SCM key, SCM value)
 	long size = VALUE(GetSCM(struct_ref_(table, 3)));
 	unsigned hash = hash_(key, size);
 	SCM buckets = GetSCM(struct_ref_(table, 4));
-	SCM bucket = GetSCM(vector_ref_(buckets, hash));
+	SCM bucket = GetSCM(good2bad(vector_ref_(buckets, hash), g_cells));
 
 	struct scm* ybucket = Getstructscm2(bucket, g_cells);
 	if(ybucket->type != TPAIR)
@@ -235,7 +235,7 @@ struct scm* hash_table_printer(struct scm* table)
 	struct scm* ybuckets = Getstructscm2(buckets, g_cells);
 	for(int i = 0; i < ybuckets->length; i++)
 	{
-		struct scm* f = bad2good(vector_ref_(buckets, i), table);
+		struct scm* f = vector_ref_(buckets, i);
 
 		if(f != &table[cell_unspecified])
 		{
@@ -279,7 +279,7 @@ struct scm* make_hash_table_(long size)
 	}
 
 	SCM hashq_type = GetSCM(make_hashq_type());
-	SCM buckets = GetSCM(make_vector__(size));
+	SCM buckets = GetSCM(good2bad(make_vector__(size), g_cells));
 	SCM values = cell_nil;
 	values = cons(buckets, values);
 	values = cons(MAKE_NUMBER(size), values);
