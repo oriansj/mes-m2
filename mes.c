@@ -1844,32 +1844,32 @@ struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 	if(arity == 0)
 	{
 		//function0_t fp = f->function;
-		SCM (*fp)(void) = builtin_function(fn);
-		return Getstructscm(fp());
+		FUNCTION0* fp = builtin_function(fn);
+		return fp();
 	}
 	else if(arity == 1)
 	{
 		//function1_t fp = f->function;
-		SCM(*fp)(SCM) = builtin_function(fn);
-		return Getstructscm(fp(CAR(x)));
+		FUNCTION1* fp = builtin_function(fn);
+		return fp(Getstructscm(CAR(x)));
 	}
 	else if(arity == 2)
 	{
 		//function2_t fp = f->function;
-		SCM(*fp)(SCM, SCM) = builtin_function(fn);
-		return Getstructscm(fp(CAR(x), CADR(x)));
+		FUNCTION2* fp = builtin_function(fn);
+		return fp(Getstructscm(CAR(x)), Getstructscm(CADR(x)));
 	}
 	else if(arity == 3)
 	{
 		//function3_t fp = f->function;
-		SCM(*fp)(SCM, SCM, SCM) = builtin_function(fn);
-		return Getstructscm(fp(CAR(x), CADR(x), CAR(CDDR(x))));
+		FUNCTION3* fp = builtin_function(fn);
+		return fp(Getstructscm(CAR(x)), Getstructscm(CADR(x)), Getstructscm(CAR(CDDR(x))));
 	}
 	else if(arity == -1)
 	{
 		//functionn_t fp = f->function;
-		SCM(*fp)(SCM) = builtin_function(fn);
-		return Getstructscm(fp(x));
+		FUNCTION1* fp = builtin_function(fn);
+		return fp(Getstructscm(x));
 	}
 
 	return Getstructscm(cell_unspecified);

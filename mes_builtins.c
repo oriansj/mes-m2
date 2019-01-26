@@ -35,7 +35,7 @@ struct scm* hashq_ref (SCM table, SCM key, SCM dflt);
 struct scm* hash_ref (SCM table, SCM key, SCM dflt);
 struct scm* hashq_set_x (SCM table, SCM key, SCM value);
 struct scm* hash_set_x (SCM table, SCM key, SCM value);
-struct scm* hash_table_printer (SCM table);
+struct scm* hash_table_printer (struct scm* table);
 struct scm* make_hash_table_(long size);
 struct scm* make_hash_table (SCM x);
 // src/lib.mes
