@@ -46,7 +46,7 @@ struct scm* make_vector__(long k)
 
 	for(long i = 0; i < k; i++)
 	{
-		g_cells[v + i] = g_cells[GetSCM(vector_entry(cell_unspecified))];
+		g_cells[v + i] = *vector_entry(cell_unspecified);
 	}
 
 	return Getstructscm(x);
@@ -99,14 +99,14 @@ struct scm* vector_entry(SCM x)
 		x = MAKE_REF(x);
 	}
 
-	return Getstructscm(x);
+	return Getstructscm2(x, g_cells);
 }
 
 struct scm* vector_set_x_(SCM x, long i, SCM e)
 {
 	assert(TYPE(x) == TVECTOR);
 	assert(i < LENGTH(x));
-	g_cells[VECTOR(x) + i] = g_cells[GetSCM(vector_entry(e))];
+	g_cells[VECTOR(x) + i] = *vector_entry(e);
 	return Getstructscm(cell_unspecified);
 }
 
@@ -122,7 +122,7 @@ struct scm* list_to_vector(SCM x)
 
 	while(x != cell_nil)
 	{
-		g_cells[p++] = g_cells[GetSCM(vector_entry(car(x)))];
+		g_cells[p++] = *vector_entry(car(x));
 		x = cdr(x);
 	}
 
