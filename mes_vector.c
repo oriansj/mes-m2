@@ -22,29 +22,21 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-#define VALUE(x) g_cells[x].rdc
-#define TYPE(x) g_cells[x].type
-#define LENGTH(x) g_cells[x].rac
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define VECTOR(x) g_cells[x].rdc
-#define REF(x) g_cells[x].rac
-#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
-#define MAKE_REF(n) make_cell__ (TREF, n, 0)
-
-SCM alloc(long n);
-SCM make_cell__(long type, SCM car, SCM cdr);
-long length__(SCM x);
+SCM alloc(SCM n);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
+SCM length__(SCM x);
 SCM car (SCM x);
 SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 struct scm* vector_entry(SCM x);
 
-struct scm* make_vector__(long k)
+struct scm* make_vector__(SCM k)
 {
 	SCM v = alloc(k);
 	struct scm* x = &g_cells[make_cell__(TVECTOR, k, v)];
+	SCM i;
 
-	for(long i = 0; i < k; i++)
+	for(i = 0; i < k; i = i + 1)
 	{
 		g_cells[v + i] = *vector_entry(cell_unspecified);
 	}
@@ -54,14 +46,14 @@ struct scm* make_vector__(long k)
 
 struct scm* make_vector_(SCM n)
 {
-	return good2bad(make_vector__(VALUE(n)), g_cells);
+	return good2bad(make_vector__(g_cells[n].rdc), g_cells);
 }
 
 struct scm* vector_length(struct scm* x)
 {
 	x = bad2good(x, g_cells);
 	assert(x->type == TVECTOR);
-	return Getstructscm(MAKE_NUMBER(x->length));
+	return Getstructscm(make_cell__ (TNUMBER, 0, x->length));
 }
 
 struct scm* vector_ref_(SCM table, long i)
@@ -78,12 +70,12 @@ struct scm* vector_ref_(SCM table, long i)
 
 	if(e->type == TCHAR)
 	{
-		return Getstructscm2(MAKE_CHAR(e->value), g_cells);
+		return Getstructscm2(make_cell__ (TCHAR, 0, e->value), g_cells);
 	}
 
 	if(e->type == TNUMBER)
 	{
-		return Getstructscm2(MAKE_NUMBER(e->value), g_cells);
+		return Getstructscm2(make_cell__ (TNUMBER, 0, e->value), g_cells);
 	}
 
 	return e;
@@ -91,7 +83,7 @@ struct scm* vector_ref_(SCM table, long i)
 
 struct scm* vector_ref(SCM x, SCM i)
 {
-	return good2bad(vector_ref_(x, VALUE(i)), g_cells);
+	return good2bad(vector_ref_(x, g_cells[i].rdc), g_cells);
 }
 
 struct scm* vector_entry(SCM x)
@@ -99,7 +91,7 @@ struct scm* vector_entry(SCM x)
 	struct scm* y = Getstructscm2(x, g_cells);
 	if(y->type != TCHAR && y->type != TNUMBER)
 	{
-		return Getstructscm2(MAKE_REF(x), g_cells);
+		return Getstructscm2(make_cell__ (TREF, x, 0), g_cells);
 	}
 
 	return y;
@@ -115,7 +107,7 @@ void vector_set_x_(SCM x, long i, SCM e)
 
 struct scm* vector_set_x(SCM x, SCM i, SCM e)
 {
-	vector_set_x_(x, VALUE(i), e);
+	vector_set_x_(x, g_cells[i].rdc, e);
 	return Getstructscm(cell_unspecified);
 }
 
