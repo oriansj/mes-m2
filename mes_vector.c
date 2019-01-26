@@ -42,14 +42,14 @@ struct scm* vector_entry(SCM x);
 struct scm* make_vector__(long k)
 {
 	SCM v = alloc(k);
-	SCM x = make_cell__(TVECTOR, k, v);
+	struct scm* x = &g_cells[make_cell__(TVECTOR, k, v)];
 
 	for(long i = 0; i < k; i++)
 	{
 		g_cells[v + i] = *vector_entry(cell_unspecified);
 	}
 
-	return Getstructscm(x);
+	return good2bad(x, g_cells);
 }
 
 struct scm* make_vector_(SCM n)
@@ -57,11 +57,11 @@ struct scm* make_vector_(SCM n)
 	return make_vector__(VALUE(n));
 }
 
-struct scm* vector_length(SCM x)
+struct scm* vector_length(struct scm* x)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
-	assert(y->type == TVECTOR);
-	return Getstructscm(MAKE_NUMBER(y->length));
+	x = bad2good(x, g_cells);
+	assert(x->type == TVECTOR);
+	return Getstructscm(MAKE_NUMBER(x->length));
 }
 
 struct scm* vector_ref_(SCM x, long i)
