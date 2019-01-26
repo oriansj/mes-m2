@@ -63,7 +63,7 @@ struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_vector__(long k);
 struct scm* vector_set_x_(SCM x, long i, SCM e);
-struct scm* vector_length (SCM x);
+struct scm* vector_length (struct scm* x);
 struct scm* vector_ref (SCM x, SCM i);
 struct scm* string_equal_p (SCM a, SCM b);
 struct scm* eq_p (SCM x, SCM y);
@@ -498,7 +498,7 @@ struct scm* make_stack()  ///((arity . n))
 struct scm* stack_length(SCM stack)
 {
 	SCM frames = GetSCM(struct_ref_(stack, 3));
-	return vector_length(frames);
+	return vector_length(Getstructscm(frames));
 }
 
 struct scm* stack_ref(SCM stack, SCM index)
