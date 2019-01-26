@@ -59,8 +59,9 @@ struct scm* make_vector_(SCM n)
 
 struct scm* vector_length(SCM x)
 {
-	assert(TYPE(x) == TVECTOR);
-	return Getstructscm(MAKE_NUMBER(LENGTH(x)));
+	struct scm* y = Getstructscm2(x, g_cells);
+	assert(y->type == TVECTOR);
+	return Getstructscm(MAKE_NUMBER(y->length));
 }
 
 struct scm* vector_ref_(SCM x, long i)
