@@ -49,12 +49,12 @@ struct scm* make_vector__(long k)
 		g_cells[v + i] = *vector_entry(cell_unspecified);
 	}
 
-	return good2bad(x, g_cells);
+	return x;
 }
 
 struct scm* make_vector_(SCM n)
 {
-	return make_vector__(VALUE(n));
+	return good2bad(make_vector__(VALUE(n)), g_cells);
 }
 
 struct scm* vector_length(struct scm* x)
@@ -64,61 +64,64 @@ struct scm* vector_length(struct scm* x)
 	return Getstructscm(MAKE_NUMBER(x->length));
 }
 
-struct scm* vector_ref_(SCM x, long i)
+struct scm* vector_ref_(SCM table, long i)
 {
-	assert(TYPE(x) == TVECTOR);
-	assert(i < LENGTH(x));
-	SCM e = VECTOR(x) + i;
+	struct scm* y = Getstructscm2(table, g_cells);
+	assert(y->type == TVECTOR);
+	assert(i < y->length);
+	struct scm* e = &g_cells[y->vector + i];
 
-	if(TYPE(e) == TREF)
+	if(e->type == TREF)
 	{
-		e = REF(e);
+		return Getstructscm2(e->ref, g_cells);
 	}
 
-	if(TYPE(e) == TCHAR)
+	if(e->type == TCHAR)
 	{
-		e = MAKE_CHAR(VALUE(e));
+		return Getstructscm2(MAKE_CHAR(e->value), g_cells);
 	}
 
-	if(TYPE(e) == TNUMBER)
+	if(e->type == TNUMBER)
 	{
-		e = MAKE_NUMBER(VALUE(e));
+		return Getstructscm2(MAKE_NUMBER(e->value), g_cells);
 	}
 
-	return Getstructscm(e);
+	return e;
 }
 
 struct scm* vector_ref(SCM x, SCM i)
 {
-	return vector_ref_(x, VALUE(i));
+	return good2bad(vector_ref_(x, VALUE(i)), g_cells);
 }
 
 struct scm* vector_entry(SCM x)
 {
-	if(TYPE(x) != TCHAR && TYPE(x) != TNUMBER)
+	struct scm* y = Getstructscm2(x, g_cells);
+	if(y->type != TCHAR && y->type != TNUMBER)
 	{
-		x = MAKE_REF(x);
+		return Getstructscm2(MAKE_REF(x), g_cells);
 	}
 
-	return Getstructscm2(x, g_cells);
+	return y;
 }
 
-struct scm* vector_set_x_(SCM x, long i, SCM e)
+void vector_set_x_(SCM x, long i, SCM e)
 {
-	assert(TYPE(x) == TVECTOR);
-	assert(i < LENGTH(x));
-	g_cells[VECTOR(x) + i] = *vector_entry(e);
-	return Getstructscm(cell_unspecified);
+	struct scm* y = Getstructscm2(x, g_cells);
+	assert(y->type == TVECTOR);
+	assert(i < y->length);
+	g_cells[y->vector + i] = *vector_entry(e);
 }
 
 struct scm* vector_set_x(SCM x, SCM i, SCM e)
 {
-	return vector_set_x_(x, VALUE(i), e);
+	vector_set_x_(x, VALUE(i), e);
+	return Getstructscm(cell_unspecified);
 }
 
 struct scm* list_to_vector(SCM x)
 {
-	SCM v = GetSCM(make_vector__(length__(x)));
+	SCM v = GetSCM(good2bad(make_vector__(length__(x)), g_cells));
 	SCM p = VECTOR(v);
 
 	while(x != cell_nil)
