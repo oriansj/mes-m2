@@ -121,8 +121,8 @@ struct scm* vector_set_x(SCM x, SCM i, SCM e)
 
 struct scm* list_to_vector(SCM x)
 {
-	SCM v = GetSCM(good2bad(make_vector__(length__(x)), g_cells));
-	SCM p = VECTOR(v);
+	struct scm* v = make_vector__(length__(x));
+	SCM p = v->rdc;
 
 	while(x != cell_nil)
 	{
@@ -130,24 +130,26 @@ struct scm* list_to_vector(SCM x)
 		x = cdr(x);
 	}
 
-	return Getstructscm(v);
+	return good2bad(v, g_cells);
 }
 
-struct scm* vector_to_list(SCM v)
+struct scm* vector_to_list(struct scm* v)
 {
-	SCM x = cell_nil;
+	v = bad2good(v, g_cells);
+	struct scm* x = &g_cells[cell_nil];
+	SCM i;
 
-	for(long i = LENGTH(v); i; i--)
+	for(i = v->length; i; i = i - 1)
 	{
-		SCM e = VECTOR(v) + i - 1;
+		struct scm* f = &g_cells[v->vector + i -1];
 
-		if(TYPE(e) == TREF)
+		if(f->type == TREF)
 		{
-			e = REF(e);
+			f = &g_cells[f->ref];
 		}
 
-		x = cons(e, x);
+		x = Getstructscm2(cons(GetSCM2(f, g_cells), GetSCM2(x, g_cells)), g_cells);
 	}
 
-	return Getstructscm(x);
+	return good2bad(x, g_cells);
 }
