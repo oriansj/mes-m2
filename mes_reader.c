@@ -116,11 +116,20 @@ struct scm* reader_read_identifier_or_number(int c)
 	unreadchar(c);
 	g_buf[i] = 0;
 #if NEW
-	SCM number = strtol(g_buf, NULL, 0);
+	char *p;
+	SCM number = strtol(g_buf, &p, 0);
 
-	if(0 != number || '0' == g_buf[0])
+	if((0 != number || '0' == g_buf[0]) && p - g_buf == i)
 	{
+		if(g_debug > 1)
+		{
+			eputs ("number! "); eputs (itoa (number)); eputs ("\n");
+		}
 		return make_cell__ (TNUMBER, 0, number);
+	}
+	if(g_debug > 1)
+	{
+		eputs ("symbol! "); eputs (g_buf); eputs ("\n");
 	}
 #else
 	if(1 == digit)
