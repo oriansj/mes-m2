@@ -134,7 +134,6 @@ struct scm* current_error_port ();
 struct scm* open_output_file (SCM x);
 struct scm* set_current_output_port (SCM port);
 struct scm* set_current_error_port (SCM port);
-struct scm* force_output (SCM port);
 struct scm* chmod_ (SCM file_name, SCM mode);
 struct scm* isatty_p (SCM port);
 struct scm* primitive_fork ();
@@ -294,7 +293,6 @@ struct scm* mes_builtins(SCM a)  ///((internal))
 	a = init_builtin(builtin_type, "open-output-file", -1, &open_output_file, a);
 	a = init_builtin(builtin_type, "set-current-output-port", 1, &set_current_output_port, a);
 	a = init_builtin(builtin_type, "set-current-error-port", 1, &set_current_error_port, a);
-	a = init_builtin(builtin_type, "force-output", -1, &force_output, a);
 	a = init_builtin(builtin_type, "chmod", 2, &chmod_, a);
 	a = init_builtin(builtin_type, "isatty?", 1, &isatty_p, a);
 	a = init_builtin(builtin_type, "primitive-fork", 0, &primitive_fork, a);
