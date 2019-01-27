@@ -24,10 +24,6 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#define CAR(x) g_cells[x].rac
-#define TYPE(x) g_cells[x].type
-#define VALUE(x) g_cells[x].rdc
-
 /* M2-Planet function imports*/
 int in_set(int c, char* s);
 
@@ -131,7 +127,7 @@ reset_reader:
 
 	if(c == EOF)
 	{
-		return Getstructscm(cell_nil);
+		return Getstructscm2(cell_nil, g_cells);
 	}
 
 	if(c == ';')
@@ -153,17 +149,17 @@ reset_reader:
 
 	if(c == ')')
 	{
-		return Getstructscm(cell_nil);
+		return Getstructscm2(cell_nil, g_cells);
 	}
 
 	if(c == '#')
 	{
-		return reader_read_hash(readchar(), a);
+		return bad2good(reader_read_hash(readchar(), a), g_cells);
 	}
 
 	if(c == '`')
 	{
-		return Getstructscm(cons(cell_symbol_quasiquote, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+		return Getstructscm2(cons(cell_symbol_quasiquote, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 	}
 
 	if(c == ',')
@@ -171,28 +167,28 @@ reset_reader:
 		if(peekchar() == '@')
 		{
 			readchar();
-			return Getstructscm(cons(cell_symbol_unquote_splicing, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+			return Getstructscm2(cons(cell_symbol_unquote_splicing, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 		}
 
-		return Getstructscm(cons(cell_symbol_unquote, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+		return Getstructscm2(cons(cell_symbol_unquote, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 	}
 
 	if(c == '\'')
 	{
-		return Getstructscm(cons(cell_symbol_quote, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+		return Getstructscm2(cons(cell_symbol_quote, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 	}
 
 	if(c == '"')
 	{
-		return reader_read_string();
+		return bad2good(reader_read_string(), g_cells);
 	}
 
 	if(c == '.' && (reader_end_of_word_p(peekchar())))
 	{
-		return Getstructscm(cell_dot);
+		return Getstructscm2(cell_dot, g_cells);
 	}
 
-	return reader_read_identifier_or_number(c);
+	return bad2good(reader_read_identifier_or_number(c), g_cells);
 }
 
 int reader_eat_whitespace(int c)
@@ -223,7 +219,7 @@ struct scm* reader_read_list(int c, SCM a)
 
 	if(c == ')')
 	{
-		return Getstructscm(cell_nil);
+		return Getstructscm2(cell_nil, g_cells);
 	}
 
 	if(c == EOF)
@@ -232,19 +228,20 @@ struct scm* reader_read_list(int c, SCM a)
 	}
 
 	//return cell_nil;
-	SCM s = GetSCM(reader_read_sexp_(c, a));
+	struct scm* s = reader_read_sexp_(c, a);
 
-	if(s == cell_dot)
+	if(s == &g_cells[cell_dot])
 	{
-		return Getstructscm(CAR(GetSCM(reader_read_list(readchar(), a))));
+		s = reader_read_list(readchar(), a);
+		return bad2good(s->car, g_cells);
 	}
 
-	return Getstructscm(cons(s, GetSCM(reader_read_list(readchar(), a))));
+	return Getstructscm2(cons(GetSCM2(s, g_cells), GetSCM2(reader_read_list(readchar(), a), g_cells)), g_cells);
 }
 
 struct scm* read_env(SCM a)
 {
-	return reader_read_sexp_(readchar(), a);
+	return good2bad(reader_read_sexp_(readchar(), a), g_cells);
 }
 
 int reader_read_block_comment(int s, int c)
@@ -262,13 +259,13 @@ struct scm* reader_read_hash(int c, SCM a)
 	if(c == '!')
 	{
 		reader_read_block_comment(c, readchar());
-		return reader_read_sexp_(readchar(), a);
+		return good2bad(reader_read_sexp_(readchar(), a), g_cells);
 	}
 
 	if(c == '|')
 	{
 		reader_read_block_comment(c, readchar());
-		return reader_read_sexp_(readchar(), a);
+		return good2bad(reader_read_sexp_(readchar(), a), g_cells);
 	}
 
 	if(c == 'f')
@@ -286,32 +283,32 @@ struct scm* reader_read_hash(int c, SCM a)
 		if(peekchar() == '@')
 		{
 			readchar();
-			return Getstructscm(cons(cell_symbol_unsyntax_splicing, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+			return Getstructscm(cons(cell_symbol_unsyntax_splicing, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)));
 		}
 
-		return Getstructscm(cons(cell_symbol_unsyntax, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+		return Getstructscm(cons(cell_symbol_unsyntax, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)));
 	}
 
 	if(c == '\'')
 	{
-		return Getstructscm(cons(cell_symbol_syntax, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+		return Getstructscm(cons(cell_symbol_syntax, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)));
 	}
 
 	if(c == '`')
 	{
-		return Getstructscm(cons(cell_symbol_quasisyntax, cons(GetSCM(reader_read_sexp_(readchar(), a)), cell_nil)));
+		return Getstructscm(cons(cell_symbol_quasisyntax, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)));
 	}
 
 	if(c == ':')
 	{
-		SCM x = GetSCM(reader_read_identifier_or_number(readchar()));
+		struct scm* x = bad2good(reader_read_identifier_or_number(readchar()), g_cells);
 
-		if(TYPE(x) == TNUMBER)
+		if(x->type == TNUMBER)
 		{ /* READ error */
-			error(cell_symbol_system_error, cons(GetSCM2(make_string_("keyword perifx ':' not followed by a symbol: "), g_cells), x));
+			error(cell_symbol_system_error, cons(GetSCM2(make_string_("keyword perifx ':' not followed by a symbol: "), g_cells), GetSCM2(x, g_cells)));
 		}
 
-		return symbol_to_keyword(x);
+		return symbol_to_keyword(GetSCM2(x, g_cells));
 	}
 
 	if(c == 'b')
@@ -336,22 +333,22 @@ struct scm* reader_read_hash(int c, SCM a)
 
 	if(c == '(')
 	{
-		return list_to_vector(GetSCM(reader_read_list(readchar(), a)));
+		return list_to_vector(GetSCM2(reader_read_list(readchar(), a), g_cells));
 	}
 
 	if(c == ';')
 	{
 		reader_read_sexp_(readchar(), a);
-		return reader_read_sexp_(readchar(), a);
+		return good2bad(reader_read_sexp_(readchar(), a), g_cells);
 	}
 
-	return reader_read_sexp_(readchar(), a);
+	return good2bad(reader_read_sexp_(readchar(), a), g_cells);
 }
 
 struct scm* reader_read_sexp(SCM c, SCM a)
 {
 	struct scm* x = Getstructscm2(c, g_cells);
-	return reader_read_sexp_(x->value, a);
+	return good2bad(reader_read_sexp_(x->value, a), g_cells);
 }
 
 struct scm* reader_read_character()
@@ -527,6 +524,25 @@ struct scm* reader_read_hex()
 	return set_reader__("0123456789ABCDEFabcdef", 4);
 }
 
+int escape_lookup(int c)
+{
+	if(c == '\\' || c == '"') return c;
+	else if(c == '0') return '\0';
+	else if(c == 'a') return '\a';
+	else if(c == 'b') return '\b';
+	else if(c == 't') return '\t';
+	else if(c == 'n') return '\n';
+	else if(c == 'v') return '\v';
+	else if(c == 'f') return '\f';
+	else if(c == 'r') return '\r';
+	else if(c == 'e') return '\e';
+	else if(c == 'x') return bad2good(reader_read_hex(), g_cells)->value;
+
+	/* Deal with really bad input */
+	fprintf(stderr, "Unknown escape recieved: %c Unable to process\n", c);
+	exit(EXIT_FAILURE);
+}
+
 struct scm* reader_read_string()
 {
 	int i = 0;
@@ -548,50 +564,7 @@ struct scm* reader_read_string()
 
 		if(c == '\\')
 		{
-			c = readchar();
-
-			if(c == '\\' || c == '"')
-				;
-			else if(c == '0')
-			{
-				c = '\0';
-			}
-			else if(c == 'a')
-			{
-				c = '\a';
-			}
-			else if(c == 'b')
-			{
-				c = '\b';
-			}
-			else if(c == 't')
-			{
-				c = '\t';
-			}
-			else if(c == 'n')
-			{
-				c = '\n';
-			}
-			else if(c == 'v')
-			{
-				c = '\v';
-			}
-			else if(c == 'f')
-			{
-				c = '\f';
-			}
-			else if(c == 'r')
-			{
-				c = '\r';
-			}
-			else if(c == 'e')
-			{
-				c = '\e';
-			}
-			else if(c == 'x')
-			{
-				c = VALUE(GetSCM(reader_read_hex()));
-			}
+			c = escape_lookup(readchar());
 		}
 
 		g_buf[i++] = c;
