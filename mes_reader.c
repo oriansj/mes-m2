@@ -85,11 +85,6 @@ int reader_read_block_comment(int s, int c);
 struct scm* reader_read_hash(int c, SCM a);
 struct scm* reader_read_list(int c, SCM a);
 
-int reader_identifier_p(int c)
-{
-	return in_set(c, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&'*+,-./:<=>?@[\\]^_`{|}");
-}
-
 int reader_end_of_word_p(int c)
 {
 	return in_set(c, "\";() \t\n\r") || c == EOF;
@@ -192,7 +187,7 @@ reset_reader:
 		return reader_read_string();
 	}
 
-	if(c == '.' && (!reader_identifier_p(peekchar())))
+	if(c == '.' && (reader_end_of_word_p(peekchar())))
 	{
 		return Getstructscm(cell_dot);
 	}
@@ -355,7 +350,8 @@ struct scm* reader_read_hash(int c, SCM a)
 
 struct scm* reader_read_sexp(SCM c, SCM a)
 {
-	return reader_read_sexp_(VALUE(c), a);
+	struct scm* x = Getstructscm2(c, g_cells);
+	return reader_read_sexp_(x->value, a);
 }
 
 struct scm* reader_read_character()
@@ -364,31 +360,31 @@ struct scm* reader_read_character()
 	int p = peekchar();
 	int i = 0;
 
-	if(c >= '0' && c <= '7' && p >= '0' && p <= '7')
+	if(in_set(c, "01234567") && in_set(p, "01234567"))
 	{
 		c = c - '0';
 
-		while(p >= '0' && p <= '7')
+		while(in_set(p, "01234567"))
 		{
 			c <<= 3;
 			c += readchar() - '0';
 			p = peekchar();
 		}
 	}
-	else if(c == 'x' && ((p >= '0' && p <= '9') || (p >= 'a' && p <= 'f') || (p >= 'F' && p <= 'F')))
+	else if(c == 'x' && in_set(p, "01234567abcdefABCDEF"))
 	{
-		c = VALUE(GetSCM(reader_read_hex()));
+		c = bad2good(reader_read_hex(), g_cells)->value;
 		eputs("reading hex c=");
 		eputs(itoa(c));
 		eputs("\n");
 	}
-	else if(((c >= 'a' && c <= 'z') || c == '*') && ((p >= 'a' && p <= 'z') || p == '*'))
+	else if(in_set(c, "abcdefghijklmnopqrstuvwxyz*") && in_set(p, "abcdefghijklmnopqrstuvwxyz*"))
 	{
 		char buf[10];
 		buf[i] = c;
 		i = i + 1;
 
-		while((p >= 'a' && p <= 'z') || p == '*')
+		while(in_set(p, "abcdefghijklmnopqrstuvwxyz*"))
 		{
 			buf[i] = readchar();
 			i = i + 1;
@@ -477,7 +473,17 @@ struct scm* reader_read_character()
 	return make_cell__ (TCHAR, 0, c);
 }
 
-struct scm* reader_read_binary()
+int index_number__(char* s, char c) /* Internal only */
+{
+	int i = 0;
+	while(s[i] != c)
+	{
+		i = i + 1;
+	}
+	return i;
+}
+
+struct scm* set_reader__(char* set, int shift) /* Internal only*/
 {
 	long n = 0;
 	int c = peekchar();
@@ -490,10 +496,10 @@ struct scm* reader_read_binary()
 		c = peekchar();
 	}
 
-	while(c == '0' || c == '1')
+	while(in_set(c, set))
 	{
-		n = n << 1;
-		n = n + c - '0';
+		n = n << shift;
+		n = n + index_number__(set, toupper(c));
 		readchar();
 		c = peekchar();
 	}
@@ -504,77 +510,21 @@ struct scm* reader_read_binary()
 	}
 
 	return make_cell__ (TNUMBER, 0, n);
+}
+
+struct scm* reader_read_binary()
+{
+	return set_reader__("01", 1);
 }
 
 struct scm* reader_read_octal()
 {
-	long n = 0;
-	int c = peekchar();
-	int negative_p = 0;
-
-	if(c == '-')
-	{
-		negative_p = 1;
-		readchar();
-		c = peekchar();
-	}
-
-	while(c >= '0' && c <= '7')
-	{
-		n = n << 3;
-		n = n + c - '0';
-		readchar();
-		c = peekchar();
-	}
-
-	if(negative_p)
-	{
-		n = 0 - n;
-	}
-
-	return make_cell__ (TNUMBER, 0, n);
+	return set_reader__("01234567", 3);
 }
 
 struct scm* reader_read_hex()
 {
-	long n = 0;
-	int c = peekchar();
-	int negative_p = 0;
-
-	if(c == '-')
-	{
-		negative_p = 1;
-		readchar();
-		c = peekchar();
-	}
-
-	while((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
-	{
-		n = n << 4;
-
-		if(c >= 'a')
-		{
-			n = n + c - 'a' + 10;
-		}
-		else if(c >= 'A')
-		{
-			n = n + c - 'A' + 10;
-		}
-		else
-		{
-			n = n + c - '0';
-		}
-
-		readchar();
-		c = peekchar();
-	}
-
-	if(negative_p)
-	{
-		n = 0 - n;
-	}
-
-	return make_cell__ (TNUMBER, 0, n);
+	return set_reader__("0123456789ABCDEFabcdef", 4);
 }
 
 struct scm* reader_read_string()
