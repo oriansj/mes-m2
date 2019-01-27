@@ -98,53 +98,12 @@ int reader_end_of_word_p(int c)
 struct scm* reader_read_identifier_or_number(int c)
 {
 	int i = 0;
-#define NEW 1
-#if !NEW
-	long n = 0;
-	int negative_p = 0;
-
-	if(c == '+' && isdigit(peekchar()))
-	{
-		c = readchar();
-	}
-	else if(c == '-' && isdigit(peekchar()))
-	{
-		negative_p = 1;
-		c = readchar();
-	}
-
-	while(isdigit(c))
-	{
-		g_buf[i++] = c;
-		n *= 10;
-		n += c - '0';
-		c = readchar();
-	}
-
-	if(reader_end_of_word_p(c))
-	{
-		unreadchar(c);
-
-		if(negative_p)
-		{
-			n = 0 - n;
-		}
-
-		if(g_debug > 1)
-		{
-			eputs ("number! "); eputs (itoa (n)); eputs ("\n");
-		}
-		return make_cell__ (TNUMBER, 0, n);
-	}
-#else // NEW
-
 	int digit = -1;
-#endif
+
 	/* Fallthrough: Note that `+', `-', `4a', `+1b' are identifiers */
 	while(!reader_end_of_word_p(c))
 	{
 		g_buf[i++] = c;
-#if NEW
 		if (!in_set(c, "0123456789"))
 		{
 			if (i > 1 || !in_set(c, "+-"))
@@ -156,34 +115,18 @@ struct scm* reader_read_identifier_or_number(int c)
 		{
 			digit = 1;
 		}
-#endif // NEW
 		c = readchar();
 	}
 
 	unreadchar(c);
 	g_buf[i] = 0;
 
-#if NEW
-	// if(g_debug > 1)
-	// {
-	// 	g_buf[i] = 0;
-	// 	eputs ("g_buf: "); eputs (g_buf); eputs (": ");
-	// }
 	if(1 == digit)
 	{
 		int n = strtol(g_buf, NULL, 0);
-		if(g_debug > 1)
-		{
-			eputs ("number! "); eputs (itoa (n)); eputs ("\n");
-		}
 		return make_cell__ (TNUMBER, 0, n);
 	}
-#endif
 
-	if(g_debug > 1)
-	{
-		eputs ("symbol! "); eputs (g_buf); eputs ("\n");
-	}
 	return cstring_to_symbol(g_buf);
 }
 
