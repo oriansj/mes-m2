@@ -32,13 +32,6 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-#define STRING(x) g_cells[x].rdc
-#define LENGTH(x) g_cells[x].rac
-#define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].rac
-#define CDR(x) g_cells[x].rdc
-#define VALUE(x) g_cells[x].rdc
-
 int readchar();
 int unreadchar();
 struct scm* write_byte (SCM x);
@@ -379,11 +372,11 @@ struct scm* set_current_input_port(SCM port)
 {
 	struct scm* x = Getstructscm2(port, g_cells);
 
-	if(TYPE(port) == TNUMBER)
+	if(x->type == TNUMBER)
 	{
 		__stdin = x->value ? x->value : STDIN;
 	}
-	else if(TYPE(port) == TPORT)
+	else if(x->type == TPORT)
 	{
 		__stdin = x->rac;
 	}
@@ -451,6 +444,9 @@ struct scm* primitive_fork()
 
 struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 {
+	struct scm* f = Getstructscm2(file_name, g_cells);
+	struct scm* a = Getstructscm2(args, g_cells);
+	struct scm* aa = bad2good(a->car, g_cells);
 	char *c_argv[1000];           // POSIX minimum 4096
 	int i = 0;
 
@@ -459,21 +455,19 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 		error(cell_symbol_system_error, cons(file_name, cons(GetSCM2(make_string_("too many arguments"), g_cells), cons(file_name, args))));
 	}
 
-	c_argv[i++] = (char*)&g_cells[STRING (file_name)].rdc;
+	c_argv[i] = (char*)&g_cells[f->rdc].rdc;
+	i = i + 1;
 
-	while(args != cell_nil)
+	while(a != &g_cells[cell_nil])
 	{
-		assert(TYPE(CAR(args)) == TSTRING);
-		c_argv[i++] = (char*)&g_cells[STRING (CAR(args))].rdc;
-		args = CDR(args);
+		assert(aa->type == TSTRING);
+		c_argv[i] = (char*)&g_cells[aa->rdc].rdc;
+		i = i + 1;
+		a = bad2good(a->cdr, g_cells);
 
 		if(g_debug > 2)
 		{
-			eputs("arg[");
-			eputs(itoa(i));
-			eputs("]: ");
-			eputs(c_argv[i - 1]);
-			eputs("\n");
+			fprintf(stderr, "arg[%d]: %s\n", i, c_argv[i - 1]);
 		}
 	}
 
@@ -483,8 +477,10 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 
 struct scm* waitpid_(SCM pid, SCM options)
 {
+	struct scm* p = Getstructscm2(pid, g_cells);
+	struct scm* o = Getstructscm2(options, g_cells);
 	int status;
-	int child = waitpid(VALUE(pid), &status, VALUE(options));
+	int child = waitpid(p->value, &status, o->value);
 	return Getstructscm(cons(make_cell__ (TNUMBER, 0, child), make_cell__ (TNUMBER, 0, status)));
 }
 
@@ -536,18 +532,22 @@ struct scm* getcwd_()  ///((name . "getcwd"))
 
 struct scm* dup_(SCM port)  ///((name . "dup"))
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0, dup(VALUE(port))));
+	struct scm* p = Getstructscm2(port, g_cells);
+	return Getstructscm(make_cell__ (TNUMBER, 0, dup(p->value)));
 }
 
 struct scm* dup2_(SCM old, SCM new)  ///((name . "dup2"))
 {
-	dup2(VALUE(old), VALUE(new));
+	struct scm* o = Getstructscm2(old, g_cells);
+	struct scm* n = Getstructscm2(new, g_cells);
+	dup2(o->value, n->value);
 	return Getstructscm(cell_unspecified);
 }
 
 struct scm* delete_file(SCM file_name)
 {
-	unlink((char*)&g_cells[STRING (file_name)].rdc);
+	struct scm* f = Getstructscm2(file_name, g_cells);
+	unlink((char*)&g_cells[f->rdc].rdc);
 	return Getstructscm(cell_unspecified);
 }
 
