@@ -89,55 +89,24 @@ int reader_end_of_word_p(int c)
 struct scm* reader_read_identifier_or_number(int c)
 {
 	int i = 0;
-#define NEW 1
-#if !NEW
-	int digit = -1;
-#endif
+
 	/* Fallthrough: Note that `+', `-', `4a', `+1b' are identifiers */
 	while(!reader_end_of_word_p(c))
 	{
 		g_buf[i++] = c;
-#if !NEW
-		if (!in_set(c, "0123456789"))
-		{
-			if (i > 1 || !in_set(c, "+-"))
-			{
-				digit = 0;
-			}
-		}
-		else if (digit == -1)
-		{
-			digit = 1;
-		}
-#endif
 		c = readchar();
 	}
 
 	unreadchar(c);
 	g_buf[i] = 0;
-#if NEW
+
 	char *p;
 	SCM number = strtol(g_buf, &p, 0);
 
 	if((0 != number || '0' == g_buf[0]) && p - g_buf == i)
 	{
-		if(g_debug > 1)
-		{
-			eputs ("number! "); eputs (itoa (number)); eputs ("\n");
-		}
 		return make_cell__ (TNUMBER, 0, number);
 	}
-	if(g_debug > 1)
-	{
-		eputs ("symbol! "); eputs (g_buf); eputs ("\n");
-	}
-#else
-	if(1 == digit)
-	{
-		int n = strtol(g_buf, NULL, 0);
-		return make_cell__ (TNUMBER, 0, n);
-	}
-#endif
 	return cstring_to_symbol(g_buf);
 }
 
