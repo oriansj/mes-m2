@@ -70,7 +70,7 @@ struct scm* gc_up_arena()  ///((internal))
 		eputs(itoa(ARENA_SIZE - g_free));
 		eputs("\n");
 		assert(0);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	g_cells = (struct scm*)p;

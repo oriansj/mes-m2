@@ -41,13 +41,9 @@ struct scm* make_string(char const* s, int length);
 struct scm* make_string_(char const* s);
 int fdungetc (int c, int fd);
 SCM make_cell__(long type, SCM car, SCM cdr);
-SCM car (SCM x);
-SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 long length__(SCM x);
 SCM error(SCM key, SCM x);
-int eputs(char const* s);
-char *itoa (int number);
 SCM acons (SCM key, SCM value, SCM alist);
 
 int eputs(char const* s)
@@ -151,10 +147,8 @@ int fdungetc(int c, int fd)
 	}
 	else if(__ungetc_buf[fd] != -1)
 	{
-		eputs(" ***MES C LIB*** fdungetc ungetc buffer overflow fd=");
-		eputs(itoa(fd));
-		eputs("\n");
-		exit(1);
+		fprintf(stderr, " ***MES C LIB*** fdungetc ungetc buffer overflow fd=%d\n", fd);
+		exit(EXIT_FAILURE);
 	}
 
 	__ungetc_buf[fd] = c;

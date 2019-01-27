@@ -22,12 +22,8 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-#define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
-#define CAAR(x) CAR (CAR (x))
-#define CADR(x) CAR (CDR (x))
-#define CDAR(x) CDR (CAR (x))
 
 struct scm* struct_ref_(SCM x, long i);
 struct scm* cstring_to_symbol(char const *s);
@@ -75,13 +71,13 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	values = cons(cell_symbol_module, values);
 	SCM module = GetSCM(make_struct(module_type, values, GetSCM(cstring_to_symbol("module-printer"))));
 	r0 = cell_nil;
-	r0 = cons(CADR(a), r0);
+	r0 = cons(CAR(CDR(a)), r0);
 	r0 = cons(CAR(a), r0);
 	m0 = module;
 
-	while(TYPE(a) == TPAIR)
+	while(g_cells[a].type == TPAIR)
 	{
-		module_define_x(module, CAAR(a), CDAR(a));
+		module_define_x(module, CAR(CAR(a)), CDR(CAR(a)));
 		a = CDR(a);
 	}
 

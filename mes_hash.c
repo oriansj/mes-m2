@@ -73,7 +73,7 @@ int hashq_(SCM x, long size)
 	}
 
 	error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("hashq_: not a symbol")), x));
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 int hash_(SCM x, long size)
