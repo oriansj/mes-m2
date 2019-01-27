@@ -98,7 +98,7 @@ int reader_end_of_word_p(int c)
 struct scm* reader_read_identifier_or_number(int c)
 {
 	int i = 0;
-#define NEW 0
+#define NEW 1
 #if !NEW
 	long n = 0;
 	int negative_p = 0;
