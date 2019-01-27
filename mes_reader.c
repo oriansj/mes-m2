@@ -24,13 +24,14 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 #define CAR(x) g_cells[x].rac
 #define TYPE(x) g_cells[x].type
 #define VALUE(x) g_cells[x].rdc
-#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 
+/* M2-Planet function imports*/
+int in_set(int c, char* s);
+
+/* Standard Mes.c function imports */
 void assert_max_string(int i, char const* msg, char* string);
 struct scm* read_env (SCM a);
 struct scm* reader_read_binary ();
@@ -43,7 +44,7 @@ SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 int readchar();
 struct scm* error(SCM key, SCM x);
-struct scm* make_string(char const* s, int length);
+struct scm* make_string_(char const* s);
 int peekchar();
 int unreadchar();
 struct scm* make_cell__(long type, SCM car, SCM cdr);
@@ -57,7 +58,7 @@ struct scm* read_input_file_env_(SCM e, SCM a)
 {
 	if(e == cell_nil)
 	{
-		return Getstructscm(e);
+		return Getstructscm(cell_nil);
 	}
 
 	return Getstructscm(cons(e, GetSCM(read_input_file_env_(GetSCM(read_env(a)), a))));
@@ -65,8 +66,6 @@ struct scm* read_input_file_env_(SCM e, SCM a)
 
 struct scm* read_input_file_env()
 {
-	//r0 = a;
-	//return read_input_file_env_ (read_env (r0), r0);
 	return read_input_file_env_(GetSCM(read_env(cell_nil)), cell_nil);
 }
 
@@ -74,15 +73,11 @@ int reader_read_line_comment(int c)
 {
 	while(c != EOF)
 	{
-		if(c == '\n')
-		{
-			return c;
-		}
-
+		if(c == '\n') return c;
 		c = readchar();
 	}
 
-	error(cell_symbol_system_error, GetSCM(MAKE_STRING0("reader_read_line_comment")));
+	error(cell_symbol_system_error, GetSCM2(make_string_("reader_read_line_comment"), g_cells));
 	exit(1);
 }
 
@@ -92,12 +87,12 @@ struct scm* reader_read_list(int c, SCM a);
 
 int reader_identifier_p(int c)
 {
-	return (c > ' ' && c <= '~' && c != '"' && c != ';' && c != '(' && c != ')' && c != EOF);
+	return in_set(c, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&'*+,-./:<=>?@[\\]^_`{|}");
 }
 
 int reader_end_of_word_p(int c)
 {
-	return (c == '"' || c == ';' || c == '(' || c == ')' || isspace(c) || c == EOF);
+	return in_set(c, "\";() \t\n\r") || c == EOF;
 }
 
 struct scm* reader_read_identifier_or_number(int c)
@@ -133,7 +128,7 @@ struct scm* reader_read_identifier_or_number(int c)
 			n = 0 - n;
 		}
 
-		return MAKE_NUMBER(n);
+		return make_cell__ (TNUMBER, 0, n);
 	}
 
 	/* Fallthrough: Note that `4a', `+1b' are identifiers */
@@ -163,7 +158,7 @@ reset_reader:
 		goto reset_reader;
 	}
 
-	if((c == ' ') || (c == '\t') || (c == '\n') || (c == '\f'))
+	if(in_set(c, " \t\n\f"))
 	{
 		c = readchar();
 		goto reset_reader;
@@ -251,7 +246,7 @@ struct scm* reader_read_list(int c, SCM a)
 
 	if(c == EOF)
 	{
-		error(cell_symbol_not_a_pair, GetSCM(MAKE_STRING0("EOF in list")));
+		error(cell_symbol_not_a_pair, GetSCM2(make_string_("EOF in list"), g_cells));
 	}
 
 	//return cell_nil;
@@ -331,7 +326,7 @@ struct scm* reader_read_hash(int c, SCM a)
 
 		if(TYPE(x) == TNUMBER)
 		{ /* READ error */
-			error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("keyword perifx ':' not followed by a symbol: ")), x));
+			error(cell_symbol_system_error, cons(GetSCM2(make_string_("keyword perifx ':' not followed by a symbol: "), g_cells), x));
 		}
 
 		return symbol_to_keyword(x);
@@ -488,11 +483,11 @@ struct scm* reader_read_character()
 			eputs("char not supported: ");
 			eputs(buf);
 			eputs("\n");
-			error(cell_symbol_system_error, GetSCM(MAKE_STRING0("char not supported")));
+			error(cell_symbol_system_error, GetSCM2(make_string_("char not supported"), g_cells));
 		}
 	}
 
-	return MAKE_CHAR(c);
+	return make_cell__ (TCHAR, 0, c);
 }
 
 struct scm* reader_read_binary()
@@ -521,7 +516,7 @@ struct scm* reader_read_binary()
 		n = 0 - n;
 	}
 
-	return MAKE_NUMBER(n);
+	return make_cell__ (TNUMBER, 0, n);
 }
 
 struct scm* reader_read_octal()
@@ -550,7 +545,7 @@ struct scm* reader_read_octal()
 		n = 0 - n;
 	}
 
-	return MAKE_NUMBER(n);
+	return make_cell__ (TNUMBER, 0, n);
 }
 
 struct scm* reader_read_hex()
@@ -592,7 +587,7 @@ struct scm* reader_read_hex()
 		n = 0 - n;
 	}
 
-	return MAKE_NUMBER(n);
+	return make_cell__ (TNUMBER, 0, n);
 }
 
 struct scm* reader_read_string()
@@ -666,5 +661,5 @@ struct scm* reader_read_string()
 	} while(1);
 
 	g_buf[i] = 0;
-	return make_string(g_buf, i);
+	return good2bad(make_string_(g_buf), g_cells);
 }

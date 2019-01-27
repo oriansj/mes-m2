@@ -94,10 +94,19 @@ struct scm* make_bytes(char const* s, size_t length)
 	return good2bad(x, g_cells);
 }
 
+struct scm* make_string_(char const* s) // internal only
+{
+	assert_max_string(strlen(s) , "make_string_", (char*)s);
+
+	SCM x = make_cell__(TSTRING, strlen(s), 0);
+	SCM v = GetSCM(make_bytes(s, strlen(s)));
+	g_cells[x].rdc = v;
+	return Getstructscm2(x, g_cells);
+}
+
 struct scm* make_string(char const* s, int length)
 {
 	assert_max_string(length, "make_string", (char*)s);
-
 	SCM x = make_cell__(TSTRING, length, 0);
 	SCM v = GetSCM(make_bytes(s, length));
 	g_cells[x].rdc = v;

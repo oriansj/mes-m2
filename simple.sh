@@ -3,7 +3,7 @@
 set -eux
 rm -rf out-glibc/
 mkdir out-glibc
-gcc -ggdb -D WITH_GLIBC=1 mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module.c mes_gc.c mes_lib.c mes_reader.c mes_posix.c mes_builtins.c mes.c temp.c -o out-glibc/mes
+gcc -ggdb -D WITH_GLIBC=1 mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module.c mes_gc.c mes_lib.c mes_reader.c mes_posix.c mes_builtins.c mes.c temp.c functions/in_set.c -o out-glibc/mes
 
 # Simplest of tests
 echo '(display "hello\n")' | MES_BOOT=boot-01.scm out-glibc/mes
