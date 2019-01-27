@@ -404,45 +404,44 @@ struct scm* current_error_port()
 struct scm* open_output_file(SCM x)  ///((arity . n))
 {
 	struct scm* y = Getstructscm2(x, g_cells);
-	SCM file_name = y->rac;
-	x = cdr(x);
+	struct scm* f = bad2good(y->car, g_cells);
+	y = bad2good(y->cdr, g_cells);
 	int mode = S_IRUSR | S_IWUSR;
 
-	if(TYPE(x) == TPAIR && TYPE(car(x)) == TNUMBER)
+	if(y->type == TPAIR && f->type == TNUMBER)
 	{
-		mode = VALUE(car(x));
+		mode = f->value;
 	}
 
-	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[STRING (file_name)].rdc, O_WRONLY | O_CREAT | O_TRUNC, mode)));
+	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_WRONLY | O_CREAT | O_TRUNC, mode)));
 }
 
 struct scm* set_current_output_port(SCM port)
 {
-	__stdout = VALUE(port) ? VALUE(port) : STDOUT;
+	struct scm* p  = Getstructscm2(port, g_cells);
+	__stdout = p->value ? p->value : STDOUT;
 	return current_output_port();
 }
 
 struct scm* set_current_error_port(SCM port)
 {
-	__stderr = VALUE(port) ? VALUE(port) : STDERR;
+	struct scm* p = Getstructscm2(port, g_cells);
+	__stderr = p->value ? p->value : STDERR;
 	return current_error_port();
-}
-
-struct scm* force_output(SCM port)  ///((arity . n))
-{
-	(void)port;
-	return Getstructscm(cell_unspecified);
 }
 
 struct scm* chmod_(SCM file_name, SCM mode)  ///((name . "chmod"))
 {
-	chmod((char*)&g_cells[STRING (file_name)].rdc, VALUE(mode));
+	struct scm* f = Getstructscm2(file_name, g_cells);
+	struct scm* m = Getstructscm2(mode, g_cells);
+	chmod((char*)&g_cells[f->rdc].rdc, m->value);
 	return Getstructscm(cell_unspecified);
 }
 
 struct scm*  isatty_p(SCM port)
 {
-	return isatty(VALUE(port)) ? Getstructscm(cell_t) : Getstructscm(cell_f);
+	struct scm* p = Getstructscm2(port, g_cells);
+	return isatty(p->value) ? Getstructscm(cell_t) : Getstructscm(cell_f);
 }
 
 struct scm* primitive_fork()
