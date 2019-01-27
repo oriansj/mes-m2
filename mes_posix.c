@@ -182,16 +182,16 @@ int peekchar()
 		return c;
 	}
 
-	SCM port = GetSCM(current_input_port());
-	SCM string = STRING(port);
-	size_t length = LENGTH(string);
+	struct scm* port = bad2good(current_input_port(), g_cells);
+	struct scm* string = bad2good(port->cdr, g_cells);
+	size_t length = string->length;
 
 	if(!length)
 	{
 		return -1;
 	}
 
-	char const *p = (char*)&g_cells[STRING (string)].rdc;
+	char const *p = (char*)&g_cells[string->rdc].rdc;
 	return p[0];
 }
 
@@ -202,18 +202,19 @@ int readchar()
 		return fdgetc(__stdin);
 	}
 
-	SCM port = GetSCM(current_input_port());
-	SCM string = STRING(port);
-	size_t length = LENGTH(string);
+	struct scm* port = bad2good(current_input_port(), g_cells);
+	struct scm* string = bad2good(port->cdr, g_cells);
+	size_t length = string->length;
 
 	if(!length)
 	{
 		return -1;
 	}
 
-	char const *p = (char*)&g_cells[STRING (string)].rdc;
-	int c = *p++;
-	STRING(port) = GetSCM(make_string(p, length - 1));
+	char const *p = (char*)&g_cells[string->rdc].rdc;
+	int c = p[0];
+	p = p + 1;
+	port->rdc = GetSCM(make_string(p, length - 1));
 	return c;
 }
 
@@ -224,107 +225,110 @@ int unreadchar(int c)
 		return fdungetc(c, __stdin);
 	}
 
-	SCM port = GetSCM(current_input_port());
-	SCM string = STRING(port);
-	size_t length = LENGTH(string);
-	char *p = (char*)&g_cells[STRING (string)].rdc;
-	p--;
-	string = GetSCM(make_string(p, length + 1));
-	p = (char*)&g_cells[STRING (string)].rdc;
+	struct scm* port = bad2good(current_input_port(), g_cells);
+	struct scm* string = bad2good(port->cdr, g_cells);
+	size_t length = string->length;
+	char *p = (char*)&g_cells[string->rdc].rdc;
+	p = p - 1;
+	string = bad2good(make_string(p, length + 1), g_cells);
+	p = (char*)&g_cells[string->rdc].rdc;
 	p[0] = c;
-	STRING(port) = string;
+	port->cdr = good2bad(string, g_cells);
 	return c;
 }
 
 struct scm* peek_byte()
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0, peekchar()));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, peekchar()), g_cells), g_cells);
 }
 
 struct scm* read_byte()
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0,readchar()));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0,readchar()), g_cells), g_cells);
 }
 
 struct scm* unread_byte(SCM i)
 {
-	unreadchar(VALUE(i));
-	return Getstructscm(i);
+	struct scm* x = Getstructscm2(i, g_cells);
+	unreadchar(x->value);
+	return good2bad(x, g_cells);
 }
 
 struct scm* peek_char()
 {
-	return Getstructscm(make_cell__ (TCHAR, 0, peekchar()));
+	return good2bad(Getstructscm2(make_cell__ (TCHAR, 0, peekchar()), g_cells), g_cells);
 }
 
 struct scm* read_char(SCM port)  ///((arity . n))
 {
 	int fd = __stdin;
+	struct scm* p = Getstructscm2(port, g_cells);
 
-	if(TYPE(port) == TPAIR && TYPE(car(port)) == TNUMBER)
+	if(p->type == TPAIR && bad2good(p->car, g_cells)->type == TNUMBER)
 	{
-		__stdin = VALUE(CAR(port));
+		__stdin = bad2good(p->car, g_cells)->value;
 	}
 
-	SCM c = make_cell__ (TCHAR, 0, readchar());
+	struct scm* c = Getstructscm2(make_cell__ (TCHAR, 0, readchar()), g_cells);
 	__stdin = fd;
-	return Getstructscm(c);
+	return good2bad(c, g_cells);
 }
 
 struct scm* unread_char(SCM i)
 {
-	unreadchar(VALUE(i));
-	return Getstructscm(i);
+	struct scm* x = Getstructscm2(i, g_cells);
+	unreadchar(x->value);
+	return good2bad(x, g_cells);
 }
 
 struct scm* write_char(SCM i)  ///((arity . n))
 {
-	write_byte(i);
-	return Getstructscm(i);
+	struct scm* x = Getstructscm2(i, g_cells);
+	write_byte(GetSCM2(x, g_cells));
+	return good2bad(x, g_cells);
 }
 
 struct scm* write_byte(SCM x)  ///((arity . n))
 {
-	SCM c = car(x);
-	SCM p = cdr(x);
+	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* c = bad2good(y->car, g_cells);
+	struct scm* p = bad2good(y->cdr, g_cells);
+	struct scm* pp = bad2good(p->car, g_cells);
 	int fd = __stdout;
 
-	if(TYPE(p) == TPAIR && TYPE(car(p)) == TNUMBER && VALUE(CAR(p)) != 1)
+	if(p->type == TPAIR && pp->type == TNUMBER)
 	{
-		fd = VALUE(CAR(p));
+		fd = pp->value;
 	}
 
-	if(TYPE(p) == TPAIR && TYPE(car(p)) == TNUMBER && VALUE(CAR(p)) == 2)
-	{
-		fd = __stderr;
-	}
+	if(1 == fd) fd = __stdout;
+	if(2 == fd) fd = __stderr;
 
-	char cc = VALUE(c);
-	write(fd, (char*)&cc, 1);
-#if !__MESC__
-	assert(TYPE(c) == TNUMBER || TYPE(c) == TCHAR);
-#endif
-	return Getstructscm(c);
+	write(fd, &c->string, 1);
+	assert(c->type == TNUMBER || c->type == TCHAR);
+	return good2bad(c, g_cells);
 }
 
 struct scm* getenv_(SCM s)  ///((name . "getenv"))
 {
-	char *p;
-	p = getenv((char*)&g_cells[STRING (s)].rdc);
+	struct scm* x = Getstructscm2(s, g_cells);
+	char *p = getenv((char*)&g_cells[x->rdc].rdc);
 	return p ? good2bad(make_string_(p), g_cells) : Getstructscm(cell_f);
 }
 
 struct scm* setenv_(SCM s, SCM v)  ///((name . "setenv"))
 {
-	char buf[1024];
-	strcpy(buf, (char*)&g_cells[STRING (s)].rdc);
-	setenv(buf, (char*)&g_cells[STRING (v)].rdc, 1);
+	struct scm* a = Getstructscm2(s, g_cells);
+	struct scm* b = Getstructscm2(v, g_cells);
+	setenv((char*)&g_cells[a->rdc].rdc, (char*)&g_cells[b->rdc].rdc, 1);
 	return Getstructscm(cell_unspecified);
 }
 
 struct scm* access_p(SCM file_name, SCM mode)
 {
-	return access((char*)&g_cells[STRING (file_name)].rdc, VALUE(mode)) == 0 ? Getstructscm(cell_t) : Getstructscm(cell_f);
+	struct scm* f = Getstructscm2(file_name, g_cells);
+	struct scm* m = Getstructscm2(mode, g_cells);
+	return access((char*)&g_cells[f->rdc].rdc, m->value) == 0 ? Getstructscm(cell_t) : Getstructscm(cell_f);
 }
 
 struct scm* current_input_port()
@@ -360,7 +364,8 @@ int mes_open(char const *file_name, int flags, int mode)
 
 struct scm* open_input_file(SCM file_name)
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[STRING (file_name)].rdc, O_RDONLY, 0)));
+	struct scm* f = Getstructscm2(file_name, g_cells);
+	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_RDONLY, 0)));
 }
 
 struct scm* open_input_string(SCM string)
@@ -399,7 +404,8 @@ struct scm* current_error_port()
 
 struct scm* open_output_file(SCM x)  ///((arity . n))
 {
-	SCM file_name = car(x);
+	struct scm* y = Getstructscm2(x, g_cells);
+	SCM file_name = y->rac;
 	x = cdr(x);
 	int mode = S_IRUSR | S_IWUSR;
 
