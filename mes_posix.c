@@ -34,17 +34,10 @@
 
 #define STRING(x) g_cells[x].rdc
 #define LENGTH(x) g_cells[x].rac
-#define CBYTES(x) (char*)&g_cells[x].rdc
-#define CSTRING(x) CBYTES (STRING (x))
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
 #define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
 #define VALUE(x) g_cells[x].rdc
-#define PORT(x) g_cells[x].rac
-#define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_STRING_PORT(x) make_cell__ (TPORT, -length__ (g_ports) - 2, x)
 
 int readchar();
 int unreadchar();
@@ -52,6 +45,7 @@ struct scm* write_byte (SCM x);
 struct scm* current_input_port ();
 int fdgetc (int fd);
 struct scm* make_string(char const* s, int length);
+struct scm* make_string_(char const* s);
 int fdungetc (int c, int fd);
 SCM make_cell__(long type, SCM car, SCM cdr);
 SCM car (SCM x);
@@ -65,8 +59,7 @@ SCM acons (SCM key, SCM value, SCM alist);
 
 int eputs(char const* s)
 {
-	int i = strlen(s);
-	write(__stderr, s, i);
+	write(__stderr, s, strlen(s));
 	return 0;
 }
 
@@ -198,7 +191,7 @@ int peekchar()
 		return -1;
 	}
 
-	char const *p = CSTRING(string);
+	char const *p = (char*)&g_cells[STRING (string)].rdc;
 	return p[0];
 }
 
@@ -218,7 +211,7 @@ int readchar()
 		return -1;
 	}
 
-	char const *p = CSTRING(string);
+	char const *p = (char*)&g_cells[STRING (string)].rdc;
 	int c = *p++;
 	STRING(port) = GetSCM(make_string(p, length - 1));
 	return c;
@@ -234,10 +227,10 @@ int unreadchar(int c)
 	SCM port = GetSCM(current_input_port());
 	SCM string = STRING(port);
 	size_t length = LENGTH(string);
-	char *p = CSTRING(string);
+	char *p = (char*)&g_cells[STRING (string)].rdc;
 	p--;
 	string = GetSCM(make_string(p, length + 1));
-	p = CSTRING(string);
+	p = (char*)&g_cells[STRING (string)].rdc;
 	p[0] = c;
 	STRING(port) = string;
 	return c;
@@ -245,12 +238,12 @@ int unreadchar(int c)
 
 struct scm* peek_byte()
 {
-	return Getstructscm(MAKE_NUMBER(peekchar()));
+	return Getstructscm(make_cell__ (TNUMBER, 0, peekchar()));
 }
 
 struct scm* read_byte()
 {
-	return Getstructscm(MAKE_NUMBER(readchar()));
+	return Getstructscm(make_cell__ (TNUMBER, 0,readchar()));
 }
 
 struct scm* unread_byte(SCM i)
@@ -261,7 +254,7 @@ struct scm* unread_byte(SCM i)
 
 struct scm* peek_char()
 {
-	return Getstructscm(MAKE_CHAR(peekchar()));
+	return Getstructscm(make_cell__ (TCHAR, 0, peekchar()));
 }
 
 struct scm* read_char(SCM port)  ///((arity . n))
@@ -273,7 +266,7 @@ struct scm* read_char(SCM port)  ///((arity . n))
 		__stdin = VALUE(CAR(port));
 	}
 
-	SCM c = MAKE_CHAR(readchar());
+	SCM c = make_cell__ (TCHAR, 0, readchar());
 	__stdin = fd;
 	return Getstructscm(c);
 }
@@ -317,38 +310,38 @@ struct scm* write_byte(SCM x)  ///((arity . n))
 struct scm* getenv_(SCM s)  ///((name . "getenv"))
 {
 	char *p;
-	p = getenv(CSTRING(s));
-	return p ? MAKE_STRING0(p) : Getstructscm(cell_f);
+	p = getenv((char*)&g_cells[STRING (s)].rdc);
+	return p ? good2bad(make_string_(p), g_cells) : Getstructscm(cell_f);
 }
 
 struct scm* setenv_(SCM s, SCM v)  ///((name . "setenv"))
 {
 	char buf[1024];
-	strcpy(buf, CSTRING(s));
-	setenv(buf, CSTRING(v), 1);
+	strcpy(buf, (char*)&g_cells[STRING (s)].rdc);
+	setenv(buf, (char*)&g_cells[STRING (v)].rdc, 1);
 	return Getstructscm(cell_unspecified);
 }
 
 struct scm* access_p(SCM file_name, SCM mode)
 {
-	return access(CSTRING(file_name), VALUE(mode)) == 0 ? Getstructscm(cell_t) : Getstructscm(cell_f);
+	return access((char*)&g_cells[STRING (file_name)].rdc, VALUE(mode)) == 0 ? Getstructscm(cell_t) : Getstructscm(cell_f);
 }
 
 struct scm* current_input_port()
 {
 	if(__stdin >= 0)
 	{
-		return Getstructscm(MAKE_NUMBER(__stdin));
+		return Getstructscm(make_cell__ (TNUMBER, 0, __stdin));
 	}
 
-	SCM x = g_ports;
+	struct scm* x = Getstructscm2(g_ports, g_cells);
 
-	while(x && PORT(CAR(x)) != __stdin)
+	while(bad2good(x->car, g_cells)->port != __stdin)
 	{
-		x = CDR(x);
+		x = bad2good(x->cdr, g_cells);
 	}
 
-	return Getstructscm(CAR(x));
+	return x->car;
 }
 
 // The Mes C Library defines and initializes these in crt1
@@ -367,40 +360,41 @@ int mes_open(char const *file_name, int flags, int mode)
 
 struct scm* open_input_file(SCM file_name)
 {
-	return Getstructscm(MAKE_NUMBER(mes_open(CSTRING(file_name), O_RDONLY, 0)));
+	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[STRING (file_name)].rdc, O_RDONLY, 0)));
 }
 
 struct scm* open_input_string(SCM string)
 {
-	SCM port = MAKE_STRING_PORT(string);
-	g_ports = cons(port, g_ports);
-	return Getstructscm(port);
+	struct scm* port = Getstructscm2(make_cell__ (TPORT, -length__ (g_ports) - 2, string), g_cells);
+	g_ports = cons(GetSCM2(port,g_cells), g_ports);
+	return good2bad(port, g_cells);
 }
 
 struct scm* set_current_input_port(SCM port)
 {
-	SCM prev = GetSCM(current_input_port());
+	struct scm* prev = current_input_port();
+	struct scm* x = Getstructscm2(port, g_cells);
 
 	if(TYPE(port) == TNUMBER)
 	{
-		__stdin = VALUE(port) ? VALUE(port) : STDIN;
+		__stdin = x->value ? x->value : STDIN;
 	}
 	else if(TYPE(port) == TPORT)
 	{
-		__stdin = PORT(port);
+		__stdin = x->rac;
 	}
 
-	return Getstructscm(prev);
+	return prev;
 }
 
 struct scm* current_output_port()
 {
-	return Getstructscm(MAKE_NUMBER(__stdout));
+	return Getstructscm(make_cell__ (TNUMBER, 0, __stdout));
 }
 
 struct scm* current_error_port()
 {
-	return Getstructscm(MAKE_NUMBER(__stderr));
+	return Getstructscm(make_cell__ (TNUMBER, 0, __stderr));
 }
 
 struct scm* open_output_file(SCM x)  ///((arity . n))
@@ -414,7 +408,7 @@ struct scm* open_output_file(SCM x)  ///((arity . n))
 		mode = VALUE(car(x));
 	}
 
-	return Getstructscm(MAKE_NUMBER(mes_open(CSTRING(file_name), O_WRONLY | O_CREAT | O_TRUNC, mode)));
+	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[STRING (file_name)].rdc, O_WRONLY | O_CREAT | O_TRUNC, mode)));
 }
 
 struct scm* set_current_output_port(SCM port)
@@ -437,7 +431,7 @@ struct scm* force_output(SCM port)  ///((arity . n))
 
 struct scm* chmod_(SCM file_name, SCM mode)  ///((name . "chmod"))
 {
-	chmod(CSTRING(file_name), VALUE(mode));
+	chmod((char*)&g_cells[STRING (file_name)].rdc, VALUE(mode));
 	return Getstructscm(cell_unspecified);
 }
 
@@ -448,7 +442,7 @@ struct scm*  isatty_p(SCM port)
 
 struct scm* primitive_fork()
 {
-	return Getstructscm(MAKE_NUMBER(fork()));
+	return Getstructscm(make_cell__ (TNUMBER, 0, fork()));
 }
 
 struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
@@ -458,15 +452,15 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 
 	if(length__(args) > 1000)
 	{
-		error(cell_symbol_system_error, cons(file_name, cons(GetSCM(MAKE_STRING0("too many arguments")), cons(file_name, args))));
+		error(cell_symbol_system_error, cons(file_name, cons(GetSCM2(make_string_("too many arguments"), g_cells), cons(file_name, args))));
 	}
 
-	c_argv[i++] = CSTRING(file_name);
+	c_argv[i++] = (char*)&g_cells[STRING (file_name)].rdc;
 
 	while(args != cell_nil)
 	{
 		assert(TYPE(CAR(args)) == TSTRING);
-		c_argv[i++] = CSTRING(CAR(args));
+		c_argv[i++] = (char*)&g_cells[STRING (CAR(args))].rdc;
 		args = CDR(args);
 
 		if(g_debug > 2)
@@ -480,14 +474,14 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 	}
 
 	c_argv[i] = 0;
-	return Getstructscm(MAKE_NUMBER(execv(c_argv[0], c_argv)));
+	return Getstructscm(make_cell__ (TNUMBER, 0, execv(c_argv[0], c_argv)));
 }
 
 struct scm* waitpid_(SCM pid, SCM options)
 {
 	int status;
 	int child = waitpid(VALUE(pid), &status, VALUE(options));
-	return Getstructscm(cons(MAKE_NUMBER(child), MAKE_NUMBER(status)));
+	return Getstructscm(cons(make_cell__ (TNUMBER, 0, child), make_cell__ (TNUMBER, 0, status)));
 }
 
 #if __x86_64__
@@ -502,19 +496,19 @@ struct timespec g_start_time;
 struct scm* init_time(SCM a)  ///((internal))
 {
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &g_start_time);
-	return Getstructscm(acons(cell_symbol_internal_time_units_per_second, MAKE_NUMBER(TIME_UNITS_PER_SECOND), a));
+	return Getstructscm(acons(cell_symbol_internal_time_units_per_second, make_cell__ (TNUMBER, 0, TIME_UNITS_PER_SECOND), a));
 }
 
 struct scm* current_time()
 {
-	return Getstructscm(MAKE_NUMBER(time(0)));
+	return Getstructscm(make_cell__ (TNUMBER, 0, time(0)));
 }
 
 struct scm* gettimeofday_()  ///((name . "gettimeofday"))
 {
 	struct timeval time;
 	gettimeofday(&time, 0);
-	return Getstructscm(cons(MAKE_NUMBER(time.tv_sec), MAKE_NUMBER(time.tv_usec)));
+	return Getstructscm(cons(make_cell__ (TNUMBER, 0, time.tv_sec), make_cell__ (TNUMBER, 0, time.tv_usec)));
 }
 
 long seconds_and_nanoseconds_to_long(long s, long ns)
@@ -527,18 +521,18 @@ struct scm* get_internal_run_time()
 	struct timespec ts;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
 	long time = seconds_and_nanoseconds_to_long(ts.tv_sec - g_start_time.tv_sec, ts.tv_nsec - g_start_time.tv_nsec);
-	return Getstructscm(MAKE_NUMBER(time));
+	return Getstructscm(make_cell__ (TNUMBER, 0, time));
 }
 
 struct scm* getcwd_()  ///((name . "getcwd"))
 {
 	char buf[PATH_MAX];
-	return MAKE_STRING0(getcwd(buf, PATH_MAX));
+	return good2bad(make_string_(getcwd(buf, PATH_MAX)), g_cells);
 }
 
 struct scm* dup_(SCM port)  ///((name . "dup"))
 {
-	return Getstructscm(MAKE_NUMBER(dup(VALUE(port))));
+	return Getstructscm(make_cell__ (TNUMBER, 0, dup(VALUE(port))));
 }
 
 struct scm* dup2_(SCM old, SCM new)  ///((name . "dup2"))
@@ -549,7 +543,7 @@ struct scm* dup2_(SCM old, SCM new)  ///((name . "dup2"))
 
 struct scm* delete_file(SCM file_name)
 {
-	unlink(CSTRING(file_name));
+	unlink((char*)&g_cells[STRING (file_name)].rdc);
 	return Getstructscm(cell_unspecified);
 }
 

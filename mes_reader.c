@@ -30,13 +30,6 @@ int in_set(int c, char* s);
 /* Standard Mes.c function imports */
 void assert_max_string(int i, char const* msg, char* string);
 struct scm* read_env (SCM a);
-struct scm* reader_read_binary ();
-struct scm* reader_read_octal ();
-struct scm* reader_read_hex ();
-struct scm* reader_read_string ();
-struct scm* reader_read_character ();
-SCM car (SCM x);
-SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 int readchar();
 struct scm* error(SCM key, SCM x);
@@ -48,16 +41,16 @@ struct scm* cstring_to_symbol(char const *s);
 struct scm* symbol_to_keyword (SCM symbol);
 struct scm* list_to_vector (SCM x);
 int eputs(char const* s);
-char *itoa (int number);
+char* itoa (int number);
 
 struct scm* read_input_file_env_(SCM e, SCM a)
 {
 	if(e == cell_nil)
 	{
-		return Getstructscm(cell_nil);
+		return good2bad(Getstructscm2(cell_nil, g_cells), g_cells);
 	}
 
-	return Getstructscm(cons(e, GetSCM(read_input_file_env_(GetSCM(read_env(a)), a))));
+	return good2bad(Getstructscm2(cons(e, GetSCM(read_input_file_env_(GetSCM(read_env(a)), a))), g_cells), g_cells);
 }
 
 struct scm* read_input_file_env()
@@ -74,12 +67,8 @@ int reader_read_line_comment(int c)
 	}
 
 	error(cell_symbol_system_error, GetSCM2(make_string_("reader_read_line_comment"), g_cells));
-	exit(1);
+	exit(EXIT_FAILURE);
 }
-
-int reader_read_block_comment(int s, int c);
-struct scm* reader_read_hash(int c, SCM a);
-struct scm* reader_read_list(int c, SCM a);
 
 int reader_end_of_word_p(int c)
 {
@@ -109,6 +98,10 @@ struct scm* reader_read_identifier_or_number(int c)
 	}
 	return cstring_to_symbol(g_buf);
 }
+
+struct scm* reader_read_hash(int c, SCM a);
+struct scm* reader_read_list(int c, SCM a);
+struct scm* reader_read_string ();
 
 struct scm* reader_read_sexp_(int c, SCM a)
 {
@@ -180,6 +173,16 @@ reset_reader:
 	return bad2good(reader_read_identifier_or_number(c), g_cells);
 }
 
+int reader_read_block_comment(int s, int c)
+{
+	if(c == s && peekchar() == '#')
+	{
+		return readchar();
+	}
+
+	return reader_read_block_comment(s, readchar());
+}
+
 int reader_eat_whitespace(int c)
 {
 	while(isspace(c))
@@ -233,15 +236,61 @@ struct scm* read_env(SCM a)
 	return good2bad(reader_read_sexp_(readchar(), a), g_cells);
 }
 
-int reader_read_block_comment(int s, int c)
+int index_number__(char* s, char c) /* Internal only */
 {
-	if(c == s && peekchar() == '#')
+	int i = 0;
+	while(s[i] != c)
 	{
-		return readchar();
+		i = i + 1;
+	}
+	return i;
+}
+
+struct scm* set_reader__(char* set, int shift) /* Internal only*/
+{
+	long n = 0;
+	int c = peekchar();
+	int negative_p = 0;
+
+	if(c == '-')
+	{
+		negative_p = 1;
+		readchar();
+		c = peekchar();
 	}
 
-	return reader_read_block_comment(s, readchar());
+	while(in_set(c, set))
+	{
+		n = n << shift;
+		n = n + index_number__(set, toupper(c));
+		readchar();
+		c = peekchar();
+	}
+
+	if(negative_p)
+	{
+		n = 0 - n;
+	}
+
+	return make_cell__ (TNUMBER, 0, n);
 }
+
+struct scm* reader_read_binary()
+{
+	return set_reader__("01", 1);
+}
+
+struct scm* reader_read_octal()
+{
+	return set_reader__("01234567", 3);
+}
+
+struct scm* reader_read_hex()
+{
+	return set_reader__("0123456789ABCDEFabcdef", 4);
+}
+
+struct scm* reader_read_character ();
 
 struct scm* reader_read_hash(int c, SCM a)
 {
@@ -457,60 +506,6 @@ struct scm* reader_read_character()
 	}
 
 	return make_cell__ (TCHAR, 0, c);
-}
-
-int index_number__(char* s, char c) /* Internal only */
-{
-	int i = 0;
-	while(s[i] != c)
-	{
-		i = i + 1;
-	}
-	return i;
-}
-
-struct scm* set_reader__(char* set, int shift) /* Internal only*/
-{
-	long n = 0;
-	int c = peekchar();
-	int negative_p = 0;
-
-	if(c == '-')
-	{
-		negative_p = 1;
-		readchar();
-		c = peekchar();
-	}
-
-	while(in_set(c, set))
-	{
-		n = n << shift;
-		n = n + index_number__(set, toupper(c));
-		readchar();
-		c = peekchar();
-	}
-
-	if(negative_p)
-	{
-		n = 0 - n;
-	}
-
-	return make_cell__ (TNUMBER, 0, n);
-}
-
-struct scm* reader_read_binary()
-{
-	return set_reader__("01", 1);
-}
-
-struct scm* reader_read_octal()
-{
-	return set_reader__("01234567", 3);
-}
-
-struct scm* reader_read_hex()
-{
-	return set_reader__("0123456789ABCDEFabcdef", 4);
 }
 
 int escape_lookup(int c)
