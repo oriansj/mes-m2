@@ -22,18 +22,6 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-#define TYPE(x) g_cells[x].type
-#define CAR(x) g_cells[x].rac
-#define CDR(x) g_cells[x].rdc
-#define LENGTH(x) g_cells[x].rac
-#define VALUE(x) g_cells[x].rdc
-#define STRING(x) g_cells[x].rdc
-#define CBYTES(x) (char*)&g_cells[x].rdc
-#define CSTRING(x) CBYTES (STRING (x))
-#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
-#define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-
 struct scm* make_symbol (SCM string);
 int eputs(char const* s);
 char *itoa (int number);
@@ -62,19 +50,18 @@ void assert_max_string(int i, char const* msg, char* string)
 	}
 }
 
-char const* list_to_cstring(SCM list, int* size)
+char const* list_to_cstring(struct scm* list, int* size)
 {
 	int i = 0;
+	list = bad2good(list, g_cells);
 
-	while(list != cell_nil)
+	while(list != &g_cells[cell_nil])
 	{
-		if(i > MAX_STRING)
-		{
-			assert_max_string(i, "list_to_string", g_buf);
-		}
+		assert_max_string(i, "list_to_string", g_buf);
 
-		g_buf[i++] = VALUE(car(list));
-		list = cdr(list);
+		g_buf[i] = g_cells[list->rac].value;
+		i = i + 1;
+		list = &g_cells[list->rdc];
 	}
 
 	g_buf[i] = 0;
@@ -90,10 +77,10 @@ size_t bytes_cells(size_t length)
 struct scm* make_bytes(char const* s, size_t length)
 {
 	size_t size = bytes_cells(length);
-	SCM x = alloc(size);
-	TYPE(x) = TBYTES;
-	LENGTH(x) = length;
-	char *p = (char*)&g_cells[x].cdr;
+	struct scm* x = Getstructscm2(alloc(size), g_cells);
+	x->type = TBYTES;
+	x->length = length;
+	char *p = (char*) &g_cells[GetSCM2(x, g_cells)].cdr;
 
 	if(!length)
 	{
@@ -104,139 +91,143 @@ struct scm* make_bytes(char const* s, size_t length)
 		memcpy(p, s, length + 1);
 	}
 
-	return Getstructscm(x);
+	return good2bad(x, g_cells);
 }
 
 struct scm* make_string(char const* s, int length)
 {
-	if(length > MAX_STRING)
-	{
-		assert_max_string(length, "make_string", (char*)s);
-	}
+	assert_max_string(length, "make_string", (char*)s);
 
 	SCM x = make_cell__(TSTRING, length, 0);
 	SCM v = GetSCM(make_bytes(s, length));
-	CDR(x) = v;
-	return Getstructscm(x);
+	g_cells[x].rdc = v;
+	return good2bad(Getstructscm2(x, g_cells), g_cells);
 }
 
 struct scm* string_equal_p(SCM a, SCM b)  ///((name . "string=?"))
 {
-	if(!((TYPE(a) == TSTRING && TYPE(b) == TSTRING) || (TYPE(a) == TKEYWORD || TYPE(b) == TKEYWORD)))
+	struct scm* a2 = Getstructscm2(a, g_cells);
+	struct scm* b2 = Getstructscm2(b, g_cells);
+	assert(a2->type == TSTRING || a2->type == TKEYWORD);
+	assert(b2->type == TSTRING || b2->type == TKEYWORD);
+	struct scm* tee = good2bad(Getstructscm2(cell_t, g_cells), g_cells);
+	struct scm* nil = good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+
+	/* If they are the same thing */
+	if(a == b) return tee;
+
+	/* If they point to the same string */
+	if(a2->cdr == b2->cdr) return tee;
+
+	/*If they are both empty strings */
+	if((NULL == a2->car) && (NULL == b2->car)) return tee;
+
+	/* If they are different lengths they can't be the same string */
+	if(a2->length != b2->length) return nil;
+
+	/* Need to fix */
+	char* s1 = (char*)&g_cells[a2->rdc].string;
+	char* s2 = (char*)&g_cells[b2->rdc].string;
+
+	while(s1[0] == s2[0])
 	{
-		eputs("type a: ");
-		eputs(itoa(TYPE(a)));
-		eputs("\n");
-		eputs("type b: ");
-		eputs(itoa(TYPE(b)));
-		eputs("\n");
-		eputs("a= ");
-		write_error_(a);
-		eputs("\n");
-		eputs("b= ");
-		write_error_(b);
-		eputs("\n");
-		assert((TYPE(a) == TSTRING && TYPE(b) == TSTRING) || (TYPE(a) == TKEYWORD || TYPE(b) == TKEYWORD));
+		if(0 == s1[0]) return tee;
+		s1 = s1 + 1;
+		s2 = s2 + 1;
 	}
 
-	if(a == b || STRING(a) == STRING(b) || (!LENGTH(a) && !LENGTH(b)) || (LENGTH(a) == LENGTH(b) && !memcmp(CSTRING(a), CSTRING(b), LENGTH(a))))
-	{
-		return Getstructscm(cell_t);
-	}
-
-	return Getstructscm(cell_f);
+	return nil;
 }
 
 struct scm* symbol_to_string(SCM symbol)
 {
-	return Getstructscm(make_cell__(TSTRING, CAR(symbol), CDR(symbol)));
+	struct scm* a = Getstructscm2(symbol, g_cells);
+	return good2bad(Getstructscm2(make_cell__(TSTRING, a->length, a->rdc), g_cells), g_cells);
 }
 
 struct scm* symbol_to_keyword(SCM symbol)
 {
-	return Getstructscm(make_cell__(TKEYWORD, CAR(symbol), CDR(symbol)));
+	struct scm* a = Getstructscm2(symbol, g_cells);
+	return good2bad(Getstructscm2(make_cell__(TKEYWORD, a->length, a->rdc), g_cells), g_cells);
 }
 
 struct scm* keyword_to_string(SCM keyword)
 {
-	return Getstructscm(make_cell__(TSTRING, CAR(keyword), CDR(keyword)));
+	struct scm* a = Getstructscm2(keyword, g_cells);
+	return good2bad(Getstructscm2(make_cell__(TSTRING, a->length, a->rdc), g_cells), g_cells);
 }
 
 struct scm* string_to_symbol(SCM string)
 {
-	SCM x = GetSCM(hash_ref(g_symbols, string, cell_f));
+	struct scm* x = bad2good(hash_ref(g_symbols, string, cell_f), g_cells);
 
-	if(x == cell_f)
+	if(x == &g_cells[cell_f])
 	{
-		x = GetSCM(make_symbol(string));
+		x = bad2good(make_symbol(string), g_cells);
 	}
 
-	return Getstructscm(x);
+	return good2bad(x, g_cells);
 }
 
 struct scm* make_symbol(SCM string)
 {
-	SCM x = make_cell__(TSYMBOL, LENGTH(string), STRING(string));
-	hash_set_x(g_symbols, string, x);
-	return Getstructscm(x);
+	struct scm* x = Getstructscm2(make_cell__(TSYMBOL, g_cells[string].length, g_cells[string].rdc), g_cells);
+	hash_set_x(g_symbols, string, GetSCM2(x,g_cells));
+	return good2bad(x, g_cells);
 }
 
-struct scm* bytes_to_list(char const* s, size_t i)
+struct scm* bytes_to_list(char const* s)
 {
-	SCM p = cell_nil;
+	SCM i = strlen(s);
+	struct scm* p = &g_cells[cell_nil];
 
-	while(i--)
+	while(0 != i)
 	{
-		int c = (0x100 + s[i]) % 0x100;
-		p = cons(MAKE_CHAR(c), p);
+		i = i - 1;
+		int c = (0xFF & s[i]);
+		p = Getstructscm2(cons(make_cell__ (TCHAR, 0, c), GetSCM2(p, g_cells)), g_cells);
 	}
 
-	return Getstructscm(p);
-}
-
-struct scm* cstring_to_list(char const* s)
-{
-	return bytes_to_list(s, strlen(s));
+	return p;
 }
 
 struct scm* cstring_to_symbol(char const *s)
 {
-	SCM string = GetSCM(MAKE_STRING0(s));
+	SCM string = GetSCM2(bad2good(make_string(s, strlen (s)), g_cells), g_cells);
 	return string_to_symbol(string);
 }
 
 struct scm* string_to_list(SCM string)
 {
-	return bytes_to_list(CSTRING(string), LENGTH(string));
+	return good2bad(bytes_to_list((char*)&g_cells[g_cells[string].rdc].rdc), g_cells);
 }
 
 struct scm* list_to_string(SCM list)
 {
 	int size;
-	char const *s = list_to_cstring(list, &size);
+	char const *s = list_to_cstring(good2bad(Getstructscm2(list, g_cells), g_cells), &size);
 	return make_string(s, size);
 }
 
 struct scm* read_string(SCM port)  ///((arity . n))
 {
 	int fd = __stdin;
+	struct scm* x = Getstructscm2(port, g_cells);
 
-	if(TYPE(port) == TPAIR && TYPE(car(port)) == TNUMBER)
+	if(x->type == TPAIR && x->car->type == TNUMBER)
 	{
-		__stdin = VALUE(CAR(port));
+		__stdin = x->car->rdc;
 	}
 
 	int c = readchar();
 	int i = 0;
 
-	while(c != -1)
+	while(EOF != c)
 	{
-		if(i > MAX_STRING)
-		{
-			assert_max_string(i, "read_string", g_buf);
-		}
+		assert_max_string(i, "read_string", g_buf);
 
-		g_buf[i++] = c;
+		g_buf[i] = c;
+		i = i + 1;
 		c = readchar();
 	}
 
@@ -250,21 +241,19 @@ struct scm* string_append(SCM x)  ///((arity . n))
 	char *p = g_buf;
 	g_buf[0] = 0;
 	int size = 0;
+	struct scm* y1 = Getstructscm2(x, g_cells);
 
-	while(x != cell_nil)
+	while(y1 != &g_cells[cell_nil])
 	{
-		SCM string = CAR(x);
-		assert(TYPE(string) == TSTRING);
-		memcpy(p, CSTRING(string), LENGTH(string) + 1);
-		p += LENGTH(string);
-		size += LENGTH(string);
+		struct scm* y2 = bad2good(y1->car, g_cells);
+		assert(y2->type == TSTRING);
+		memcpy(p, &bad2good(y2->cdr, g_cells)->rdc, y2->rac + 1);
+		p += y2->length;
+		size += y2->length;
 
-		if(size > MAX_STRING)
-		{
-			assert_max_string(size, "string_append", g_buf);
-		}
+		assert_max_string(size, "string_append", g_buf);
 
-		x = CDR(x);
+		y1 = bad2good(y1->cdr, g_cells);
 	}
 
 	return make_string(g_buf, size);
@@ -272,22 +261,25 @@ struct scm* string_append(SCM x)  ///((arity . n))
 
 struct scm* string_length(SCM string)
 {
-	assert(TYPE(string) == TSTRING);
-	return Getstructscm(MAKE_NUMBER(LENGTH(string)));
+	struct scm* x = Getstructscm2(string, g_cells);
+	assert(x->type == TSTRING);
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, x->length), g_cells), g_cells);
 }
 
 struct scm* string_ref(SCM str, SCM k)
 {
-	assert(TYPE(str) == TSTRING);
-	assert(TYPE(k) == TNUMBER);
-	size_t size = LENGTH(str);
-	size_t i = VALUE(k);
+	struct scm* x = Getstructscm2(str, g_cells);
+	struct scm* y = Getstructscm2(k, g_cells);
+	assert(x->type == TSTRING);
+	assert(y->type == TNUMBER);
+	size_t size = x->length;
+	size_t i = y->rdc;
 
 	if(i > size)
 	{
-		error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("value out of range")), k));
+		error(cell_symbol_system_error, cons(GetSCM(make_string("value out of range", strlen ("value out of range"))), k));
 	}
 
-	char const *p = CSTRING(str);
-	return Getstructscm(MAKE_CHAR(p[i]));
+	char const *p = (char*) &bad2good(x->cdr,g_cells)->string;
+	return Getstructscm(make_cell__ (TCHAR, 0, p[i]));
 }
