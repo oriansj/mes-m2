@@ -257,7 +257,7 @@ SCM error(SCM key, SCM x)
 	write_error_(x);
 	eputs("\n");
 	assert(0);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 //  extra lib
@@ -1923,7 +1923,7 @@ void read_boot()  ///((internal))
 		eputs("mes: boot failed: no such file: ");
 		eputs(boot);
 		eputs("\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	r2 = read_input_file_env();
