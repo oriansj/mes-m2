@@ -25,23 +25,16 @@
 #define FRAME_SIZE 5
 
 #define TYPE(x) g_cells[x].type
-#define VARIABLE(x) g_cells[x].rac
-#define VALUE(x) g_cells[x].rdc
-#define LENGTH(x) g_cells[x].rac
-#define REF(x) g_cells[x].rac
-#define STRUCT(x) g_cells[x].rdc
-#define VECTOR(x) g_cells[x].rdc
+#define VARIABLE(x) g_cells[x].variable
+#define VALUE(x) g_cells[x].value
+#define LENGTH(x) g_cells[x].length
+#define REF(x) g_cells[x].ref
+#define STRUCT(x) g_cells[x].struc
+#define VECTOR(x) g_cells[x].vector
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
-#define CAAR(x) CAR (CAR (x))
-#define CADR(x) CAR (CDR (x))
-#define CDAR(x) CDR (CAR (x))
-#define CDDR(x) CDR (CDR (x))
-#define PORT(x) g_cells[x].rac
+#define PORT(x) g_cells[x].port
 #define STRING(x) g_cells[x].rdc
-#define CBYTES(x) (char*)&g_cells[x].rdc
-#define CSTRING(x) CBYTES (STRING (x))
-
 
 // CONSTANT STRUCT_TYPE 0
 #define STRUCT_TYPE 0
@@ -143,9 +136,9 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	else if(t == TCLOSURE)
 	{
 		fdputs("#<closure ", fd);
-		SCM circ = CADR(x);
-		SCM name = CADR(circ);
-		SCM args = CAR(CDDR(x));
+		SCM circ = CAR (CDR (x));
+		SCM name = CAR (CDR (circ));
+		SCM args = CAR(CDR (CDR (x)));
 		display_helper(CAR(name), 0, "", fd, 0);
 		fdputc(' ', fd);
 		display_helper(args, 0, "", fd, 0);
@@ -175,7 +168,7 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 		}
 
 		if(CAR(x) == cell_circular
-		        && CADR(x) != cell_closure)
+		        && CAR (CDR (x)) != cell_closure)
 		{
 			fdputs("(*circ* . ", fd);
 			int i = 0;
@@ -183,7 +176,7 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 
 			while(x != cell_nil && i++ < 10)
 			{
-				fdisplay_(CAAR(x), fd, write_p);
+				fdisplay_(CAR (CAR (x)), fd, write_p);
 				fdputs(" ", fd);
 				x = CDR(x);
 			}
@@ -241,7 +234,7 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 			fdputc('"', fd);
 		}
 
-		char const *s = CSTRING(x);
+		char const *s = (char*)&g_cells[STRING (x)].rdc;
 #if 0
 		s += START(x);
 		size_t length = LEN(x);
@@ -509,7 +502,7 @@ struct scm* stack_ref(SCM stack, SCM index)
 
 struct scm* xassq(SCM x, SCM a)  ///for speed in core only
 {
-	while(a != cell_nil && x != CDAR(a))
+	while(a != cell_nil && x != CDR (CAR (a)))
 	{
 		a = CDR(a);
 	}

@@ -23,23 +23,18 @@
 #include "mes_constants.h"
 
 #define TYPE(x) g_cells[x].type
-#define CBYTES(x) (char*)&g_cells[x].rdc
 #define STRING(x) g_cells[x].rdc
-#define CSTRING(x) CBYTES (STRING (x))
-#define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define VALUE(x) g_cells[x].rdc
+#define VALUE(x) g_cells[x].value
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
-#define LENGTH(x) g_cells[x].rac
-#define CAAR(x) CAR (CAR (x))
+#define LENGTH(x) g_cells[x].length
 
 struct scm* make_vector__(long k);
 struct scm* vector_ref_(SCM x, long i);
 void vector_set_x_(SCM x, long i, SCM e);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
-struct scm* make_string(char const* s, int length);
+struct scm* make_string_(char const* s);
 SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* struct_ref_(SCM x, long i);
 SCM assq (SCM x, SCM a);
@@ -69,10 +64,10 @@ int hashq_(SCM x, long size)
 {
 	if(TYPE(x) == TSPECIAL || TYPE(x) == TSYMBOL)
 	{
-		return hash_cstring(CSTRING(x), size);    // FIXME: hash x directly
+		return hash_cstring((char*)&g_cells[STRING (x)].rdc, size);    // FIXME: hash x directly
 	}
 
-	error(cell_symbol_system_error, cons(GetSCM(MAKE_STRING0("hashq_: not a symbol")), x));
+	error(cell_symbol_system_error, cons(GetSCM2(make_string_("hashq_: not a symbol"), g_cells), x));
 	exit(EXIT_FAILURE);
 }
 
@@ -81,7 +76,7 @@ int hash_(SCM x, long size)
 	struct scm* y = Getstructscm2(x, g_cells);
 	if(y->type == TSTRING)
 	{
-		return hash_cstring(CSTRING(x), size);
+		return hash_cstring((char*)&g_cells[STRING (x)].rdc, size);
 	}
 
 	assert(0);
@@ -91,13 +86,13 @@ int hash_(SCM x, long size)
 struct scm* hashq(SCM x, SCM size)
 {
 	assert(0);
-	return Getstructscm(MAKE_NUMBER(hashq_(x, VALUE(size))));
+	return Getstructscm(make_cell__ (TNUMBER, 0, hashq_(x, VALUE(size))));
 }
 
 struct scm* hash(SCM x, SCM size)
 {
 	assert(0);
-	return Getstructscm(MAKE_NUMBER(hash_(x, VALUE(size))));
+	return Getstructscm(make_cell__ (TNUMBER, 0, hash_(x, VALUE(size))));
 }
 
 struct scm* hashq_get_handle(SCM table, SCM key, SCM dflt)
@@ -282,7 +277,7 @@ struct scm* make_hash_table_(long size)
 	SCM buckets = GetSCM(good2bad(make_vector__(size), g_cells));
 	SCM values = cell_nil;
 	values = cons(buckets, values);
-	values = cons(MAKE_NUMBER(size), values);
+	values = cons(make_cell__ (TNUMBER, 0, size), values);
 	values = cons(cell_symbol_hashq_table, values);
 	//FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer");
 	return make_struct(hashq_type, values, cell_unspecified);
