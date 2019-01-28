@@ -26,6 +26,7 @@
 
 /* M2-Planet function imports*/
 int in_set(int c, char* s);
+int numerate_string(char *a);
 
 /* Standard Mes.c function imports */
 void assert_max_string(int i, char const* msg, char* string);
@@ -89,10 +90,9 @@ struct scm* reader_read_identifier_or_number(int c)
 	unreadchar(c);
 	g_buf[i] = 0;
 
-	char *p;
-	SCM number = strtol(g_buf, &p, 0);
+	SCM number = numerate_string(g_buf);
 
-	if((0 != number || '0' == g_buf[0]) && p - g_buf == i)
+	if((0 != number || '0' == g_buf[0]))
 	{
 		return make_cell__ (TNUMBER, 0, number);
 	}
@@ -246,7 +246,7 @@ int index_number__(char* s, char c) /* Internal only */
 	return i;
 }
 
-struct scm* set_reader__(char* set, int shift) /* Internal only*/
+struct scm* set_reader__(char* set, int mult) /* Internal only*/
 {
 	long n = 0;
 	int c = peekchar();
@@ -261,7 +261,7 @@ struct scm* set_reader__(char* set, int shift) /* Internal only*/
 
 	while(in_set(c, set))
 	{
-		n = n << shift;
+		n = n * mult;
 		n = n + index_number__(set, toupper(c));
 		readchar();
 		c = peekchar();
@@ -277,17 +277,17 @@ struct scm* set_reader__(char* set, int shift) /* Internal only*/
 
 struct scm* reader_read_binary()
 {
-	return set_reader__("01", 1);
+	return set_reader__("01", 2);
 }
 
 struct scm* reader_read_octal()
 {
-	return set_reader__("01234567", 3);
+	return set_reader__("01234567", 8);
 }
 
 struct scm* reader_read_hex()
 {
-	return set_reader__("0123456789ABCDEFabcdef", 4);
+	return set_reader__("0123456789ABCDEFabcdef", 16);
 }
 
 struct scm* reader_read_character ();
