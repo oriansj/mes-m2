@@ -26,14 +26,12 @@
 
 #define TYPE(x) g_cells[x].type
 #define NTYPE(x) g_news[x].type
-#define NVECTOR(x) g_news[x].rdc
-#define LENGTH(x) g_cells[x].rac
-#define NLENGTH(x) g_news[x].rac
-#define VECTOR(x) g_cells[x].rdc
-#define CBYTES(x) (char*)&g_cells[x].rdc
-#define NCBYTES(x) (char*)&g_news[x].rdc
+#define VECTOR(x) g_cells[x].vector
+#define NVECTOR(x) g_news[x].vector
+#define LENGTH(x) g_cells[x].length
+#define NLENGTH(x) g_news[x].length
 #define CAR(x) g_cells[x].rac
-#define NVALUE(x) g_news[x].rdc
+#define NVALUE(x) g_news[x].value
 
 size_t bytes_cells(size_t length);
 int eputs(char const* s);
@@ -60,7 +58,7 @@ struct scm* gc_up_arena()  ///((internal))
 	}
 
 	long arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
-	void *p = realloc(g_cells - 1, arena_bytes + STACK_SIZE * sizeof(SCM));
+	char* p = realloc(g_cells - 1, arena_bytes + STACK_SIZE * sizeof(SCM));
 
 	if(!p)
 	{
@@ -117,8 +115,8 @@ struct scm* gc_copy(SCM old)  ///((internal))
 	}
 	else if(NTYPE(new) == TBYTES)
 	{
-		char const *src = CBYTES(old);
-		char *dest = NCBYTES(new);
+		char const *src = (char*)&g_cells[old].rdc;
+		char *dest = (char*)&g_news[new].rdc;
 		size_t length = NLENGTH(new);
 		memcpy(dest, src, length + 1);
 		g_free += bytes_cells(length) - 1;
