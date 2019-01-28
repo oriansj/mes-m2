@@ -27,7 +27,6 @@
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
 #define VALUE(x) g_cells[x].rdc
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 
 int eputs(char const* s);
 SCM error(SCM key, SCM x);
@@ -141,7 +140,7 @@ struct scm* minus(SCM x)  ///((name . "-") (arity . n))
 		x = cdr(x);
 	}
 
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* plus(SCM x)  ///((name . "+") (arity . n))
@@ -155,7 +154,7 @@ struct scm* plus(SCM x)  ///((name . "+") (arity . n))
 		x = cdr(x);
 	}
 
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* divide(SCM x)  ///((name . "/") (arity . n))
@@ -182,7 +181,7 @@ struct scm* divide(SCM x)  ///((name . "/") (arity . n))
 		x = cdr(x);
 	}
 
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* modulo(SCM a, SCM b)
@@ -197,7 +196,7 @@ struct scm* modulo(SCM a, SCM b)
 	}
 
 	x = x ? x % VALUE(b) : 0;
-	return Getstructscm(MAKE_NUMBER(x));
+	return Getstructscm(make_cell__ (TNUMBER, 0, x));
 }
 
 struct scm* multiply(SCM x)  ///((name . "*") (arity . n))
@@ -211,7 +210,7 @@ struct scm* multiply(SCM x)  ///((name . "*") (arity . n))
 		x = cdr(x);
 	}
 
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* logand(SCM x)  ///((arity . n))
@@ -225,7 +224,7 @@ struct scm* logand(SCM x)  ///((arity . n))
 		x = cdr(x);
 	}
 
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* logior(SCM x)  ///((arity . n))
@@ -239,14 +238,14 @@ struct scm* logior(SCM x)  ///((arity . n))
 		x = cdr(x);
 	}
 
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* lognot(SCM x)
 {
 	assert_number("lognot", x);
 	long n = ~VALUE(x);
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* logxor(SCM x)  ///((arity . n))
@@ -260,7 +259,7 @@ struct scm* logxor(SCM x)  ///((arity . n))
 		x = cdr(x);
 	}
 
-	return Getstructscm(MAKE_NUMBER(n));
+	return Getstructscm(make_cell__ (TNUMBER, 0, n));
 }
 
 struct scm* ash(SCM n, SCM count)
@@ -269,5 +268,5 @@ struct scm* ash(SCM n, SCM count)
 	assert_number("ash", count);
 	long cn = VALUE(n);
 	long ccount = VALUE(count);
-	return Getstructscm(MAKE_NUMBER((ccount < 0) ? cn >> -ccount : cn << ccount));
+	return Getstructscm(make_cell__ (TNUMBER, 0, (ccount < 0) ? cn >> -ccount : cn << ccount));
 }

@@ -22,6 +22,7 @@
 #include "mes.h"
 #include "mes_constants.h"
 #include <fcntl.h>
+int numerate_string(char *a);
 
 #define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].rac
@@ -1934,7 +1935,7 @@ int get_env_value(char* c, int alt)
 {
 	char* s = getenv(c);
 	if(NULL == s) return alt;
-	return atoi(s);
+	return numerate_string(s);
 }
 
 int main(int argc, char *argv[])
