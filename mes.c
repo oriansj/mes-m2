@@ -67,7 +67,7 @@ char *itoa (int number);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
 int eputs (char const* s);
-struct scm* mes_builtins(SCM a);
+struct scm* mes_builtins(struct scm* a);
 struct scm* apply_builtin(SCM fn, SCM x);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_hash_table_(SCM size);
@@ -1557,7 +1557,7 @@ SCM gc_init_cells()  ///((internal))
 	SCM arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
 	void *p = malloc(arena_bytes + STACK_SIZE * sizeof(SCM));
 	g_cells = (struct scm *)p;
-	g_stack_array = (SCM*)(p + arena_bytes);
+	g_stack_array = (SCM*)((char*)p + arena_bytes);
 	TYPE(0) = TVECTOR;
 	LENGTH(0) = 1000;
 	VECTOR(0) = 0;
@@ -1750,132 +1750,6 @@ SCM mes_environment(int argc, char *argv[])
 	return mes_g_stack(a);
 }
 
-SCM init_builtin(SCM builtin_type, char const* name, int arity, SCM(*function)(SCM), SCM a)
-{
-	SCM s = GetSCM2(cstring_to_symbol(name), g_cells);
-	return acons(s, make_builtin(builtin_type, GetSCM(symbol_to_string(s)), MAKE_NUMBER(arity), MAKE_NUMBER(function)), a);
-}
-
-SCM make_builtin_type()  ///(internal))
-{
-	SCM record_type = cell_symbol_record_type;
-	SCM fields = cell_nil;
-	fields = cons(GetSCM2(cstring_to_symbol("address"), g_cells), fields);
-	fields = cons(GetSCM2(cstring_to_symbol("arity"), g_cells), fields);
-	fields = cons(GetSCM2(cstring_to_symbol("name"), g_cells), fields);
-	fields = cons(fields, cell_nil);
-	fields = cons(cell_symbol_builtin, fields);
-	return GetSCM(make_struct(record_type, fields, cell_unspecified));
-}
-
-SCM make_builtin(SCM builtin_type, SCM name, SCM arity, SCM function)
-{
-	SCM values = cell_nil;
-	values = cons(function, values);
-	values = cons(arity, values);
-	values = cons(name, values);
-	values = cons(cell_symbol_builtin, values);
-	return GetSCM(make_struct(builtin_type, values, GetSCM2(cstring_to_symbol("builtin-printer"), g_cells)));
-}
-
-SCM builtin_name(SCM builtin)
-{
-	return GetSCM(struct_ref_(builtin, 3));
-}
-
-SCM builtin_arity(SCM builtin)
-{
-	return GetSCM(struct_ref_(builtin, 4));
-}
-
-void* builtin_function(SCM builtin)
-{
-	return (void*)VALUE(GetSCM(struct_ref_(builtin, 5)));
-}
-
-SCM builtin_p(SCM x)
-{
-	return (TYPE(x) == TSTRUCT && GetSCM(struct_ref_(x, 2)) == cell_symbol_builtin) ? cell_t : cell_f;
-}
-
-struct scm* builtin_printer(SCM builtin)
-{
-	fdputs("#<procedure ", __stdout);
-	display_(builtin_name(builtin));
-	fdputc(' ', __stdout);
-	int arity = VALUE(builtin_arity(builtin));
-
-	if(arity == -1)
-	{
-		fdputc('_', __stdout);
-	}
-	else
-	{
-		fdputc('(', __stdout);
-
-		for(int i = 0; i < arity; i++)
-		{
-			if(i)
-			{
-				fdputc(' ', __stdout);
-			}
-
-			fdputc('_', __stdout);
-		}
-	}
-
-	fdputc('>', __stdout);
-	return Getstructscm(cell_unspecified);
-}
-
-struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
-{
-	int arity = VALUE(builtin_arity(fn));
-
-	if((arity > 0 || arity == -1) && x != cell_nil && TYPE(CAR(x)) == TVALUES)
-	{
-		x = cons(CADAR(x), CDR(x));
-	}
-
-	if((arity > 1 || arity == -1) && x != cell_nil && TYPE(CDR(x)) == TPAIR && TYPE(CADR(x)) == TVALUES)
-	{
-		x = cons(CAR(x), cons(CDADAR(x), CDR(x)));
-	}
-
-	if(arity == 0)
-	{
-		//function0_t fp = f->function;
-		FUNCTION0* fp = builtin_function(fn);
-		return fp();
-	}
-	else if(arity == 1)
-	{
-		//function1_t fp = f->function;
-		FUNCTION1* fp = builtin_function(fn);
-		return fp(Getstructscm(CAR(x)));
-	}
-	else if(arity == 2)
-	{
-		//function2_t fp = f->function;
-		FUNCTION2* fp = builtin_function(fn);
-		return fp(Getstructscm(CAR(x)), Getstructscm(CADR(x)));
-	}
-	else if(arity == 3)
-	{
-		//function3_t fp = f->function;
-		FUNCTION3* fp = builtin_function(fn);
-		return fp(Getstructscm(CAR(x)), Getstructscm(CADR(x)), Getstructscm(CAR(CDDR(x))));
-	}
-	else if(arity == -1)
-	{
-		//functionn_t fp = f->function;
-		FUNCTION1* fp = builtin_function(fn);
-		return fp(Getstructscm(x));
-	}
-
-	return Getstructscm(cell_unspecified);
-}
-
 int open_boot(char *prefix, char const *boot, char const *location);
 void read_boot()  ///((internal))
 {
@@ -1976,7 +1850,7 @@ int main(int argc, char *argv[])
 	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
 
 	SCM a = mes_environment(argc, argv);
-	a = GetSCM(mes_builtins(a));
+	a = GetSCM2(mes_builtins(Getstructscm2(a, g_cells)), g_cells);
 	a = init_time(a);
 	m0 = GetSCM(make_initial_module(a));
 	g_macros = GetSCM(make_hash_table_(0));
