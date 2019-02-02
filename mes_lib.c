@@ -416,7 +416,7 @@ struct scm* fdisplay_(SCM x, int fd, int write_p)  ///((internal))
 	return display_helper(x, 0, "", fd, write_p);
 }
 
-void exit_(SCM x)  ///((name . "exit"))
+struct scm* exit_(SCM x)  ///((name . "exit"))
 {
 	assert(TYPE(x) == TNUMBER);
 	exit(VALUE(x));
