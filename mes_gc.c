@@ -164,7 +164,7 @@ void gc_loop(SCM scan)  ///((internal))
 	{
 		if(NTYPE(scan) == TBROKEN_HEART)
 		{
-			error(cell_symbol_system_error, GetSCM(cstring_to_symbol("gc")));
+			error(cell_symbol_system_error, GetSCM2(cstring_to_symbol("gc"), g_cells));
 		}
 
 		if(NTYPE(scan) == TMACRO
