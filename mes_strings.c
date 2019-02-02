@@ -203,7 +203,7 @@ struct scm* bytes_to_list(char const* s)
 struct scm* cstring_to_symbol(char const *s)
 {
 	SCM string = GetSCM2(bad2good(make_string(s, strlen (s)), g_cells), g_cells);
-	return string_to_symbol(string);
+	return bad2good(string_to_symbol(string), g_cells);
 }
 
 struct scm* string_to_list(SCM string)

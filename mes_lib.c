@@ -457,14 +457,14 @@ struct scm* make_frame(long index)
 	SCM values = cell_nil;
 	values = cons(procedure, values);
 	values = cons(cell_symbol_frame, values);
-	return make_struct(frame_type, values, GetSCM(cstring_to_symbol("frame-printer")));
+	return make_struct(frame_type, values, GetSCM2(cstring_to_symbol("frame-printer"), g_cells));
 }
 
 struct scm* make_stack_type()  ///((internal))
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
-	fields = cons(GetSCM(cstring_to_symbol("frames")), fields);
+	fields = cons(GetSCM2(cstring_to_symbol("frames"), g_cells), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_stack, fields);
 	return make_struct(record_type, fields, cell_unspecified);
