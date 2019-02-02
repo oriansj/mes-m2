@@ -96,7 +96,7 @@ struct scm* reader_read_identifier_or_number(int c)
 	{
 		return make_cell__ (TNUMBER, 0, number);
 	}
-	return cstring_to_symbol(g_buf);
+	return good2bad(cstring_to_symbol(g_buf), g_cells);
 }
 
 struct scm* reader_read_hash(int c, SCM a);

@@ -399,7 +399,7 @@ SCM append2(SCM x, SCM y)
 
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("append2"))));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM2(cstring_to_symbol("append2"), g_cells)));
 	}
 
 	SCM r = cell_nil;
@@ -422,7 +422,7 @@ SCM append_reverse(SCM x, SCM y)
 
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("append-reverse"))));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM2(cstring_to_symbol("append-reverse"), g_cells)));
 	}
 
 	while(x != cell_nil)
@@ -438,7 +438,7 @@ SCM reverse_x_(SCM x, SCM t)
 {
 	if(x != cell_nil && TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("core:reverse!"))));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM2(cstring_to_symbol("core:reverse!"), g_cells)));
 	}
 
 	SCM r = t;
@@ -533,7 +533,7 @@ SCM set_car_x(SCM x, SCM e)
 {
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("set-car!"))));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM2(cstring_to_symbol("set-car!"), g_cells)));
 	}
 
 	CAR(x) = e;
@@ -544,7 +544,7 @@ SCM set_cdr_x(SCM x, SCM e)
 {
 	if(TYPE(x) != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, GetSCM(cstring_to_symbol("set-cdr!"))));
+		error(cell_symbol_not_a_pair, cons(x, GetSCM2(cstring_to_symbol("set-cdr!"), g_cells)));
 	}
 
 	CDR(x) = e;
@@ -1752,7 +1752,7 @@ SCM mes_environment(int argc, char *argv[])
 
 SCM init_builtin(SCM builtin_type, char const* name, int arity, SCM(*function)(SCM), SCM a)
 {
-	SCM s = GetSCM(cstring_to_symbol(name));
+	SCM s = GetSCM2(cstring_to_symbol(name), g_cells);
 	return acons(s, make_builtin(builtin_type, GetSCM(symbol_to_string(s)), MAKE_NUMBER(arity), MAKE_NUMBER(function)), a);
 }
 
@@ -1760,9 +1760,9 @@ SCM make_builtin_type()  ///(internal))
 {
 	SCM record_type = cell_symbol_record_type;
 	SCM fields = cell_nil;
-	fields = cons(GetSCM(cstring_to_symbol("address")), fields);
-	fields = cons(GetSCM(cstring_to_symbol("arity")), fields);
-	fields = cons(GetSCM(cstring_to_symbol("name")), fields);
+	fields = cons(GetSCM2(cstring_to_symbol("address"), g_cells), fields);
+	fields = cons(GetSCM2(cstring_to_symbol("arity"), g_cells), fields);
+	fields = cons(GetSCM2(cstring_to_symbol("name"), g_cells), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_builtin, fields);
 	return GetSCM(make_struct(record_type, fields, cell_unspecified));
@@ -1775,7 +1775,7 @@ SCM make_builtin(SCM builtin_type, SCM name, SCM arity, SCM function)
 	values = cons(arity, values);
 	values = cons(name, values);
 	values = cons(cell_symbol_builtin, values);
-	return GetSCM(make_struct(builtin_type, values, GetSCM(cstring_to_symbol("builtin-printer"))));
+	return GetSCM(make_struct(builtin_type, values, GetSCM2(cstring_to_symbol("builtin-printer"), g_cells)));
 }
 
 SCM builtin_name(SCM builtin)
