@@ -82,7 +82,6 @@ struct scm* display_error_ (SCM x);
 struct scm* write_error_ (SCM x);
 SCM equal2_p (SCM a, SCM b);
 SCM reverse_x_ (SCM x, SCM t);
-SCM make_builtin (SCM builtin_type, SCM name, SCM arity, SCM function);
 SCM builtin_arity (SCM builtin);
 SCM builtin_p (SCM x);
 struct scm* module_printer (SCM module);
@@ -174,6 +173,17 @@ SCM cons(SCM x, SCM y)
 	return make_cell__(TPAIR, x, y);
 }
 
+struct scm* cons2(struct scm* x, struct scm* y)
+{
+	return Getstructscm2(make_cell__(TPAIR, GetSCM2(x, g_cells), GetSCM2(y, g_cells)), g_cells);
+}
+
+SCM cons3(struct scm* x, struct scm* y)
+{
+	return make_cell__(TPAIR, GetSCM2(x, g_cells), GetSCM2(y, g_cells));
+}
+
+
 SCM car(SCM x)
 {
 	return CAR(x);
@@ -217,6 +227,17 @@ SCM acons(SCM key, SCM value, SCM alist)
 {
 	return cons(cons(key, value), alist);
 }
+
+struct scm* acons2(struct scm* key, struct scm* value, struct scm* alist)
+{
+	return cons2(cons2(key, value), alist);
+}
+
+SCM acons3(struct scm* key, struct scm* value, struct scm* alist)
+{
+	return cons3(cons2(key, value), alist);
+}
+
 
 SCM length__(SCM x)  ///((internal))
 {
@@ -941,7 +962,7 @@ apply:
 	if(t == TSTRUCT && builtin_p(CAR(r1)) == cell_t)
 	{
 		check_formals(CAR(r1), builtin_arity(CAR(r1)), CDR(r1));
-		r1 = GetSCM(apply_builtin(CAR(r1), CDR(r1)));    /// FIXME: move into eval_apply
+		r1 = GetSCM2(apply_builtin(CAR(r1), CDR(r1)), g_cells);    /// FIXME: move into eval_apply
 		goto vm_return;
 	}
 	else if(t == TCLOSURE)
