@@ -78,7 +78,7 @@ int __stderr;
 SCM g_continuations;
 SCM g_symbols;
 SCM g_stack;
-SCM *g_stack_array;
+struct scm** g_stack_array;
 int MAX_STRING;
 char *g_buf;
 SCM g_free;

@@ -447,7 +447,7 @@ struct scm* make_frame(long index)
 {
 	SCM frame_type = GetSCM(make_frame_type());
 	long array_index = (STACK_SIZE - (index * FRAME_SIZE));
-	SCM procedure = g_stack_array[array_index + FRAME_PROCEDURE];
+	SCM procedure = (SCM) g_stack_array[array_index + FRAME_PROCEDURE];
 
 	if(!procedure)
 	{
