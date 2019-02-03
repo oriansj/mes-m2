@@ -387,21 +387,21 @@ SCM gc_push_frame()  ///((internal))
 		assert(!"STACK FULL");
 	}
 
-	g_stack_array[--g_stack] = cell_f;
-	g_stack_array[--g_stack] = r0;
-	g_stack_array[--g_stack] = r1;
-	g_stack_array[--g_stack] = r2;
-	g_stack_array[--g_stack] = r3;
+	g_stack_array[--g_stack] = (struct scm*) cell_f;
+	g_stack_array[--g_stack] = (struct scm*)r0;
+	g_stack_array[--g_stack] = (struct scm*)r1;
+	g_stack_array[--g_stack] = (struct scm*)r2;
+	g_stack_array[--g_stack] = (struct scm*)r3;
 	return g_stack;
 }
 
 SCM gc_peek_frame()  ///((internal))
 {
-	r3 = g_stack_array[g_stack];
-	r2 = g_stack_array[g_stack + 1];
-	r1 = g_stack_array[g_stack + 2];
-	r0 = g_stack_array[g_stack + 3];
-	return g_stack_array[g_stack + FRAME_PROCEDURE];
+	r3 = (SCM) g_stack_array[g_stack];
+	r2 = (SCM) g_stack_array[g_stack + 1];
+	r1 = (SCM) g_stack_array[g_stack + 2];
+	r0 = (SCM) g_stack_array[g_stack + 3];
+	return (SCM) g_stack_array[g_stack + FRAME_PROCEDURE];
 }
 
 SCM gc_pop_frame()  ///((internal))
@@ -956,7 +956,7 @@ evlis3:
 	r1 = cons(r2, r1);
 	goto vm_return;
 apply:
-	g_stack_array[g_stack + FRAME_PROCEDURE] = CAR(r1);
+	g_stack_array[g_stack + FRAME_PROCEDURE] = (struct scm*)CAR(r1);
 	t = TYPE(CAR(r1));
 
 	if(t == TSTRUCT && builtin_p(CAR(r1)) == cell_t)
@@ -986,7 +986,7 @@ apply:
 		{
 			for(t = 0; t < LENGTH(v); t++)
 			{
-				g_stack_array[STACK_SIZE - LENGTH(v) + t] = GetSCM(good2bad(vector_ref_(v, t), g_cells));
+				g_stack_array[STACK_SIZE - LENGTH(v) + t] = good2bad(vector_ref_(v, t), g_cells);
 			}
 
 			g_stack = STACK_SIZE - LENGTH(v);
@@ -1516,7 +1516,7 @@ call_with_current_continuation:
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{
-		vector_set_x_(v, t - g_stack, g_stack_array[t]);
+		vector_set_x_(v, t - g_stack, (SCM) g_stack_array[t]);
 	}
 
 	CONTINUATION(x) = v;
@@ -1528,7 +1528,7 @@ call_with_current_continuation2:
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{
-		vector_set_x_(v, t - g_stack, g_stack_array[t]);
+		vector_set_x_(v, t - g_stack, (SCM)g_stack_array[t]);
 	}
 
 	CONTINUATION(r2) = v;
