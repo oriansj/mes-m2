@@ -194,7 +194,7 @@ void gc_init_cells()  ///((internal))
 	SCM arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
 	void *p = malloc(arena_bytes + STACK_SIZE * sizeof(SCM));
 	g_cells = (struct scm *)p;
-	g_stack_array = (SCM*)((char*)p + arena_bytes);
+	g_stack_array = (struct scm**)((char*)p + arena_bytes);
 	g_cells[0].type = TVECTOR;
 	g_cells[0].length = 1000;
 	g_cells[0].vector = 0;
