@@ -11,5 +11,8 @@ echo '(display "hello\n")' | MES_BOOT=boot-01.scm out-glibc/mes
 # Basic test.  Once this works there are ~30 tests in mes/test/*.test
 MES_DEBUG=4 MES_PREFIX=mes MES=out-glibc/mes tests/base.test
 
+# GC test
+MES_DEBUG=3 MES_ARENA=10000 MES_MAX_ARENA=10000 MES_BOOT=gc-test.scm out-glibc/mes
+
 # If we ever need to get into hairy debugging, a scaffold with ~50
 # bootstrap tests is available in mes: scaffold/boot/*.scm
