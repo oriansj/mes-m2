@@ -1,0 +1,5 @@
+(gc)
+(define (loop n)
+  (if (> n 0) (loop (- n 1))))
+(loop 100000)
+(gc)
