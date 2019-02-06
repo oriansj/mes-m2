@@ -96,22 +96,27 @@ void gc_flip()  ///((internal))
 
 struct scm* gc_copy(SCM old)  ///((internal))
 {
-	if(TYPE(old) == TBROKEN_HEART)
+	struct scm* o = Getstructscm2(old, g_cells);
+	if(o->type == TBROKEN_HEART)
 	{
-		return Getstructscm(g_cells[old].rac);
+		return o->car;
 	}
 
 	SCM new = g_free++;
-	g_news[new] = g_cells[old];
+	struct scm* n = Getstructscm2(new, g_news);
+	*n = *o;
 
-	if(NTYPE(new) == TSTRUCT || NTYPE(new) == TVECTOR)
+	if(n->type == TSTRUCT || n->type == TVECTOR)
 	{
-		NVECTOR(new) = g_free;
+		n->vector = g_free;
+		long i;
 
-		for(long i = 0; i < LENGTH(old); i++)
+		for(i = 0; i < o->length; i++)
 		{
-			g_news[g_free++] = g_cells[VECTOR(old) + i];
+			g_news[g_free + i] = g_cells[VECTOR(old) + i];
 		}
+
+		g_free = g_free + i;;
 	}
 	else if(NTYPE(new) == TBYTES)
 	{
@@ -173,7 +178,7 @@ void gc_loop(SCM scan)  ///((internal))
 		        || scan == 1 // null
 		        || NTYPE(scan) == TVARIABLE)
 		{
-			car = GetSCM(gc_copy(g_news[scan].rac));
+			car = GetSCM2(bad2good(gc_copy(g_news[scan].rac), g_news), g_news);
 			gc_relocate_car(scan, car);
 		}
 
@@ -190,7 +195,7 @@ void gc_loop(SCM scan)  ///((internal))
 		        || NTYPE(scan) == TVALUES)
 		        && g_news[scan].cdr) // allow for 0 terminated list of symbols
 		{
-			cdr = GetSCM(gc_copy(g_news[scan].rdc));
+			cdr = GetSCM2(bad2good(gc_copy(g_news[scan].rdc), g_news), g_news);
 			gc_relocate_cdr(scan, cdr);
 		}
 
