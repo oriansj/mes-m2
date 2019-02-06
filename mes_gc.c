@@ -215,50 +215,60 @@ struct scm* gc_relocate_cdr(SCM new, SCM cdr)  ///((internal))
 
 void gc_loop()  ///((internal))
 {
-	SCM scan = 1;
 	SCM car;
 	SCM cdr;
 
-	while(scan < g_free)
+	SCM scan = 1;
+	struct scm* s = g_news + 1;
+	struct scm* g = Getstructscm2(g_free, g_news);
+
+        while(s < g)
 	{
-		if(NTYPE(scan) == TBROKEN_HEART)
+		if(s->type == TBROKEN_HEART)
 		{
 			error(cell_symbol_system_error, GetSCM2(cstring_to_symbol("gc"), g_cells));
 		}
 
-		if(NTYPE(scan) == TMACRO
-		        || NTYPE(scan) == TPAIR
-		        || NTYPE(scan) == TREF
+		if(s->type == TMACRO
+		        || s->type == TPAIR
+		        || s->type == TREF
 		        || scan == 1 // null
-		        || NTYPE(scan) == TVARIABLE)
+		        || s->type == TVARIABLE)
 		{
 			car = GetSCM2(bad2good(gc_copy(g_news[scan].rac), g_news), g_news);
 			gc_relocate_car(scan, car);
+			//g_news[scan].rac = GetSCM2(gc_copy_new (bad2good(g_news[scan].car, g_news)), g_news);
 		}
 
-		if((NTYPE(scan) == TCLOSURE
-		        || NTYPE(scan) == TCONTINUATION
-		        || NTYPE(scan) == TKEYWORD
-		        || NTYPE(scan) == TMACRO
-		        || NTYPE(scan) == TPAIR
-		        || NTYPE(scan) == TPORT
-		        || NTYPE(scan) == TSPECIAL
-		        || NTYPE(scan) == TSTRING
-		        || NTYPE(scan) == TSYMBOL
+		if((s->type == TCLOSURE
+		        || s->type == TCONTINUATION
+		        || s->type == TKEYWORD
+		        || s->type == TMACRO
+		        || s->type == TPAIR
+		        || s->type == TPORT
+		        || s->type == TSPECIAL
+		        || s->type == TSTRING
+		        || s->type == TSYMBOL
 		        || scan == 1 // null
-		        || NTYPE(scan) == TVALUES)
+		        || s->type == TVALUES)
 		        && g_news[scan].cdr) // allow for 0 terminated list of symbols
 		{
 			cdr = GetSCM2(bad2good(gc_copy(g_news[scan].rdc), g_news), g_news);
 			gc_relocate_cdr(scan, cdr);
+			// g_news[scan].rdc = GetSCM2(gc_copy(bad2good(g_news[scan].cdr, g_news)), g_news);
 		}
 
-		if(NTYPE(scan) == TBYTES)
+		if(s->type == TBYTES)
 		{
-			scan += bytes_cells(NLENGTH(scan)) - 1;
+			//scan += bytes_cells(s->length) - 1;
+			int b = bytes_cells(s->length) - 1;
+			scan += b;
+			s += b;
 		}
 
 		scan++;
+		s++;
+		g = Getstructscm2(g_free, g_news);
 	}
 
 	gc_flip();
