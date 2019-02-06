@@ -82,7 +82,7 @@ struct scm* display_error_ (SCM x);
 struct scm* write_error_ (SCM x);
 SCM equal2_p (SCM a, SCM b);
 SCM reverse_x_ (SCM x, SCM t);
-SCM builtin_arity (SCM builtin);
+struct scm* builtin_arity (SCM builtin);
 SCM builtin_p (SCM x);
 struct scm* module_printer (SCM module);
 struct scm* module_variable (SCM module, SCM name);
@@ -961,7 +961,7 @@ apply:
 
 	if(t == TSTRUCT && builtin_p(CAR(r1)) == cell_t)
 	{
-		check_formals(CAR(r1), builtin_arity(CAR(r1)), CDR(r1));
+		check_formals(CAR(r1), GetSCM(builtin_arity(CAR(r1))), CDR(r1));
 		r1 = GetSCM2(apply_builtin(CAR(r1), CDR(r1)), g_cells);    /// FIXME: move into eval_apply
 		goto vm_return;
 	}
