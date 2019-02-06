@@ -148,6 +148,59 @@ struct scm* gc_copy(SCM old)  ///((internal))
 	return Getstructscm(new);
 }
 
+struct scm* gc_copy_new(struct scm* old)  ///((internal))
+{
+	if(old->type == TBROKEN_HEART)
+	{
+		return bad2good(old->car, g_cells);
+	}
+
+	SCM new = g_free++;
+	struct scm* n = Getstructscm2(new, g_news);
+	*n = *old;
+
+	if(n->type == TSTRUCT || n->type == TVECTOR)
+	{
+		n->vector = g_free;
+		long i;
+
+		for(i = 0; i < old->length; i++)
+		{
+			g_news[g_free + i] = g_cells[old->vector + i];
+		}
+
+		g_free = g_free + i;;
+	}
+	else if(n->type == TBYTES)
+	{
+		char const *src = (char*) &old->cdr;
+		char *dest = (char*)&n->cdr;
+		size_t length = n->length;
+		memcpy(dest, src, length + 1);
+		g_free += bytes_cells(length) - 1;
+
+		if(g_debug > 4)
+		{
+			eputs("gc copy bytes: ");
+			eputs(src);
+			eputs("\n");
+			eputs("    length: ");
+			eputs(itoa(old->length));
+			eputs("\n");
+			eputs("    nlength: ");
+			eputs(itoa(n->length));
+			eputs("\n");
+			eputs("        ==> ");
+			eputs(dest);
+			eputs("\n");
+		}
+	}
+
+	old->type = TBROKEN_HEART;
+	old->car = good2bad(n, g_news);
+	return n;
+}
+
 struct scm* gc_relocate_car(SCM new, SCM car)  ///((internal))
 {
 	g_news[new].rac = car;
@@ -160,8 +213,9 @@ struct scm* gc_relocate_cdr(SCM new, SCM cdr)  ///((internal))
 	return Getstructscm(cell_unspecified);
 }
 
-void gc_loop(SCM scan)  ///((internal))
+void gc_loop()  ///((internal))
 {
+	SCM scan = 1;
 	SCM car;
 	SCM cdr;
 
@@ -277,20 +331,32 @@ void gc_()  ///((internal))
 
 	for(long i = g_free; i < g_symbol_max; i++)
 	{
-		gc_copy(i);
+		//gc_copy(i);
+		gc_copy_new(Getstructscm2(i, g_cells));
 	}
 
-	g_symbols = GetSCM(gc_copy(g_symbols));
-	g_macros = GetSCM(gc_copy(g_macros));
-	g_ports = GetSCM(gc_copy(g_ports));
-	m0 = GetSCM(gc_copy(m0));
+	// g_symbols = GetSCM(gc_copy(g_symbols));
+	// g_macros = GetSCM(gc_copy(g_macros));
+	// g_ports = GetSCM(gc_copy(g_ports));
+	// m0 = GetSCM(gc_copy(m0));
+
+	//g_symbols = GetSCM2(gc_copy_new(Getstructscm2(g_symbols, g_cells)), Getstructscm2(g_symbols, g_cells));
+	// g_macros = GetSCM2(gc_copy_new(Getstructscm2(g_macros, g_cells)), Getstructscm2(g_macros, g_cells));
+	// g_ports = GetSCM2(gc_copy_new(Getstructscm2(g_ports, g_cells)), Getstructscm2(g_ports, g_cells));
+	// m0 = GetSCM2(gc_copy_new(Getstructscm2(m0, g_cells)), g_cells);
+
+	g_symbols = good2bad (gc_copy_new(Getstructscm2(g_symbols, g_cells)), g_news);
+	g_macros = good2bad (gc_copy_new(Getstructscm2(g_macros, g_cells)), g_news);
+	g_ports = good2bad (gc_copy_new(Getstructscm2(g_ports, g_cells)), g_news);
+	m0 = good2bad (gc_copy_new(Getstructscm2(m0, g_cells)), g_news);
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{
 		g_stack_array[i] = GetSCM(gc_copy(g_stack_array[i]));
+		//g_stack_array[i] = good2bad(gc_copy_new(bad2good(g_stack_array[i], g_cells)), g_cells);
 	}
 
-	gc_loop(1);
+	gc_loop();
 }
 
 struct scm* gc()
