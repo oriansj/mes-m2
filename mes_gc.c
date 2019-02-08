@@ -201,23 +201,8 @@ struct scm* gc_copy_new(struct scm* old)  ///((internal))
 	return n;
 }
 
-struct scm* gc_relocate_car(SCM new, SCM car)  ///((internal))
-{
-	g_news[new].rac = car;
-	return Getstructscm(cell_unspecified);
-}
-
-struct scm* gc_relocate_cdr(SCM new, SCM cdr)  ///((internal))
-{
-	g_news[new].rdc = cdr;
-	return Getstructscm(cell_unspecified);
-}
-
 void gc_loop()  ///((internal))
 {
-	SCM car;
-	SCM cdr;
-
 	SCM scan = 1;
 	struct scm* s = g_news + 1;
 	struct scm* g = Getstructscm2(g_free, g_news);
@@ -235,8 +220,7 @@ void gc_loop()  ///((internal))
 		        || scan == 1 // null
 		        || s->type == TVARIABLE)
 		{
-			car = GetSCM2(bad2good(gc_copy(g_news[scan].rac), g_news), g_news);
-			gc_relocate_car(scan, car);
+			g_news[scan].rac = GetSCM2(bad2good(gc_copy(g_news[scan].rac), g_news), g_news);
 			//g_news[scan].rac = GetSCM2(gc_copy_new (bad2good(g_news[scan].car, g_news)), g_news);
 		}
 
@@ -253,9 +237,8 @@ void gc_loop()  ///((internal))
 		        || s->type == TVALUES)
 		        && g_news[scan].cdr) // allow for 0 terminated list of symbols
 		{
-			cdr = GetSCM2(bad2good(gc_copy(g_news[scan].rdc), g_news), g_news);
-			gc_relocate_cdr(scan, cdr);
-			// g_news[scan].rdc = GetSCM2(gc_copy(bad2good(g_news[scan].cdr, g_news)), g_news);
+			g_news[scan].rdc = GetSCM2(bad2good(gc_copy(g_news[scan].rdc), g_news), g_news);
+			//g_news[scan].rdc = GetSCM2(gc_copy_new(bad2good(g_news[scan].cdr, g_news)), g_news);
 		}
 
 		if(s->type == TBYTES)
