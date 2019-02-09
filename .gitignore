@@ -18,4 +18,5 @@
 /src/*.mes.symbols.h
 /src/*.mes.symbols.i
 out-glibc/*
+scratch/*
 scaffold/hello

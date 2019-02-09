@@ -145,7 +145,7 @@ struct scm* gc_copy(SCM old)  ///((internal))
 
 	TYPE(old) = TBROKEN_HEART;
 	CAR(old) = new;
-	return Getstructscm(new);
+	return good2bad(Getstructscm2(new, g_news), g_news);
 }
 
 struct scm* gc_copy_new(struct scm* old)  ///((internal))
@@ -265,7 +265,7 @@ struct scm* gc_check()
 		gc();
 	}
 
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* gc_init_news()  ///((internal))
@@ -328,25 +328,14 @@ void gc_()  ///((internal))
 		gc_copy_new(Getstructscm2(i, g_cells));
 	}
 
-	// g_symbols = GetSCM(gc_copy(g_symbols));
-	// g_macros = GetSCM(gc_copy(g_macros));
-	// g_ports = GetSCM(gc_copy(g_ports));
-	// m0 = GetSCM(gc_copy(m0));
-
-	//g_symbols = GetSCM2(gc_copy_new(Getstructscm2(g_symbols, g_cells)), Getstructscm2(g_symbols, g_cells));
-	// g_macros = GetSCM2(gc_copy_new(Getstructscm2(g_macros, g_cells)), Getstructscm2(g_macros, g_cells));
-	// g_ports = GetSCM2(gc_copy_new(Getstructscm2(g_ports, g_cells)), Getstructscm2(g_ports, g_cells));
-	// m0 = GetSCM2(gc_copy_new(Getstructscm2(m0, g_cells)), g_cells);
-
-	g_symbols = good2bad (gc_copy_new(Getstructscm2(g_symbols, g_cells)), g_news);
-	g_macros = good2bad (gc_copy_new(Getstructscm2(g_macros, g_cells)), g_news);
-	g_ports = good2bad (gc_copy_new(Getstructscm2(g_ports, g_cells)), g_news);
-	m0 = good2bad (gc_copy_new(Getstructscm2(m0, g_cells)), g_news);
+	g_symbols = GetSCM2(gc_copy_new(Getstructscm2(g_symbols, g_cells)), g_news);
+	g_macros = GetSCM2(gc_copy_new(Getstructscm2(g_macros, g_cells)), g_news);
+	g_ports = GetSCM2(gc_copy_new(Getstructscm2(g_ports, g_cells)), g_news);
+	m0 = GetSCM2(gc_copy_new(Getstructscm2(m0, g_cells)), g_news);
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{
-		g_stack_array[i] = GetSCM(gc_copy(g_stack_array[i]));
-		//g_stack_array[i] = good2bad(gc_copy_new(bad2good(g_stack_array[i], g_cells)), g_cells);
+		g_stack_array[i] = GetSCM2(bad2good(gc_copy(g_stack_array[i]), g_cells), g_cells);
 	}
 
 	gc_loop();
@@ -377,5 +366,5 @@ struct scm* gc()
 		write_error_(r0);
 		eputs("\n");
 	}
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }

@@ -51,12 +51,12 @@ struct scm* read_input_file_env_(SCM e, SCM a)
 		return good2bad(Getstructscm2(cell_nil, g_cells), g_cells);
 	}
 
-	return good2bad(Getstructscm2(cons(e, GetSCM(read_input_file_env_(GetSCM(read_env(a)), a))), g_cells), g_cells);
+	return good2bad(Getstructscm2(cons(e, GetSCM2(bad2good(read_input_file_env_(GetSCM2(bad2good(read_env(a), g_cells), g_cells), a), g_cells), g_cells)), g_cells), g_cells);
 }
 
 struct scm* read_input_file_env()
 {
-	return read_input_file_env_(GetSCM(read_env(cell_nil)), cell_nil);
+	return read_input_file_env_(GetSCM2(bad2good(read_env(cell_nil), g_cells), g_cells), cell_nil);
 }
 
 int reader_read_line_comment(int c)
