@@ -288,5 +288,5 @@ struct scm* string_ref(SCM str, SCM k)
 	}
 
 	char const *p = (char*) &bad2good(x->cdr,g_cells)->string;
-	return Getstructscm(make_cell__ (TCHAR, 0, p[i]));
+	return good2bad(Getstructscm2(make_cell__ (TCHAR, 0, p[i]), g_cells), g_cells);
 }

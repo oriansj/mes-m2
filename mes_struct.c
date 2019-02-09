@@ -53,7 +53,7 @@ struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 		g_cells[v + i] = *vector_entry(e);
 	}
 
-	return Getstructscm(make_cell__(TSTRUCT, size, v));
+	return good2bad(Getstructscm2(make_cell__(TSTRUCT, size, v), g_cells), g_cells);
 }
 
 struct scm* struct_length(struct scm* x)

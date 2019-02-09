@@ -107,7 +107,6 @@ SCM g_ports;
 
 
 /* Temp interface functions */
-struct scm* Getstructscm(SCM a);
 SCM GetSCM2(struct scm* a, struct scm* table);
 struct scm* Getstructscm2(SCM a, struct scm* table);
 struct scm* bad2good(struct scm* a, struct scm* table);

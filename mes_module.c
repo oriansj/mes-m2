@@ -96,7 +96,7 @@ struct scm* module_printer(SCM module)
 	fdputs("globals:\n  ", __stdout);
 	display_(table);
 	fdputc('>', __stdout);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* module_variable(SCM module, SCM name)
@@ -112,7 +112,7 @@ struct scm* module_variable(SCM module, SCM name)
 		x = GetSCM2(bad2good(hashq_get_handle(globals, name, cell_f), g_cells), g_cells);
 	}
 
-	return Getstructscm(x);
+	return good2bad(Getstructscm2(x, g_cells), g_cells);
 }
 
 struct scm* module_ref(SCM module, SCM name)
