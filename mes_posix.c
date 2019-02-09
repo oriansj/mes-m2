@@ -124,19 +124,6 @@ int fdgetc(int fd)
 	return i;
 }
 
-int fdputc(int c, int fd)
-{
-	write(fd, (char*)&c, 1);
-	return 0;
-}
-
-int fdputs(char const* s, int fd)
-{
-	int i = strlen(s);
-	write(fd, s, i);
-	return 0;
-}
-
 int fdungetc(int c, int fd)
 {
 	__ungetc_init();
