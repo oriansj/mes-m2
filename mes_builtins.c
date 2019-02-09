@@ -469,7 +469,7 @@ struct scm* builtin_printer(SCM builtin)
 	}
 
 	fdputc('>', __stdout);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))

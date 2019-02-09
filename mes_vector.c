@@ -51,7 +51,7 @@ struct scm* vector_length(struct scm* x)
 {
 	x = bad2good(x, g_cells);
 	assert(x->type == TVECTOR);
-	return Getstructscm(make_cell__ (TNUMBER, 0, x->length));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, x->length), g_cells), g_cells);
 }
 
 struct scm* vector_ref_(SCM table, long i)
@@ -106,7 +106,7 @@ void vector_set_x_(SCM x, long i, SCM e)
 struct scm* vector_set_x(SCM x, SCM i, SCM e)
 {
 	vector_set_x_(x, g_cells[i].rdc, e);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* list_to_vector(SCM x)

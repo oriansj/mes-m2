@@ -86,13 +86,13 @@ int hash_(SCM x, long size)
 struct scm* hashq(SCM x, SCM size)
 {
 	assert(0);
-	return Getstructscm(make_cell__ (TNUMBER, 0, hashq_(x, VALUE(size))));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, hashq_(x, VALUE(size))), g_cells), g_cells);
 }
 
 struct scm* hash(SCM x, SCM size)
 {
 	assert(0);
-	return Getstructscm(make_cell__ (TNUMBER, 0, hash_(x, VALUE(size))));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, hash_(x, VALUE(size))), g_cells), g_cells);
 }
 
 struct scm* hashq_get_handle(SCM table, SCM key, SCM dflt)
@@ -177,7 +177,7 @@ struct scm* hash_ref(SCM table, SCM key, SCM dflt)
 		}
 	}
 
-	return Getstructscm(cell_f);
+	return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* hashq_set_x(SCM table, SCM key, SCM value)
@@ -195,7 +195,7 @@ struct scm* hashq_set_x(SCM table, SCM key, SCM value)
 
 	bucket = acons(key, value, bucket);
 	vector_set_x_(buckets, hash, bucket);
-	return Getstructscm(value);
+	return good2bad(Getstructscm2(value, g_cells), g_cells);
 }
 
 struct scm* hash_set_x(SCM table, SCM key, SCM value)
@@ -213,7 +213,7 @@ struct scm* hash_set_x(SCM table, SCM key, SCM value)
 
 	bucket = acons(key, value, bucket);
 	vector_set_x_(buckets, hash, bucket);
-	return Getstructscm(value);
+	return good2bad(Getstructscm2(value, g_cells), g_cells);
 }
 
 struct scm* hash_table_printer(struct scm* table)
@@ -252,7 +252,7 @@ struct scm* hash_table_printer(struct scm* table)
 	}
 
 	fdputc('>', __stdout);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* make_hashq_type()  ///((internal))
