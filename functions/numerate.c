@@ -25,6 +25,14 @@
 #define FALSE 0
 int in_set(int c, char* s);
 
+int char2hex(int c)
+{
+	if (c >= '0' && c <= '9') return (c - 48);
+	else if (c >= 'a' && c <= 'f') return (c - 87);
+	else if (c >= 'A' && c <= 'F') return (c - 55);
+	else return -1;
+}
+
 int index_number(char* s, char c)
 {
 	int i = 0;

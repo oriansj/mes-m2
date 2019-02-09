@@ -64,6 +64,7 @@ struct scm* eq_p (SCM x, SCM y);
 /* Imported Functions */
 void raw_print(char* s, int fd);
 void fd_print(char* s, int f);
+char* char_lookup(int c, int type);
 
 struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 {
@@ -86,55 +87,8 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 		}
 		else
 		{
-			fdputs("#", fd);
-			long v = y->rdc;
-			// long v = y->value;
-
-			if(v == '\0')
-			{
-				fdputs("\\nul", fd);
-			}
-			else if(v == '\a')
-			{
-				fdputs("\\alarm", fd);
-			}
-			else if(v == '\b')
-			{
-				fdputs("\\backspace", fd);
-			}
-			else if(v == '\t')
-			{
-				fdputs("\\tab", fd);
-			}
-			else if(v == '\n')
-			{
-				fdputs("\\newline", fd);
-			}
-			else if(v == '\v')
-			{
-				fdputs("\\vtab", fd);
-			}
-			else if(v == '\f')
-			{
-				fdputs("\\page", fd);
-			}
-			else if(v == '\r')
-			{
-				fdputs("\\return", fd);
-			}
-			else if(v == ' ')
-			{
-				fdputs("\\space", fd);
-			}
-			else
-			{
-				if(v >= 32 && v <= 127)
-				{
-					fdputc('\\', fd);
-				}
-
-				fdputc(y->value, fd);
-			}
+			fdputc('#', fd);
+			fd_print(char_lookup(y->value, TRUE), fd);
 		}
 	}
 	else if(t == TCLOSURE)
@@ -215,34 +169,33 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	else if(t == TPORT)
 	{
 		fdputs("#<port ", fd);
-		fdputs(itoa(PORT(x)), fd);
+		fdputs(itoa(y->rac), fd);
 		fdputs(" ", fd);
-		x = STRING(x);
-		char *s = (char*)&g_cells[STRING (x)].rdc;
+		char *s = (char*)bad2good(bad2good(y->cdr, g_cells)->cdr, g_cells)->rdc;
 		raw_print(s, fd);
 		fdputs("\">", fd);
 	}
 	else if(t == TKEYWORD)
 	{
 		fdputs("#:", fd);
-		char *s = (char*)&g_cells[STRING (x)].rdc;
+		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
 		raw_print(s, fd);
 	}
 	else if(t == TSTRING)
 	{
 		if(write_p) fdputc('"', fd);
-		char *s = (char*)&g_cells[STRING (x)].rdc;
+		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
 		fd_print(s, fd);
 		if(write_p) fdputc('"', fd);
 	}
 	else if(t == TSPECIAL)
 	{
-		char *s = (char*)&g_cells[STRING (x)].rdc;
+		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
 		raw_print(s, fd);
 	}
 	else if(t == TSYMBOL)
 	{
-		char *s = (char*)&g_cells[STRING (x)].rdc;
+		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
 		raw_print(s, fd);
 	}
 	else if(t == TREF)
