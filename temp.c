@@ -1,10 +1,5 @@
 #include "mes.h"
 
-struct scm* Getstructscm(SCM a)
-{
-	return (struct scm*) a;
-}
-
 SCM GetSCM2(struct scm* a, struct scm* table)
 {
 	return (a - table);

@@ -300,7 +300,7 @@ struct scm* getenv_(SCM s)  ///((name . "getenv"))
 {
 	struct scm* x = Getstructscm2(s, g_cells);
 	char *p = getenv((char*)&g_cells[x->rdc].rdc);
-	return p ? good2bad(make_string_(p), g_cells) : Getstructscm(cell_f);
+	return p ? good2bad(make_string_(p), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* setenv_(SCM s, SCM v)  ///((name . "setenv"))
@@ -308,21 +308,21 @@ struct scm* setenv_(SCM s, SCM v)  ///((name . "setenv"))
 	struct scm* a = Getstructscm2(s, g_cells);
 	struct scm* b = Getstructscm2(v, g_cells);
 	setenv((char*)&g_cells[a->rdc].rdc, (char*)&g_cells[b->rdc].rdc, 1);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* access_p(SCM file_name, SCM mode)
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
 	struct scm* m = Getstructscm2(mode, g_cells);
-	return access((char*)&g_cells[f->rdc].rdc, m->value) == 0 ? Getstructscm(cell_t) : Getstructscm(cell_f);
+	return access((char*)&g_cells[f->rdc].rdc, m->value) == 0 ? good2bad(Getstructscm2(cell_t, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* current_input_port()
 {
 	if(__stdin >= 0)
 	{
-		return Getstructscm(make_cell__ (TNUMBER, 0, __stdin));
+		return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, __stdin), g_cells), g_cells);
 	}
 
 	struct scm* x = Getstructscm2(g_ports, g_cells);
@@ -352,7 +352,7 @@ int mes_open(char const *file_name, int flags, int mode)
 struct scm* open_input_file(SCM file_name)
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
-	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_RDONLY, 0)));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_RDONLY, 0)), g_cells), g_cells);
 }
 
 struct scm* open_input_string(SCM string)
@@ -381,12 +381,12 @@ struct scm* set_current_input_port(SCM port)
 
 struct scm* current_output_port()
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0, __stdout));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, __stdout), g_cells), g_cells);
 }
 
 struct scm* current_error_port()
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0, __stderr));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, __stderr), g_cells), g_cells);
 }
 
 struct scm* open_output_file(SCM x)  ///((arity . n))
@@ -401,7 +401,7 @@ struct scm* open_output_file(SCM x)  ///((arity . n))
 		mode = f->value;
 	}
 
-	return Getstructscm(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_WRONLY | O_CREAT | O_TRUNC, mode)));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_WRONLY | O_CREAT | O_TRUNC, mode)), g_cells), g_cells);
 }
 
 struct scm* set_current_output_port(SCM port)
@@ -423,18 +423,18 @@ struct scm* chmod_(SCM file_name, SCM mode)  ///((name . "chmod"))
 	struct scm* f = Getstructscm2(file_name, g_cells);
 	struct scm* m = Getstructscm2(mode, g_cells);
 	chmod((char*)&g_cells[f->rdc].rdc, m->value);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm*  isatty_p(SCM port)
 {
 	struct scm* p = Getstructscm2(port, g_cells);
-	return isatty(p->value) ? Getstructscm(cell_t) : Getstructscm(cell_f);
+	return isatty(p->value) ? good2bad(Getstructscm2(cell_t, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* primitive_fork()
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0, fork()));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, fork()), g_cells), g_cells);
 }
 
 struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
@@ -467,7 +467,7 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 	}
 
 	c_argv[i] = 0;
-	return Getstructscm(make_cell__ (TNUMBER, 0, execv(c_argv[0], c_argv)));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, execv(c_argv[0], c_argv)), g_cells), g_cells);
 }
 
 struct scm* waitpid_(SCM pid, SCM options)
@@ -476,7 +476,7 @@ struct scm* waitpid_(SCM pid, SCM options)
 	struct scm* o = Getstructscm2(options, g_cells);
 	int status;
 	int child = waitpid(p->value, &status, o->value);
-	return Getstructscm(cons(make_cell__ (TNUMBER, 0, child), make_cell__ (TNUMBER, 0, status)));
+	return good2bad(Getstructscm2(cons(make_cell__ (TNUMBER, 0, child), make_cell__ (TNUMBER, 0, status)), g_cells), g_cells);
 }
 
 #if __x86_64__
@@ -491,19 +491,19 @@ struct timespec g_start_time;
 struct scm* init_time(SCM a)  ///((internal))
 {
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &g_start_time);
-	return Getstructscm(acons(cell_symbol_internal_time_units_per_second, make_cell__ (TNUMBER, 0, TIME_UNITS_PER_SECOND), a));
+	return good2bad(Getstructscm2(acons(cell_symbol_internal_time_units_per_second, make_cell__ (TNUMBER, 0, TIME_UNITS_PER_SECOND), a), g_cells), g_cells);
 }
 
 struct scm* current_time()
 {
-	return Getstructscm(make_cell__ (TNUMBER, 0, time(0)));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, time(0)), g_cells), g_cells);
 }
 
 struct scm* gettimeofday_()  ///((name . "gettimeofday"))
 {
 	struct timeval time;
 	gettimeofday(&time, 0);
-	return Getstructscm(cons(make_cell__ (TNUMBER, 0, time.tv_sec), make_cell__ (TNUMBER, 0, time.tv_usec)));
+	return good2bad(Getstructscm2(cons(make_cell__ (TNUMBER, 0, time.tv_sec), make_cell__ (TNUMBER, 0, time.tv_usec)), g_cells), g_cells);
 }
 
 long seconds_and_nanoseconds_to_long(long s, long ns)
@@ -516,7 +516,7 @@ struct scm* get_internal_run_time()
 	struct timespec ts;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
 	long time = seconds_and_nanoseconds_to_long(ts.tv_sec - g_start_time.tv_sec, ts.tv_nsec - g_start_time.tv_nsec);
-	return Getstructscm(make_cell__ (TNUMBER, 0, time));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, time), g_cells), g_cells);
 }
 
 struct scm* getcwd_()  ///((name . "getcwd"))
@@ -528,7 +528,7 @@ struct scm* getcwd_()  ///((name . "getcwd"))
 struct scm* dup_(SCM port)  ///((name . "dup"))
 {
 	struct scm* p = Getstructscm2(port, g_cells);
-	return Getstructscm(make_cell__ (TNUMBER, 0, dup(p->value)));
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, dup(p->value)), g_cells), g_cells);
 }
 
 struct scm* dup2_(SCM old, SCM new)  ///((name . "dup2"))
@@ -536,14 +536,14 @@ struct scm* dup2_(SCM old, SCM new)  ///((name . "dup2"))
 	struct scm* o = Getstructscm2(old, g_cells);
 	struct scm* n = Getstructscm2(new, g_cells);
 	dup2(o->value, n->value);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* delete_file(SCM file_name)
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
 	unlink((char*)&g_cells[f->rdc].rdc);
-	return Getstructscm(cell_unspecified);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 int open_boot(char *prefix, char const *boot, char const *location)
