@@ -61,8 +61,13 @@ struct scm* vector_ref (SCM x, SCM i);
 struct scm* string_equal_p (SCM a, SCM b);
 struct scm* eq_p (SCM x, SCM y);
 
+/* Imported Functions */
+void raw_print(char* s, int fd);
+void fd_print(char* s, int f);
+
 struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 {
+	struct scm* y = Getstructscm2(x, g_cells);
 	fdputs(sep, fd);
 
 	if(g_depth == 0)
@@ -71,18 +76,19 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	}
 
 	g_depth = g_depth - 1;
-	int t = TYPE(x);
+	int t = y->type;
 
 	if(t == TCHAR)
 	{
 		if(!write_p)
 		{
-			fdputc(VALUE(x), fd);
+			fdputc(y->value, fd);
 		}
 		else
 		{
 			fdputs("#", fd);
-			long v = VALUE(x);
+			long v = y->rdc;
+			// long v = y->value;
 
 			if(v == '\0')
 			{
@@ -112,9 +118,7 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 			{
 				fdputs("\\page", fd);
 			}
-			//Nyacc bug
-			// else if (v == '\r') fdputs ("return", fd);
-			else if(v == 13)
+			else if(v == '\r')
 			{
 				fdputs("\\return", fd);
 			}
@@ -129,17 +133,16 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 					fdputc('\\', fd);
 				}
 
-				fdputc(VALUE(x), fd);
+				fdputc(y->value, fd);
 			}
 		}
 	}
 	else if(t == TCLOSURE)
 	{
 		fdputs("#<closure ", fd);
-		SCM circ = CAR (CDR (x));
-		SCM name = CAR (CDR (circ));
-		SCM args = CAR(CDR (CDR (x)));
-		display_helper(CAR(name), 0, "", fd, 0);
+		struct scm* name = bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells);
+		SCM args = bad2good(bad2good(bad2good(y->cdr, g_cells)->cdr, g_cells)->car, g_cells)->rac;
+		display_helper(name->rac, 0, "", fd, 0);
 		fdputc(' ', fd);
 		display_helper(args, 0, "", fd, 0);
 		fdputs(">", fd);
@@ -147,18 +150,18 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	else if(t == TMACRO)
 	{
 		fdputs("#<macro ", fd);
-		display_helper(CDR(x), cont, "", fd, 0);
+		display_helper(y->rdc, cont, "", fd, 0);
 		fdputs(">", fd);
 	}
 	else if(t == TVARIABLE)
 	{
 		fdputs("#<variable ", fd);
-		display_helper(CAR(VARIABLE(x)), cont, "", fd, 0);
+		display_helper(bad2good(y->car, g_cells)->rac, cont, "", fd, 0);
 		fdputs(">", fd);
 	}
 	else if(t == TNUMBER)
 	{
-		fdputs(itoa(VALUE(x)), fd);
+		fdputs(itoa(y->value), fd);
 	}
 	else if(t == TPAIR)
 	{
@@ -167,41 +170,40 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 			fdputs("(", fd);
 		}
 
-		if(CAR(x) == cell_circular
-		        && CAR (CDR (x)) != cell_closure)
+		if(y->rac == cell_circular && bad2good(y->cdr, g_cells)->rac != cell_closure)
 		{
 			fdputs("(*circ* . ", fd);
 			int i = 0;
-			x = CDR(x);
+			y = bad2good(y->cdr, g_cells);
 
-			while(x != cell_nil && i++ < 10)
+			while(GetSCM2(y, g_cells) != cell_nil && i++ < 10)
 			{
-				fdisplay_(CAR (CAR (x)), fd, write_p);
+				fdisplay_(bad2good(y->car, g_cells)->rac, fd, write_p);
 				fdputs(" ", fd);
-				x = CDR(x);
+				y = bad2good(y->cdr, g_cells);
 			}
 
 			fdputs(" ...)", fd);
 		}
 		else
 		{
-			if(x && x != cell_nil)
+			if(GetSCM2(y, g_cells) != cell_nil)
 			{
-				fdisplay_(CAR(x), fd, write_p);
+				fdisplay_(y->rac, fd, write_p);
 			}
 
-			if(CDR(x) && TYPE(CDR(x)) == TPAIR)
+			if(bad2good(y->cdr, g_cells)->type == TPAIR)
 			{
-				display_helper(CDR(x), 1, " ", fd, write_p);
+				display_helper(y->rdc, 1, " ", fd, write_p);
 			}
-			else if(CDR(x) && CDR(x) != cell_nil)
+			else if(y->rdc != cell_nil)
 			{
-				if(TYPE(CDR(x)) != TPAIR)
+				if(bad2good(y->cdr, g_cells)->type != TPAIR)
 				{
 					fdputs(" . ", fd);
 				}
 
-				fdisplay_(CDR(x), fd, write_p);
+				fdisplay_(y->rdc, fd, write_p);
 			}
 		}
 
@@ -210,107 +212,38 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 			fdputs(")", fd);
 		}
 	}
-	else if(t == TKEYWORD
-	        || t == TPORT
-	        || t == TSPECIAL
-	        || t == TSTRING
-	        || t == TSYMBOL)
+	else if(t == TPORT)
 	{
-		if(t == TPORT)
-		{
-			fdputs("#<port ", fd);
-			fdputs(itoa(PORT(x)), fd);
-			fdputs(" ", fd);
-			x = STRING(x);
-		}
-
-		if(t == TKEYWORD)
-		{
-			fdputs("#:", fd);
-		}
-
-		if((write_p && t == TSTRING) || t == TPORT)
-		{
-			fdputc('"', fd);
-		}
-
-		char const *s = (char*)&g_cells[STRING (x)].rdc;
-#if 0
-		s += START(x);
-		size_t length = LEN(x);
-#else
-		size_t length = LENGTH(x);
-#endif
-
-		for(size_t i = 0; i < length; i++)
-		{
-			long v = write_p ? s[i] : -1;
-
-			if(v == '\0')
-			{
-				fdputs("\\0", fd);
-			}
-			else if(v == '\a')
-			{
-				fdputs("\\a", fd);
-			}
-			else if(v == '\b')
-			{
-				fdputs("\\b", fd);
-			}
-			else if(v == '\t')
-			{
-				fdputs("\\t", fd);
-			}
-			else if(v == '\v')
-			{
-				fdputs("\\v", fd);
-			}
-			else if(v == '\n')
-			{
-				fdputs("\\n", fd);
-			}
-			else if(v == '\f')
-			{
-				fdputs("\\f", fd);
-			}
-
-#if 1 //__MESC__
-			//Nyacc bug
-			else if(v == 13)
-			{
-				fdputs("\\r", fd);
-			}
-			else if(v == 27)
-			{
-				fdputs("\\e", fd);
-			}
-
-#else
-			//else if (v == '\r') fdputs ("\\r", fd);
-			//Nyacc crash
-			//else if (v == '\e') fdputs ("\\e", fd);
-#endif
-			else if(v == '\\')
-			{
-				fdputs("\\\\", fd);
-			}
-			else if(v == '"') fdputs("\\\"", fd);
-			else
-			{
-				fdputc(s[i], fd);
-			}
-		}
-
-		if((write_p && t == TSTRING) || t == TPORT)
-		{
-			fdputc('"', fd);
-		}
-
-		if(t == TPORT)
-		{
-			fdputs(">", fd);
-		}
+		fdputs("#<port ", fd);
+		fdputs(itoa(PORT(x)), fd);
+		fdputs(" ", fd);
+		x = STRING(x);
+		char *s = (char*)&g_cells[STRING (x)].rdc;
+		raw_print(s, fd);
+		fdputs("\">", fd);
+	}
+	else if(t == TKEYWORD)
+	{
+		fdputs("#:", fd);
+		char *s = (char*)&g_cells[STRING (x)].rdc;
+		raw_print(s, fd);
+	}
+	else if(t == TSTRING)
+	{
+		if(write_p) fdputc('"', fd);
+		char *s = (char*)&g_cells[STRING (x)].rdc;
+		fd_print(s, fd);
+		if(write_p) fdputc('"', fd);
+	}
+	else if(t == TSPECIAL)
+	{
+		char *s = (char*)&g_cells[STRING (x)].rdc;
+		raw_print(s, fd);
+	}
+	else if(t == TSYMBOL)
+	{
+		char *s = (char*)&g_cells[STRING (x)].rdc;
+		raw_print(s, fd);
 	}
 	else if(t == TREF)
 	{
