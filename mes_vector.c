@@ -25,8 +25,6 @@
 SCM alloc(SCM n);
 SCM make_cell__(SCM type, SCM car, SCM cdr);
 SCM length__(SCM x);
-SCM car (SCM x);
-SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 struct scm* vector_entry(SCM x);
 
@@ -114,12 +112,13 @@ struct scm* vector_set_x(SCM x, SCM i, SCM e)
 struct scm* list_to_vector(SCM x)
 {
 	struct scm* v = make_vector__(length__(x));
+	struct scm* y = Getstructscm2(x, g_cells);
 	SCM p = v->rdc;
 
-	while(x != cell_nil)
+	while(GetSCM2(y, g_cells) != cell_nil)
 	{
-		g_cells[p++] = *vector_entry(car(x));
-		x = cdr(x);
+		g_cells[p++] = *vector_entry(y->rac);
+		y = bad2good(y->cdr, g_cells);
 	}
 
 	return good2bad(v, g_cells);

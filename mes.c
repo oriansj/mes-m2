@@ -133,7 +133,7 @@ SCM make_cell_(SCM type, SCM car, SCM cdr)
 
 SCM assoc_string(SCM x, SCM a)  ///((internal))
 {
-	while(a != cell_nil && (TYPE(CAAR(a)) != TSTRING || GetSCM(string_equal_p(x, CAAR(a))) == cell_f))
+	while(a != cell_nil && (TYPE(CAAR(a)) != TSTRING || GetSCM2(bad2good(string_equal_p(x, CAAR(a)), g_cells), g_cells) == cell_f))
 	{
 		a = CDR(a);
 	}
@@ -208,7 +208,7 @@ SCM eq_p(SCM x, SCM y)
 {
 	return (x == y
 	        || ((TYPE(x) == TKEYWORD && TYPE(y) == TKEYWORD
-	             && GetSCM(string_equal_p(x, y)) == cell_t))
+	             && GetSCM2(bad2good(string_equal_p(x, y), g_cells), g_cells) == cell_t))
 	        || (TYPE(x) == TCHAR && TYPE(y) == TCHAR
 	            && VALUE(x) == VALUE(y))
 	        || (TYPE(x) == TNUMBER && TYPE(y) == TNUMBER
@@ -267,7 +267,7 @@ SCM apply(SCM, SCM);
 
 SCM error(SCM key, SCM x)
 {
-	SCM throw= GetSCM(module_ref(r0, cell_symbol_throw));
+	SCM throw= GetSCM2(bad2good(module_ref(r0, cell_symbol_throw), g_cells), g_cells);
 
 	if(throw != cell_undefined)
 	{
@@ -309,7 +309,7 @@ SCM check_formals(SCM f, SCM formals, SCM args)  ///((internal))
 		eputs(itoa(alen));
 		eputs("\n");
 		write_error_(f);
-		SCM e = GetSCM(MAKE_STRING0(s));
+		SCM e = GetSCM2(bad2good(MAKE_STRING0(s), g_cells), g_cells);
 		return error(cell_symbol_wrong_number_of_args, cons(e, f));
 	}
 
@@ -373,7 +373,7 @@ SCM check_apply(SCM f, SCM e)  ///((internal))
 		eputs("[");
 		write_error_(e);
 		eputs("]\n");
-		SCM e = GetSCM(MAKE_STRING0(s));
+		SCM e = GetSCM2(bad2good(MAKE_STRING0(s), g_cells), g_cells);
 		return error(cell_symbol_wrong_type_arg, cons(e, f));
 	}
 
@@ -518,7 +518,7 @@ assq(SCM x, SCM a)
 	}
 	else if(t == TKEYWORD)
 	{
-		while(a != cell_nil && GetSCM(string_equal_p(x, CAAR(a))) == cell_f)
+		while(a != cell_nil && GetSCM2(bad2good(string_equal_p(x, CAAR(a)), g_cells), g_cells) == cell_f)
 		{
 			a = CDR(a);
 		}
@@ -582,7 +582,7 @@ SCM set_env_x(SCM x, SCM e, SCM a)
 	}
 	else
 	{
-		p = assert_defined(x, GetSCM(module_variable(a, x)));
+		p = assert_defined(x, GetSCM2(bad2good(module_variable(a, x), g_cells), g_cells));
 	}
 
 	if(TYPE(p) != TPAIR)
@@ -615,7 +615,7 @@ SCM macro_get_handle(SCM name)
 {
 	if(TYPE(name) == TSYMBOL)
 	{
-		return GetSCM(hashq_get_handle(g_macros, name, cell_nil));
+		return GetSCM2(bad2good(hashq_get_handle(g_macros, name, cell_nil), g_cells), g_cells);
 	}
 
 	return cell_f;
@@ -635,7 +635,7 @@ SCM get_macro(SCM name)  ///((internal))
 
 SCM macro_set_x(SCM name, SCM value)  ///((internal))
 {
-	return GetSCM(hashq_set_x(g_macros, name, value));
+	return GetSCM2(bad2good(hashq_set_x(g_macros, name, value), g_cells), g_cells);
 }
 
 SCM push_cc(SCM p1, SCM p2, SCM a, SCM c)  ///((internal))
@@ -745,7 +745,7 @@ SCM expand_variable_(SCM x, SCM formals, int top_p)  ///((internal))
 			        && CAR(x) != cell_symbol_primitive_load
 			        && !formal_p(CAR(x), formals))
 			{
-				SCM v = GetSCM(module_variable(r0, CAR(x)));
+				SCM v = GetSCM2(bad2good(module_variable(r0, CAR(x)), g_cells), g_cells);
 
 				if(v != cell_f)
 				{
@@ -932,7 +932,7 @@ eval_apply:
 	}
 	else
 	{
-		error(cell_symbol_system_error, GetSCM(MAKE_STRING0("eval/apply unknown continuation")));
+		error(cell_symbol_system_error, GetSCM2(bad2good(MAKE_STRING0("eval/apply unknown continuation"), g_cells), g_cells));
 	}
 
 evlis:
@@ -961,7 +961,7 @@ apply:
 
 	if(t == TSTRUCT && builtin_p(CAR(r1)) == cell_t)
 	{
-		check_formals(CAR(r1), GetSCM(builtin_arity(CAR(r1))), CDR(r1));
+		check_formals(CAR(r1), GetSCM2(bad2good(builtin_arity(CAR(r1)), g_cells), g_cells), CDR(r1));
 		r1 = GetSCM2(apply_builtin(CAR(r1), CDR(r1)), g_cells);    /// FIXME: move into eval_apply
 		goto vm_return;
 	}
@@ -1161,7 +1161,7 @@ eval_macro_expand_expand:
 					}
 					else
 					{
-						entry = GetSCM(module_variable(r0, name));
+						entry = GetSCM2(bad2good(module_variable(r0, name), g_cells), g_cells);
 
 						if(entry == cell_f)
 						{
@@ -1209,7 +1209,7 @@ eval_define:
 				}
 				else if(global_p)
 				{
-					entry = GetSCM(module_variable(r0, name));
+					entry = GetSCM2(bad2good(module_variable(r0, name), g_cells), g_cells);
 					set_cdr_x(entry, r1);
 				}
 				else
@@ -1218,7 +1218,7 @@ eval_define:
 					aa = cons(entry, cell_nil);
 					set_cdr_x(aa, cdr(r0));
 					set_cdr_x(r0, aa);
-					cl = GetSCM(module_variable(r0, cell_closure));
+					cl = GetSCM2(bad2good(module_variable(r0, cell_closure), g_cells), g_cells);
 					set_cdr_x(cl, aa);
 				}
 
@@ -1255,7 +1255,7 @@ eval2:
 			goto vm_return;
 		}
 
-		r1 = assert_defined(r1, GetSCM(module_ref(r0, r1)));
+		r1 = assert_defined(r1, GetSCM2(bad2good(module_ref(r0, r1), g_cells), g_cells));
 		goto vm_return;
 	}
 	else if(t == TVARIABLE)
@@ -1331,13 +1331,13 @@ macro_expand_set_x:
 	if(TYPE(r1) == TPAIR && TYPE(CAR(r1)) == TSYMBOL)
 	{
 		macro = macro_get_handle(cell_symbol_portable_macro_expand);
-		expanders = GetSCM(module_ref(r0, cell_symbol_sc_expander_alist));
+		expanders = GetSCM2(bad2good(module_ref(r0, cell_symbol_sc_expander_alist), g_cells), g_cells);
 		if((CAR(r1) != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
 		{
 			macro = assq(CAR(r1), expanders);
 			if(macro != cell_f)
 			{
-				sc_expand = GetSCM(module_ref(r0, cell_symbol_macro_expand));
+				sc_expand = GetSCM2(bad2good(module_ref(r0, cell_symbol_macro_expand), g_cells), g_cells);
 				r2 = r1;
 
 				if(sc_expand != cell_undefined && sc_expand != cell_f)
@@ -1512,7 +1512,7 @@ if_expr:
 call_with_current_continuation:
 	gc_push_frame();
 	x = MAKE_CONTINUATION(g_continuations++);
-	v = GetSCM(good2bad(make_vector__(STACK_SIZE - g_stack), g_cells));
+	v = GetSCM2(make_vector__(STACK_SIZE - g_stack), g_cells);
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{
@@ -1524,7 +1524,7 @@ call_with_current_continuation:
 	push_cc(cons(CAR(r1), cons(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
-	v = GetSCM(good2bad(make_vector__(STACK_SIZE - g_stack), g_cells));
+	v = GetSCM2(make_vector__(STACK_SIZE - g_stack), g_cells);
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{
@@ -1665,8 +1665,8 @@ int main(int argc, char *argv[])
 	SCM a = mes_environment(argc, argv);
 	a = GetSCM2(mes_builtins(Getstructscm2(a, g_cells)), g_cells);
 	a = init_time(a);
-	m0 = GetSCM(make_initial_module(a));
-	g_macros = GetSCM(make_hash_table_(0));
+	m0 = GetSCM2(bad2good(make_initial_module(a), g_cells), g_cells);
+	g_macros = GetSCM2(bad2good(make_hash_table_(0), g_cells), g_cells);
 
 	if(g_debug > 4)
 	{
