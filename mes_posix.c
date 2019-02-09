@@ -201,7 +201,7 @@ int readchar()
 	char const *p = (char*)&g_cells[string->rdc].rdc;
 	int c = p[0];
 	p = p + 1;
-	port->rdc = GetSCM(make_string(p, length - 1));
+	port->rdc = GetSCM2(bad2good(make_string(p, length - 1), g_cells), g_cells);
 	return c;
 }
 

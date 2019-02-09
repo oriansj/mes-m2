@@ -1,10 +1,5 @@
 #include "mes.h"
 
-SCM GetSCM(struct scm* a)
-{
-	return (SCM) a;
-}
-
 struct scm* Getstructscm(SCM a)
 {
 	return (struct scm*) a;
@@ -27,5 +22,5 @@ struct scm* good2bad(struct scm* a, struct scm* table)
 
 struct scm* bad2good(struct scm* a, struct scm* table)
 {
-	return (GetSCM(a) + table);
+	return ((SCM)a + table);
 }

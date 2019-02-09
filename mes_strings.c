@@ -26,8 +26,6 @@ struct scm* make_symbol (SCM string);
 int eputs(char const* s);
 char *itoa (int number);
 SCM error(SCM key, SCM x);
-SCM car (SCM x);
-SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 SCM alloc(long n);
 SCM make_cell__(long type, SCM car, SCM cdr);
@@ -99,7 +97,7 @@ struct scm* make_string_(char const* s) // internal only
 	assert_max_string(strlen(s) , "make_string_", (char*)s);
 
 	SCM x = make_cell__(TSTRING, strlen(s), 0);
-	SCM v = GetSCM(make_bytes(s, strlen(s)));
+	SCM v = GetSCM2(bad2good(make_bytes(s, strlen(s)), g_cells), g_cells);
 	g_cells[x].rdc = v;
 	return Getstructscm2(x, g_cells);
 }
@@ -108,7 +106,7 @@ struct scm* make_string(char const* s, int length)
 {
 	assert_max_string(length, "make_string", (char*)s);
 	SCM x = make_cell__(TSTRING, length, 0);
-	SCM v = GetSCM(make_bytes(s, length));
+	SCM v = GetSCM2(bad2good(make_bytes(s, length), g_cells), g_cells);
 	g_cells[x].rdc = v;
 	return good2bad(Getstructscm2(x, g_cells), g_cells);
 }
@@ -286,7 +284,7 @@ struct scm* string_ref(SCM str, SCM k)
 
 	if(i > size)
 	{
-		error(cell_symbol_system_error, cons(GetSCM(make_string("value out of range", strlen ("value out of range"))), k));
+		error(cell_symbol_system_error, cons(GetSCM2(bad2good(make_string("value out of range", strlen ("value out of range")), g_cells), g_cells), k));
 	}
 
 	char const *p = (char*) &bad2good(x->cdr,g_cells)->string;
