@@ -165,7 +165,7 @@ struct scm* string_append (SCM x);
 struct scm* string_length (SCM string);
 struct scm* string_ref (SCM str, SCM k);
 // src/struct.mes
-struct scm* make_struct (SCM type, SCM fields, SCM printer);
+struct scm* make_struct_(SCM type, struct scm* fields, SCM printer);
 struct scm* struct_length (SCM x);
 struct scm* struct_ref (SCM x, SCM i);
 struct scm* struct_set_x (SCM x, SCM i, SCM e);
@@ -181,6 +181,7 @@ SCM init_time(SCM a);
 
 /* Internal functions required*/
 struct scm* make_string(char const* s, int length);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* make_string_(char const* s);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* struct_ref_(SCM x, SCM i);
@@ -402,7 +403,7 @@ SCM make_builtin(struct scm* builtin_type, SCM name, SCM arity, SCM function)
 	values = cons(arity, values);
 	values = cons(name, values);
 	values = cons(cell_symbol_builtin, values);
-	return GetSCM2(bad2good(make_struct(GetSCM2(builtin_type, g_cells), values, GetSCM2(cstring_to_symbol("builtin-printer"), g_cells)), g_cells), g_cells);
+	return GetSCM2(make_struct(GetSCM2(builtin_type, g_cells), values, GetSCM2(cstring_to_symbol("builtin-printer"), g_cells)), g_cells);
 }
 
 struct scm* make_builtin_type()  ///(internal))
@@ -413,7 +414,7 @@ struct scm* make_builtin_type()  ///(internal))
 	fields = cons2(cstring_to_symbol("name"), fields);
 	fields = cons2(fields, Getstructscm2(cell_nil, g_cells));
 	fields = cons2(Getstructscm2(cell_symbol_builtin, g_cells), fields);
-	return bad2good(make_struct(cell_symbol_record_type, GetSCM2(fields, g_cells), cell_unspecified), g_cells);
+	return make_struct(cell_symbol_record_type, GetSCM2(fields, g_cells), cell_unspecified);
 }
 
 struct scm* init_builtin(struct scm* builtin_type, char const* name, int arity, struct scm*(*function)(), struct scm* a)
@@ -666,7 +667,7 @@ struct scm* mes_builtins(struct scm* a)  ///((internal))
 	a = init_builtin(builtin_type, "string-length", 1, &string_length, a);
 	a = init_builtin(builtin_type, "string-ref", 2, &string_ref, a);
 	/* src/struct.mes */
-	a = init_builtin(builtin_type, "make-struct", 3, &make_struct, a);
+	a = init_builtin(builtin_type, "make-struct", 3, &make_struct_, a);
 	a = init_builtin(builtin_type, "struct-length", 1, &struct_length, a);
 	a = init_builtin(builtin_type, "struct-ref", 2, &struct_ref, a);
 	a = init_builtin(builtin_type, "struct-set!", 3, &struct_set_x, a);

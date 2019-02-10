@@ -178,7 +178,7 @@ struct scm* make_hashq_type()  ///((internal))
 	fields = cons(cell_symbol_size, fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_hashq_table, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return good2bad(make_struct(record_type, fields, cell_unspecified), g_cells);
 }
 
 struct scm* make_hash_table_(long size)
@@ -195,7 +195,7 @@ struct scm* make_hash_table_(long size)
 	values = cons(make_cell__ (TNUMBER, 0, size), values);
 	values = cons(cell_symbol_hashq_table, values);
 	//FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer");
-	return make_struct(hashq_type, values, cell_unspecified);
+	return good2bad(make_struct(hashq_type, values, cell_unspecified), g_cells);
 }
 
 struct scm* make_hash_table(SCM x)

@@ -93,30 +93,8 @@ SCM set_current_input_port (SCM port);
 SCM read_input_file_env ();
 struct scm* string_equal_p (SCM a, SCM b);
 struct scm* symbol_to_string (SCM symbol);
-struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM init_time(SCM a);
-
-SCM alloc(SCM n)
-{
-	SCM x = g_free;
-	g_free += n;
-
-	if(g_free > ARENA_SIZE)
-	{
-		assert(!"alloc: out of memory");
-	}
-
-	return x;
-}
-
-SCM make_cell__(SCM type, SCM car, SCM cdr)
-{
-	SCM x = alloc(1);
-	TYPE(x) = type;
-	CAR(x) = car;
-	CDR(x) = cdr;
-	return x;
-}
+SCM make_cell__(long type, SCM car, SCM cdr);
 
 SCM make_cell_(SCM type, SCM car, SCM cdr)
 {

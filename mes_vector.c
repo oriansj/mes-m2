@@ -22,26 +22,13 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-SCM alloc(SCM n);
 SCM make_cell__(SCM type, SCM car, SCM cdr);
 SCM length__(SCM x);
 SCM cons (SCM x, SCM y);
 struct scm* equal2_p(SCM a, SCM b);
 struct scm* vector_entry(SCM x);
+struct scm* make_vector__(SCM k);
 
-struct scm* make_vector__(SCM k)
-{
-	SCM v = alloc(k);
-	struct scm* x = &g_cells[make_cell__(TVECTOR, k, v)];
-	SCM i;
-
-	for(i = 0; i < k; i = i + 1)
-	{
-		g_cells[v + i] = *vector_entry(cell_unspecified);
-	}
-
-	return x;
-}
 
 struct scm* make_vector_(SCM n)
 {
