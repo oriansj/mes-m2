@@ -34,7 +34,6 @@
 
 int readchar();
 int unreadchar();
-struct scm* write_byte (SCM x);
 struct scm* current_input_port ();
 int fdgetc (int fd);
 struct scm* make_string(char const* s, int length);
@@ -45,12 +44,6 @@ SCM cons (SCM x, SCM y);
 long length__(SCM x);
 SCM error(SCM key, SCM x);
 SCM acons (SCM key, SCM value, SCM alist);
-
-int eputs(char const* s)
-{
-	write(__stderr, s, strlen(s));
-	return 0;
-}
 
 char* ntoab(long x, int base, int signed_p)
 {
@@ -253,34 +246,6 @@ struct scm* unread_char(SCM i)
 	struct scm* x = Getstructscm2(i, g_cells);
 	unreadchar(x->value);
 	return good2bad(x, g_cells);
-}
-
-struct scm* write_char(SCM i)  ///((arity . n))
-{
-	struct scm* x = Getstructscm2(i, g_cells);
-	write_byte(GetSCM2(x, g_cells));
-	return good2bad(x, g_cells);
-}
-
-struct scm* write_byte(SCM x)  ///((arity . n))
-{
-	struct scm* y = Getstructscm2(x, g_cells);
-	struct scm* c = bad2good(y->car, g_cells);
-	struct scm* p = bad2good(y->cdr, g_cells);
-	struct scm* pp = bad2good(p->car, g_cells);
-	int fd = __stdout;
-
-	if(p->type == TPAIR && pp->type == TNUMBER)
-	{
-		fd = pp->value;
-	}
-
-	if(1 == fd) fd = __stdout;
-	if(2 == fd) fd = __stderr;
-
-	write(fd, &c->string, 1);
-	assert(c->type == TNUMBER || c->type == TCHAR);
-	return good2bad(c, g_cells);
 }
 
 struct scm* getenv_(SCM s)  ///((name . "getenv"))

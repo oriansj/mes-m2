@@ -31,9 +31,6 @@ SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM acons (SCM key, SCM value, SCM alist);
 struct scm* make_hash_table_(long size);
-int fdputs(char const* s, int fd);
-struct scm* display_ (SCM x);
-int fdputc(int c, int fd);
 SCM assq (SCM x, SCM a);
 struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
 struct scm* hashq_set_x (SCM table, SCM key, SCM value);
@@ -78,25 +75,6 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	}
 
 	return good2bad(Getstructscm2(module, g_cells), g_cells);
-}
-
-struct scm* module_printer(SCM module)
-{
-	//module = m0;
-	fdputs("#<", __stdout);
-	display_(GetSCM2(struct_ref_(module, 2), g_cells));
-	fdputc(' ', __stdout);
-	fdputs("name: ", __stdout);
-	display_(GetSCM2(struct_ref_(module, 3), g_cells));
-	fdputc(' ', __stdout);
-	fdputs("locals: ", __stdout);
-	display_(GetSCM2(struct_ref_(module, 4), g_cells));
-	fdputc(' ', __stdout);
-	SCM table = GetSCM2(struct_ref_(module, 5), g_cells);
-	fdputs("globals:\n  ", __stdout);
-	display_(table);
-	fdputc('>', __stdout);
-	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* module_variable(SCM module, SCM name)
