@@ -17,6 +17,7 @@ gcc -ggdb \
 	mes_reader.c \
 	mes_posix.c \
 	mes_builtins.c \
+	mes_eval.c \
 	mes.c \
 	temp.c \
 	functions/in_set.c \
