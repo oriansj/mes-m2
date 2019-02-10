@@ -47,7 +47,7 @@ struct scm* make_module_type()  ///(internal))
 	fields = cons(GetSCM2(cstring_to_symbol("name"), g_cells), fields);
 	fields = cons(fields, cell_nil);
 	fields = cons(cell_symbol_module, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return good2bad(make_struct(record_type, fields, cell_unspecified), g_cells);
 }
 
 struct scm* make_initial_module(SCM a)  ///((internal))
@@ -65,7 +65,7 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	values = cons(locals, values);
 	values = cons(name, values);
 	values = cons(cell_symbol_module, values);
-	SCM module = GetSCM2(bad2good(make_struct(module_type, values, GetSCM2(cstring_to_symbol("module-printer"), g_cells)), g_cells), g_cells);
+	SCM module = GetSCM2(make_struct(module_type, values, GetSCM2(cstring_to_symbol("module-printer"), g_cells)), g_cells);
 	r0 = cell_nil;
 	r0 = cons(bad2good(b->cdr, g_cells)->rac, r0);
 	r0 = cons(b->rac, r0);

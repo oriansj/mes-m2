@@ -28,32 +28,13 @@
 #define STRUCT_PRINTER 1
 
 long length__(SCM x);
-SCM alloc(long n);
 SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* vector_entry(SCM x);
+struct scm* make_struct(SCM type, struct scm* fields, SCM printer);
 
-struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
+struct scm* make_struct_(SCM type, struct scm* fields, SCM printer) /* External */
 {
-	fields = bad2good(fields, g_cells);
-	long size = 2 + length__(GetSCM2(fields, g_cells));
-	SCM v = alloc(size);
-	g_cells[v] = *vector_entry(type);
-	g_cells[v + 1] = *vector_entry(printer);
-
-	for(long i = 2; i < size; i++)
-	{
-		SCM e = cell_unspecified;
-
-		if(fields != &g_cells[cell_nil])
-		{
-			e = fields->rac;
-			fields = &g_cells[fields->rdc];
-		}
-
-		g_cells[v + i] = *vector_entry(e);
-	}
-
-	return good2bad(Getstructscm2(make_cell__(TSTRUCT, size, v), g_cells), g_cells);
+	return good2bad(make_struct(type, fields, printer), g_cells);
 }
 
 struct scm* struct_length(struct scm* x)

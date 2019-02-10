@@ -21,19 +21,8 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include <errno.h>
-#include <strings.h>
 
-#define TYPE(x) g_cells[x].type
-#define NTYPE(x) g_news[x].type
-#define VECTOR(x) g_cells[x].vector
-#define NVECTOR(x) g_news[x].vector
-#define LENGTH(x) g_cells[x].length
-#define NLENGTH(x) g_news[x].length
-#define CAR(x) g_cells[x].rac
-#define NVALUE(x) g_news[x].value
-
-size_t bytes_cells(size_t length);
+long length__(SCM x);
 int eputs(char const* s);
 char *itoa (int number);
 SCM error(SCM key, SCM x);
@@ -41,6 +30,94 @@ struct scm* cstring_to_symbol(char const *s);
 SCM write_error_ (SCM x);
 SCM gc_push_frame();
 SCM gc_pop_frame();
+struct scm* vector_entry(SCM x);
+
+size_t bytes_cells(size_t length)
+{
+	return (1 + sizeof(long) + sizeof(long) + length + sizeof(SCM)) / sizeof(SCM);
+}
+
+struct scm* alloc(SCM n)
+{
+	SCM x = g_free;
+	g_free = g_free + n;
+
+	if(g_free > ARENA_SIZE)
+	{
+		assert(!"alloc: out of memory");
+	}
+
+	return Getstructscm2(x, g_cells);
+}
+
+SCM make_cell__(SCM type, SCM car, SCM cdr)
+{
+	struct scm* x = alloc(1);
+	x->type = type;
+	x->rac = car;
+	x->rdc = cdr;
+	return GetSCM2(x, g_cells);
+}
+
+
+struct scm* make_bytes(char const* s, size_t length)
+{
+	size_t size = bytes_cells(length);
+	struct scm* x = alloc(size);
+	x->type = TBYTES;
+	x->length = length;
+	char *p = (char*) &x->rdc;
+
+	if(!length)
+	{
+		*(char*)p = 0;
+	}
+	else
+	{
+		memcpy(p, s, length + 1);
+	}
+
+	return x;
+}
+
+struct scm* make_vector__(SCM k)
+{
+	SCM v = GetSCM2(alloc(k), g_cells);
+	struct scm* x = &g_cells[make_cell__(TVECTOR, k, v)];
+	SCM i;
+
+	for(i = 0; i < k; i = i + 1)
+	{
+		g_cells[v + i] = *vector_entry(cell_unspecified);
+	}
+
+	return x;
+}
+
+struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
+{
+	fields = bad2good(fields, g_cells);
+	long size = 2 + length__(GetSCM2(fields, g_cells));
+	SCM v = GetSCM2(alloc(size), g_cells);
+	g_cells[v] = *vector_entry(type);
+	g_cells[v + 1] = *vector_entry(printer);
+
+	for(long i = 2; i < size; i++)
+	{
+		SCM e = cell_unspecified;
+
+		if(fields != &g_cells[cell_nil])
+		{
+			e = fields->rac;
+			fields = &g_cells[fields->rdc];
+		}
+
+		g_cells[v + i] = *vector_entry(e);
+	}
+
+	return Getstructscm2(make_cell__(TSTRUCT, size, v), g_cells);
+}
+
 
 struct scm* gc_up_arena()  ///((internal))
 {
@@ -113,16 +190,16 @@ struct scm* gc_copy(SCM old)  ///((internal))
 
 		for(i = 0; i < o->length; i++)
 		{
-			g_news[g_free + i] = g_cells[VECTOR(old) + i];
+			g_news[g_free + i] = g_cells[o->vector + i];
 		}
 
 		g_free = g_free + i;;
 	}
-	else if(NTYPE(new) == TBYTES)
+	else if(n->type == TBYTES)
 	{
 		char const *src = (char*)&g_cells[old].rdc;
 		char *dest = (char*)&g_news[new].rdc;
-		size_t length = NLENGTH(new);
+		size_t length = n->length;
 		memcpy(dest, src, length + 1);
 		g_free += bytes_cells(length) - 1;
 
@@ -132,10 +209,10 @@ struct scm* gc_copy(SCM old)  ///((internal))
 			eputs(src);
 			eputs("\n");
 			eputs("    length: ");
-			eputs(itoa(LENGTH(old)));
+			eputs(itoa(o->length));
 			eputs("\n");
 			eputs("    nlength: ");
-			eputs(itoa(NLENGTH(new)));
+			eputs(itoa(n->length));
 			eputs("\n");
 			eputs("        ==> ");
 			eputs(dest);
@@ -143,9 +220,9 @@ struct scm* gc_copy(SCM old)  ///((internal))
 		}
 	}
 
-	TYPE(old) = TBROKEN_HEART;
-	CAR(old) = new;
-	return good2bad(Getstructscm2(new, g_news), g_news);
+	o->type = TBROKEN_HEART;
+	o->rac = new;
+	return good2bad(n, g_news);
 }
 
 struct scm* gc_copy_new(struct scm* old)  ///((internal))
@@ -207,7 +284,7 @@ void gc_loop()  ///((internal))
 	struct scm* s = g_news + 1;
 	struct scm* g = Getstructscm2(g_free, g_news);
 
-        while(s < g)
+	while(s < g)
 	{
 		if(s->type == TBROKEN_HEART)
 		{
@@ -268,21 +345,18 @@ struct scm* gc_check()
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
-struct scm* gc_init_news()  ///((internal))
-{
-	g_news = g_cells + g_free;
-	NTYPE(0) = TVECTOR;
-	NLENGTH(0) = 1000;
-	NVECTOR(0) = 0;
-	g_news++;
-	NTYPE(0) = TCHAR;
-	NVALUE(0) = 'n';
-	return NULL;
-}
-
 void gc_()  ///((internal))
 {
-	gc_init_news();
+	struct scm* nil = Getstructscm2(g_free, g_cells);
+	nil->type = TVECTOR;
+	nil->length = 1000;
+	nil->vector = 0;
+
+	nil = nil + 1;
+	nil->type = TCHAR;
+	nil->value = 'n';
+
+	g_news = g_cells + g_free + 1;
 
 	if(g_debug == 2)
 	{
@@ -335,7 +409,7 @@ void gc_()  ///((internal))
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{
-		g_stack_array[i] = GetSCM2(bad2good(gc_copy(g_stack_array[i]), g_cells), g_cells);
+		g_stack_array[i] = gc_copy((SCM)g_stack_array[i]);
 	}
 
 	gc_loop();

@@ -27,8 +27,8 @@ int eputs(char const* s);
 char *itoa (int number);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
-SCM alloc(long n);
 SCM make_cell__(long type, SCM car, SCM cdr);
+struct scm* make_bytes(char const* s, size_t length);
 SCM write_error_ (SCM x);
 struct scm* hash_ref (SCM table, SCM key, SCM dflt);
 struct scm* hash_set_x (SCM table, SCM key, SCM value);
@@ -67,37 +67,12 @@ char const* list_to_cstring(struct scm* list, int* size)
 	return g_buf;
 }
 
-size_t bytes_cells(size_t length)
-{
-	return (1 + sizeof(long) + sizeof(long) + length + sizeof(SCM)) / sizeof(SCM);
-}
-
-struct scm* make_bytes(char const* s, size_t length)
-{
-	size_t size = bytes_cells(length);
-	struct scm* x = Getstructscm2(alloc(size), g_cells);
-	x->type = TBYTES;
-	x->length = length;
-	char *p = (char*) &g_cells[GetSCM2(x, g_cells)].cdr;
-
-	if(!length)
-	{
-		*(char*)p = 0;
-	}
-	else
-	{
-		memcpy(p, s, length + 1);
-	}
-
-	return good2bad(x, g_cells);
-}
-
 struct scm* make_string_(char const* s) // internal only
 {
 	assert_max_string(strlen(s) , "make_string_", (char*)s);
 
 	SCM x = make_cell__(TSTRING, strlen(s), 0);
-	SCM v = GetSCM2(bad2good(make_bytes(s, strlen(s)), g_cells), g_cells);
+	SCM v = GetSCM2(make_bytes(s, strlen(s)), g_cells);
 	g_cells[x].rdc = v;
 	return Getstructscm2(x, g_cells);
 }
@@ -106,7 +81,7 @@ struct scm* make_string(char const* s, int length)
 {
 	assert_max_string(length, "make_string", (char*)s);
 	SCM x = make_cell__(TSTRING, length, 0);
-	SCM v = GetSCM2(bad2good(make_bytes(s, length), g_cells), g_cells);
+	SCM v = GetSCM2(make_bytes(s, length), g_cells);
 	g_cells[x].rdc = v;
 	return good2bad(Getstructscm2(x, g_cells), g_cells);
 }
