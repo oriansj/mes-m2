@@ -14,5 +14,14 @@ MES_DEBUG=4 MES_PREFIX=mes MES=out-glibc/mes tests/base.test
 # GC test
 MES_DEBUG=3 MES_ARENA=10000 MES_MAX_ARENA=10000 MES_BOOT=gc-test.scm out-glibc/mes
 
+# MesCC test
+MES_DEBUG=2 MES_PREFIX=mes MES=../mes-m2/out-glibc/mes sh -x scripts/mescc scaffold/hello.c
+set +e
+scaffold/hello
+r=$?
+if [ $r != 42 ]; then
+   exit 1
+fi
+
 # If we ever need to get into hairy debugging, a scaffold with ~50
 # bootstrap tests is available in mes: scaffold/boot/*.scm
