@@ -28,6 +28,8 @@
 SCM cons (SCM x, SCM y);
 SCM apply(SCM f, SCM x);
 struct scm* struct_ref_(SCM x, long i);
+struct scm* vector_ref_(SCM x, long i);
+
 SCM builtin_p (SCM x);
 struct scm* fdisplay_(SCM, int, int);
 int fdputs(char const* s, int fd);
@@ -275,6 +277,45 @@ struct scm* frame_printer(SCM frame)
 	display_(GetSCM2(struct_ref_(frame, 2), g_cells));
 	fdputs(" procedure: ", __stdout);
 	display_(GetSCM2(struct_ref_(frame, 3), g_cells));
+	fdputc('>', __stdout);
+	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
+}
+
+struct scm* hash_table_printer(struct scm* table)
+{
+	fdputs("#<", __stdout);
+	display_(GetSCM2(struct_ref_(GetSCM2(bad2good(table, g_cells), g_cells), 2), g_cells));
+	fdputc(' ', __stdout);
+	fdputs("size: ", __stdout);
+	display_(GetSCM2(struct_ref_(GetSCM2(bad2good(table, g_cells), g_cells), 3), g_cells));
+	fdputc(' ', __stdout);
+	SCM buckets = GetSCM2(struct_ref_(GetSCM2(bad2good(table, g_cells), g_cells), 4), g_cells);
+	fdputs("buckets: ", __stdout);
+
+	struct scm* ybuckets = Getstructscm2(buckets, g_cells);
+	for(int i = 0; i < ybuckets->length; i++)
+	{
+		struct scm* f = vector_ref_(buckets, i);
+
+		if(f != &table[cell_unspecified])
+		{
+			fdputc('[', __stdout);
+
+			while(f->type == TPAIR)
+			{
+				write_(GetSCM2(f->car->car, table));
+				f = f->cdr;
+
+				if(f->type == TPAIR)
+				{
+					fdputc(' ', __stdout);
+				}
+			}
+
+			fdputs("]\n  ", __stdout);
+		}
+	}
+
 	fdputc('>', __stdout);
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
