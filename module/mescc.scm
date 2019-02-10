@@ -58,12 +58,15 @@
             (compile (single-char #\S))
             (define (single-char #\D) (value #t))
             (debug-info (single-char #\g))
-            (dumpmachine (single-char #\d))
+            (dumpmachine)
             (help (single-char #\h))
             (include (single-char #\I) (value #t))
             (library-dir (single-char #\L) (value #t))
             (library (single-char #\l) (value #t))
             (machine (single-char #\m) (value #t))
+            (nodefaultlibs)
+            (nostartfiles)
+            (nostdlib)
             (preprocess (single-char #\E))
             (std (value #t))
             (output (single-char #\o) (value #t))
@@ -97,6 +100,9 @@ Usage: mescc [OPTION]... FILE...
   -L DIR              append DIR to library path
   -l LIBNAME          link with LIBNAME
   -m BITS             compile for BITS bits [32]
+  -nodefaultlibs      do not use libc.o when linking
+  -nostartfiles       do not use crt1.o when linking
+  -nostdlib           do not use crt1.o or libc.o when linking
   -o FILE             write output to FILE
   -O LEVEL            use optimizing LEVEL
   -S                  preprocess and compile only; do not assemble or link
@@ -119,7 +125,11 @@ General help using GNU software: <http://gnu.org/gethelp/>
            options))))
 
 (define (mescc:main args)
-  (let* ((single-dash-options '("-dumpmachine" "-std"))
+  (let* ((single-dash-options '("-dumpmachine"
+                                "-nodefaultlibs"
+                                "-nostartfiles"
+                                "-nostdlib"
+                                "-std"))
          (args (map (lambda (o)
                       (if (member o single-dash-options) (string-append "-" o)
                           o))
