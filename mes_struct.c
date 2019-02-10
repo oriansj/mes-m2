@@ -97,7 +97,7 @@ struct scm* struct_set_x_(struct scm* x, long i, SCM e)
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
-struct scm* struct_ref(SCM x, SCM i)
+struct scm* struct_ref(SCM x, SCM i) /* External */
 {
 	return good2bad(struct_ref_(good2bad(Getstructscm2(x, g_cells), g_cells), g_cells[i].rdc), g_cells);
 }
