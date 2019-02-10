@@ -22,9 +22,6 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-// CONSTANT FRAME_SIZE 5
-#define FRAME_SIZE 5
-
 SCM cons (SCM x, SCM y);
 struct scm* cstring_to_symbol(char const *s);
 void vector_set_x_(SCM x, long i, SCM e);
@@ -51,44 +48,12 @@ struct scm* make_frame_type()  ///((internal))
 	return good2bad(make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified), g_cells);
 }
 
-struct scm* make_frame(long index)
-{
-	long array_index = (STACK_SIZE - (index * FRAME_SIZE));
-	SCM procedure = (SCM) g_stack_array[array_index + FRAME_PROCEDURE];
-
-	if(!procedure)
-	{
-		procedure = cell_f;
-	}
-
-	return good2bad(make_struct(GetSCM2(bad2good(make_frame_type(), g_cells), g_cells)
-	                  , cons(cell_symbol_frame, cons(procedure, cell_nil))
-	                  , GetSCM2(cstring_to_symbol("frame-printer"), g_cells)), g_cells);
-}
 
 struct scm* make_stack_type()  ///((internal))
 {
 	return good2bad(make_struct(cell_symbol_record_type
 	                  , cons(cell_symbol_stack, cons(cons(GetSCM2(cstring_to_symbol("frames"), g_cells), cell_nil), cell_nil))
 	                  , cell_unspecified), g_cells);
-}
-
-struct scm* make_stack()  ///((arity . n))
-{
-	SCM stack_type = GetSCM2(bad2good(make_stack_type(), g_cells), g_cells);
-	long size = (STACK_SIZE - g_stack) / FRAME_SIZE;
-	SCM frames = GetSCM2(make_vector__(size), g_cells);
-
-	for(long i = 0; i < size; i++)
-	{
-		SCM frame = GetSCM2(bad2good(make_frame(i), g_cells), g_cells);
-		vector_set_x_(frames, i, frame);
-	}
-
-	SCM values = cell_nil;
-	values = cons(frames, values);
-	values = cons(cell_symbol_stack, values);
-	return good2bad(make_struct(stack_type, values, cell_unspecified), g_cells);
 }
 
 struct scm* stack_length(SCM stack)

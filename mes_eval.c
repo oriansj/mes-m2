@@ -22,6 +22,8 @@
 #include "mes.h"
 #include "mes_constants.h"
 
+extern SCM STACK_SIZE;
+
 #define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
@@ -75,7 +77,6 @@ struct scm* mes_builtins(struct scm* a);
 struct scm* apply_builtin(SCM fn, SCM x);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_hash_table_(SCM size);
-struct scm* make_initial_module(SCM a);
 struct scm* gc_check ();
 SCM gc ();
 SCM push_cc(SCM p1, SCM p2, SCM a, SCM c);
@@ -494,7 +495,7 @@ eval_macro_expand_expand:
 					}
 					else
 					{
-						entry = GetSCM2(bad2good(module_variable(r0, name), g_cells), g_cells);
+						entry = GetSCM2(module_variable(r0, name), g_cells);
 
 						if(entry == cell_f)
 						{
@@ -542,7 +543,7 @@ eval_define:
 				}
 				else if(global_p)
 				{
-					entry = GetSCM2(bad2good(module_variable(r0, name), g_cells), g_cells);
+					entry = GetSCM2(module_variable(r0, name), g_cells);
 					set_cdr_x(entry, r1);
 				}
 				else
@@ -551,7 +552,7 @@ eval_define:
 					aa = cons(entry, cell_nil);
 					set_cdr_x(aa, cdr(r0));
 					set_cdr_x(r0, aa);
-					cl = GetSCM2(bad2good(module_variable(r0, cell_closure), g_cells), g_cells);
+					cl = GetSCM2(module_variable(r0, cell_closure), g_cells);
 					set_cdr_x(cl, aa);
 				}
 

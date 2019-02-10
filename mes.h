@@ -69,7 +69,6 @@ struct scm
 };
 
 struct scm *g_cells;
-struct scm *g_news;
 
 char **environ;
 int __stdin;
@@ -83,11 +82,6 @@ int MAX_STRING;
 char *g_buf;
 SCM g_free;
 int g_debug;
-SCM GC_SAFETY;
-SCM ARENA_SIZE;
-SCM MAX_ARENA_SIZE;
-SCM JAM_SIZE;
-SCM STACK_SIZE;
 SCM g_symbol_max;
 int* __ungetc_buf;
 
