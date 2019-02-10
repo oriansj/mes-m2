@@ -347,7 +347,7 @@ struct scm* reader_read_hash(int c, SCM a)
 			error(cell_symbol_system_error, cons(GetSCM2(make_string_("keyword perifx ':' not followed by a symbol: "), g_cells), GetSCM2(x, g_cells)));
 		}
 
-		return symbol_to_keyword(GetSCM2(x, g_cells));
+		return good2bad(symbol_to_keyword(GetSCM2(x, g_cells)), g_cells);
 	}
 
 	if(c == 'b')

@@ -88,7 +88,7 @@ SCM make_cell_(SCM type, SCM car, SCM cdr)
 
 SCM assoc_string(SCM x, SCM a)  ///((internal))
 {
-	while(a != cell_nil && (TYPE(CAAR(a)) != TSTRING || GetSCM2(bad2good(string_equal_p(x, CAAR(a)), g_cells), g_cells) == cell_f))
+	while(a != cell_nil && (TYPE(CAAR(a)) != TSTRING || GetSCM2(string_equal_p(x, CAAR(a)), g_cells) == cell_f))
 	{
 		a = CDR(a);
 	}
@@ -163,7 +163,7 @@ SCM eq_p(SCM x, SCM y)
 {
 	return (x == y
 	        || ((TYPE(x) == TKEYWORD && TYPE(y) == TKEYWORD
-	             && GetSCM2(bad2good(string_equal_p(x, y), g_cells), g_cells) == cell_t))
+	             && GetSCM2(string_equal_p(x, y), g_cells) == cell_t))
 	        || (TYPE(x) == TCHAR && TYPE(y) == TCHAR
 	            && VALUE(x) == VALUE(y))
 	        || (TYPE(x) == TNUMBER && TYPE(y) == TNUMBER
@@ -222,7 +222,7 @@ SCM apply(SCM, SCM);
 
 SCM error(SCM key, SCM x)
 {
-	SCM throw= GetSCM2(bad2good(module_ref(r0, cell_symbol_throw), g_cells), g_cells);
+	SCM throw= GetSCM2(module_ref(r0, cell_symbol_throw), g_cells);
 
 	if(throw != cell_undefined)
 	{
@@ -470,7 +470,7 @@ SCM assq(SCM x, SCM a)
 	}
 	else if(t == TKEYWORD)
 	{
-		while(a != cell_nil && GetSCM2(bad2good(string_equal_p(x, CAAR(a)), g_cells), g_cells) == cell_f)
+		while(a != cell_nil && GetSCM2(string_equal_p(x, CAAR(a)), g_cells) == cell_f)
 		{
 			a = CDR(a);
 		}
@@ -587,7 +587,7 @@ SCM get_macro(SCM name)  ///((internal))
 
 SCM macro_set_x(SCM name, SCM value)  ///((internal))
 {
-	return GetSCM2(bad2good(hashq_set_x(g_macros, name, value), g_cells), g_cells);
+	return GetSCM2(hashq_set_x(g_macros, name, value), g_cells);
 }
 
 SCM push_cc(SCM p1, SCM p2, SCM a, SCM c)  ///((internal))
@@ -808,7 +808,7 @@ SCM mes_environment(int argc, char *argv[])
 
 struct scm* make_initial_module(SCM a)  ///((internal))
 {
-	SCM module_type = GetSCM2(bad2good(make_module_type(), g_cells), g_cells);
+	SCM module_type = GetSCM2(make_module_type(), g_cells);
 	a = acons(cell_symbol_module, module_type, a);
 	SCM hashq_type = GetSCM2(bad2good(make_hashq_type(), g_cells), g_cells);
 	a = acons(cell_symbol_hashq_table, hashq_type, a);

@@ -118,7 +118,7 @@ struct scm* hashq_ref(SCM table, SCM key, SCM dflt)
 	return x->cdr;
 }
 
-struct scm* hash_ref(SCM table, SCM key, SCM dflt) /* External */
+struct scm* hash_ref(SCM table, SCM key, SCM dflt)
 {
 	dflt = 0; /* NOP to silence checkers */
 
@@ -128,11 +128,11 @@ struct scm* hash_ref(SCM table, SCM key, SCM dflt) /* External */
 		struct scm* y = Getstructscm2(assoc(key, GetSCM2(bucket, g_cells)), g_cells);
 		if(GetSCM2(y, g_cells) != cell_f)
 		{
-			return y->cdr;
+			return bad2good(y->cdr, g_cells);
 		}
 	}
 
-	return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	return Getstructscm2(cell_f, g_cells);
 }
 
 struct scm* hashq_set_x(SCM table, SCM key, SCM value)
@@ -149,7 +149,7 @@ struct scm* hashq_set_x(SCM table, SCM key, SCM value)
 	{
 		vector_set_x_(buckets, hashq_(key, size), acons(key, value, GetSCM2(vector_ref_(buckets, hashq_(key, size)), g_cells)));
 	}
-	return good2bad(Getstructscm2(value, g_cells), g_cells);
+	return Getstructscm2(value, g_cells);
 }
 
 struct scm* hash_set_x(SCM table, SCM key, SCM value)
@@ -210,4 +210,16 @@ struct scm* make_hash_table(SCM x)
 	}
 
 	return make_hash_table_(size);
+}
+
+
+/* Externally exposed */
+struct scm* hashq_set_x_(SCM table, SCM key, SCM value)
+{
+	return good2bad(hashq_set_x(table, key, value), g_cells);
+}
+
+struct scm* hash_ref_(SCM table, SCM key, SCM dflt)
+{
+	return good2bad(hash_ref(table, key, dflt), g_cells);
 }

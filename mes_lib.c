@@ -114,7 +114,7 @@ struct scm* memq(SCM x, SCM a)
 	}
 	else if(t == TKEYWORD)
 	{
-		while(GetSCM2(a2, g_cells) != cell_nil && (bad2good(a2->car, g_cells)->type != TKEYWORD || GetSCM2(bad2good(string_equal_p(x, a2->rac), g_cells), g_cells) == cell_f))
+		while(GetSCM2(a2, g_cells) != cell_nil && (bad2good(a2->car, g_cells)->type != TKEYWORD || GetSCM2(string_equal_p(x, a2->rac), g_cells) == cell_f))
 		{
 			a2 = bad2good(a2->cdr, g_cells);
 		}
@@ -149,7 +149,7 @@ struct scm* equal2_p(SCM a, SCM b)
 
 	if(a2->type == TSTRING && b2->type == TSTRING)
 	{
-		return string_equal_p(a, b);
+		return good2bad(string_equal_p(a, b), g_cells);
 	}
 
 	if(a2->type == TVECTOR && b2->type == TVECTOR)

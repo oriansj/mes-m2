@@ -81,7 +81,6 @@ struct scm* gc_check ();
 SCM gc ();
 SCM push_cc(SCM p1, SCM p2, SCM a, SCM c);
 struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
-struct scm* hashq_set_x (SCM table, SCM key, SCM value);
 struct scm* hash_set_x (SCM table, SCM key, SCM value);
 struct scm* display_ (SCM x);
 struct scm* display_error_ (SCM x);
@@ -97,8 +96,6 @@ struct scm* module_define_x (SCM module, SCM name, SCM value);
 SCM open_input_file (SCM file_name);
 SCM set_current_input_port (SCM port);
 SCM read_input_file_env ();
-struct scm* string_equal_p (SCM a, SCM b);
-struct scm* symbol_to_string (SCM symbol);
 SCM init_time(SCM a);
 SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* vector_ref_(SCM x, SCM i);
@@ -589,7 +586,7 @@ eval2:
 			goto vm_return;
 		}
 
-		r1 = assert_defined(r1, GetSCM2(bad2good(module_ref(r0, r1), g_cells), g_cells));
+		r1 = assert_defined(r1, GetSCM2(module_ref(r0, r1), g_cells));
 		goto vm_return;
 	}
 	else if(t == TVARIABLE)
@@ -665,13 +662,13 @@ macro_expand_set_x:
 	if(TYPE(r1) == TPAIR && TYPE(CAR(r1)) == TSYMBOL)
 	{
 		macro = macro_get_handle(cell_symbol_portable_macro_expand);
-		expanders = GetSCM2(bad2good(module_ref(r0, cell_symbol_sc_expander_alist), g_cells), g_cells);
+		expanders = GetSCM2(module_ref(r0, cell_symbol_sc_expander_alist), g_cells);
 		if((CAR(r1) != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
 		{
 			macro = assq(CAR(r1), expanders);
 			if(macro != cell_f)
 			{
-				sc_expand = GetSCM2(bad2good(module_ref(r0, cell_symbol_macro_expand), g_cells), g_cells);
+				sc_expand = GetSCM2(module_ref(r0, cell_symbol_macro_expand), g_cells);
 				r2 = r1;
 
 				if(sc_expand != cell_undefined && sc_expand != cell_f)

@@ -36,6 +36,7 @@ int readchar();
 int unreadchar();
 struct scm* current_input_port ();
 int fdgetc (int fd);
+int eputs(char const* s);
 struct scm* make_string(char const* s, int length);
 struct scm* make_string_(char const* s);
 int fdungetc (int c, int fd);
@@ -158,7 +159,7 @@ int peekchar()
 		return -1;
 	}
 
-	char const *p = (char*)&g_cells[string->rdc].rdc;
+	char const *p = (char*)&bad2good(string->cdr, g_cells)->rdc;
 	return p[0];
 }
 
@@ -178,7 +179,7 @@ int readchar()
 		return -1;
 	}
 
-	char const *p = (char*)&g_cells[string->rdc].rdc;
+	char const *p = (char*)&bad2good(string->cdr, g_cells)->rdc;
 	int c = p[0];
 	p = p + 1;
 	port->rdc = GetSCM2(bad2good(make_string(p, length - 1), g_cells), g_cells);
@@ -195,10 +196,10 @@ int unreadchar(int c)
 	struct scm* port = bad2good(current_input_port(), g_cells);
 	struct scm* string = bad2good(port->cdr, g_cells);
 	size_t length = string->length;
-	char *p = (char*)&g_cells[string->rdc].rdc;
+	char *p = (char*)&bad2good(string->cdr, g_cells)->rdc;
 	p = p - 1;
 	string = bad2good(make_string(p, length + 1), g_cells);
-	p = (char*)&g_cells[string->rdc].rdc;
+	p = (char*)&bad2good(string->cdr, g_cells)->rdc;
 	p[0] = c;
 	port->cdr = good2bad(string, g_cells);
 	return c;
@@ -251,7 +252,7 @@ struct scm* unread_char(SCM i)
 struct scm* getenv_(SCM s)  ///((name . "getenv"))
 {
 	struct scm* x = Getstructscm2(s, g_cells);
-	char *p = getenv((char*)&g_cells[x->rdc].rdc);
+	char *p = getenv((char*)&bad2good(x->cdr, g_cells)->rdc);
 	return p ? good2bad(make_string_(p), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
@@ -259,7 +260,7 @@ struct scm* setenv_(SCM s, SCM v)  ///((name . "setenv"))
 {
 	struct scm* a = Getstructscm2(s, g_cells);
 	struct scm* b = Getstructscm2(v, g_cells);
-	setenv((char*)&g_cells[a->rdc].rdc, (char*)&g_cells[b->rdc].rdc, 1);
+	setenv((char*)&bad2good(a->cdr, g_cells)->rdc, (char*)&bad2good(b->cdr, g_cells)->rdc, 1);
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
@@ -267,7 +268,7 @@ struct scm* access_p(SCM file_name, SCM mode)
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
 	struct scm* m = Getstructscm2(mode, g_cells);
-	return access((char*)&g_cells[f->rdc].rdc, m->value) == 0 ? good2bad(Getstructscm2(cell_t, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	return access((char*)&bad2good(f->cdr, g_cells)->rdc, m->value) == 0 ? good2bad(Getstructscm2(cell_t, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* current_input_port()
@@ -304,7 +305,7 @@ int mes_open(char const *file_name, int flags, int mode)
 struct scm* open_input_file(SCM file_name)
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_RDONLY, 0)), g_cells), g_cells);
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, mes_open((char*)&bad2good(f->cdr, g_cells)->rdc, O_RDONLY, 0)), g_cells), g_cells);
 }
 
 struct scm* open_input_string(SCM string)
@@ -353,7 +354,7 @@ struct scm* open_output_file(SCM x)  ///((arity . n))
 		mode = f->value;
 	}
 
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, mes_open((char*)&g_cells[f->rdc].rdc, O_WRONLY | O_CREAT | O_TRUNC, mode)), g_cells), g_cells);
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, mes_open((char*)&bad2good(f->cdr, g_cells)->rdc, O_WRONLY | O_CREAT | O_TRUNC, mode)), g_cells), g_cells);
 }
 
 struct scm* set_current_output_port(SCM port)
@@ -374,7 +375,7 @@ struct scm* chmod_(SCM file_name, SCM mode)  ///((name . "chmod"))
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
 	struct scm* m = Getstructscm2(mode, g_cells);
-	chmod((char*)&g_cells[f->rdc].rdc, m->value);
+	chmod((char*)&bad2good(f->cdr, g_cells)->rdc, m->value);
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
@@ -401,14 +402,14 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 		error(cell_symbol_system_error, cons(file_name, cons(GetSCM2(make_string_("too many arguments"), g_cells), cons(file_name, args))));
 	}
 
-	c_argv[i] = (char*)&g_cells[f->rdc].rdc;
+	c_argv[i] = (char*)&bad2good(f->cdr, g_cells)->rdc;
 	i = i + 1;
 
-	while(a != &g_cells[cell_nil])
+	while(GetSCM2(a, g_cells) != cell_nil)
 	{
 		struct scm* aa = bad2good(a->car, g_cells);
 		assert(aa->type == TSTRING);
-		c_argv[i] = (char*)&g_cells[aa->rdc].rdc;
+		c_argv[i] = (char*)&bad2good(aa->cdr, g_cells)->rdc;
 		i = i + 1;
 		a = bad2good(a->cdr, g_cells);
 
@@ -494,7 +495,7 @@ struct scm* dup2_(SCM old, SCM new)  ///((name . "dup2"))
 struct scm* delete_file(SCM file_name)
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
-	unlink((char*)&g_cells[f->rdc].rdc);
+	unlink((char*)&bad2good(f->cdr, g_cells)->rdc);
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 

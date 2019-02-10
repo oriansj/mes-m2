@@ -47,7 +47,7 @@ struct scm* vector_ref_(SCM table, long i)
 	struct scm* y = Getstructscm2(table, g_cells);
 	assert(y->type == TVECTOR);
 	assert(i < y->length);
-	struct scm* e = &g_cells[y->vector + i];
+	struct scm* e = bad2good(y->cdr, g_cells) + i;
 
 	if(e->type == TREF)
 	{
@@ -150,16 +150,16 @@ struct scm* list_to_vector(SCM x)
 struct scm* vector_to_list(struct scm* v)
 {
 	v = bad2good(v, g_cells);
-	struct scm* x = &g_cells[cell_nil];
+	struct scm* x = Getstructscm2(cell_nil, g_cells);
 	SCM i;
 
 	for(i = v->length; i; i = i - 1)
 	{
-		struct scm* f = &g_cells[v->vector + i -1];
+		struct scm* f = bad2good(v->cdr, g_cells) + i -1;
 
 		if(f->type == TREF)
 		{
-			f = &g_cells[f->ref];
+			f = bad2good(f->car, g_cells);
 		}
 
 		x = Getstructscm2(cons(GetSCM2(f, g_cells), GetSCM2(x, g_cells)), g_cells);

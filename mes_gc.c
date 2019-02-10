@@ -56,10 +56,8 @@ void initialize_memory()
 	g_news = 0;
 	MAX_ARENA_SIZE = get_env_value("MES_MAX_ARENA", 100000000);
 	ARENA_SIZE = get_env_value("MES_ARENA", 10000000);
-	JAM_SIZE = ARENA_SIZE / 10;
-	JAM_SIZE = get_env_value("MES_JAM", 20000);
-	GC_SAFETY = ARENA_SIZE / 100;
-	GC_SAFETY = get_env_value("MES_SAFETY", 2000);
+	JAM_SIZE = get_env_value("MES_JAM", ARENA_SIZE / 10);
+	GC_SAFETY = get_env_value("MES_SAFETY", ARENA_SIZE / 100);
 	STACK_SIZE = get_env_value("MES_STACK", 20000);
 	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
 }
@@ -175,7 +173,7 @@ struct scm* make_bytes(char const* s, size_t length)
 struct scm* make_vector__(SCM k)
 {
 	SCM v = GetSCM2(alloc(k), g_cells);
-	struct scm* x = &g_cells[make_cell__(TVECTOR, k, v)];
+	struct scm* x = bad2good((struct scm*)make_cell__(TVECTOR, k, v), g_cells);
 	SCM i;
 
 	for(i = 0; i < k; i = i + 1)
@@ -198,10 +196,10 @@ struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 	{
 		SCM e = cell_unspecified;
 
-		if(fields != &g_cells[cell_nil])
+		if(GetSCM2(fields, g_cells) != cell_nil)
 		{
 			e = fields->rac;
-			fields = &g_cells[fields->rdc];
+			fields = bad2good(fields->cdr, g_cells);
 		}
 
 		g_cells[v + i] = *vector_entry(e);
@@ -253,8 +251,8 @@ struct scm* gc_copy(SCM old)  ///((internal))
 	}
 	else if(n->type == TBYTES)
 	{
-		char const *src = (char*)&g_cells[old].rdc;
-		char *dest = (char*)&g_news[new].rdc;
+		char const *src = (char*)&o->rdc;
+		char *dest = (char*)&n->rdc;
 		size_t length = n->length;
 		memcpy(dest, src, length + 1);
 		g_free += bytes_cells(length) - 1;

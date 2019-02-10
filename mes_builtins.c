@@ -31,8 +31,8 @@ struct scm* hashq (SCM x, SCM size);
 struct scm* hash (SCM x, SCM size);
 struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
 struct scm* hashq_ref (SCM table, SCM key, SCM dflt);
-struct scm* hash_ref (SCM table, SCM key, SCM dflt);
-struct scm* hashq_set_x (SCM table, SCM key, SCM value);
+struct scm* hash_ref_ (SCM table, SCM key, SCM dflt);
+struct scm* hashq_set_x_ (SCM table, SCM key, SCM value);
 struct scm* hash_set_x (SCM table, SCM key, SCM value);
 struct scm* hash_table_printer (struct scm* table);
 struct scm* make_hash_table_(long size);
@@ -103,10 +103,10 @@ SCM values (SCM x);
 struct scm* builtin_printer(SCM builtin);
 
 // src/module.mes
-struct scm* make_module_type ();
+struct scm* make_module_type_ ();
 struct scm* module_printer (SCM module);
 struct scm* module_variable_ (SCM module, SCM name);
-struct scm* module_ref (SCM module, SCM name);
+struct scm* module_ref_ (SCM module, SCM name);
 struct scm* module_define_x (SCM module, SCM name, SCM value);
 // src/posix.mes
 struct scm* peek_byte ();
@@ -152,12 +152,12 @@ struct scm* reader_read_octal ();
 struct scm* reader_read_hex ();
 struct scm* reader_read_string ();
 // src/strings.mes
-struct scm* string_equal_p (SCM a, SCM b);
-struct scm* symbol_to_string (SCM symbol);
-struct scm* symbol_to_keyword (SCM symbol);
+struct scm* string_equal_p_ (SCM a, SCM b);
+struct scm* symbol_to_string_ (SCM symbol);
+struct scm* symbol_to_keyword_ (SCM symbol);
 struct scm* keyword_to_string (SCM keyword);
 struct scm* string_to_symbol (SCM string);
-struct scm* make_symbol (SCM string);
+struct scm* make_symbol_ (SCM string);
 struct scm* string_to_list (SCM string);
 struct scm* list_to_string (SCM list);
 struct scm* read_string (SCM port);
@@ -184,6 +184,7 @@ struct scm* make_string(char const* s, int length);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* make_string_(char const* s);
 struct scm* cstring_to_symbol(char const *s);
+struct scm* symbol_to_string (SCM symbol);
 struct scm* struct_ref_(SCM x, SCM i);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
@@ -192,12 +193,13 @@ void gc_init_cells();
 
 void init_symbol(SCM x, SCM type, char const* name)
 {
-	g_cells[x].type = type;
+	struct scm* y = Getstructscm2(x, g_cells);
+	y->type = type;
 	int length = strlen(name);
-	SCM string = GetSCM2(bad2good(make_string(name, length), g_cells), g_cells);
-	g_cells[x].length = length;
-	g_cells[x].string = g_cells[string].string;
-	hash_set_x(g_symbols, string, x);
+	struct scm* string = bad2good(make_string(name, length), g_cells);
+	y->length = length;
+	y->string = string->string;
+	hash_set_x(g_symbols, GetSCM2(string, g_cells), x);
 }
 
 SCM mes_symbols()  ///((internal))
@@ -377,7 +379,7 @@ struct scm* make_builtin_type()  ///(internal))
 struct scm* init_builtin(struct scm* builtin_type, char const* name, int arity, struct scm*(*function)(), struct scm* a)
 {
 	SCM s = GetSCM2(cstring_to_symbol(name), g_cells);
-	return Getstructscm2(acons(s, make_builtin(builtin_type, GetSCM2(bad2good(symbol_to_string(s), g_cells), g_cells), make_cell__ (TNUMBER, 0, (long)arity), make_cell__ (TNUMBER, 0, (long)function)), GetSCM2(a, g_cells)), g_cells);
+	return Getstructscm2(acons(s, make_builtin(builtin_type, GetSCM2(symbol_to_string(s), g_cells), make_cell__ (TNUMBER, 0, (long)arity), make_cell__ (TNUMBER, 0, (long)function)), GetSCM2(a, g_cells)), g_cells);
 }
 
 struct scm* builtin_name(SCM builtin)
@@ -392,12 +394,14 @@ struct scm* builtin_arity(SCM builtin)
 
 void* builtin_function(SCM builtin)
 {
-	return (void*)g_cells[GetSCM2(struct_ref_(builtin, 5), g_cells)].rdc;
+	return (void*)struct_ref_(builtin, 5)->rdc;
 }
 
 SCM builtin_p(SCM x)
 {
-	return (g_cells[x].type == TSTRUCT && GetSCM2(struct_ref_(x, 2), g_cells) == cell_symbol_builtin) ? cell_t : cell_f;
+	struct scm* y = Getstructscm2(x, g_cells);
+	if (y->type == TSTRUCT && GetSCM2(struct_ref_(x, 2), g_cells) == cell_symbol_builtin) return cell_t;
+	return cell_f;
 }
 
 struct scm* builtin_printer(SCM builtin)
@@ -405,7 +409,7 @@ struct scm* builtin_printer(SCM builtin)
 	fdputs("#<procedure ", __stdout);
 	display_(GetSCM2(bad2good(builtin_name(builtin), g_cells), g_cells));
 	fdputc(' ', __stdout);
-	int arity = g_cells[GetSCM2(bad2good(builtin_arity(builtin), g_cells), g_cells)].value;
+	int arity = bad2good(builtin_arity(builtin), g_cells)->value;
 
 	if(arity == -1)
 	{
@@ -432,17 +436,23 @@ struct scm* builtin_printer(SCM builtin)
 
 struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 {
-	int arity = g_cells[GetSCM2(bad2good(builtin_arity(fn), g_cells), g_cells)].value;
+	int arity = bad2good(builtin_arity(fn), g_cells)->value;
 	struct scm* y = Getstructscm2(x, g_cells);
 
-	if((arity > 0 || arity == -1) && x != cell_nil && g_cells[y->rac].type == TVALUES)
+	if((arity > 0 || arity == -1) && x != cell_nil && bad2good(y->car, g_cells)->type == TVALUES)
 	{
 		y = cons2(bad2good(bad2good(bad2good(y->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells));
 	}
 
-	if((arity > 1 || arity == -1) && x != cell_nil && g_cells[g_cells[x].rdc].type == TPAIR && g_cells[g_cells[g_cells[x].rdc].rac].type == TVALUES)
+	if(arity > 1 || arity == -1)
 	{
-		y = cons2(bad2good(y->car, g_cells), cons2(bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells)));
+		if(x != cell_nil && g_cells[y->rdc].type == TPAIR)
+		{
+			if(g_cells[g_cells[g_cells[x].rdc].rac].type == TVALUES)
+			{
+				y = cons2(bad2good(y->car, g_cells), cons2(bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells)));
+			}
+		}
 	}
 
 	if(arity == 0)
@@ -492,8 +502,8 @@ struct scm* mes_builtins(struct scm* a)  ///((internal))
 	a = init_builtin(builtin_type, "hash", 2, &hash, a);
 	a = init_builtin(builtin_type, "hashq-get-handle", 3, &hashq_get_handle, a);
 	a = init_builtin(builtin_type, "hashq-ref", 3, &hashq_ref, a);
-	a = init_builtin(builtin_type, "hash-ref", 3, &hash_ref, a);
-	a = init_builtin(builtin_type, "hashq-set!", 3, &hashq_set_x, a);
+	a = init_builtin(builtin_type, "hash-ref", 3, &hash_ref_, a);
+	a = init_builtin(builtin_type, "hashq-set!", 3, &hashq_set_x_, a);
 	a = init_builtin(builtin_type, "hash-set!", 3, &hash_set_x, a);
 	a = init_builtin(builtin_type, "hash-table-printer", 1, &hash_table_printer, a);
 	a = init_builtin(builtin_type, "make-hash-table", 1, &make_hash_table, a);
@@ -562,10 +572,10 @@ struct scm* mes_builtins(struct scm* a)  ///((internal))
 	a = init_builtin(builtin_type, "builtin?", 1, &builtin_p, a);
 	a = init_builtin(builtin_type, "builtin-printer", 1, &builtin_printer, a);
 	/* src/module.mes */
-	a = init_builtin(builtin_type, "make-module-type", 0, &make_module_type, a);
+	a = init_builtin(builtin_type, "make-module-type", 0, &make_module_type_, a);
 	a = init_builtin(builtin_type, "module-printer", 1, &module_printer, a);
 	a = init_builtin(builtin_type, "module-variable", 2, &module_variable_, a);
-	a = init_builtin(builtin_type, "module-ref", 2, &module_ref, a);
+	a = init_builtin(builtin_type, "module-ref", 2, &module_ref_, a);
 	a = init_builtin(builtin_type, "module-define!", 3, &module_define_x, a);
 	/* src/posix.mes */
 	a = init_builtin(builtin_type, "peek-byte", 0, &peek_byte, a);
@@ -611,12 +621,12 @@ struct scm* mes_builtins(struct scm* a)  ///((internal))
 	a = init_builtin(builtin_type, "reader-read-hex", 0, &reader_read_hex, a);
 	a = init_builtin(builtin_type, "reader-read-string", 0, &reader_read_string, a);
 	/* src/strings.mes */
-	a = init_builtin(builtin_type, "string=?", 2, &string_equal_p, a);
-	a = init_builtin(builtin_type, "symbol->string", 1, &symbol_to_string, a);
-	a = init_builtin(builtin_type, "symbol->keyword", 1, &symbol_to_keyword, a);
+	a = init_builtin(builtin_type, "string=?", 2, &string_equal_p_, a);
+	a = init_builtin(builtin_type, "symbol->string", 1, &symbol_to_string_, a);
+	a = init_builtin(builtin_type, "symbol->keyword", 1, &symbol_to_keyword_, a);
 	a = init_builtin(builtin_type, "keyword->string", 1, &keyword_to_string, a);
 	a = init_builtin(builtin_type, "string->symbol", 1, &string_to_symbol, a);
-	a = init_builtin(builtin_type, "make-symbol", 1, &make_symbol, a);
+	a = init_builtin(builtin_type, "make-symbol", 1, &make_symbol_, a);
 	a = init_builtin(builtin_type, "string->list", 1, &string_to_list, a);
 	a = init_builtin(builtin_type, "list->string", 1, &list_to_string, a);
 	a = init_builtin(builtin_type, "read-string", -1, &read_string, a);
