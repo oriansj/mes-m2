@@ -139,9 +139,9 @@
       (if (null? (cdr rest)) (car rest)
           (append2 (car rest) (apply append (cdr rest))))))
 
-(define %prefix (getenv "MES_PREFIX"))
+;;(define %prefix (getenv "MES_PREFIX")) hmm?
 (define %moduledir
-  (if (not %prefix) "/usr/local/share/mes/module/"
+  (if (not %prefix) "mes/module/"
       (list->string
        (append (string->list %prefix) (string->list "/module/" )))))
 

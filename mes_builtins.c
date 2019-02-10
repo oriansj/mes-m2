@@ -329,8 +329,8 @@ SCM mes_symbols()  ///((internal))
 	a = acons(cell_symbol_boot_module, cell_symbol_boot_module, a);
 	a = acons(cell_symbol_current_module, cell_symbol_current_module, a);
 	a = acons(cell_symbol_call_with_current_continuation, cell_call_with_current_continuation, a);
-	a = acons(cell_symbol_mes_version, GetSCM2(make_string_("0.19"), g_cells), a);
-	a = acons(cell_symbol_mes_prefix, GetSCM2(make_string_("/usr/local"), g_cells), a);
+	a = acons(cell_symbol_mes_version, GetSCM2(make_string_("git"), g_cells), a); // FIXME
+	a = acons(cell_symbol_mes_prefix, GetSCM2(make_string_("mes"), g_cells), a);  // FIXME
 	a = acons(cell_type_bytes, make_cell__ (TNUMBER, 0, (long)TBYTES), a);
 	a = acons(cell_type_char, make_cell__ (TNUMBER, 0, (long)TCHAR), a);
 	a = acons(cell_type_closure, make_cell__ (TNUMBER, 0, (long)TCLOSURE), a);
