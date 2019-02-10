@@ -84,15 +84,15 @@ struct scm* module_printer(SCM module)
 {
 	//module = m0;
 	fdputs("#<", __stdout);
-	display_(GetSCM2(bad2good(struct_ref_(module, 2), g_cells), g_cells));
+	display_(GetSCM2(struct_ref_(module, 2), g_cells));
 	fdputc(' ', __stdout);
 	fdputs("name: ", __stdout);
-	display_(GetSCM2(bad2good(struct_ref_(module, 3), g_cells), g_cells));
+	display_(GetSCM2(struct_ref_(module, 3), g_cells));
 	fdputc(' ', __stdout);
 	fdputs("locals: ", __stdout);
-	display_(GetSCM2(bad2good(struct_ref_(module, 4), g_cells), g_cells));
+	display_(GetSCM2(struct_ref_(module, 4), g_cells));
 	fdputc(' ', __stdout);
-	SCM table = GetSCM2(bad2good(struct_ref_(module, 5), g_cells), g_cells);
+	SCM table = GetSCM2(struct_ref_(module, 5), g_cells);
 	fdputs("globals:\n  ", __stdout);
 	display_(table);
 	fdputc('>', __stdout);
@@ -108,7 +108,7 @@ struct scm* module_variable(SCM module, SCM name)
 	if(x == cell_f)
 	{
 		module = m0;
-		SCM globals = GetSCM2(bad2good(struct_ref_(module, 5), g_cells), g_cells);
+		SCM globals = GetSCM2(struct_ref_(module, 5), g_cells);
 		x = GetSCM2(bad2good(hashq_get_handle(globals, name, cell_f), g_cells), g_cells);
 	}
 
@@ -130,6 +130,6 @@ struct scm* module_ref(SCM module, SCM name)
 struct scm* module_define_x(SCM module, SCM name, SCM value)
 {
 	module = m0;
-	SCM globals = GetSCM2(bad2good(struct_ref_(module, 5), g_cells), g_cells);
+	SCM globals = GetSCM2(struct_ref_(module, 5), g_cells);
 	return hashq_set_x(globals, name, value);
 }

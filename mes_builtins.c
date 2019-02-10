@@ -424,22 +424,22 @@ struct scm* init_builtin(struct scm* builtin_type, char const* name, int arity, 
 
 struct scm* builtin_name(SCM builtin)
 {
-	return struct_ref_(builtin, 3);
+	return good2bad(struct_ref_(builtin, 3), g_cells);
 }
 
 struct scm* builtin_arity(SCM builtin)
 {
-	return struct_ref_(builtin, 4);
+	return good2bad(struct_ref_(builtin, 4), g_cells);
 }
 
 void* builtin_function(SCM builtin)
 {
-	return (void*)g_cells[GetSCM2(bad2good(struct_ref_(builtin, 5), g_cells), g_cells)].rdc;
+	return (void*)g_cells[GetSCM2(struct_ref_(builtin, 5), g_cells)].rdc;
 }
 
 SCM builtin_p(SCM x)
 {
-	return (g_cells[x].type == TSTRUCT && GetSCM2(bad2good(struct_ref_(x, 2), g_cells), g_cells) == cell_symbol_builtin) ? cell_t : cell_f;
+	return (g_cells[x].type == TSTRUCT && GetSCM2(struct_ref_(x, 2), g_cells) == cell_symbol_builtin) ? cell_t : cell_f;
 }
 
 struct scm* builtin_printer(SCM builtin)
