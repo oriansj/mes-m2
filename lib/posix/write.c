@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2017 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -17,20 +17,22 @@
  * You should have received a copy of the GNU General Public License
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MES_ENDIAN_H
-#define __MES_ENDIAN_H 1
 
-#if WITH_GLIBC
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#undef __MES_ENDIAN_H
-#include_next <endian.h>
+#include <errno.h>
+#include <libmes-mini.h>
 
-#else // ! WITH_GLIBC
-#define	__LITTLE_ENDIAN 1234
-#define	__BIG_ENDIAN 4321
-#define __BYTE_ORDER __LITTLE_ENDIAN
-#endif // ! WITH_GLIBC
+ssize_t write ();
 
-#endif // __MES_ENDIAN_H
+ssize_t
+write (int filedes, void const *buffer, size_t size)
+{
+  int r = _write (filedes, buffer, size);
+  if (r < 0)
+    {
+      errno = -r;
+      r = -1;
+    }
+  else
+    errno = 0;
+  return r;
+}
