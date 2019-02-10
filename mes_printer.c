@@ -379,7 +379,7 @@ struct scm* write_byte(SCM x)  ///((arity . n))
 	if(1 == fd) fd = __stdout;
 	if(2 == fd) fd = __stderr;
 
-	write(fd, c->string, 1);
+	write(fd, &c->string, 1);
 	assert(c->type == TNUMBER || c->type == TCHAR);
 	return good2bad(c, g_cells);
 }

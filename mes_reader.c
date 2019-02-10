@@ -74,7 +74,7 @@ int reader_read_line_comment(int c)
 
 int reader_end_of_word_p(int c)
 {
-	return in_set(c, "\";() \t\n\r");
+	return in_set(c, "\";() \t\n\r") || c == EOF;
 }
 
 struct scm* reader_read_identifier_or_number(int c)
@@ -511,8 +511,7 @@ struct scm* reader_read_character()
 
 int escape_lookup(int c)
 {
-	if(c == '\\' || c == '"') return c;
-	else if(c == '0') return '\0';
+	if(c == '0') return '\0';
 	else if(c == 'a') return '\a';
 	else if(c == 'b') return '\b';
 	else if(c == 't') return '\t';
@@ -522,10 +521,8 @@ int escape_lookup(int c)
 	else if(c == 'r') return '\r';
 	else if(c == 'e') return '\e';
 	else if(c == 'x') return bad2good(reader_read_hex(), g_cells)->value;
-
-	/* Deal with really bad input */
-	fprintf(stderr, "Unknown escape recieved: %c Unable to process\n", c);
-	exit(EXIT_FAILURE);
+	/* Any other escaped character is itself */
+	else return c;
 }
 
 struct scm* reader_read_string()

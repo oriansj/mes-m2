@@ -316,6 +316,7 @@ struct scm* open_input_string(SCM string)
 
 struct scm* set_current_input_port(SCM port)
 {
+	struct scm* prev = current_input_port();
 	struct scm* x = Getstructscm2(port, g_cells);
 
 	if(x->type == TNUMBER)
@@ -327,7 +328,7 @@ struct scm* set_current_input_port(SCM port)
 		__stdin = x->rac;
 	}
 
-	return current_input_port();
+	return prev;
 }
 
 struct scm* current_output_port()
@@ -392,7 +393,6 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 {
 	struct scm* f = Getstructscm2(file_name, g_cells);
 	struct scm* a = Getstructscm2(args, g_cells);
-	struct scm* aa = bad2good(a->car, g_cells);
 	char *c_argv[1000];           // POSIX minimum 4096
 	int i = 0;
 
@@ -406,6 +406,7 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 
 	while(a != &g_cells[cell_nil])
 	{
+		struct scm* aa = bad2good(a->car, g_cells);
 		assert(aa->type == TSTRING);
 		c_argv[i] = (char*)&g_cells[aa->rdc].rdc;
 		i = i + 1;
