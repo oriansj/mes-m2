@@ -22,29 +22,20 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-#define TYPE(x) g_cells[x].type
-#define STRING(x) g_cells[x].rdc
-#define VALUE(x) g_cells[x].value
-#define CAR(x) g_cells[x].rac
-#define CDR(x) g_cells[x].rdc
-#define LENGTH(x) g_cells[x].length
-
-struct scm* make_vector__(long k);
 struct scm* vector_ref_(SCM x, long i);
+struct scm* struct_ref_(SCM x, long i);
+
+SCM make_cell__(long type, SCM car, SCM cdr);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
+struct scm* make_string_(char const* s);
+struct scm* make_vector__(long k);
+
 void vector_set_x_(SCM x, long i, SCM e);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
-struct scm* make_string_(char const* s);
-SCM make_cell__(long type, SCM car, SCM cdr);
-struct scm* struct_ref_(SCM x, long i);
 SCM assq (SCM x, SCM a);
 SCM assoc (SCM x, SCM a);
 SCM acons (SCM key, SCM value, SCM alist);
-int fdputs (char const* s, int fd);
-struct scm* display_ (SCM x);
-int fdputc (int c, int fd);
-SCM write_ (SCM x);
-struct scm* make_struct (SCM type, SCM fields, SCM printer);
 
 int hash_cstring(char const* s, long size)
 {
@@ -163,7 +154,7 @@ struct scm* hashq_set_x(SCM table, SCM key, SCM value)
 
 struct scm* hash_set_x(SCM table, SCM key, SCM value)
 {
-	long size = VALUE(GetSCM2(struct_ref_(table, 3), g_cells));
+	long size = struct_ref_(table, 3)->value;
 	unsigned hash = hash_(key, size);
 	SCM buckets = GetSCM2(struct_ref_(table, 4), g_cells);
 	SCM bucket = GetSCM2(vector_ref_(buckets, hash), g_cells);
@@ -177,45 +168,6 @@ struct scm* hash_set_x(SCM table, SCM key, SCM value)
 	bucket = acons(key, value, bucket);
 	vector_set_x_(buckets, hash, bucket);
 	return good2bad(Getstructscm2(value, g_cells), g_cells);
-}
-
-struct scm* hash_table_printer(struct scm* table)
-{
-	fdputs("#<", __stdout);
-	display_(GetSCM2(struct_ref_(GetSCM2(bad2good(table, g_cells), g_cells), 2), g_cells));
-	fdputc(' ', __stdout);
-	fdputs("size: ", __stdout);
-	display_(GetSCM2(struct_ref_(GetSCM2(bad2good(table, g_cells), g_cells), 3), g_cells));
-	fdputc(' ', __stdout);
-	SCM buckets = GetSCM2(struct_ref_(GetSCM2(bad2good(table, g_cells), g_cells), 4), g_cells);
-	fdputs("buckets: ", __stdout);
-
-	struct scm* ybuckets = Getstructscm2(buckets, g_cells);
-	for(int i = 0; i < ybuckets->length; i++)
-	{
-		struct scm* f = vector_ref_(buckets, i);
-
-		if(f != &table[cell_unspecified])
-		{
-			fdputc('[', __stdout);
-
-			while(f->type == TPAIR)
-			{
-				write_(GetSCM2(f->car->car, table));
-				f = f->cdr;
-
-				if(f->type == TPAIR)
-				{
-					fdputc(' ', __stdout);
-				}
-			}
-
-			fdputs("]\n  ", __stdout);
-		}
-	}
-
-	fdputc('>', __stdout);
-	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* make_hashq_type()  ///((internal))
