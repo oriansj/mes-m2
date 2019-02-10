@@ -48,7 +48,7 @@ struct scm* exit_(SCM x)  ///((name . "exit"))
 
 struct scm* make_frame_type()  ///((internal))
 {
-	return make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified);
+	return good2bad(make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified), g_cells);
 }
 
 struct scm* make_frame(long index)
@@ -61,16 +61,16 @@ struct scm* make_frame(long index)
 		procedure = cell_f;
 	}
 
-	return make_struct(GetSCM2(bad2good(make_frame_type(), g_cells), g_cells)
+	return good2bad(make_struct(GetSCM2(bad2good(make_frame_type(), g_cells), g_cells)
 	                  , cons(cell_symbol_frame, cons(procedure, cell_nil))
-	                  , GetSCM2(cstring_to_symbol("frame-printer"), g_cells));
+	                  , GetSCM2(cstring_to_symbol("frame-printer"), g_cells)), g_cells);
 }
 
 struct scm* make_stack_type()  ///((internal))
 {
-	return make_struct(cell_symbol_record_type
+	return good2bad(make_struct(cell_symbol_record_type
 	                  , cons(cell_symbol_stack, cons(cons(GetSCM2(cstring_to_symbol("frames"), g_cells), cell_nil), cell_nil))
-	                  , cell_unspecified);
+	                  , cell_unspecified), g_cells);
 }
 
 struct scm* make_stack()  ///((arity . n))
@@ -88,7 +88,7 @@ struct scm* make_stack()  ///((arity . n))
 	SCM values = cell_nil;
 	values = cons(frames, values);
 	values = cons(cell_symbol_stack, values);
-	return make_struct(stack_type, values, cell_unspecified);
+	return good2bad(make_struct(stack_type, values, cell_unspecified), g_cells);
 }
 
 struct scm* stack_length(SCM stack)
