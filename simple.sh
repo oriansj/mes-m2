@@ -34,7 +34,7 @@ MES_DEBUG=4 MES_PREFIX=mes MES=out-glibc/mes tests/base.test
 MES_DEBUG=3 MES_ARENA=10000 MES_MAX_ARENA=10000 MES_BOOT=gc-test.scm out-glibc/mes
 
 # MesCC test
-MES_DEBUG=2 MES_PREFIX=mes MES=../mes-m2/out-glibc/mes sh -x scripts/mescc scaffold/hello.c
+MES_DEBUG=2 MES_PREFIX=mes MES=out-glibc/mes sh -x scripts/mescc scaffold/hello.c
 set +e
 scaffold/hello
 r=$?

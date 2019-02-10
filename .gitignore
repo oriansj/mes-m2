@@ -8,6 +8,7 @@
 *.x86_64-mes-gcc-log
 *.x86_64-mes-gcc-out
 *.o
+*.go
 *~
 /build.log
 /src/*.mes.environment.h
