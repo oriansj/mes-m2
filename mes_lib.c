@@ -25,14 +25,16 @@
 // CONSTANT FRAME_SIZE 5
 #define FRAME_SIZE 5
 
-struct scm* struct_ref_(SCM x, long i);
 SCM cons (SCM x, SCM y);
-struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* cstring_to_symbol(char const *s);
-struct scm* make_vector__(long k);
 void vector_set_x_(SCM x, long i, SCM e);
+struct scm* struct_ref_(SCM x, long i);
 struct scm* vector_length (struct scm* x);
+
 SCM make_cell__(SCM type, SCM car, SCM cdr);
+struct scm* make_vector__(long k);
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
+
 struct scm* string_equal_p (SCM a, SCM b);
 struct scm* vector_equal_p(SCM a, SCM b);
 struct scm* eq_p (SCM x, SCM y);
@@ -91,12 +93,12 @@ struct scm* make_stack()  ///((arity . n))
 
 struct scm* stack_length(SCM stack)
 {
-	return vector_length(struct_ref_(stack, 3));
+	return vector_length(good2bad(struct_ref_(stack, 3), g_cells));
 }
 
 struct scm* stack_ref(SCM stack, SCM index)
 {
-	struct scm* y = bad2good(struct_ref_(stack, 3), g_cells);
+	struct scm* y = struct_ref_(stack, 3);
 	assert(y->type == TVECTOR);
 	assert(index < y->length);
 	struct scm* e = &g_cells[y->vector + index];
