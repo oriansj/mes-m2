@@ -47,6 +47,9 @@
                         (search-path (string-split (getenv "PATH") #\:) file-name))))
     (execl executable args)))
 
+(define (force-output . port)
+  *unspecified*)
+
 (define (system* file-name . args)
   (let ((pid (primitive-fork)))
     (cond ((zero? pid)

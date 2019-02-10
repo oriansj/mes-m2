@@ -31,9 +31,6 @@
 (mes-use-module (srfi srfi-16))
 (mes-use-module (mes display))
 
-(define (force-output . port)
-  *unspecified*)
-
 (define (drain-input port) (read-string))
 
 (define (read-line . rest)
