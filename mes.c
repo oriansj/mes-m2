@@ -21,81 +21,54 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include <fcntl.h>
 
 #define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
 #define VALUE(x) g_cells[x].rdc
 #define VARIABLE(x) g_cells[x].rac
-#define STRING(x) g_cells[x].rdc
-#define LENGTH(x) g_cells[x].rac
-#define VECTOR(x) g_cells[x].rdc
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 #define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_MACRO(name, x) make_cell__ (TMACRO, x, STRING (name))
-#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
-#define MAKE_CONTINUATION(n) make_cell__ (TCONTINUATION, n, g_stack)
 #define CAAR(x) CAR (CAR (x))
 #define CADR(x) CAR (CDR (x))
 #define CDAR(x) CDR (CAR (x))
-#define CDDR(x) CDR (CDR (x))
-#define CADAR(x) CAR (CDR (CAR (x)))
-#define CADDR(x) CAR (CDR (CDR (x)))
-#define CDADAR(x) CAR (CDR (CAR (CDR (x))))
 #define MACRO(x) g_cells[x].rac
-#define CLOSURE(x) g_cells[x].rdc
-#define CONTINUATION(x) g_cells[x].rdc
 
-SCM ARENA_SIZE;
-SCM MAX_ARENA_SIZE;
-SCM STACK_SIZE;
-
-SCM JAM_SIZE;
-SCM GC_SAFETY;
-
-int MAX_STRING;
-char *g_buf = 0;
-
-char *g_arena = 0;
-int g_debug;
-SCM g_free = 0;
 
 /* Imported Functions */
-char *itoa (int number);
-int fdputc (int c, int fd);
-int fdputs (char const* s, int fd);
-int eputs (char const* s);
-struct scm* make_string(char const* s, int length);
-struct scm* mes_builtins(struct scm* a);
-struct scm* apply_builtin(SCM fn, SCM x);
-struct scm* cstring_to_symbol(char const *s);
-struct scm* make_hash_table_(SCM size);
-struct scm* make_initial_module(SCM a);
-struct scm* gc_check ();
 SCM gc ();
+void initialize_memory();
+char *itoa (int number);
+struct scm* mes_builtins(struct scm* a);
+struct scm* cstring_to_symbol(char const *s);
+
 struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
 struct scm* hashq_set_x (SCM table, SCM key, SCM value);
-struct scm* hash_set_x (SCM table, SCM key, SCM value);
-struct scm* display_ (SCM x);
+SCM equal2_p (SCM a, SCM b);
+struct scm* string_equal_p (SCM a, SCM b);
+SCM reverse_x_ (SCM x, SCM t);
+SCM builtin_p (SCM x);
+int eputs (char const* s);
 struct scm* display_error_ (SCM x);
 struct scm* write_error_ (SCM x);
-SCM equal2_p (SCM a, SCM b);
-SCM reverse_x_ (SCM x, SCM t);
-struct scm* builtin_arity (SCM builtin);
-SCM builtin_p (SCM x);
 struct scm* module_printer (SCM module);
 struct scm* module_variable (SCM module, SCM name);
 struct scm* module_ref (SCM module, SCM name);
-struct scm* module_define_x (SCM module, SCM name, SCM value);
-SCM open_input_file (SCM file_name);
-SCM set_current_input_port (SCM port);
 SCM read_input_file_env ();
-struct scm* string_equal_p (SCM a, SCM b);
-struct scm* symbol_to_string (SCM symbol);
 SCM init_time(SCM a);
+struct scm* module_define_x(SCM module, SCM name, SCM value);
+
+struct scm* make_hashq_type();
+struct scm* make_module_type();
+struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM make_cell__(long type, SCM car, SCM cdr);
+struct scm* make_string_(char const* s);
+struct scm* make_string(char const* s, int length);
+struct scm* make_hash_table_(SCM size);
+SCM mes_g_stack(SCM a);
+
 SCM eval_apply();
+SCM mes_symbols();
 
 /* M2-Planet Imports */
 int numerate_string(char *a);
@@ -561,7 +534,7 @@ SCM set_env_x(SCM x, SCM e, SCM a)
 	}
 	else
 	{
-		p = assert_defined(x, GetSCM2(bad2good(module_variable(a, x), g_cells), g_cells));
+		p = assert_defined(x, GetSCM2(module_variable(a, x), g_cells));
 	}
 
 	if(TYPE(p) != TPAIR)
@@ -724,7 +697,7 @@ SCM expand_variable_(SCM x, SCM formals, int top_p)  ///((internal))
 			        && CAR(x) != cell_symbol_primitive_load
 			        && !formal_p(CAR(x), formals))
 			{
-				SCM v = GetSCM2(bad2good(module_variable(r0, CAR(x)), g_cells), g_cells);
+				SCM v = GetSCM2(module_variable(r0, CAR(x)), g_cells);
 
 				if(v != cell_f)
 				{
@@ -817,7 +790,45 @@ int get_env_value(char* c, int alt)
 	return numerate_string(s);
 }
 
-SCM mes_environment(int argc, char *argv[]);
+SCM mes_environment(int argc, char *argv[])
+{
+	SCM a = mes_symbols();
+	a = acons(cell_symbol_compiler, GetSCM2(make_string_("gnuc"), g_cells), a);
+	a = acons(cell_symbol_arch, GetSCM2(make_string_("x86_64"), g_cells), a);
+
+	struct scm* lst = Getstructscm2(cell_nil, g_cells);
+	for(int i = argc - 1; i >= 0; i--)
+	{
+		lst = cons2(make_string_(argv[i]), lst);
+	}
+
+	a = acons(cell_symbol_argv, GetSCM2(lst, g_cells), a);
+	return mes_g_stack(a);
+}
+
+struct scm* make_initial_module(SCM a)  ///((internal))
+{
+	SCM module_type = GetSCM2(bad2good(make_module_type(), g_cells), g_cells);
+	a = acons(cell_symbol_module, module_type, a);
+	SCM hashq_type = GetSCM2(bad2good(make_hashq_type(), g_cells), g_cells);
+	a = acons(cell_symbol_hashq_table, hashq_type, a);
+	struct scm* b = Getstructscm2(a, g_cells);
+	SCM name = cons(GetSCM2(cstring_to_symbol("boot"), g_cells), cell_nil);
+	SCM globals = GetSCM2(bad2good(make_hash_table_(0), g_cells), g_cells);
+	SCM values = cons(cell_symbol_module, cons(name, cons(cell_nil, cons(globals, cell_nil))));
+	SCM module = GetSCM2(make_struct(module_type, values, GetSCM2(cstring_to_symbol("module-printer"), g_cells)), g_cells);
+	r0 = cons(b->rac, cons(bad2good(b->cdr, g_cells)->rac, cell_nil));
+	m0 = module;
+
+	while(b->type == TPAIR)
+	{
+		module_define_x(module, bad2good(b->car, g_cells)->rac, bad2good(b->car, g_cells)->rdc);
+		b = bad2good(b->cdr, g_cells);
+	}
+
+	return good2bad(Getstructscm2(module, g_cells), g_cells);
+}
+
 int main(int argc, char *argv[])
 {
 	__ungetc_buf = calloc((RLIMIT_NOFILE + 1), sizeof(int));
@@ -832,28 +843,15 @@ int main(int argc, char *argv[])
 	g_macros = 0;
 	g_ports = 1;
 	g_cells = 0;
-	g_news = 0;
 	__stdin = STDIN;
 	__stdout = STDOUT;
 	__stderr = STDERR;
 
 	g_debug = get_env_value("MES_DEBUG", 0);
 
-	if(g_debug > 1)
-	{
-		eputs(";;; MODULEDIR=");
-		eputs("module");
-		eputs("\n");
-	}
+	if(g_debug > 1) eputs(";;; MODULEDIR=module\n");
 
-	MAX_ARENA_SIZE = get_env_value("MES_MAX_ARENA", 100000000);
-	ARENA_SIZE = get_env_value("MES_ARENA", 10000000);
-	JAM_SIZE = ARENA_SIZE / 10;
-	JAM_SIZE = get_env_value("MES_JAM", 20000);
-	GC_SAFETY = ARENA_SIZE / 100;
-	GC_SAFETY = get_env_value("MES_SAFETY", 2000);
-	STACK_SIZE = get_env_value("MES_STACK", 20000);
-	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
+	initialize_memory();
 
 	SCM a = mes_environment(argc, argv);
 	a = GetSCM2(mes_builtins(Getstructscm2(a, g_cells)), g_cells);
@@ -894,45 +892,16 @@ int main(int argc, char *argv[])
 
 	if(g_debug)
 	{
-		if(g_debug > 4)
-		{
-			module_printer(m0);
-		}
+		if(g_debug > 4) module_printer(m0);
 
 		eputs("\ngc stats: [");
 		eputs(itoa(g_free));
-		MAX_ARENA_SIZE = 0;
-		gc(g_stack);
+		gc();
 		eputs(" => ");
 		eputs(itoa(g_free));
 		eputs("]\n");
 
-		if(g_debug > 4)
-		{
-			module_printer(m0);
-		}
-
-		eputs("\n");
-		gc(g_stack);
-		eputs(" => ");
-		eputs(itoa(g_free));
-		eputs("]\n");
-
-		if(g_debug > 4)
-		{
-			module_printer(m0);
-		}
-
-		eputs("\n");
-		gc(g_stack);
-		eputs(" => ");
-		eputs(itoa(g_free));
-		eputs("]\n");
-
-		if(g_debug > 4)
-		{
-			module_printer(m0);
-		}
+		if(g_debug > 4) module_printer(m0);
 
 		if(g_debug > 3)
 		{

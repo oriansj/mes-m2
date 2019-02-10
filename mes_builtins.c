@@ -105,7 +105,7 @@ struct scm* builtin_printer(SCM builtin);
 // src/module.mes
 struct scm* make_module_type ();
 struct scm* module_printer (SCM module);
-struct scm* module_variable (SCM module, SCM name);
+struct scm* module_variable_ (SCM module, SCM name);
 struct scm* module_ref (SCM module, SCM name);
 struct scm* module_define_x (SCM module, SCM name, SCM value);
 // src/posix.mes
@@ -188,34 +188,7 @@ struct scm* struct_ref_(SCM x, SCM i);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
 int eputs (char const* s);
-
-
-void gc_init_cells()  ///((internal))
-{
-	SCM arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
-	void *p = malloc(arena_bytes + STACK_SIZE * sizeof(SCM));
-	g_cells = (struct scm *)p;
-	g_stack_array = (struct scm**)((char*)p + arena_bytes);
-	g_cells[0].type = TVECTOR;
-	g_cells[0].length = 1000;
-	g_cells[0].vector = 0;
-	g_cells++;
-	g_cells[0].type = TCHAR;
-	g_cells[0].value = 'c';
-	// FIXME: remove MES_MAX_STRING, grow dynamically
-	g_buf = (char*)malloc(MAX_STRING);
-}
-
-SCM mes_g_stack(SCM a)  ///((internal))
-{
-	//g_stack = g_free + ARENA_SIZE;
-	g_stack = STACK_SIZE;
-	r0 = a;
-	r1 = make_cell__ (TCHAR, 0, 0);
-	r2 = make_cell__ (TCHAR, 0, 0);
-	r3 = make_cell__ (TCHAR, 0, 0);
-	return r0;
-}
+void gc_init_cells();
 
 void init_symbol(SCM x, SCM type, char const* name)
 {
@@ -378,22 +351,6 @@ SCM mes_symbols()  ///((internal))
 	a = acons(cell_type_broken_heart, make_cell__ (TNUMBER, 0, (long)TBROKEN_HEART), a);
 	a = acons(cell_closure, a, a);
 	return a;
-}
-
-SCM mes_environment(int argc, char *argv[])
-{
-	SCM a = mes_symbols();
-	a = acons(cell_symbol_compiler, GetSCM2(make_string_("gnuc"), g_cells), a);
-	a = acons(cell_symbol_arch, GetSCM2(make_string_("x86_64"), g_cells), a);
-
-	struct scm* lst = Getstructscm2(cell_nil, g_cells);
-	for(int i = argc - 1; i >= 0; i--)
-	{
-		lst = cons2(make_string_(argv[i]), lst);
-	}
-
-	a = acons(cell_symbol_argv, GetSCM2(lst, g_cells), a);
-	return mes_g_stack(a);
 }
 
 SCM make_builtin(struct scm* builtin_type, SCM name, SCM arity, SCM function)
@@ -607,7 +564,7 @@ struct scm* mes_builtins(struct scm* a)  ///((internal))
 	/* src/module.mes */
 	a = init_builtin(builtin_type, "make-module-type", 0, &make_module_type, a);
 	a = init_builtin(builtin_type, "module-printer", 1, &module_printer, a);
-	a = init_builtin(builtin_type, "module-variable", 2, &module_variable, a);
+	a = init_builtin(builtin_type, "module-variable", 2, &module_variable_, a);
 	a = init_builtin(builtin_type, "module-ref", 2, &module_ref, a);
 	a = init_builtin(builtin_type, "module-define!", 3, &module_define_x, a);
 	/* src/posix.mes */

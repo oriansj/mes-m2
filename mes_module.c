@@ -47,36 +47,6 @@ struct scm* make_module_type()  ///(internal))
 	return good2bad(make_struct(record_type, fields, cell_unspecified), g_cells);
 }
 
-struct scm* make_initial_module(SCM a)  ///((internal))
-{
-	SCM module_type = GetSCM2(bad2good(make_module_type(), g_cells), g_cells);
-	a = acons(cell_symbol_module, module_type, a);
-	SCM hashq_type = GetSCM2(bad2good(make_hashq_type(), g_cells), g_cells);
-	a = acons(cell_symbol_hashq_table, hashq_type, a);
-	struct scm* b = Getstructscm2(a, g_cells);
-	SCM name = cons(GetSCM2(cstring_to_symbol("boot"), g_cells), cell_nil);
-	SCM globals = GetSCM2(bad2good(make_hash_table_(0), g_cells), g_cells);
-	SCM locals = cell_nil;
-	SCM values = cell_nil;
-	values = cons(globals, values);
-	values = cons(locals, values);
-	values = cons(name, values);
-	values = cons(cell_symbol_module, values);
-	SCM module = GetSCM2(make_struct(module_type, values, GetSCM2(cstring_to_symbol("module-printer"), g_cells)), g_cells);
-	r0 = cell_nil;
-	r0 = cons(bad2good(b->cdr, g_cells)->rac, r0);
-	r0 = cons(b->rac, r0);
-	m0 = module;
-
-	while(b->type == TPAIR)
-	{
-		module_define_x(module, bad2good(b->car, g_cells)->rac, bad2good(b->car, g_cells)->rdc);
-		b = bad2good(b->cdr, g_cells);
-	}
-
-	return good2bad(Getstructscm2(module, g_cells), g_cells);
-}
-
 struct scm* module_variable(SCM module, SCM name)
 {
 	//SCM locals = struct_ref_ (module, 3);
@@ -90,12 +60,18 @@ struct scm* module_variable(SCM module, SCM name)
 		x = GetSCM2(bad2good(hashq_get_handle(globals, name, cell_f), g_cells), g_cells);
 	}
 
-	return good2bad(Getstructscm2(x, g_cells), g_cells);
+	return Getstructscm2(x, g_cells);
 }
+
+struct scm* module_variable_(SCM module, SCM name)
+{
+	return good2bad(module_variable(module, name), g_cells);
+}
+
 
 struct scm* module_ref(SCM module, SCM name)
 {
-	struct scm* y = bad2good(module_variable(module, name), g_cells);
+	struct scm* y = module_variable(module, name);
 
 	if(GetSCM2(y, g_cells) == cell_f)
 	{

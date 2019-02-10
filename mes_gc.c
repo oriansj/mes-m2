@@ -31,6 +31,98 @@ SCM write_error_ (SCM x);
 SCM gc_push_frame();
 SCM gc_pop_frame();
 struct scm* vector_entry(SCM x);
+int get_env_value(char* c, int alt);
+SCM make_cell__(long type, SCM car, SCM cdr);
+struct scm* make_stack_type();
+struct scm* make_struct(SCM type, struct scm* fields, SCM printer);
+struct scm* make_frame_type();
+SCM cons (SCM x, SCM y);
+struct scm* make_vector__(long k);
+void vector_set_x_(SCM x, long i, SCM e);
+
+SCM GC_SAFETY;
+SCM ARENA_SIZE;
+SCM MAX_ARENA_SIZE;
+SCM JAM_SIZE;
+SCM STACK_SIZE;
+// CONSTANT FRAME_SIZE 5
+#define FRAME_SIZE 5
+
+
+struct scm *g_news;
+
+void initialize_memory()
+{
+	g_news = 0;
+	MAX_ARENA_SIZE = get_env_value("MES_MAX_ARENA", 100000000);
+	ARENA_SIZE = get_env_value("MES_ARENA", 10000000);
+	JAM_SIZE = ARENA_SIZE / 10;
+	JAM_SIZE = get_env_value("MES_JAM", 20000);
+	GC_SAFETY = ARENA_SIZE / 100;
+	GC_SAFETY = get_env_value("MES_SAFETY", 2000);
+	STACK_SIZE = get_env_value("MES_STACK", 20000);
+	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
+}
+
+void gc_init_cells()  ///((internal))
+{
+	SCM arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
+	void *p = malloc(arena_bytes + STACK_SIZE * sizeof(SCM));
+	g_cells = (struct scm *)p;
+	g_stack_array = (struct scm**)((char*)p + arena_bytes);
+	g_cells[0].type = TVECTOR;
+	g_cells[0].length = 1000;
+	g_cells[0].vector = 0;
+	g_cells++;
+	g_cells[0].type = TCHAR;
+	g_cells[0].value = 'c';
+	// FIXME: remove MES_MAX_STRING, grow dynamically
+	g_buf = (char*)malloc(MAX_STRING);
+}
+
+SCM mes_g_stack(SCM a)  ///((internal))
+{
+	g_stack = STACK_SIZE;
+	r0 = a;
+	r1 = make_cell__ (TCHAR, 0, 0);
+	r2 = make_cell__ (TCHAR, 0, 0);
+	r3 = make_cell__ (TCHAR, 0, 0);
+	return r0;
+}
+
+struct scm* make_frame(long index)
+{
+	long array_index = (STACK_SIZE - (index * FRAME_SIZE));
+	SCM procedure = (SCM) g_stack_array[array_index + FRAME_PROCEDURE];
+
+	if(!procedure)
+	{
+		procedure = cell_f;
+	}
+
+	return good2bad(make_struct((SCM) make_frame_type()
+	                  , (struct scm*) cons(cell_symbol_frame, cons(procedure, cell_nil))
+	                  , GetSCM2(cstring_to_symbol("frame-printer"), g_cells)), g_cells);
+}
+
+struct scm* make_stack()  ///((arity . n))
+{
+	SCM stack_type = GetSCM2(bad2good(make_stack_type(), g_cells), g_cells);
+	long size = (STACK_SIZE - g_stack) / FRAME_SIZE;
+	SCM frames = GetSCM2(make_vector__(size), g_cells);
+
+	for(long i = 0; i < size; i++)
+	{
+		SCM frame = GetSCM2(bad2good(make_frame(i), g_cells), g_cells);
+		vector_set_x_(frames, i, frame);
+	}
+
+	SCM values = cell_nil;
+	values = cons(frames, values);
+	values = cons(cell_symbol_stack, values);
+	return good2bad(make_struct(stack_type, (struct scm*)values, cell_unspecified), g_cells);
+}
+
 
 size_t bytes_cells(size_t length)
 {
@@ -116,42 +208,6 @@ struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 	}
 
 	return Getstructscm2(make_cell__(TSTRUCT, size, v), g_cells);
-}
-
-
-struct scm* gc_up_arena()  ///((internal))
-{
-	long old_arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
-
-	if(ARENA_SIZE >> 1 < MAX_ARENA_SIZE >> 2)
-	{
-		ARENA_SIZE <<= 1;
-		JAM_SIZE <<= 1;
-		GC_SAFETY <<= 1;
-	}
-	else
-	{
-		ARENA_SIZE = MAX_ARENA_SIZE - JAM_SIZE;
-	}
-
-	long arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
-	char* p = realloc(g_cells - 1, arena_bytes + STACK_SIZE * sizeof(SCM));
-
-	if(!p)
-	{
-		eputs("realloc failed, g_free=");
-		eputs(itoa(g_free));
-		eputs(":");
-		eputs(itoa(ARENA_SIZE - g_free));
-		eputs("\n");
-		assert(0);
-		exit(EXIT_FAILURE);
-	}
-
-	g_cells = (struct scm*)p;
-	memcpy(p + arena_bytes, p + old_arena_bytes, STACK_SIZE * sizeof(SCM));
-	g_cells++;
-	return NULL;
 }
 
 void gc_flip()  ///((internal))
@@ -392,8 +448,6 @@ void gc_()  ///((internal))
 			eputs(itoa(MAX_ARENA_SIZE));
 			eputs("]...");
 		}
-
-		gc_up_arena();
 	}
 
 	for(long i = g_free; i < g_symbol_max; i++)
