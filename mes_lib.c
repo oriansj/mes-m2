@@ -22,316 +22,35 @@
 #include "mes.h"
 #include "mes_constants.h"
 
+// CONSTANT FRAME_SIZE 5
 #define FRAME_SIZE 5
 
-#define TYPE(x) g_cells[x].type
-#define VARIABLE(x) g_cells[x].variable
-#define VALUE(x) g_cells[x].value
-#define LENGTH(x) g_cells[x].length
-#define REF(x) g_cells[x].ref
-#define STRUCT(x) g_cells[x].struc
-#define VECTOR(x) g_cells[x].vector
-#define CAR(x) g_cells[x].rac
-#define CDR(x) g_cells[x].rdc
-#define PORT(x) g_cells[x].port
-#define STRING(x) g_cells[x].rdc
-
-// CONSTANT STRUCT_TYPE 0
-#define STRUCT_TYPE 0
-// CONSTANT STRUCT_PRINTER 1
-#define STRUCT_PRINTER 1
-
-int g_depth;
-struct scm* fdisplay_(SCM, int, int);
-int fdputs(char const* s, int fd);
-int fdputc(int c, int fd);
-char *itoa (int number);
 struct scm* struct_ref_(SCM x, long i);
-SCM builtin_p (SCM x);
-SCM apply(SCM f, SCM x);
-SCM car (SCM x);
-SCM cdr (SCM x);
 SCM cons (SCM x, SCM y);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_vector__(long k);
 void vector_set_x_(SCM x, long i, SCM e);
 struct scm* vector_length (struct scm* x);
-struct scm* vector_ref (SCM x, SCM i);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* string_equal_p (SCM a, SCM b);
+struct scm* vector_equal_p(SCM a, SCM b);
 struct scm* eq_p (SCM x, SCM y);
-
-/* Imported Functions */
-void raw_print(char* s, int fd);
-void fd_print(char* s, int f);
-char* char_lookup(int c, int type);
-
-struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
-{
-	struct scm* y = Getstructscm2(x, g_cells);
-	fdputs(sep, fd);
-
-	if(g_depth == 0)
-	{
-		return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
-	}
-
-	g_depth = g_depth - 1;
-	int t = y->type;
-
-	if(t == TCHAR)
-	{
-		if(!write_p)
-		{
-			fdputc(y->value, fd);
-		}
-		else
-		{
-			fdputc('#', fd);
-			fd_print(char_lookup(y->value, TRUE), fd);
-		}
-	}
-	else if(t == TCLOSURE)
-	{
-		fdputs("#<closure ", fd);
-		struct scm* name = bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells);
-		SCM args = bad2good(bad2good(bad2good(y->cdr, g_cells)->cdr, g_cells)->car, g_cells)->rac;
-		display_helper(name->rac, 0, "", fd, 0);
-		fdputc(' ', fd);
-		display_helper(args, 0, "", fd, 0);
-		fdputs(">", fd);
-	}
-	else if(t == TMACRO)
-	{
-		fdputs("#<macro ", fd);
-		display_helper(y->rdc, cont, "", fd, 0);
-		fdputs(">", fd);
-	}
-	else if(t == TVARIABLE)
-	{
-		fdputs("#<variable ", fd);
-		display_helper(bad2good(y->car, g_cells)->rac, cont, "", fd, 0);
-		fdputs(">", fd);
-	}
-	else if(t == TNUMBER)
-	{
-		fdputs(itoa(y->value), fd);
-	}
-	else if(t == TPAIR)
-	{
-		if(!cont)
-		{
-			fdputs("(", fd);
-		}
-
-		if(y->rac == cell_circular && bad2good(y->cdr, g_cells)->rac != cell_closure)
-		{
-			fdputs("(*circ* . ", fd);
-			int i = 0;
-			y = bad2good(y->cdr, g_cells);
-
-			while(GetSCM2(y, g_cells) != cell_nil && i++ < 10)
-			{
-				fdisplay_(bad2good(y->car, g_cells)->rac, fd, write_p);
-				fdputs(" ", fd);
-				y = bad2good(y->cdr, g_cells);
-			}
-
-			fdputs(" ...)", fd);
-		}
-		else
-		{
-			if(GetSCM2(y, g_cells) != cell_nil)
-			{
-				fdisplay_(y->rac, fd, write_p);
-			}
-
-			if(bad2good(y->cdr, g_cells)->type == TPAIR)
-			{
-				display_helper(y->rdc, 1, " ", fd, write_p);
-			}
-			else if(y->rdc != cell_nil)
-			{
-				if(bad2good(y->cdr, g_cells)->type != TPAIR)
-				{
-					fdputs(" . ", fd);
-				}
-
-				fdisplay_(y->rdc, fd, write_p);
-			}
-		}
-
-		if(!cont)
-		{
-			fdputs(")", fd);
-		}
-	}
-	else if(t == TPORT)
-	{
-		fdputs("#<port ", fd);
-		fdputs(itoa(y->rac), fd);
-		fdputs(" ", fd);
-		char *s = (char*)bad2good(bad2good(y->cdr, g_cells)->cdr, g_cells)->rdc;
-		raw_print(s, fd);
-		fdputs("\">", fd);
-	}
-	else if(t == TKEYWORD)
-	{
-		fdputs("#:", fd);
-		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
-		raw_print(s, fd);
-	}
-	else if(t == TSTRING)
-	{
-		if(write_p) fdputc('"', fd);
-		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
-		fd_print(s, fd);
-		if(write_p) fdputc('"', fd);
-	}
-	else if(t == TSPECIAL)
-	{
-		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
-		raw_print(s, fd);
-	}
-	else if(t == TSYMBOL)
-	{
-		char *s = (char*)&bad2good(y->cdr, g_cells)->rdc;
-		raw_print(s, fd);
-	}
-	else if(t == TREF)
-	{
-		fdisplay_(REF(x), fd, write_p);
-	}
-	else if(t == TSTRUCT)
-	{
-		//SCM printer = STRUCT (x) + 1;
-		SCM printer = GetSCM2(bad2good(struct_ref_(x, STRUCT_PRINTER), g_cells), g_cells);
-
-		if(TYPE(printer) == TREF)
-		{
-			printer = REF(printer);
-		}
-
-		if(TYPE(printer) == TCLOSURE || builtin_p(printer) == cell_t)
-		{
-			apply(printer, cons(x, cell_nil));
-		}
-		else
-		{
-			fdputs("#<", fd);
-			fdisplay_(STRUCT(x), fd, write_p);
-
-			long size = LENGTH(x);
-
-			for(long i = 2; i < size; i++)
-			{
-				fdputc(' ', fd);
-				fdisplay_(STRUCT(x) + i, fd, write_p);
-			}
-
-			fdputc('>', fd);
-		}
-	}
-	else if(t == TVECTOR)
-	{
-		fdputs("#(", fd);
-
-		for(long i = 0; i < LENGTH(x); i++)
-		{
-			if(i)
-			{
-				fdputc(' ', fd);
-			}
-
-			fdisplay_(VECTOR(x) + i, fd, write_p);
-		}
-
-		fdputc(')', fd);
-	}
-	else
-	{
-		fdputs("<", fd);
-		fdputs(itoa(t), fd);
-		fdputs(":", fd);
-		fdputs(itoa(x), fd);
-		fdputs(">", fd);
-	}
-
-	return 0;
-}
-
-struct scm* display_(SCM x)
-{
-	g_depth = 5;
-	return display_helper(x, 0, "", __stdout, 0);
-}
-
-struct scm* display_error_(SCM x)
-{
-	g_depth = 5;
-	return display_helper(x, 0, "", __stderr, 0);
-}
-
-struct scm* display_port_(SCM x, SCM p)
-{
-	assert(TYPE(p) == TNUMBER);
-	return fdisplay_(x, VALUE(p), 0);
-}
-
-struct scm* write_(SCM x)
-{
-	g_depth = 5;
-	return display_helper(x, 0, "", __stdout, 1);
-}
-
-struct scm* write_error_(SCM x)
-{
-	g_depth = 5;
-	return display_helper(x, 0, "", __stderr, 1);
-}
-
-struct scm* write_port_(SCM x, SCM p)
-{
-	assert(TYPE(p) == TNUMBER);
-	return fdisplay_(x, VALUE(p), 1);
-}
-
-struct scm* fdisplay_(SCM x, int fd, int write_p)  ///((internal))
-{
-	g_depth = 5;
-	return display_helper(x, 0, "", fd, write_p);
-}
 
 struct scm* exit_(SCM x)  ///((name . "exit"))
 {
-	assert(TYPE(x) == TNUMBER);
-	exit(VALUE(x));
-}
-
-struct scm* frame_printer(SCM frame)
-{
-	fdputs("#<", __stdout);
-	display_(GetSCM2(bad2good(struct_ref_(frame, 2), g_cells), g_cells));
-	fdputc(' ', __stdout);
-	fdputs("procedure: ", __stdout);
-	display_(GetSCM2(bad2good(struct_ref_(frame, 3), g_cells), g_cells));
-	fdputc('>', __stdout);
-	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
+	struct scm* y = Getstructscm2(x, g_cells);
+	assert(y->type == TNUMBER);
+	exit(y->value);
 }
 
 struct scm* make_frame_type()  ///((internal))
 {
-	SCM record_type = cell_symbol_record_type; // FIXME
-	SCM fields = cell_nil;
-	fields = cons(cell_symbol_procedure, fields);
-	fields = cons(fields, cell_nil);
-	fields = cons(cell_symbol_frame, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified);
 }
 
 struct scm* make_frame(long index)
 {
-	SCM frame_type = GetSCM2(bad2good(make_frame_type(), g_cells), g_cells);
 	long array_index = (STACK_SIZE - (index * FRAME_SIZE));
 	SCM procedure = (SCM) g_stack_array[array_index + FRAME_PROCEDURE];
 
@@ -340,20 +59,16 @@ struct scm* make_frame(long index)
 		procedure = cell_f;
 	}
 
-	SCM values = cell_nil;
-	values = cons(procedure, values);
-	values = cons(cell_symbol_frame, values);
-	return make_struct(frame_type, values, GetSCM2(cstring_to_symbol("frame-printer"), g_cells));
+	return make_struct(GetSCM2(bad2good(make_frame_type(), g_cells), g_cells)
+	                  , cons(cell_symbol_frame, cons(procedure, cell_nil))
+	                  , GetSCM2(cstring_to_symbol("frame-printer"), g_cells));
 }
 
 struct scm* make_stack_type()  ///((internal))
 {
-	SCM record_type = cell_symbol_record_type; // FIXME
-	SCM fields = cell_nil;
-	fields = cons(GetSCM2(cstring_to_symbol("frames"), g_cells), fields);
-	fields = cons(fields, cell_nil);
-	fields = cons(cell_symbol_stack, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	return make_struct(cell_symbol_record_type
+	                  , cons(cell_symbol_stack, cons(cons(GetSCM2(cstring_to_symbol("frames"), g_cells), cell_nil), cell_nil))
+	                  , cell_unspecified);
 }
 
 struct scm* make_stack()  ///((arity . n))
@@ -376,112 +91,103 @@ struct scm* make_stack()  ///((arity . n))
 
 struct scm* stack_length(SCM stack)
 {
-	SCM frames = GetSCM2(bad2good(struct_ref_(stack, 3), g_cells), g_cells);
-	return vector_length(good2bad(Getstructscm2(frames, g_cells), g_cells));
+	return vector_length(struct_ref_(stack, 3));
 }
 
 struct scm* stack_ref(SCM stack, SCM index)
 {
-	SCM frames = GetSCM2(bad2good(struct_ref_(stack, 3), g_cells), g_cells);
-	return vector_ref(frames, index);
+	struct scm* y = bad2good(struct_ref_(stack, 3), g_cells);
+	assert(y->type == TVECTOR);
+	assert(index < y->length);
+	struct scm* e = &g_cells[y->vector + index];
+
+	if(e->type == TREF)
+	{
+		return Getstructscm2(e->ref, g_cells);
+	}
+
+	if(e->type == TCHAR)
+	{
+		return Getstructscm2(make_cell__ (TCHAR, 0, e->value), g_cells);
+	}
+
+	if(e->type == TNUMBER)
+	{
+		return Getstructscm2(make_cell__ (TNUMBER, 0, e->value), g_cells);
+	}
+
+	return e;
 }
 
 struct scm* xassq(SCM x, SCM a)  ///for speed in core only
 {
-	while(a != cell_nil && x != CDR (CAR (a)))
+	struct scm* a2 = Getstructscm2(a, g_cells);
+	while(GetSCM2(a2, g_cells) != cell_nil && x != bad2good(a2->car, g_cells)->rdc)
 	{
-		a = CDR(a);
+		a2 = bad2good(a2->cdr, g_cells);
 	}
 
-	return a != cell_nil ? good2bad(Getstructscm2(CAR(a), g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	return GetSCM2(a2, g_cells) != cell_nil ? a2->car : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* memq(SCM x, SCM a)
 {
-	int t = TYPE(x);
+	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* a2 = Getstructscm2(a, g_cells);
+	int t = y->type;
 
 	if(t == TCHAR || t == TNUMBER)
 	{
-		SCM v = VALUE(x);
+		SCM v = y->value;
 
-		while(a != cell_nil && v != VALUE(CAR(a)))
+		while(GetSCM2(a2, g_cells) != cell_nil && v != bad2good(a2->car, g_cells)->value)
 		{
-			a = CDR(a);
+			a2 = bad2good(a2->cdr, g_cells);
 		}
 	}
 	else if(t == TKEYWORD)
 	{
-		while(a != cell_nil && (TYPE(CAR(a)) != TKEYWORD || GetSCM2(bad2good(string_equal_p(x, CAR(a)), g_cells), g_cells) == cell_f))
+		while(GetSCM2(a2, g_cells) != cell_nil && (bad2good(a2->car, g_cells)->type != TKEYWORD || GetSCM2(bad2good(string_equal_p(x, a2->rac), g_cells), g_cells) == cell_f))
 		{
-			a = CDR(a);
+			a2 = bad2good(a2->cdr, g_cells);
 		}
 	}
 	else
 	{
-		while(a != cell_nil && x != CAR(a))
+		while(GetSCM2(a2, g_cells) != cell_nil && x != a2->rac)
 		{
-			a = CDR(a);
+			a2 = bad2good(a2->cdr, g_cells);
 		}
 	}
 
-	return a != cell_nil ? good2bad(Getstructscm2(a, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	return GetSCM2(a2, g_cells) != cell_nil ? good2bad(a2, g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* equal2_p(SCM a, SCM b)
 {
-equal2:
+	struct scm* a2 = Getstructscm2(a, g_cells);
+	struct scm* b2 = Getstructscm2(b, g_cells);
+	struct scm* tee = good2bad(Getstructscm2(cell_t, g_cells), g_cells);
 
 	if(a == b)
 	{
-		return good2bad(Getstructscm2(cell_t, g_cells), g_cells);
+		return tee;
 	}
 
-	if(TYPE(a) == TPAIR && TYPE(b) == TPAIR)
+	if(a2->type == TPAIR && b2->type == TPAIR)
 	{
-		if(equal2_p(CAR(a), CAR(b)) == good2bad(Getstructscm2(cell_t, g_cells), g_cells))
-		{
-			a = CDR(a);
-			b = CDR(b);
-			goto equal2;
-		}
-
+		if((tee == equal2_p(a2->rac, b2->rac)) && (tee == equal2_p(a2->rdc, b2->rdc))) return tee;
 		return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 	}
 
-	if(TYPE(a) == TSTRING && TYPE(b) == TSTRING)
+	if(a2->type == TSTRING && b2->type == TSTRING)
 	{
 		return string_equal_p(a, b);
 	}
 
-	if(TYPE(a) == TVECTOR && TYPE(b) == TVECTOR)
+	if(a2->type == TVECTOR && b2->type == TVECTOR)
 	{
-		if(LENGTH(a) != LENGTH(b))
-		{
-			return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
-		}
-
-		for(long i = 0; i < LENGTH(a); i++)
-		{
-			SCM ai = VECTOR(a) + i;
-			SCM bi = VECTOR(b) + i;
-
-			if(TYPE(ai) == TREF)
-			{
-				ai = REF(ai);
-			}
-
-			if(TYPE(bi) == TREF)
-			{
-				bi = REF(bi);
-			}
-
-			if(equal2_p(ai, bi) == good2bad(Getstructscm2(cell_f, g_cells), g_cells))
-			{
-				return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
-			}
-		}
-
-		return good2bad(Getstructscm2(cell_t, g_cells), g_cells);
+		return vector_equal_p(a, b);
 	}
 
 	return eq_p(a, b);
@@ -489,15 +195,17 @@ equal2:
 
 struct scm* last_pair(SCM x)
 {
-	while(x != cell_nil && CDR(x) != cell_nil)
+	struct scm* y = Getstructscm2(x, g_cells);
+	while(GetSCM2(y, g_cells) != cell_nil && y->rdc != cell_nil)
 	{
-		x = CDR(x);
+		y = bad2good(y->cdr, g_cells);
 	}
 
-	return good2bad(Getstructscm2(x, g_cells), g_cells);
+	return good2bad(y, g_cells);
 }
 
 struct scm* pair_p(SCM x)
 {
-	return TYPE(x) == TPAIR ? good2bad(Getstructscm2(cell_t, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	struct scm* y = Getstructscm2(x, g_cells);
+	return y->type == TPAIR ? good2bad(Getstructscm2(cell_t, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }

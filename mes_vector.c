@@ -26,6 +26,7 @@ SCM alloc(SCM n);
 SCM make_cell__(SCM type, SCM car, SCM cdr);
 SCM length__(SCM x);
 SCM cons (SCM x, SCM y);
+struct scm* equal2_p(SCM a, SCM b);
 struct scm* vector_entry(SCM x);
 
 struct scm* make_vector__(SCM k)
@@ -77,6 +78,41 @@ struct scm* vector_ref_(SCM table, long i)
 	}
 
 	return e;
+}
+
+struct scm* vector_equal_p(SCM a, SCM b)
+{
+	struct scm* a2 = Getstructscm2(a, g_cells);
+	struct scm* b2 = Getstructscm2(b, g_cells);
+
+	if(a2->length != b2->length)
+	{
+		return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	}
+
+	for(long i = 0; i < a2->length; i++)
+	{
+		SCM ai = a2->vector + i;
+		struct scm* ai2 = Getstructscm2(ai, g_cells);
+		SCM bi = b2->vector + i;
+		struct scm* bi2 = Getstructscm2(bi, g_cells);
+
+		if(ai2->type == TREF)
+		{
+			ai = ai2->ref;
+		}
+
+		if(bi2->type == TREF)
+		{
+			bi = bi2->ref;
+		}
+
+		if(equal2_p(ai, bi) == good2bad(Getstructscm2(cell_f, g_cells), g_cells))
+		{
+			return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+		}
+	}
+	return good2bad(Getstructscm2(cell_t, g_cells), g_cells);
 }
 
 struct scm* vector_ref(SCM x, SCM i)
