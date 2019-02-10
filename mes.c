@@ -766,7 +766,6 @@ SCM expand_variable(SCM x, SCM formals)  ///((internal))
 	return expand_variable_(x, formals, 1);
 }
 
-struct scm* struct_ref_(SCM x, SCM i);
 struct scm* vector_ref_(SCM x, SCM i);
 struct scm* make_vector__(SCM k);
 struct scm* vector_set_x_(SCM x, SCM i, SCM e);

@@ -61,7 +61,7 @@ struct scm
 		char* cbytes;
 		SCM closure;
 		SCM continuation;
-		int value;
+		SCM value;
 		SCM vector;
 		char* string;
 		SCM struc;

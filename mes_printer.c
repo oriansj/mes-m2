@@ -175,7 +175,7 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	else if(t == TSTRUCT)
 	{
 		//SCM printer = STRUCT (x) + 1;
-		struct scm* printer = bad2good(struct_ref_(x, STRUCT_PRINTER), g_cells);
+		struct scm* printer = struct_ref_(x, STRUCT_PRINTER);
 
 		if(printer->type == TREF)
 		{
@@ -272,9 +272,9 @@ struct scm* fdisplay_(SCM x, int fd, int write_p)  ///((internal))
 struct scm* frame_printer(SCM frame)
 {
 	fdputs("#<", __stdout);
-	display_(GetSCM2(bad2good(struct_ref_(frame, 2), g_cells), g_cells));
+	display_(GetSCM2(struct_ref_(frame, 2), g_cells));
 	fdputs(" procedure: ", __stdout);
-	display_(GetSCM2(bad2good(struct_ref_(frame, 3), g_cells), g_cells));
+	display_(GetSCM2(struct_ref_(frame, 3), g_cells));
 	fdputc('>', __stdout);
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }

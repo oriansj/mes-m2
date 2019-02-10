@@ -72,20 +72,20 @@ struct scm* struct_ref_(struct scm* x, long i)
 
 	if(f->type == TREF)
 	{
-		return good2bad(Getstructscm2(f->ref, g_cells), g_cells);
+		return Getstructscm2(f->ref, g_cells);
 	}
 
 	if(f->type == TCHAR)
 	{
-		return good2bad(Getstructscm2(make_cell__ (TCHAR, 0, f->rdc), g_cells), g_cells);
+		return Getstructscm2(make_cell__ (TCHAR, 0, f->rdc), g_cells);
 	}
 
 	if(f->type == TNUMBER)
 	{
-		return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, f->rdc), g_cells), g_cells);
+		return Getstructscm2(make_cell__ (TNUMBER, 0, f->rdc), g_cells);
 	}
 
-	return good2bad(f, g_cells);
+	return f;
 }
 
 struct scm* struct_set_x_(struct scm* x, long i, SCM e)
@@ -99,7 +99,7 @@ struct scm* struct_set_x_(struct scm* x, long i, SCM e)
 
 struct scm* struct_ref(SCM x, SCM i)
 {
-	return struct_ref_(good2bad(Getstructscm2(x, g_cells), g_cells), g_cells[i].rdc);
+	return good2bad(struct_ref_(good2bad(Getstructscm2(x, g_cells), g_cells), g_cells[i].rdc), g_cells);
 }
 
 struct scm* struct_set_x(SCM x, SCM i, SCM e)
