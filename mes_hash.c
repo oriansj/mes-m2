@@ -118,7 +118,7 @@ struct scm* hashq_ref(SCM table, SCM key, SCM dflt)
 	return x->cdr;
 }
 
-struct scm* hash_ref(SCM table, SCM key, SCM dflt)
+struct scm* hash_ref(SCM table, SCM key, SCM dflt) /* External */
 {
 	dflt = 0; /* NOP to silence checkers */
 

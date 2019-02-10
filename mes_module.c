@@ -62,6 +62,7 @@ struct scm* module_variable(SCM module, SCM name)
 	return Getstructscm2(x, g_cells);
 }
 
+
 struct scm* module_ref(SCM module, SCM name)
 {
 	struct scm* y = module_variable(module, name);

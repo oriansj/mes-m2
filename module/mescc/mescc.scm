@@ -135,9 +135,11 @@
          (hex2-files (if (null? infos) hex2-files
                          (append hex2-files
                                  (list (infos->hex2 options hex2-file-name infos)))))
+         (default-libraries (if (or (option-ref options 'nodefaultlibs #f)
+                                    (option-ref options 'nostdlib #f)) '()
+                                    '("c")))
          (libraries (filter-map (multi-opt 'library) options))
-         (libraries (if (pair? libraries) libraries '("c")))
-         (libraries (if (equal? libraries '("none")) '() libraries))
+         (libraries (delete-duplicates (append libraries default-libraries)))
          (hex2-libraries (map (cut find-library options ".o" <>) libraries))
          (hex2-files (append hex2-files hex2-libraries))
          (S-files (append S-files (map (cut find-library options ".S" <>)  libraries)))
@@ -208,12 +210,15 @@
          (elf-footer (or elf-footer
                          (arch-find options (string-append
                                              "elf" machine "-footer-single-main.hex2"))))
+         (start-files (if (or (option-ref options 'nostartfiles #f)
+                              (option-ref options 'nostdlib #f)) '()
+                              `("-f" ,(arch-find options "crt1.o"))))
          (command `(,hex2
                     "--LittleEndian"
                     "--Architecture" ,architecture
                     "--BaseAddress" ,base-address
                     "-f" ,(arch-find options (string-append "elf" machine "-header.hex2"))
-                    "-f" ,(arch-find options "crt1.o")
+                    ,@start-files
                     ,@(append-map (cut list "-f" <>) hex2-files)
                     "-f" ,elf-footer
                     "--exec_enable"
