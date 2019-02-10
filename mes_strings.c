@@ -23,30 +23,16 @@
 #include "mes_constants.h"
 
 struct scm* make_symbol (SCM string);
-int eputs(char const* s);
 char *itoa (int number);
-SCM error(SCM key, SCM x);
+
 SCM cons (SCM x, SCM y);
 SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* make_bytes(char const* s, size_t length);
 SCM write_error_ (SCM x);
 struct scm* hash_ref (SCM table, SCM key, SCM dflt);
 struct scm* hash_set_x (SCM table, SCM key, SCM value);
-int readchar();
-
-void assert_max_string(int i, char const* msg, char* string)
-{
-	if(i > MAX_STRING)
-	{
-		eputs(msg);
-		eputs(":string too long[");
-		eputs(itoa(i));
-		eputs("]:");
-		string[MAX_STRING - 1] = 0;
-		eputs(string);
-		error(cell_symbol_system_error, cell_f);
-	}
-}
+void assert_max_string(int i, char const* msg, char* string);
+SCM error(SCM key, SCM x);
 
 char const* list_to_cstring(struct scm* list, int* size)
 {
@@ -189,33 +175,6 @@ struct scm* list_to_string(SCM list)
 	int size;
 	char const *s = list_to_cstring(good2bad(Getstructscm2(list, g_cells), g_cells), &size);
 	return make_string(s, size);
-}
-
-struct scm* read_string(SCM port)  ///((arity . n))
-{
-	int fd = __stdin;
-	struct scm* x = Getstructscm2(port, g_cells);
-
-	if(x->type == TPAIR && x->car->type == TNUMBER)
-	{
-		__stdin = x->car->rdc;
-	}
-
-	int c = readchar();
-	int i = 0;
-
-	while(EOF != c)
-	{
-		assert_max_string(i, "read_string", g_buf);
-
-		g_buf[i] = c;
-		i = i + 1;
-		c = readchar();
-	}
-
-	g_buf[i] = 0;
-	__stdin = fd;
-	return make_string(g_buf, i);
 }
 
 struct scm* string_append(SCM x)  ///((arity . n))

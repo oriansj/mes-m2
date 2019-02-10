@@ -35,6 +35,7 @@ SCM cons (SCM x, SCM y);
 int readchar();
 struct scm* error(SCM key, SCM x);
 struct scm* make_string_(char const* s);
+struct scm* make_string(char const* s, int length);
 int peekchar();
 int unreadchar();
 struct scm* make_cell__(long type, SCM car, SCM cdr);
@@ -553,4 +554,31 @@ struct scm* reader_read_string()
 
 	g_buf[i] = 0;
 	return good2bad(make_string_(g_buf), g_cells);
+}
+
+struct scm* read_string(SCM port)  ///((arity . n))
+{
+	int fd = __stdin;
+	struct scm* x = Getstructscm2(port, g_cells);
+
+	if(x->type == TPAIR && x->car->type == TNUMBER)
+	{
+		__stdin = x->car->rdc;
+	}
+
+	int c = readchar();
+	int i = 0;
+
+	while(EOF != c)
+	{
+		assert_max_string(i, "read_string", g_buf);
+
+		g_buf[i] = c;
+		i = i + 1;
+		c = readchar();
+	}
+
+	g_buf[i] = 0;
+	__stdin = fd;
+	return make_string(g_buf, i);
 }
