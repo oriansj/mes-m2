@@ -175,8 +175,8 @@
                                (else (replace-suffix M1-file-name ".o"))))
          (machine (option-ref options 'machine "32"))
          (architecture (cond
-                        ((equal? machine "32") "1")
-                        ((equal? machine "64") "2")
+                        ((equal? machine "32") "x86")
+                        ((equal? machine "64") "amd64")
                         (else "1")))
          (m1-macros (cond
                      ((equal? machine "32") "x86.M1")
@@ -186,7 +186,7 @@
          (M1 (or (getenv "M1") "M1"))
          (command `(,M1
                     "--LittleEndian"
-                    "--Architecture" ,architecture
+                    "--architecture" ,architecture
                     "-f" ,(arch-find options m1-macros)
                     ,@(append-map (cut list "-f" <>) M1-files)
                     "-o" ,hex2-file-name)))
@@ -203,8 +203,8 @@
          (hex2 (or (getenv "HEX2") "hex2"))
          (machine (option-ref options 'machine "32"))
          (architecture (cond
-                         ((equal? machine "32") "1")
-                         ((equal? machine "64") "2")
+                         ((equal? machine "32") "x86")
+                         ((equal? machine "64") "amd64")
                          (else "1")))
          (base-address (option-ref options 'base-address "0x1000000"))
          (elf-footer (or elf-footer
@@ -215,7 +215,7 @@
                               `("-f" ,(arch-find options "crt1.o"))))
          (command `(,hex2
                     "--LittleEndian"
-                    "--Architecture" ,architecture
+                    "--architecture" ,architecture
                     "--BaseAddress" ,base-address
                     "-f" ,(arch-find options (string-append "elf" machine "-header.hex2"))
                     ,@start-files
