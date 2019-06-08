@@ -66,7 +66,7 @@ SCM check_apply(SCM f, SCM e);
 SCM pairlis(SCM x, SCM y, SCM a);
 SCM call_lambda(SCM e, SCM x);
 struct scm* make_string(char const* s, int length);
-SCM cons(SCM x, SCM y);
+SCM cons_(SCM x, SCM y);
 SCM check_formals(SCM f, SCM formals, SCM args);
 char *itoa (int number);
 SCM error(SCM key, SCM x);
@@ -284,7 +284,7 @@ evlis2:
 	push_cc(CDR(r2), r1, r0, cell_vm_evlis3);
 	goto evlis;
 evlis3:
-	r1 = cons(r2, r1);
+	r1 = cons_(r2, r1);
 	goto vm_return;
 apply:
 	g_stack_array[g_stack + FRAME_PROCEDURE] = (struct scm*)CAR(r1);
@@ -334,7 +334,7 @@ apply:
 
 		if(c == cell_vm_apply)
 		{
-			push_cc(cons(CADR(r1), CADDR(r1)), r1, r0, cell_vm_return);
+			push_cc(cons_(CADR(r1), CADDR(r1)), r1, r0, cell_vm_return);
 			goto apply;
 		}
 		else if(c ==  cell_vm_eval)
@@ -344,7 +344,7 @@ apply:
 		}
 		else if(c ==  cell_vm_begin_expand)
 		{
-			push_cc(cons(CADR(r1), cell_nil), r1, CADDR(r1), cell_vm_return);
+			push_cc(cons_(CADR(r1), cell_nil), r1, CADDR(r1), cell_vm_return);
 			goto begin_expand;
 		}
 		else if(c ==  cell_call_with_current_continuation)
@@ -397,7 +397,7 @@ apply:
 	goto eval;
 apply2:
 	check_apply(r1, CAR(r2));
-	r1 = cons(r1, CDR(r2));
+	r1 = cons_(r1, CDR(r2));
 	goto apply;
 eval:
 	t = TYPE(r1);
@@ -505,7 +505,7 @@ eval_macro_expand_expand:
 
 				if(TYPE(CADR(r1)) != TPAIR)
 				{
-					push_cc(CAR(CDDR(r1)), r2, cons(cons(CADR(r1), CADR(r1)), r0), cell_vm_eval_define);
+					push_cc(CAR(CDDR(r1)), r2, cons_(cons_(CADR(r1), CADR(r1)), r0), cell_vm_eval_define);
 					goto eval;
 				}
 				else
@@ -519,7 +519,7 @@ eval_macro_expand_expand:
 						expand_variable(body, formals);
 					}
 
-					r1 = cons(cell_symbol_lambda, cons(formals, body));
+					r1 = cons_(cell_symbol_lambda, cons_(formals, body));
 					push_cc(r1, r2, p, cell_vm_eval_define);
 					goto eval;
 				}
@@ -545,8 +545,8 @@ eval_define:
 				}
 				else
 				{
-					entry = cons(name, r1);
-					aa = cons(entry, cell_nil);
+					entry = cons_(name, r1);
+					aa = cons_(entry, cell_nil);
 					set_cdr_x(aa, cdr(r0));
 					set_cdr_x(r0, aa);
 					cl = GetSCM2(module_variable(r0, cell_closure), g_cells);
@@ -564,7 +564,7 @@ eval_check_func:
 			push_cc(CDR(r2), r2, r0, cell_vm_eval2);
 			goto evlis;
 eval2:
-			r1 = cons(CAR(r2), r1);
+			r1 = cons_(CAR(r2), r1);
 			goto apply;
 		}
 	}
@@ -622,7 +622,7 @@ macro_expand_lambda:
 
 	if(TYPE(r1) == TPAIR && (macro = get_macro(CAR(r1))) != cell_f)
 	{
-		r1 = cons(macro, CDR(r1));
+		r1 = cons_(macro, CDR(r1));
 		push_cc(r1, cell_nil, r0, cell_vm_macro_expand);
 		goto apply;
 	}
@@ -673,7 +673,7 @@ macro_expand_set_x:
 
 				if(sc_expand != cell_undefined && sc_expand != cell_f)
 				{
-					r1 = cons(sc_expand, cons(r1, cell_nil));
+					r1 = cons_(sc_expand, cons_(r1, cell_nil));
 					goto apply;
 				}
 			}
@@ -711,7 +711,7 @@ begin:
 		{
 			if(CAAR(r1) == cell_symbol_primitive_load)
 			{
-				program = cons(CAR(r1), cell_nil);
+				program = cons_(CAR(r1), cell_nil);
 				push_cc(program, r1, r0, cell_vm_begin_primitive_load);
 				goto begin_expand;
 begin_primitive_load:
@@ -790,7 +790,7 @@ begin_expand_primitive_load:
 				input = r1;
 				r1 = x;
 				set_current_input_port(input);
-				r1 = cons(cell_symbol_begin, r1);
+				r1 = cons_(cell_symbol_begin, r1);
 				CAR(r2) = r1;
 				r1 = r2;
 				continue;
@@ -852,7 +852,7 @@ call_with_current_continuation:
 
 	CONTINUATION(x) = v;
 	gc_pop_frame();
-	push_cc(cons(CAR(r1), cons(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
+	push_cc(cons_(CAR(r1), cons_(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
 	v = GetSCM2(make_vector__(STACK_SIZE - g_stack), g_cells);
@@ -865,7 +865,7 @@ call_with_current_continuation2:
 	CONTINUATION(r2) = v;
 	goto vm_return;
 call_with_values:
-	push_cc(cons(CAR(r1), cell_nil), r1, r0, cell_vm_call_with_values2);
+	push_cc(cons_(CAR(r1), cell_nil), r1, r0, cell_vm_call_with_values2);
 	goto apply;
 call_with_values2:
 
@@ -874,7 +874,7 @@ call_with_values2:
 		r1 = CDR(r1);
 	}
 
-	r1 = cons(CADR(r2), r1);
+	r1 = cons_(CADR(r2), r1);
 	goto apply;
 vm_return:
 	x = r1;

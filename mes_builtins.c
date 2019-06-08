@@ -69,7 +69,7 @@ struct scm* lognot (SCM x);
 struct scm* logxor (SCM x);
 struct scm* ash (SCM n, SCM count);
 // src/mes.mes
-SCM acons (SCM key, SCM value, SCM alist);
+SCM acons_ (SCM key, SCM value, SCM alist);
 SCM add_formals (SCM formals, SCM x);
 SCM append2 (SCM x, SCM y);
 SCM append_reverse (SCM x, SCM y);
@@ -81,7 +81,7 @@ SCM car (SCM x);
 SCM car_ (SCM x);
 SCM cdr (SCM x);
 SCM cdr_ (SCM x);
-SCM cons (SCM x, SCM y);
+SCM cons_ (SCM x, SCM y);
 struct scm* cons2(struct scm* x, struct scm* y);
 SCM cons3(struct scm* x, struct scm* y);
 SCM eq_p (SCM x, SCM y);
@@ -327,41 +327,41 @@ SCM mes_symbols()  ///((internal))
 	init_symbol(cell_type_broken_heart, TSYMBOL, "<cell:broken-heart>");
 	init_symbol(cell_symbol_test, TSYMBOL, "%%test");
 	SCM a = cell_nil;
-	a = acons(cell_symbol_call_with_values, cell_symbol_call_with_values, a);
-	a = acons(cell_symbol_boot_module, cell_symbol_boot_module, a);
-	a = acons(cell_symbol_current_module, cell_symbol_current_module, a);
-	a = acons(cell_symbol_call_with_current_continuation, cell_call_with_current_continuation, a);
-	a = acons(cell_symbol_mes_version, GetSCM2(make_string_("git"), g_cells), a); // FIXME
-	a = acons(cell_symbol_mes_prefix, GetSCM2(make_string_("mes"), g_cells), a);  // FIXME
-	a = acons(cell_type_bytes, make_cell__ (TNUMBER, 0, (long)TBYTES), a);
-	a = acons(cell_type_char, make_cell__ (TNUMBER, 0, (long)TCHAR), a);
-	a = acons(cell_type_closure, make_cell__ (TNUMBER, 0, (long)TCLOSURE), a);
-	a = acons(cell_type_continuation, make_cell__ (TNUMBER, 0, (long)TCONTINUATION), a);
-	a = acons(cell_type_keyword, make_cell__ (TNUMBER, 0, (long)TKEYWORD), a);
-	a = acons(cell_type_macro, make_cell__ (TNUMBER, 0, (long)TMACRO), a);
-	a = acons(cell_type_number, make_cell__ (TNUMBER, 0, (long)TNUMBER), a);
-	a = acons(cell_type_pair, make_cell__ (TNUMBER, 0, (long)TPAIR), a);
-	a = acons(cell_type_port, make_cell__ (TNUMBER, 0, (long)TPORT), a);
-	a = acons(cell_type_ref, make_cell__ (TNUMBER, 0, (long)TREF), a);
-	a = acons(cell_type_special, make_cell__ (TNUMBER, 0, (long)TSPECIAL), a);
-	a = acons(cell_type_string, make_cell__ (TNUMBER, 0, (long)TSTRING), a);
-	a = acons(cell_type_struct, make_cell__ (TNUMBER, 0, (long)TSTRUCT), a);
-	a = acons(cell_type_symbol, make_cell__ (TNUMBER, 0, (long)TSYMBOL), a);
-	a = acons(cell_type_values, make_cell__ (TNUMBER, 0, (long)TVALUES), a);
-	a = acons(cell_type_variable, make_cell__ (TNUMBER, 0, (long)TVARIABLE), a);
-	a = acons(cell_type_vector, make_cell__ (TNUMBER, 0, (long)TVECTOR), a);
-	a = acons(cell_type_broken_heart, make_cell__ (TNUMBER, 0, (long)TBROKEN_HEART), a);
-	a = acons(cell_closure, a, a);
+	a = acons_(cell_symbol_call_with_values, cell_symbol_call_with_values, a);
+	a = acons_(cell_symbol_boot_module, cell_symbol_boot_module, a);
+	a = acons_(cell_symbol_current_module, cell_symbol_current_module, a);
+	a = acons_(cell_symbol_call_with_current_continuation, cell_call_with_current_continuation, a);
+	a = acons_(cell_symbol_mes_version, GetSCM2(make_string_("git"), g_cells), a); // FIXME
+	a = acons_(cell_symbol_mes_prefix, GetSCM2(make_string_("mes"), g_cells), a);  // FIXME
+	a = acons_(cell_type_bytes, make_cell__ (TNUMBER, 0, (long)TBYTES), a);
+	a = acons_(cell_type_char, make_cell__ (TNUMBER, 0, (long)TCHAR), a);
+	a = acons_(cell_type_closure, make_cell__ (TNUMBER, 0, (long)TCLOSURE), a);
+	a = acons_(cell_type_continuation, make_cell__ (TNUMBER, 0, (long)TCONTINUATION), a);
+	a = acons_(cell_type_keyword, make_cell__ (TNUMBER, 0, (long)TKEYWORD), a);
+	a = acons_(cell_type_macro, make_cell__ (TNUMBER, 0, (long)TMACRO), a);
+	a = acons_(cell_type_number, make_cell__ (TNUMBER, 0, (long)TNUMBER), a);
+	a = acons_(cell_type_pair, make_cell__ (TNUMBER, 0, (long)TPAIR), a);
+	a = acons_(cell_type_port, make_cell__ (TNUMBER, 0, (long)TPORT), a);
+	a = acons_(cell_type_ref, make_cell__ (TNUMBER, 0, (long)TREF), a);
+	a = acons_(cell_type_special, make_cell__ (TNUMBER, 0, (long)TSPECIAL), a);
+	a = acons_(cell_type_string, make_cell__ (TNUMBER, 0, (long)TSTRING), a);
+	a = acons_(cell_type_struct, make_cell__ (TNUMBER, 0, (long)TSTRUCT), a);
+	a = acons_(cell_type_symbol, make_cell__ (TNUMBER, 0, (long)TSYMBOL), a);
+	a = acons_(cell_type_values, make_cell__ (TNUMBER, 0, (long)TVALUES), a);
+	a = acons_(cell_type_variable, make_cell__ (TNUMBER, 0, (long)TVARIABLE), a);
+	a = acons_(cell_type_vector, make_cell__ (TNUMBER, 0, (long)TVECTOR), a);
+	a = acons_(cell_type_broken_heart, make_cell__ (TNUMBER, 0, (long)TBROKEN_HEART), a);
+	a = acons_(cell_closure, a, a);
 	return a;
 }
 
 SCM make_builtin(struct scm* builtin_type, SCM name, SCM arity, SCM function)
 {
 	SCM values = cell_nil;
-	values = cons(function, values);
-	values = cons(arity, values);
-	values = cons(name, values);
-	values = cons(cell_symbol_builtin, values);
+	values = cons_(function, values);
+	values = cons_(arity, values);
+	values = cons_(name, values);
+	values = cons_(cell_symbol_builtin, values);
 	return GetSCM2(make_struct(GetSCM2(builtin_type, g_cells), values, GetSCM2(cstring_to_symbol("builtin-printer"), g_cells)), g_cells);
 }
 
@@ -379,7 +379,7 @@ struct scm* make_builtin_type()  ///(internal))
 struct scm* init_builtin(struct scm* builtin_type, char const* name, int arity, struct scm*(*function)(), struct scm* a)
 {
 	SCM s = GetSCM2(cstring_to_symbol(name), g_cells);
-	return Getstructscm2(acons(s, make_builtin(builtin_type, GetSCM2(symbol_to_string(s), g_cells), make_cell__ (TNUMBER, 0, (long)arity), make_cell__ (TNUMBER, 0, (long)function)), GetSCM2(a, g_cells)), g_cells);
+	return Getstructscm2(acons_(s, make_builtin(builtin_type, GetSCM2(symbol_to_string(s), g_cells), make_cell__ (TNUMBER, 0, (long)arity), make_cell__ (TNUMBER, 0, (long)function)), GetSCM2(a, g_cells)), g_cells);
 }
 
 struct scm* builtin_name(SCM builtin)
@@ -543,14 +543,14 @@ struct scm* mes_builtins(struct scm* a)  ///((internal))
 	a = init_builtin(builtin_type, "core:type", 1, &type_, a);
 	a = init_builtin(builtin_type, "core:car", 1, &car_, a);
 	a = init_builtin(builtin_type, "core:cdr", 1, &cdr_, a);
-	a = init_builtin(builtin_type, "cons", 2, &cons, a);
+	a = init_builtin(builtin_type, "cons", 2, &cons_, a);
 	a = init_builtin(builtin_type, "car", 1, &car, a);
 	a = init_builtin(builtin_type, "cdr", 1, &cdr, a);
 	a = init_builtin(builtin_type, "list", -1, &list, a);
 	a = init_builtin(builtin_type, "null?", 1, &null_p, a);
 	a = init_builtin(builtin_type, "eq?", 2, &eq_p, a);
 	a = init_builtin(builtin_type, "values", -1, &values, a);
-	a = init_builtin(builtin_type, "acons", 3, &acons, a);
+	a = init_builtin(builtin_type, "acons", 3, &acons_, a);
 	a = init_builtin(builtin_type, "length", 1, &length, a);
 	a = init_builtin(builtin_type, "error", 2, &error, a);
 	a = init_builtin(builtin_type, "append2", 2, &append2, a);

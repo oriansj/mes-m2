@@ -59,7 +59,7 @@ int hashq_(SCM x, long size)
 		return hash_cstring((char*)&bad2good(y->cdr, g_cells)->rdc, size);    // FIXME: hash x directly
 	}
 
-	error(cell_symbol_system_error, cons(GetSCM2(make_string_("hashq_: not a symbol"), g_cells), x));
+	error(cell_symbol_system_error, cons_(GetSCM2(make_string_("hashq_: not a symbol"), g_cells), x));
 	exit(EXIT_FAILURE);
 }
 
@@ -143,11 +143,11 @@ struct scm* hashq_set_x(SCM table, SCM key, SCM value)
 	struct scm* ybucket = vector_ref_(buckets, hashq_(key, size));
 	if(ybucket->type != TPAIR)
 	{
-		vector_set_x_(buckets, hashq_(key, size), acons(key, value, cell_nil));
+		vector_set_x_(buckets, hashq_(key, size), acons_(key, value, cell_nil));
 	}
 	else
 	{
-		vector_set_x_(buckets, hashq_(key, size), acons(key, value, GetSCM2(vector_ref_(buckets, hashq_(key, size)), g_cells)));
+		vector_set_x_(buckets, hashq_(key, size), acons_(key, value, GetSCM2(vector_ref_(buckets, hashq_(key, size)), g_cells)));
 	}
 	return Getstructscm2(value, g_cells);
 }
@@ -165,7 +165,7 @@ struct scm* hash_set_x(SCM table, SCM key, SCM value)
 		bucket = cell_nil;
 	}
 
-	bucket = acons(key, value, bucket);
+	bucket = acons_(key, value, bucket);
 	vector_set_x_(buckets, hash, bucket);
 	return good2bad(Getstructscm2(value, g_cells), g_cells);
 }
@@ -174,10 +174,10 @@ struct scm* make_hashq_type()  ///((internal))
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
-	fields = cons(cell_symbol_buckets, fields);
-	fields = cons(cell_symbol_size, fields);
-	fields = cons(fields, cell_nil);
-	fields = cons(cell_symbol_hashq_table, fields);
+	fields = cons_(cell_symbol_buckets, fields);
+	fields = cons_(cell_symbol_size, fields);
+	fields = cons_(fields, cell_nil);
+	fields = cons_(cell_symbol_hashq_table, fields);
 	return good2bad(make_struct(record_type, fields, cell_unspecified), g_cells);
 }
 
@@ -191,9 +191,9 @@ struct scm* make_hash_table_(long size)
 	SCM hashq_type = GetSCM2(bad2good(make_hashq_type(), g_cells), g_cells);
 	SCM buckets = GetSCM2(make_vector__(size), g_cells);
 	SCM values = cell_nil;
-	values = cons(buckets, values);
-	values = cons(make_cell__ (TNUMBER, 0, size), values);
-	values = cons(cell_symbol_hashq_table, values);
+	values = cons_(buckets, values);
+	values = cons_(make_cell__ (TNUMBER, 0, size), values);
+	values = cons_(cell_symbol_hashq_table, values);
 	//FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer");
 	return good2bad(make_struct(hashq_type, values, cell_unspecified), g_cells);
 }

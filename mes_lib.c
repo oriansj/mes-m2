@@ -45,14 +45,14 @@ struct scm* exit_(SCM x)  ///((name . "exit"))
 
 struct scm* make_frame_type()  ///((internal))
 {
-	return good2bad(make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified), g_cells);
+	return good2bad(make_struct(cell_symbol_record_type, cons_(cell_symbol_frame, cons_(cons_(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified), g_cells);
 }
 
 
 struct scm* make_stack_type()  ///((internal))
 {
 	return good2bad(make_struct(cell_symbol_record_type
-	                  , cons(cell_symbol_stack, cons(cons(GetSCM2(cstring_to_symbol("frames"), g_cells), cell_nil), cell_nil))
+	                  , cons_(cell_symbol_stack, cons_(cons_(GetSCM2(cstring_to_symbol("frames"), g_cells), cell_nil), cell_nil))
 	                  , cell_unspecified), g_cells);
 }
 

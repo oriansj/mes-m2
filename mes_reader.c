@@ -52,7 +52,7 @@ struct scm* read_input_file_env_(SCM e, SCM a)
 		return good2bad(Getstructscm2(cell_nil, g_cells), g_cells);
 	}
 
-	return good2bad(Getstructscm2(cons(e, GetSCM2(bad2good(read_input_file_env_(GetSCM2(bad2good(read_env(a), g_cells), g_cells), a), g_cells), g_cells)), g_cells), g_cells);
+	return good2bad(Getstructscm2(cons_(e, GetSCM2(bad2good(read_input_file_env_(GetSCM2(bad2good(read_env(a), g_cells), g_cells), a), g_cells), g_cells)), g_cells), g_cells);
 }
 
 struct scm* read_input_file_env()
@@ -142,7 +142,7 @@ reset_reader:
 
 	if(c == '`')
 	{
-		return Getstructscm2(cons(cell_symbol_quasiquote, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
+		return Getstructscm2(cons_(cell_symbol_quasiquote, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 	}
 
 	if(c == ',')
@@ -150,15 +150,15 @@ reset_reader:
 		if(peekchar() == '@')
 		{
 			readchar();
-			return Getstructscm2(cons(cell_symbol_unquote_splicing, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
+			return Getstructscm2(cons_(cell_symbol_unquote_splicing, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 		}
 
-		return Getstructscm2(cons(cell_symbol_unquote, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
+		return Getstructscm2(cons_(cell_symbol_unquote, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 	}
 
 	if(c == '\'')
 	{
-		return Getstructscm2(cons(cell_symbol_quote, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
+		return Getstructscm2(cons_(cell_symbol_quote, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells);
 	}
 
 	if(c == '"')
@@ -229,7 +229,7 @@ struct scm* reader_read_list(int c, SCM a)
 		return bad2good(s->car, g_cells);
 	}
 
-	return Getstructscm2(cons(GetSCM2(s, g_cells), GetSCM2(reader_read_list(readchar(), a), g_cells)), g_cells);
+	return Getstructscm2(cons_(GetSCM2(s, g_cells), GetSCM2(reader_read_list(readchar(), a), g_cells)), g_cells);
 }
 
 struct scm* read_env(SCM a)
@@ -322,20 +322,20 @@ struct scm* reader_read_hash(int c, SCM a)
 		if(peekchar() == '@')
 		{
 			readchar();
-			return good2bad(Getstructscm2(cons(cell_symbol_unsyntax_splicing, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
+			return good2bad(Getstructscm2(cons_(cell_symbol_unsyntax_splicing, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
 		}
 
-		return good2bad(Getstructscm2(cons(cell_symbol_unsyntax, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
+		return good2bad(Getstructscm2(cons_(cell_symbol_unsyntax, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
 	}
 
 	if(c == '\'')
 	{
-		return good2bad(Getstructscm2(cons(cell_symbol_syntax, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
+		return good2bad(Getstructscm2(cons_(cell_symbol_syntax, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
 	}
 
 	if(c == '`')
 	{
-		return good2bad(Getstructscm2(cons(cell_symbol_quasisyntax, cons(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
+		return good2bad(Getstructscm2(cons_(cell_symbol_quasisyntax, cons_(GetSCM2(reader_read_sexp_(readchar(), a), g_cells), cell_nil)), g_cells), g_cells);
 	}
 
 	if(c == ':')
@@ -344,7 +344,7 @@ struct scm* reader_read_hash(int c, SCM a)
 
 		if(x->type == TNUMBER)
 		{ /* READ error */
-			error(cell_symbol_system_error, cons(GetSCM2(make_string_("keyword perifx ':' not followed by a symbol: "), g_cells), GetSCM2(x, g_cells)));
+			error(cell_symbol_system_error, cons_(GetSCM2(make_string_("keyword perifx ':' not followed by a symbol: "), g_cells), GetSCM2(x, g_cells)));
 		}
 
 		return good2bad(symbol_to_keyword(GetSCM2(x, g_cells)), g_cells);

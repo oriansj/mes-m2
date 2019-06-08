@@ -38,11 +38,11 @@ struct scm* make_module_type()
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
-	fields = cons(GetSCM2(cstring_to_symbol("globals"), g_cells), fields);
-	fields = cons(GetSCM2(cstring_to_symbol("locals"), g_cells), fields);
-	fields = cons(GetSCM2(cstring_to_symbol("name"), g_cells), fields);
-	fields = cons(fields, cell_nil);
-	fields = cons(cell_symbol_module, fields);
+	fields = cons_(GetSCM2(cstring_to_symbol("globals"), g_cells), fields);
+	fields = cons_(GetSCM2(cstring_to_symbol("locals"), g_cells), fields);
+	fields = cons_(GetSCM2(cstring_to_symbol("name"), g_cells), fields);
+	fields = cons_(fields, cell_nil);
+	fields = cons_(cell_symbol_module, fields);
 	return make_struct(record_type, fields, cell_unspecified);
 }
 

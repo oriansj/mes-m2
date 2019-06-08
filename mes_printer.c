@@ -189,7 +189,7 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 
 		if(printer->type == TCLOSURE || builtin_p(GetSCM2(printer, g_cells)) == cell_t)
 		{
-			apply(GetSCM2(printer, g_cells), cons(x, cell_nil));
+			apply(GetSCM2(printer, g_cells), cons_(x, cell_nil));
 		}
 		else
 		{

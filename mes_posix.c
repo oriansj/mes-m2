@@ -311,7 +311,7 @@ struct scm* open_input_file(SCM file_name)
 struct scm* open_input_string(SCM string)
 {
 	struct scm* port = Getstructscm2(make_cell__ (TPORT, -length__ (g_ports) - 2, string), g_cells);
-	g_ports = cons(GetSCM2(port,g_cells), g_ports);
+	g_ports = cons_(GetSCM2(port,g_cells), g_ports);
 	return good2bad(port, g_cells);
 }
 
@@ -399,7 +399,7 @@ struct scm* execl_(SCM file_name, SCM args)  ///((name . "execl"))
 
 	if(length__(args) > 1000)
 	{
-		error(cell_symbol_system_error, cons(file_name, cons(GetSCM2(make_string_("too many arguments"), g_cells), cons(file_name, args))));
+		error(cell_symbol_system_error, cons_(file_name, cons_(GetSCM2(make_string_("too many arguments"), g_cells), cons_(file_name, args))));
 	}
 
 	c_argv[i] = (char*)&bad2good(f->cdr, g_cells)->rdc;
@@ -429,7 +429,7 @@ struct scm* waitpid_(SCM pid, SCM options)
 	struct scm* o = Getstructscm2(options, g_cells);
 	int status;
 	int child = waitpid(p->value, &status, o->value);
-	return good2bad(Getstructscm2(cons(make_cell__ (TNUMBER, 0, child), make_cell__ (TNUMBER, 0, status)), g_cells), g_cells);
+	return good2bad(Getstructscm2(cons_(make_cell__ (TNUMBER, 0, child), make_cell__ (TNUMBER, 0, status)), g_cells), g_cells);
 }
 
 #if __x86_64__
@@ -444,7 +444,7 @@ struct timespec g_start_time;
 struct scm* init_time(SCM a)  ///((internal))
 {
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &g_start_time);
-	return good2bad(Getstructscm2(acons(cell_symbol_internal_time_units_per_second, make_cell__ (TNUMBER, 0, TIME_UNITS_PER_SECOND), a), g_cells), g_cells);
+	return good2bad(Getstructscm2(acons_(cell_symbol_internal_time_units_per_second, make_cell__ (TNUMBER, 0, TIME_UNITS_PER_SECOND), a), g_cells), g_cells);
 }
 
 struct scm* current_time()
@@ -456,7 +456,7 @@ struct scm* gettimeofday_()  ///((name . "gettimeofday"))
 {
 	struct timeval time;
 	gettimeofday(&time, 0);
-	return good2bad(Getstructscm2(cons(make_cell__ (TNUMBER, 0, time.tv_sec), make_cell__ (TNUMBER, 0, time.tv_usec)), g_cells), g_cells);
+	return good2bad(Getstructscm2(cons_(make_cell__ (TNUMBER, 0, time.tv_sec), make_cell__ (TNUMBER, 0, time.tv_usec)), g_cells), g_cells);
 }
 
 long seconds_and_nanoseconds_to_long(long s, long ns)

@@ -162,7 +162,7 @@ struct scm* vector_to_list(struct scm* v)
 			f = bad2good(f->car, g_cells);
 		}
 
-		x = Getstructscm2(cons(GetSCM2(f, g_cells), GetSCM2(x, g_cells)), g_cells);
+		x = Getstructscm2(cons_(GetSCM2(f, g_cells), GetSCM2(x, g_cells)), g_cells);
 	}
 
 	return good2bad(x, g_cells);

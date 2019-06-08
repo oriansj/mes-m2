@@ -182,7 +182,7 @@ struct scm* string_to_list(SCM string)
 	{
 		i = i - 1;
 		int c = (0xFF & s[i]);
-		p = Getstructscm2(cons(make_cell__ (TCHAR, 0, c), GetSCM2(p, g_cells)), g_cells);
+		p = Getstructscm2(cons_(make_cell__ (TCHAR, 0, c), GetSCM2(p, g_cells)), g_cells);
 	}
 
 	return good2bad(p, g_cells);
@@ -236,7 +236,7 @@ struct scm* string_ref(SCM str, SCM k)
 
 	if(i > size)
 	{
-		error(cell_symbol_system_error, cons(GetSCM2(bad2good(make_string("value out of range", strlen ("value out of range")), g_cells), g_cells), k));
+		error(cell_symbol_system_error, cons_(GetSCM2(bad2good(make_string("value out of range", strlen ("value out of range")), g_cells), g_cells), k));
 	}
 
 	char const *p = (char*) &bad2good(x->cdr,g_cells)->string;

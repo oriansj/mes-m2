@@ -99,7 +99,7 @@ struct scm* make_frame(long index)
 	}
 
 	return good2bad(make_struct((SCM) make_frame_type()
-	                  , (struct scm*) cons(cell_symbol_frame, cons(procedure, cell_nil))
+	                  , (struct scm*) cons_(cell_symbol_frame, cons_(procedure, cell_nil))
 	                  , GetSCM2(cstring_to_symbol("frame-printer"), g_cells)), g_cells);
 }
 
@@ -116,8 +116,8 @@ struct scm* make_stack()  ///((arity . n))
 	}
 
 	SCM values = cell_nil;
-	values = cons(frames, values);
-	values = cons(cell_symbol_stack, values);
+	values = cons_(frames, values);
+	values = cons_(cell_symbol_stack, values);
 	return good2bad(make_struct(stack_type, (struct scm*)values, cell_unspecified), g_cells);
 }
 
