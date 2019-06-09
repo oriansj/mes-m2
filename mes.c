@@ -386,6 +386,11 @@ SCM gc_peek_frame()  ///((internal))
 SCM gc_pop_frame()  ///((internal))
 {
 	SCM x = gc_peek_frame();
+	g_stack_array[g_stack] = 0;
+	g_stack_array[g_stack + 1] = 0;
+	g_stack_array[g_stack + 2] = 0;
+	g_stack_array[g_stack + 3] = 0;
+	g_stack_array[g_stack + 4] = 0;
 	g_stack += 5;
 	return x;
 }

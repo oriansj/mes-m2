@@ -65,7 +65,7 @@ void initialize_memory()
 void gc_init_cells()  ///((internal))
 {
 	SCM arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
-	void *p = malloc(arena_bytes + STACK_SIZE * sizeof(SCM));
+	void *p = calloc(arena_bytes + STACK_SIZE * sizeof(SCM), 1);
 	g_cells = (struct scm *)p;
 	g_stack_array = (struct scm**)((char*)p + arena_bytes);
 	g_cells[0].type = TVECTOR;
@@ -75,7 +75,7 @@ void gc_init_cells()  ///((internal))
 	g_cells[0].type = TCHAR;
 	g_cells[0].value = 'c';
 	// FIXME: remove MES_MAX_STRING, grow dynamically
-	g_buf = (char*)malloc(MAX_STRING);
+	g_buf = (char*)calloc(MAX_STRING, 1);
 }
 
 SCM mes_g_stack(SCM a)  ///((internal))
@@ -223,6 +223,9 @@ void gc_flip()  ///((internal))
 	}
 
 	memcpy(g_cells - 1, g_news - 1, (g_free + 2)*sizeof(struct scm));
+	size_t clear = (ARENA_SIZE - g_free ) * sizeof(struct scm)
+		- (STACK_SIZE - g_stack) * sizeof(SCM);
+	memset(g_cells + g_free, 0, clear);
 }
 
 struct scm* gc_copy(SCM old)  ///((internal))
