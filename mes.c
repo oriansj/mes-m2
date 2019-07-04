@@ -126,25 +126,22 @@ struct scm* cons(struct scm* x, struct scm* y)
 	return make_cell(TPAIR, x, y);
 }
 
-struct scm* cons2(struct scm* x, struct scm* y)
-{
-	return Getstructscm2(make_cell__(TPAIR, GetSCM2(x, g_cells), GetSCM2(y, g_cells)), g_cells);
-}
-
 SCM cons3(struct scm* x, struct scm* y)
 {
-	return make_cell__(TPAIR, GetSCM2(x, g_cells), GetSCM2(y, g_cells));
+	return GetSCM2(cons(x, y), g_cells);
 }
 
 
 SCM car(SCM x)
 {
-	return CAR(x);
+	struct scm* y = Getstructscm2(x, g_cells);
+	return y->rac;
 }
 
 SCM cdr(SCM x)
 {
-	return CDR(x);
+	struct scm* y = Getstructscm2(x, g_cells);
+	return y->rdc;
 }
 
 SCM list(SCM x)  ///((arity . n))
@@ -184,12 +181,12 @@ SCM acons_(SCM key, SCM value, SCM alist)
 
 struct scm* acons2(struct scm* key, struct scm* value, struct scm* alist)
 {
-	return cons2(cons2(key, value), alist);
+	return cons(cons(key, value), alist);
 }
 
 SCM acons3(struct scm* key, struct scm* value, struct scm* alist)
 {
-	return cons3(cons2(key, value), alist);
+	return cons3(cons(key, value), alist);
 }
 
 
@@ -370,6 +367,7 @@ SCM gc_pop_frame()  ///((internal))
 
 SCM append2(SCM x, SCM y)
 {
+	struct scm* z = Getstructscm2(x, g_cells);
 	if(x == cell_nil)
 	{
 		return y;
@@ -382,34 +380,13 @@ SCM append2(SCM x, SCM y)
 
 	SCM r = cell_nil;
 
-	while(x != cell_nil)
+	while(GetSCM2(z, g_cells) != cell_nil)
 	{
-		r = cons_(CAR(x), r);
-		x = CDR(x);
+		r = cons_(z->rac, r);
+		z = bad2good(z->cdr, g_cells);
 	}
 
 	return reverse_x_(r, y);
-}
-
-SCM append_reverse(SCM x, SCM y)
-{
-	if(x == cell_nil)
-	{
-		return y;
-	}
-
-	if(g_cells[x].type != TPAIR)
-	{
-		error(cell_symbol_not_a_pair, cons_(x, GetSCM2(cstring_to_symbol("append-reverse"), g_cells)));
-	}
-
-	while(x != cell_nil)
-	{
-		y = cons_(CAR(x), y);
-		x = CDR(x);
-	}
-
-	return y;
 }
 
 SCM reverse_x_(SCM x, SCM t)
@@ -803,7 +780,7 @@ SCM mes_environment(int argc, char *argv[])
 	struct scm* lst = Getstructscm2(cell_nil, g_cells);
 	for(int i = argc - 1; i >= 0; i--)
 	{
-		lst = cons2(make_string_(argv[i]), lst);
+		lst = cons(make_string_(argv[i]), lst);
 	}
 
 	a = acons_(cell_symbol_argv, GetSCM2(lst, g_cells), a);

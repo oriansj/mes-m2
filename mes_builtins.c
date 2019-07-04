@@ -72,7 +72,6 @@ struct scm* ash (SCM n, SCM count);
 SCM acons_ (SCM key, SCM value, SCM alist);
 SCM add_formals (SCM formals, SCM x);
 SCM append2 (SCM x, SCM y);
-SCM append_reverse (SCM x, SCM y);
 SCM arity_ (SCM x);
 SCM assoc (SCM x, SCM a);
 SCM assq (SCM x, SCM a);
@@ -82,7 +81,7 @@ SCM car_ (SCM x);
 SCM cdr (SCM x);
 SCM cdr_ (SCM x);
 SCM cons_ (SCM x, SCM y);
-struct scm* cons2(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 SCM cons3(struct scm* x, struct scm* y);
 SCM eq_p (SCM x, SCM y);
 SCM error (SCM key, SCM x);
@@ -368,11 +367,11 @@ SCM make_builtin(struct scm* builtin_type, SCM name, SCM arity, SCM function)
 struct scm* make_builtin_type()  ///(internal))
 {
 	struct scm* fields = Getstructscm2(cell_nil, g_cells);
-	fields = cons2(cstring_to_symbol("address"), fields);
-	fields = cons2(cstring_to_symbol("arity"), fields);
-	fields = cons2(cstring_to_symbol("name"), fields);
-	fields = cons2(fields, Getstructscm2(cell_nil, g_cells));
-	fields = cons2(Getstructscm2(cell_symbol_builtin, g_cells), fields);
+	fields = cons(cstring_to_symbol("address"), fields);
+	fields = cons(cstring_to_symbol("arity"), fields);
+	fields = cons(cstring_to_symbol("name"), fields);
+	fields = cons(fields, Getstructscm2(cell_nil, g_cells));
+	fields = cons(Getstructscm2(cell_symbol_builtin, g_cells), fields);
 	return make_struct(cell_symbol_record_type, GetSCM2(fields, g_cells), cell_unspecified);
 }
 
@@ -441,7 +440,7 @@ struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 
 	if((arity > 0 || arity == -1) && x != cell_nil && bad2good(y->car, g_cells)->type == TVALUES)
 	{
-		y = cons2(bad2good(bad2good(bad2good(y->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells));
+		y = cons(bad2good(bad2good(bad2good(y->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells));
 	}
 
 	if(arity > 1 || arity == -1)
@@ -450,7 +449,7 @@ struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 		{
 			if(g_cells[g_cells[g_cells[x].rdc].rac].type == TVALUES)
 			{
-				y = cons2(bad2good(y->car, g_cells), cons2(bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells)));
+				y = cons(bad2good(y->car, g_cells), cons(bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells)));
 			}
 		}
 	}
@@ -554,7 +553,6 @@ struct scm* mes_builtins(struct scm* a)  ///((internal))
 	a = init_builtin(builtin_type, "length", 1, &length, a);
 	a = init_builtin(builtin_type, "error", 2, &error, a);
 	a = init_builtin(builtin_type, "append2", 2, &append2, a);
-	a = init_builtin(builtin_type, "append-reverse", 2, &append_reverse, a);
 	a = init_builtin(builtin_type, "core:reverse!", 2, &reverse_x_, a);
 	a = init_builtin(builtin_type, "pairlis", 3, &pairlis, a);
 	a = init_builtin(builtin_type, "assq", 2, &assq, a);

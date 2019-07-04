@@ -578,7 +578,7 @@
 		(find-end (cons #\newline (append sl cl)) '()
 			  (skip-to-col scol (cdr il)) ps 0))
 	       (else
-		(let ((il1 (append-reverse sl il)))
+		(let ((il1 (append (reverse sl) il)))
 		  (find-end (cons (car il1) cl) '() (cdr il1) ps 0)))))))
 	(let ((ep (match-beg (list ch) tree))) ;; ep=end pattern (e.g., "*/")
 	  (if ep (find-end '() '() (list (mc-read-char)) ep 0) #f))))))
