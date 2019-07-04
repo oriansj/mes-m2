@@ -90,7 +90,7 @@ SCM eval_apply ();
 SCM length (SCM x);
 SCM list (SCM x);
 SCM macro_get_handle (SCM name);
-SCM make_cell_ (SCM type, SCM car, SCM cdr);
+SCM make_cell_(SCM type, SCM car, SCM cdr);
 SCM make_cell__(long type, SCM car, SCM cdr);
 SCM null_p (SCM x);
 SCM pairlis (SCM x, SCM y, SCM a);
@@ -397,11 +397,11 @@ void* builtin_function(SCM builtin)
 	return (void*)struct_ref_(builtin, 5)->rdc;
 }
 
-SCM builtin_p(SCM x)
+struct scm* builtin_p(SCM x)
 {
 	struct scm* y = Getstructscm2(x, g_cells);
-	if (y->type == TSTRUCT && GetSCM2(struct_ref_(x, 2), g_cells) == cell_symbol_builtin) return cell_t;
-	return cell_f;
+	if (y->type == TSTRUCT && GetSCM2(struct_ref_(x, 2), g_cells) == cell_symbol_builtin) return good2bad(Getstructscm2(cell_t, g_cells), g_cells);
+	return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
 }
 
 struct scm* builtin_printer(SCM builtin)

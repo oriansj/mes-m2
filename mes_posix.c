@@ -34,17 +34,17 @@
 
 int readchar();
 int unreadchar();
-struct scm* current_input_port ();
-int fdgetc (int fd);
+struct scm* current_input_port();
+int fdgetc(int fd);
 int eputs(char const* s);
 struct scm* make_string(char const* s, int length);
 struct scm* make_string_(char const* s);
-int fdungetc (int c, int fd);
+int fdungetc(int c, int fd);
 SCM make_cell__(long type, SCM car, SCM cdr);
-SCM cons (SCM x, SCM y);
+SCM cons_(SCM x, SCM y);
 long length__(SCM x);
 SCM error(SCM key, SCM x);
-SCM acons (SCM key, SCM value, SCM alist);
+SCM acons_(SCM key, SCM value, SCM alist);
 
 char* ntoab(long x, int base, int signed_p)
 {

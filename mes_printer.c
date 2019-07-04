@@ -26,16 +26,16 @@
 // CONSTANT STRUCT_PRINTER 1
 #define STRUCT_PRINTER 1
 
-SCM cons (SCM x, SCM y);
+SCM cons_(SCM x, SCM y);
 SCM apply(SCM f, SCM x);
 struct scm* struct_ref_(SCM x, long i);
 struct scm* vector_ref_(SCM x, long i);
 
-SCM builtin_p (SCM x);
+SCM builtin_p(SCM x);
 struct scm* fdisplay_(SCM, int, int);
 int fdputs(char const* s, int fd);
 int fdputc(int c, int fd);
-char *itoa (int number);
+char *itoa(int number);
 int eputs(char const* s);
 SCM error(SCM key, SCM x);
 

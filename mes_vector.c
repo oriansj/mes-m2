@@ -24,7 +24,7 @@
 
 SCM make_cell__(SCM type, SCM car, SCM cdr);
 SCM length__(SCM x);
-SCM cons (SCM x, SCM y);
+struct scm* cons(struct scm* x, struct scm* y);
 struct scm* equal2_p(SCM a, SCM b);
 struct scm* vector_entry(SCM x);
 struct scm* make_vector__(SCM k);
@@ -162,7 +162,7 @@ struct scm* vector_to_list(struct scm* v)
 			f = bad2good(f->car, g_cells);
 		}
 
-		x = Getstructscm2(cons_(GetSCM2(f, g_cells), GetSCM2(x, g_cells)), g_cells);
+		x = cons(f, x);
 	}
 
 	return good2bad(x, g_cells);

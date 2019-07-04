@@ -57,6 +57,7 @@ struct scm* make_hashq_type();
 struct scm* make_module_type();
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 SCM make_cell__(long type, SCM car, SCM cdr);
+struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr);
 struct scm* make_string_(char const* s);
 struct scm* make_string(char const* s, int length);
 struct scm* make_hash_table_(SCM size);
@@ -68,39 +69,6 @@ SCM mes_symbols();
 /* M2-Planet Imports */
 int numerate_string(char *a);
 
-SCM make_cell_(SCM type, SCM car, SCM cdr)
-{
-	struct scm* t = Getstructscm2(type, g_cells);
-	assert(t->type == TNUMBER);
-
-	if(t->value == TCHAR || t->value == TNUMBER)
-	{
-		if(0 != car)
-		{
-			if(0 != cdr)
-			{
-				return make_cell__(t->value, Getstructscm2(car, g_cells)->rac, Getstructscm2(cdr, g_cells)->rdc);
-			}
-			else
-			{
-				return make_cell__(t->value, Getstructscm2(car, g_cells)->rac, 0);
-			}
-		}
-		else
-		{
-			if(0 != cdr)
-			{
-				return make_cell__(t->value, 0, Getstructscm2(cdr, g_cells)->rdc);
-			}
-			else
-			{
-				return make_cell__(t->value, 0, 0);
-			}
-		}
-	}
-
-	return make_cell__(t->value, car, cdr);
-}
 
 SCM assoc_string(SCM x, SCM a)  ///((internal))
 {
@@ -151,6 +119,11 @@ SCM cdr_(SCM x)
 SCM cons_(SCM x, SCM y)
 {
 	return make_cell__(TPAIR, x, y);
+}
+
+struct scm* cons(struct scm* x, struct scm* y)
+{
+	return make_cell(TPAIR, x, y);
 }
 
 struct scm* cons2(struct scm* x, struct scm* y)

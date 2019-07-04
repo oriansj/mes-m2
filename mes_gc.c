@@ -149,6 +149,40 @@ SCM make_cell__(SCM type, SCM car, SCM cdr)
 	return GetSCM2(x, g_cells);
 }
 
+SCM make_cell_(SCM type, SCM car, SCM cdr)
+{
+	struct scm* t = Getstructscm2(type, g_cells);
+	assert(t->type == TNUMBER);
+
+	if(t->value == TCHAR || t->value == TNUMBER)
+	{
+		if(0 != car)
+		{
+			if(0 != cdr)
+			{
+				return make_cell__(t->value, Getstructscm2(car, g_cells)->rac, Getstructscm2(cdr, g_cells)->rdc);
+			}
+			else
+			{
+				return make_cell__(t->value, Getstructscm2(car, g_cells)->rac, 0);
+			}
+		}
+		else
+		{
+			if(0 != cdr)
+			{
+				return make_cell__(t->value, 0, Getstructscm2(cdr, g_cells)->rdc);
+			}
+			else
+			{
+				return make_cell__(t->value, 0, 0);
+			}
+		}
+	}
+
+	return make_cell__(t->value, car, cdr);
+}
+
 struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr)
 {
 	struct scm* x = alloc(1);

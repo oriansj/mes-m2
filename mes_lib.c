@@ -22,7 +22,7 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-SCM cons (SCM x, SCM y);
+SCM cons_(SCM x, SCM y);
 struct scm* cstring_to_symbol(char const *s);
 void vector_set_x_(SCM x, long i, SCM e);
 struct scm* struct_ref_(SCM x, long i);

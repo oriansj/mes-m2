@@ -32,10 +32,10 @@ struct scm* make_vector__(long k);
 
 void vector_set_x_(SCM x, long i, SCM e);
 SCM error(SCM key, SCM x);
-SCM cons (SCM x, SCM y);
-SCM assq (SCM x, SCM a);
-SCM assoc (SCM x, SCM a);
-SCM acons (SCM key, SCM value, SCM alist);
+SCM cons_(SCM x, SCM y);
+SCM assq(SCM x, SCM a);
+SCM assoc(SCM x, SCM a);
+SCM acons_(SCM key, SCM value, SCM alist);
 
 int hash_cstring(char const* s, long size)
 {
