@@ -149,6 +149,15 @@ SCM make_cell__(SCM type, SCM car, SCM cdr)
 	return GetSCM2(x, g_cells);
 }
 
+struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr)
+{
+	struct scm* x = alloc(1);
+	x->type = type;
+	x->car = good2bad(car, g_cells);
+	x->cdr = good2bad(cdr, g_cells);
+	return x;
+}
+
 
 struct scm* make_bytes(char const* s, size_t length)
 {

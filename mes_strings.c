@@ -23,8 +23,8 @@
 #include "mes_constants.h"
 
 char *itoa (int number);
-
-SCM cons (SCM x, SCM y);
+SCM cons_ (SCM x, SCM y);
+struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr);
 SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* make_bytes(char const* s, size_t length);
 SCM write_error_ (SCM x);
@@ -52,7 +52,7 @@ char const* list_to_cstring(struct scm* list, int* size)
 	return g_buf;
 }
 
-struct scm* make_string_(char const* s) // internal only
+struct scm* make_string_(char const* s) /* internal only */
 {
 	assert_max_string(strlen(s) , "make_string_", (char*)s);
 
@@ -109,18 +109,19 @@ struct scm* string_equal_p(SCM a, SCM b)
 struct scm* symbol_to_string(SCM symbol)
 {
 	struct scm* a = Getstructscm2(symbol, g_cells);
-	return Getstructscm2(make_cell__(TSTRING, a->length, a->rdc), g_cells);
+	return make_cell(TSTRING, bad2good(a->car, g_cells), bad2good(a->cdr, g_cells));
 }
 
 struct scm* symbol_to_keyword(SCM symbol)
 {
 	struct scm* a = Getstructscm2(symbol, g_cells);
-	return Getstructscm2(make_cell__(TKEYWORD, a->length, a->rdc), g_cells);
+	return make_cell(TKEYWORD, bad2good(a->car, g_cells), bad2good(a->cdr, g_cells));
 }
 
 struct scm* make_symbol(SCM string)
 {
-	struct scm* x = Getstructscm2(make_cell__(TSYMBOL, g_cells[string].length, g_cells[string].rdc), g_cells);
+	struct scm* s = Getstructscm2(string, g_cells);
+	struct scm* x = make_cell(TSYMBOL, bad2good(s->car, g_cells), bad2good(s->cdr, g_cells));
 	hash_set_x(g_symbols, string, GetSCM2(x,g_cells));
 	return x;
 }
@@ -195,7 +196,7 @@ struct scm* list_to_string(SCM list)
 	return make_string(s, size);
 }
 
-struct scm* string_append(SCM x)  ///((arity . n))
+struct scm* string_append(SCM x)  /*((arity . n))*/
 {
 	char *p = g_buf;
 	g_buf[0] = 0;
