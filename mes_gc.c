@@ -36,7 +36,7 @@ SCM make_cell__(long type, SCM car, SCM cdr);
 struct scm* make_stack_type();
 struct scm* make_struct(SCM type, struct scm* fields, SCM printer);
 struct scm* make_frame_type();
-SCM cons (SCM x, SCM y);
+SCM cons_ (SCM x, SCM y);
 struct scm* make_vector__(long k);
 void vector_set_x_(SCM x, long i, SCM e);
 
@@ -233,7 +233,7 @@ struct scm* gc_copy(SCM old)  ///((internal))
 	struct scm* o = Getstructscm2(old, g_cells);
 	if(o->type == TBROKEN_HEART)
 	{
-		return o->car;
+		return bad2good(o->car, g_news);
 	}
 
 	SCM new = g_free++;
@@ -279,7 +279,7 @@ struct scm* gc_copy(SCM old)  ///((internal))
 
 	o->type = TBROKEN_HEART;
 	o->rac = new;
-	return good2bad(n, g_news);
+	return n;
 }
 
 struct scm* gc_copy_new(struct scm* old)  ///((internal))
@@ -354,8 +354,7 @@ void gc_loop()  ///((internal))
 		        || scan == 1 // null
 		        || s->type == TVARIABLE)
 		{
-			g_news[scan].rac = GetSCM2(bad2good(gc_copy(g_news[scan].rac), g_news), g_news);
-			//g_news[scan].rac = GetSCM2(gc_copy_new (bad2good(g_news[scan].car, g_news)), g_news);
+			g_news[scan].rac = GetSCM2(gc_copy(g_news[scan].rac), g_news);
 		}
 
 		if((s->type == TCLOSURE
@@ -371,8 +370,7 @@ void gc_loop()  ///((internal))
 		        || s->type == TVALUES)
 		        && g_news[scan].cdr) // allow for 0 terminated list of symbols
 		{
-			g_news[scan].rdc = GetSCM2(bad2good(gc_copy(g_news[scan].rdc), g_news), g_news);
-			//g_news[scan].rdc = GetSCM2(gc_copy_new(bad2good(g_news[scan].cdr, g_news)), g_news);
+			g_news[scan].rdc = GetSCM2(gc_copy(g_news[scan].rdc), g_news);
 		}
 
 		if(s->type == TBYTES)
@@ -464,7 +462,7 @@ void gc_()  ///((internal))
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{
-		g_stack_array[i] = gc_copy((SCM)g_stack_array[i]);
+		g_stack_array[i] = good2bad(gc_copy((SCM)g_stack_array[i]), g_news);
 	}
 
 	gc_loop();
