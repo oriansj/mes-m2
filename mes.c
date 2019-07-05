@@ -396,17 +396,19 @@ SCM reverse_x_(SCM x, SCM t)
 		error(cell_symbol_not_a_pair, cons_(x, GetSCM2(cstring_to_symbol("core:reverse!"), g_cells)));
 	}
 
-	SCM r = t;
+	struct scm* r = Getstructscm2(t, g_cells);
+	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* s;
 
-	while(x != cell_nil)
+	while(GetSCM2(y, g_cells) != cell_nil)
 	{
-		t = CDR(x);
-		CDR(x) = r;
-		r = x;
-		x = t;
+		s = bad2good(y->cdr, g_cells);
+		y->cdr = good2bad(r, g_cells);
+		r = y;
+		y = s;
 	}
 
-	return r;
+	return GetSCM2(r, g_cells);
 }
 
 SCM pairlis(SCM x, SCM y, SCM a)
@@ -426,82 +428,99 @@ SCM pairlis(SCM x, SCM y, SCM a)
 
 SCM assq(SCM x, SCM a)
 {
-	if(g_cells[a].type != TPAIR)
+	struct scm* b = Getstructscm2(a, g_cells);
+	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* NIL = Getstructscm2(cell_nil, g_cells);
+
+	if(b->type != TPAIR)
 	{
 		return cell_f;
 	}
 
-	int t = g_cells[x].type;
+	int t = y->type;
 
 	if(t == TSYMBOL || t == TSPECIAL)
 	{
-		while(a != cell_nil && x != CAR (CAR (a)))
+		while(b != NIL)
 		{
-			a = CDR(a);
+			if(x == (bad2good(b->car, g_cells)->rac)) return b->rac;
+			b = bad2good(b->cdr, g_cells);
 		}
-	}
-	else if(t == TCHAR || t == TNUMBER)
-	{
-		SCM v = VALUE(x);
-
-		while(a != cell_nil && v != VALUE(CAR (CAR (a))))
-		{
-			a = CDR(a);
-		}
-	}
-	else if(t == TKEYWORD)
-	{
-		while(a != cell_nil && GetSCM2(string_equal_p(x, CAR (CAR (a))), g_cells) == cell_f)
-		{
-			a = CDR(a);
-		}
-	}
-	else
-	{
-		/* pointer equality, e.g. on strings. */
-		while(a != cell_nil && x != CAR (CAR (a)))
-		{
-			a = CDR(a);
-		}
+		return cell_f;
 	}
 
-	return a != cell_nil ? CAR(a) : cell_f;
+	if(t == TCHAR || t == TNUMBER)
+	{
+		SCM v = y->value;
+		while(b != NIL)
+		{
+			if(v == (bad2good(bad2good(b->car, g_cells)->car, g_cells)->value)) return b->rac;
+			b = bad2good(b->cdr, g_cells);
+		}
+		return cell_f;
+	}
+
+	if(t == TKEYWORD)
+	{
+		struct scm* F = Getstructscm2(cell_f, g_cells);
+		while(b != NIL)
+		{
+			if(F == string_equal_p(x, bad2good(b->car, g_cells)->rac)) return b->rac;
+			b = bad2good(b->cdr, g_cells);
+		}
+		return cell_f;
+	}
+
+	/* pointer equality, e.g. on strings. */
+	while(b != NIL)
+	{
+		if(x == bad2good(b->car, g_cells)->rac) return b->rac;
+		b = bad2good(b->cdr, g_cells);
+	}
+	return cell_f;
 }
 
 SCM assoc(SCM x, SCM a)
 {
-	if(g_cells[x].type == TSTRING)
+	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* b = Getstructscm2(a, g_cells);
+	struct scm* NIL = Getstructscm2(cell_nil, g_cells);
+
+	if(y->type == TSTRING)
 	{
 		return assoc_string(x, a);
 	}
 
-	while(a != cell_nil && equal2_p(x, CAR (CAR (a))) == cell_f)
+	while(b != NIL)
 	{
-		a = CDR(a);
+		if(cell_f != equal2_p(x, bad2good(b->car, g_cells)->rac)) return b->rac;
+		b = bad2good(b->cdr, g_cells);
 	}
 
-	return a != cell_nil ? CAR(a) : cell_f;
+	return cell_f;
 }
 
 SCM set_car_x(SCM x, SCM e)
 {
-	if(g_cells[x].type != TPAIR)
+	struct scm* y = Getstructscm2(x, g_cells);
+	if(y->type != TPAIR)
 	{
 		error(cell_symbol_not_a_pair, cons_(x, GetSCM2(cstring_to_symbol("set-car!"), g_cells)));
 	}
 
-	CAR(x) = e;
+	y->rac = e;
 	return cell_unspecified;
 }
 
 SCM set_cdr_x(SCM x, SCM e)
 {
-	if(g_cells[x].type != TPAIR)
+	struct scm* y = Getstructscm2(x, g_cells);
+	if(y->type != TPAIR)
 	{
 		error(cell_symbol_not_a_pair, cons_(x, GetSCM2(cstring_to_symbol("set-cdr!"), g_cells)));
 	}
 
-	CDR(x) = e;
+	y->rdc = e;
 	return cell_unspecified;
 }
 
