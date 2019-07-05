@@ -445,9 +445,9 @@ struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 
 	if(arity > 1 || arity == -1)
 	{
-		if(x != cell_nil && g_cells[y->rdc].type == TPAIR)
+		if(x != cell_nil && bad2good(y->cdr, g_cells)->type == TPAIR)
 		{
-			if(g_cells[g_cells[g_cells[x].rdc].rac].type == TVALUES)
+			if(bad2good(bad2good(Getstructscm2(x, g_cells)->cdr, g_cells)->car, g_cells)->type == TVALUES)
 			{
 				y = cons(bad2good(y->car, g_cells), cons(bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells)));
 			}
@@ -470,13 +470,13 @@ struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 	{
 		//function2_t fp = f->function;
 		FUNCTION2* fp = builtin_function(fn);
-		return bad2good(fp(y->car, g_cells[y->rdc].car), g_cells);
+		return bad2good(fp(y->car, bad2good(y->cdr, g_cells)->car), g_cells);
 	}
 	else if(arity == 3)
 	{
 		//function3_t fp = f->function;
 		FUNCTION3* fp = builtin_function(fn);
-		return bad2good(fp(y->car, g_cells[y->rdc].car, g_cells[g_cells[y->rdc].rdc].car), g_cells);
+		return bad2good(fp(y->car, bad2good(y->cdr, g_cells)->car, bad2good(bad2good(y->cdr, g_cells)->cdr, g_cells)->car), g_cells);
 	}
 	else if(arity == -1)
 	{
