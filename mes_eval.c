@@ -24,14 +24,8 @@
 
 extern SCM STACK_SIZE;
 
-#define TYPE(x) g_cells[x].type
 #define CAR(x) g_cells[x].rac
 #define CDR(x) g_cells[x].rdc
-#define VALUE(x) g_cells[x].value
-#define VARIABLE(x) g_cells[x].variable
-#define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
-#define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_MACRO(name, x) make_cell__ (TMACRO, x, g_cells[name].rdc)
 
 SCM append2(SCM x, SCM y);
 SCM gc_push_frame();
@@ -247,7 +241,7 @@ eval_apply:
 	}
 	else
 	{
-		error(cell_symbol_system_error, GetSCM2(bad2good(MAKE_STRING0("eval/apply unknown continuation"), g_cells), g_cells));
+		error(cell_symbol_system_error, GetSCM2(bad2good(make_string ("eval/apply unknown continuation", strlen("eval/apply unknown continuation")), g_cells), g_cells));
 	}
 
 evlis:
@@ -257,7 +251,7 @@ evlis:
 		goto vm_return;
 	}
 
-	if(TYPE(r1) != TPAIR)
+	if(g_cells[r1].type != TPAIR)
 	{
 		goto eval;
 	}
@@ -272,7 +266,7 @@ evlis3:
 	goto vm_return;
 apply:
 	g_stack_array[g_stack + FRAME_PROCEDURE] = (struct scm*)CAR(r1);
-	t = TYPE(CAR(r1));
+	t = g_cells[CAR(r1)].type;
 
 	if(t == TSTRUCT && builtin_p(CAR(r1)) == cell_t)
 	{
@@ -384,7 +378,7 @@ apply2:
 	r1 = cons_(r1, CDR(r2));
 	goto apply;
 eval:
-	t = TYPE(r1);
+	t = g_cells[r1].type;
 
 	if(t == TPAIR)
 	{
@@ -451,7 +445,7 @@ eval_macro_expand_expand:
 		}
 		else
 		{
-			if(TYPE(r1) == TPAIR && (CAR(r1) == cell_symbol_define || CAR(r1) == cell_symbol_define_macro))
+			if(g_cells[r1].type == TPAIR && (CAR(r1) == cell_symbol_define || CAR(r1) == cell_symbol_define_macro))
 			{
 				global_p = CAR (CAR (r0)) != cell_closure;
 				macro_p = CAR(r1) == cell_symbol_define_macro;
@@ -460,7 +454,7 @@ eval_macro_expand_expand:
 				{
 					name = CAR (CDR (r1));
 
-					if(TYPE(CAR (CDR (r1))) == TPAIR)
+					if(g_cells[CAR (CDR (r1))].type == TPAIR)
 					{
 						name = CAR(name);
 					}
@@ -487,7 +481,7 @@ eval_macro_expand_expand:
 
 				r2 = r1;
 
-				if(TYPE(CAR (CDR (r1))) != TPAIR)
+				if(g_cells[CAR (CDR (r1))].type != TPAIR)
 				{
 					push_cc(CAR(CDR (CDR (r1))), r2, cons_(cons_(CAR (CDR (r1)), CAR (CDR (r1))), r0), cell_vm_eval_define);
 					goto eval;
@@ -511,7 +505,7 @@ eval_macro_expand_expand:
 eval_define:
 				name = CAR (CDR (r2));
 
-				if(TYPE(CAR (CDR (r2))) == TPAIR)
+				if(g_cells[CAR (CDR (r2))].type == TPAIR)
 				{
 					name = CAR(name);
 				}
@@ -519,7 +513,7 @@ eval_define:
 				if(macro_p)
 				{
 					entry = macro_get_handle(name);
-					r1 = MAKE_MACRO(name, r1);
+					r1 = make_cell__ (TMACRO, r1, g_cells[name].rdc);
 					set_cdr_x(entry, r1);
 				}
 				else if(global_p)
@@ -575,7 +569,7 @@ eval2:
 	}
 	else if(t == TVARIABLE)
 	{
-		r1 = CDR(VARIABLE(r1));
+		r1 = CDR(g_cells[r1].variable);
 		goto vm_return;
 	}
 	else if(t == TBROKEN_HEART)
@@ -588,7 +582,7 @@ eval2:
 	}
 
 macro_expand:
-	if(TYPE(r1) != TPAIR || CAR(r1) == cell_symbol_quote)
+	if(g_cells[r1].type != TPAIR || CAR(r1) == cell_symbol_quote)
 	{
 		goto vm_return;
 	}
@@ -604,7 +598,7 @@ macro_expand_lambda:
 		goto vm_return;
 	}
 
-	if(TYPE(r1) == TPAIR && (macro = get_macro(CAR(r1))) != cell_f)
+	if(g_cells[r1].type == TPAIR && (macro = get_macro(CAR(r1))) != cell_f)
 	{
 		r1 = cons_(macro, CDR(r1));
 		push_cc(r1, cell_nil, r0, cell_vm_macro_expand);
@@ -643,7 +637,7 @@ macro_expand_set_x:
 		goto vm_return;
 	}
 
-	if(TYPE(r1) == TPAIR && TYPE(CAR(r1)) == TSYMBOL)
+	if(g_cells[r1].type == TPAIR && g_cells[CAR(r1)].type == TSYMBOL)
 	{
 		macro = macro_get_handle(cell_symbol_portable_macro_expand);
 		expanders = GetSCM2(module_ref(r0, cell_symbol_sc_expander_alist), g_cells);
@@ -691,7 +685,7 @@ begin:
 	{
 		gc_check();
 
-		if(TYPE(r1) == TPAIR)
+		if(g_cells[r1].type == TPAIR)
 		{
 			if(CAR (CAR (r1)) == cell_symbol_primitive_load)
 			{
@@ -704,7 +698,7 @@ begin_primitive_load:
 			}
 		}
 
-		if(TYPE(r1) == TPAIR && TYPE(CAR(r1)) == TPAIR)
+		if(g_cells[r1].type == TPAIR && g_cells[CAR(r1)].type == TPAIR)
 		{
 			if(CAR (CAR (r1)) == cell_symbol_begin)
 			{
@@ -734,9 +728,9 @@ begin_expand:
 	{
 		gc_check();
 
-		if(TYPE(r1) == TPAIR)
+		if(g_cells[r1].type == TPAIR)
 		{
-			if(TYPE(CAR(r1)) == TPAIR && CAR (CAR (r1)) == cell_symbol_begin)
+			if(g_cells[CAR(r1)].type == TPAIR && CAR (CAR (r1)) == cell_symbol_begin)
 			{
 				r1 = append2(CDR (CAR (r1)), CDR(r1));
 			}
@@ -747,13 +741,15 @@ begin_expand:
 				goto eval; // FIXME: expand too?!
 begin_expand_primitive_load:
 
-				if(TYPE(r1) == TNUMBER && VALUE(r1) == 0)
+				if(g_cells[r1].type == TNUMBER && g_cells[r1].value == 0)
+				{
 					;
-				else if(TYPE(r1) == TSTRING)
+				}
+				else if(g_cells[r1].type == TSTRING)
 				{
 					input = set_current_input_port(open_input_file(r1));
 				}
-				else if(TYPE(r1) == TPORT)
+				else if(g_cells[r1].type == TPORT)
 				{
 					input = set_current_input_port(r1);
 				}
@@ -853,7 +849,7 @@ call_with_values:
 	goto apply;
 call_with_values2:
 
-	if(TYPE(r1) == TVALUES)
+	if(g_cells[r1].type == TVALUES)
 	{
 		r1 = CDR(r1);
 	}

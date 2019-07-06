@@ -266,8 +266,7 @@ void gc_flip()  ///((internal))
 	}
 
 	memcpy(g_cells - 1, g_news - 1, (g_free + 2)*sizeof(struct scm));
-	size_t clear = (ARENA_SIZE - g_free ) * sizeof(struct scm)
-		- (STACK_SIZE - g_stack) * sizeof(SCM);
+	size_t clear = (ARENA_SIZE - g_free ) * sizeof(struct scm) - (STACK_SIZE - g_stack) * sizeof(SCM);
 	memset(g_cells + g_free, 0, clear);
 }
 
