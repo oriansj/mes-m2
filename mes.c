@@ -347,13 +347,13 @@ SCM gc_push_frame()  ///((internal))
 	g_stack_array[--g_stack] = (struct scm*)r0;
 	g_stack_array[--g_stack] = (struct scm*)r1;
 	g_stack_array[--g_stack] = (struct scm*)r2;
-	g_stack_array[--g_stack] = (struct scm*)r3;
+	g_stack_array[--g_stack] = R3;
 	return g_stack;
 }
 
 SCM gc_peek_frame()  ///((internal))
 {
-	r3 = (SCM) g_stack_array[g_stack];
+	R3 = g_stack_array[g_stack];
 	r2 = (SCM) g_stack_array[g_stack + 1];
 	r1 = (SCM) g_stack_array[g_stack + 2];
 	r0 = (SCM) g_stack_array[g_stack + 3];
@@ -602,13 +602,13 @@ SCM macro_set_x(SCM name, SCM value)  ///((internal))
 
 SCM push_cc(SCM p1, SCM p2, SCM a, SCM c)  ///((internal))
 {
-	SCM x = r3;
-	r3 = c;
+	struct scm* x = R3;
+	R3 = good2bad(Getstructscm2(c));
 	r2 = p2;
 	gc_push_frame();
 	r1 = p1;
 	r0 = a;
-	r3 = x;
+	R3 = x;
 	return cell_unspecified;
 }
 
@@ -734,7 +734,7 @@ SCM expand_variable(SCM x, SCM formals)  ///((internal))
 SCM apply(SCM f, SCM x)  ///((internal))
 {
 	push_cc(cons_(f, x), cell_unspecified, r0, cell_unspecified);
-	r3 = cell_vm_apply;
+	R3 = good2bad(Getstructscm2(cell_vm_apply));
 	return eval_apply();
 }
 
@@ -851,7 +851,7 @@ int main(int argc, char *argv[])
 	r0 = 0;
 	r1 = 0;
 	r2 = 0;
-	r3 = 0;
+	R3 = good2bad(Getstructscm2(0));
 	m0 = 0;
 	g_macros = 0;
 	g_ports = 1;
@@ -894,7 +894,7 @@ int main(int argc, char *argv[])
 		eputs("\n");
 	}
 
-	r3 = cell_vm_begin_expand;
+	R3 = good2bad(Getstructscm2(cell_vm_begin_expand));
 	r1 = eval_apply();
 
 	if(g_debug)

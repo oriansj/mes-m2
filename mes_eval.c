@@ -80,26 +80,44 @@ struct scm* vector_set_x_(SCM x, SCM i, SCM e);
 SCM eval_apply()
 {
 	SCM aa;
+	struct scm* AA;
 	SCM args;
+	struct scm* ARGS;
 	SCM body;
+	struct scm* BODY;
 	SCM cl;
+	struct scm* CL;
 	SCM entry;
+	struct scm* ENTRY;
 	SCM expanders;
+	struct scm* EXPANDERS;
 	SCM formals;
+	struct scm* FORMALS;
 	SCM input;
+	struct scm* INPUT;
 	SCM name;
+	struct scm* NAME;
 	SCM macro;
+	struct scm* MACRO;
 	SCM p;
+	struct scm* P;
 	SCM program;
+	struct scm* PROGRAM;
 	SCM sc_expand;
+	struct scm* SC_EXPAND;
 	SCM v;
+	struct scm* V;
 	SCM x;
+	struct scm* X;
 	int global_p;
 	int macro_p;
 	int t;
 	SCM c;
+	SCM r3;
+	struct scm* C;
 eval_apply:
 
+	r3 = GetSCM2(bad2good(R3));
 	if(r3 == cell_vm_evlis2)
 	{
 		goto evlis2;

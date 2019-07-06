@@ -85,17 +85,23 @@ int* __ungetc_buf;
 
 /* Mes core locals */
 SCM r0;
+struct scm* R0;
 /* param 1 */
 SCM r1;
+struct scm* R1;
 /* save 2 */
 SCM r2;
+struct scm* R2;
 /* continuation */
-SCM r3;
+struct scm* R3;
 /* current-module */
 SCM m0;
+struct scm* M0;
 /* macro */
 SCM g_macros;
+struct scm* G_MACROS;
 SCM g_ports;
+struct scm* G_PORTS;
 
 
 /* Temp interface functions */
