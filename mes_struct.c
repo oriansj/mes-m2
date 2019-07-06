@@ -53,7 +53,7 @@ struct scm* struct_ref_(struct scm* x, long i)
 
 	if(f->type == TREF)
 	{
-		return Getstructscm2(f->ref, g_cells);
+		return bad2good(f->car, g_cells);
 	}
 
 	if(f->type == TCHAR)

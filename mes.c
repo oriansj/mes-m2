@@ -524,7 +524,7 @@ SCM set_env_x(SCM x, SCM e, SCM a)
 
 	if(y->type == TVARIABLE)
 	{
-		p = Getstructscm2(y->variable, g_cells);
+		p = Getstructscm2(y->rac, g_cells);
 	}
 	else
 	{

@@ -70,7 +70,7 @@ struct scm* stack_ref(SCM stack, SCM index)
 
 	if(e->type == TREF)
 	{
-		return Getstructscm2(e->ref, g_cells);
+		return bad2good(e->car, g_cells);
 	}
 
 	if(e->type == TCHAR)

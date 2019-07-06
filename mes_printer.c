@@ -175,7 +175,7 @@ struct scm* display_helper(SCM x, int cont, char* sep, int fd, int write_p)
 	}
 	else if(t == TREF)
 	{
-		fdisplay_(y->ref, fd, write_p);
+		fdisplay_(y->rac, fd, write_p);
 	}
 	else if(t == TSTRUCT)
 	{

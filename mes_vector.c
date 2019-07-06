@@ -51,7 +51,7 @@ struct scm* vector_ref_(SCM table, long i)
 
 	if(e->type == TREF)
 	{
-		return Getstructscm2(e->ref, g_cells);
+		return bad2good(e->car, g_cells);
 	}
 
 	if(e->type == TCHAR)
@@ -86,12 +86,12 @@ struct scm* vector_equal_p(SCM a, SCM b)
 
 		if(ai2->type == TREF)
 		{
-			ai = ai2->ref;
+			ai = ai2->rac;
 		}
 
 		if(bi2->type == TREF)
 		{
-			bi = bi2->ref;
+			bi = bi2->rac;
 		}
 
 		if(equal2_p(ai, bi) == good2bad(Getstructscm2(cell_f, g_cells), g_cells))

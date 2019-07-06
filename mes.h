@@ -51,8 +51,6 @@ struct scm
 		int length;
 		SCM macro;
 		SCM port;
-		SCM ref;
-		SCM variable;
 	};
 	union
 	{
