@@ -78,11 +78,11 @@ void gc_init_cells()  ///((internal))
 SCM mes_g_stack(SCM a)  ///((internal))
 {
 	g_stack = STACK_SIZE;
-	r0 = a;
+	R0 = good2bad(Getstructscm2(a));
 	R1 = good2bad(Getstructscm2(make_cell__ (TCHAR, 0, 0)));
 	R2 = good2bad(Getstructscm2(make_cell__ (TCHAR, 0, 0)));
 	R3 = good2bad(Getstructscm2(make_cell__ (TCHAR, 0, 0)));
-	return r0;
+	return GetSCM2(bad2good(R0));
 }
 
 struct scm* make_frame(long index)
@@ -538,7 +538,7 @@ struct scm* gc()
 		write_error_(g_symbols);
 		eputs("\n");
 		eputs("R0: ");
-		write_error_(r0);
+		write_error_(GetSCM2(bad2good(R0)));
 		eputs("\n");
 	}
 
@@ -552,7 +552,7 @@ struct scm* gc()
 		write_error_(g_symbols);
 		eputs("\n");
 		eputs("R0: ");
-		write_error_(r0);
+		write_error_(GetSCM2(bad2good(R0)));
 		eputs("\n");
 	}
 	return good2bad(Getstructscm2(cell_unspecified));

@@ -84,7 +84,6 @@ SCM g_symbol_max;
 int* __ungetc_buf;
 
 /* Mes core locals */
-SCM r0;
 struct scm* R0;
 /* param 1 */
 struct scm* R1;

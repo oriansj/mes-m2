@@ -214,7 +214,7 @@ SCM apply(SCM, SCM);
 
 SCM error(SCM key, SCM x)
 {
-	SCM throw= GetSCM2(module_ref(r0, cell_symbol_throw));
+	SCM throw= GetSCM2(module_ref(GetSCM2(bad2good(R0)), cell_symbol_throw));
 
 	if(throw != cell_undefined)
 	{
@@ -344,7 +344,7 @@ SCM gc_push_frame()  ///((internal))
 	}
 
 	g_stack_array[--g_stack] = (struct scm*) cell_f;
-	g_stack_array[--g_stack] = (struct scm*)r0;
+	g_stack_array[--g_stack] = R0;
 	g_stack_array[--g_stack] = R1;
 	g_stack_array[--g_stack] = R2;
 	g_stack_array[--g_stack] = R3;
@@ -356,7 +356,7 @@ SCM gc_peek_frame()  ///((internal))
 	R3 = g_stack_array[g_stack];
 	R2 = g_stack_array[g_stack + 1];
 	R1 = g_stack_array[g_stack + 2];
-	r0 = (SCM) g_stack_array[g_stack + 3];
+	R0 = g_stack_array[g_stack + 3];
 	return (SCM) g_stack_array[g_stack + FRAME_PROCEDURE];
 }
 
@@ -558,7 +558,7 @@ SCM call_lambda(SCM e, SCM x)  ///((internal))
 {
 	SCM cl = cons_(cons_(cell_closure, x), x);
 	R1 = good2bad(Getstructscm2(e));
-	r0 = cl;
+	R0 = good2bad(Getstructscm2(cl));
 	return cell_unspecified;
 }
 
@@ -607,7 +607,7 @@ SCM push_cc(SCM p1, SCM p2, SCM a, SCM c)  ///((internal))
 	R2 = good2bad(Getstructscm2(p2));
 	gc_push_frame();
 	R1 = good2bad(Getstructscm2(p1));
-	r0 = a;
+	R0 = good2bad(Getstructscm2(a));
 	R3 = x;
 	return cell_unspecified;
 }
@@ -710,7 +710,7 @@ SCM expand_variable_(SCM x, SCM formals, int top_p)  ///((internal))
 			        && y->rac != cell_symbol_primitive_load
 			        && !formal_p(y->rac, formals))
 			{
-				SCM v = GetSCM2(module_variable(r0, y->rac));
+				SCM v = GetSCM2(module_variable(GetSCM2(bad2good(R0)), y->rac));
 
 				if(v != cell_f)
 				{
@@ -733,7 +733,7 @@ SCM expand_variable(SCM x, SCM formals)  ///((internal))
 
 SCM apply(SCM f, SCM x)  ///((internal))
 {
-	push_cc(cons_(f, x), cell_unspecified, r0, cell_unspecified);
+	push_cc(cons_(f, x), cell_unspecified, GetSCM2(bad2good(R0)), cell_unspecified);
 	R3 = good2bad(Getstructscm2(cell_vm_apply));
 	return eval_apply();
 }
@@ -830,7 +830,7 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	SCM globals = GetSCM2(bad2good(make_hash_table_(0)));
 	SCM values = cons_(cell_symbol_module, cons_(name, cons_(cell_nil, cons_(globals, cell_nil))));
 	SCM module = GetSCM2(make_struct(module_type, values, GetSCM2(cstring_to_symbol("module-printer"))));
-	r0 = cons_(b->rac, cons_(bad2good(b->cdr)->rac, cell_nil));
+	R0 = good2bad(Getstructscm2(cons_(b->rac, cons_(bad2good(b->cdr)->rac, cell_nil))));
 	m0 = module;
 
 	while(b->type == TPAIR)
@@ -848,7 +848,7 @@ int main(int argc, char *argv[])
 	g_continuations = 0;
 	g_symbols = 0;
 	g_stack = 0;
-	r0 = 0;
+	R0 = good2bad(Getstructscm2(0));
 	R1 = good2bad(Getstructscm2(0));
 	R2 = good2bad(Getstructscm2(0));
 	R3 = good2bad(Getstructscm2(0));
@@ -878,7 +878,7 @@ int main(int argc, char *argv[])
 	}
 
 	read_boot();
-	push_cc(GetSCM2(bad2good(R2)), cell_unspecified, r0, cell_unspecified);
+	push_cc(GetSCM2(bad2good(R2)), cell_unspecified, GetSCM2(bad2good(R0)), cell_unspecified);
 
 	if(g_debug > 2)
 	{
