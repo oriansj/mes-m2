@@ -163,7 +163,8 @@ SCM eq_p(SCM x, SCM y)
 SCM values(SCM x)  ///((arity . n))
 {
 	SCM v = cons_(0, x);
-	g_cells[v].type = TVALUES;
+	struct scm* y = Getstructscm2(v, g_cells);
+	y->type = TVALUES;
 	return v;
 }
 
@@ -186,17 +187,19 @@ SCM acons3(struct scm* key, struct scm* value, struct scm* alist)
 SCM length__(SCM x)  ///((internal))
 {
 	SCM n = 0;
+	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* NIL = Getstructscm2(cell_nil, g_cells);
 
-	while(x != cell_nil)
+	while(y != NIL)
 	{
 		n++;
 
-		if(g_cells[x].type != TPAIR)
+		if(y->type != TPAIR)
 		{
 			return -1;
 		}
 
-		x = g_cells[x].rdc;
+		y = bad2good(y->cdr, g_cells);
 	}
 
 	return n;
@@ -239,7 +242,16 @@ SCM assert_defined(SCM x, SCM e)  ///((internal))
 
 SCM check_formals(SCM f, SCM formals, SCM args)  ///((internal))
 {
-	SCM flen = (g_cells[formals].type == TNUMBER) ? g_cells[formals].value : length__(formals);
+	struct scm* formal = Getstructscm2(formals, g_cells);
+	SCM flen;
+	if(formal->type == TNUMBER)
+	{
+		flen = formal->value;
+	}
+	else
+	{
+		flen = length__(formals);
+	}
 	SCM alen = length__(args);
 
 	if(alen != flen && alen != -1 && flen != -1)
@@ -282,27 +294,29 @@ SCM check_apply(SCM f, SCM e)  ///((internal))
 		type = "*undefined*";
 	}
 
-	if(g_cells[f].type == TCHAR)
+	struct scm* g = Getstructscm2(f, g_cells);
+
+	if(g->type == TCHAR)
 	{
 		type = "char";
 	}
 
-	if(g_cells[f].type == TNUMBER)
+	if(g->type == TNUMBER)
 	{
 		type = "number";
 	}
 
-	if(g_cells[f].type == TSTRING)
+	if(g->type == TSTRING)
 	{
 		type = "string";
 	}
 
-	if(g_cells[f].type == TSTRUCT && builtin_p(f) == cell_f)
+	if(g->type == TSTRUCT && builtin_p(f) == cell_f)
 	{
 		type = "#<...>";
 	}
 
-	if(g_cells[f].type == TBROKEN_HEART)
+	if(g->type == TBROKEN_HEART)
 	{
 		type = "<3";
 	}
@@ -366,7 +380,7 @@ SCM append2(SCM x, SCM y)
 		return y;
 	}
 
-	if(g_cells[x].type != TPAIR)
+	if(z->type != TPAIR)
 	{
 		error(cell_symbol_not_a_pair, cons_(x, GetSCM2(cstring_to_symbol("append2"), g_cells)));
 	}
@@ -384,13 +398,13 @@ SCM append2(SCM x, SCM y)
 
 SCM reverse_x_(SCM x, SCM t)
 {
-	if(x != cell_nil && g_cells[x].type != TPAIR)
+	struct scm* y = Getstructscm2(x, g_cells);
+	if(x != cell_nil && y->type != TPAIR)
 	{
 		error(cell_symbol_not_a_pair, cons_(x, GetSCM2(cstring_to_symbol("core:reverse!"), g_cells)));
 	}
 
 	struct scm* r = Getstructscm2(t, g_cells);
-	struct scm* y = Getstructscm2(x, g_cells);
 	struct scm* s;
 
 	while(GetSCM2(y, g_cells) != cell_nil)
@@ -411,7 +425,8 @@ SCM pairlis(SCM x, SCM y, SCM a)
 		return a;
 	}
 
-	if(g_cells[x].type != TPAIR)
+	struct scm* z = Getstructscm2(x, g_cells);
+	if(z->type != TPAIR)
 	{
 		return cons_(cons_(x, y), a);
 	}
@@ -644,66 +659,67 @@ int formal_p(SCM x, SCM formals)  /// ((internal))
 
 SCM expand_variable_(SCM x, SCM formals, int top_p)  ///((internal))
 {
-	while(g_cells[x].type == TPAIR)
+	struct scm* y = Getstructscm2(x, g_cells);
+	while(y->type == TPAIR)
 	{
-		if(g_cells[g_cells[x].rac].type == TPAIR)
+		if(bad2good(y->car, g_cells)->type == TPAIR)
 		{
-			if(g_cells[g_cells[x].rac].rac == cell_symbol_lambda)
+			if(bad2good(y->car, g_cells)->rac == cell_symbol_lambda)
 			{
-				SCM f = g_cells[g_cells[g_cells[x].rac].rdc].rac;
+				SCM f = bad2good(bad2good(y->car, g_cells)->cdr, g_cells)->rac;
 				formals = add_formals(formals, f);
 			}
-			else if(g_cells[g_cells[x].rac].rac == cell_symbol_define || g_cells[g_cells[x].rac].rac == cell_symbol_define_macro)
+			else if(bad2good(y->car, g_cells)->rac == cell_symbol_define || bad2good(y->car, g_cells)->rac == cell_symbol_define_macro)
 			{
-				SCM f = g_cells[g_cells[g_cells[x].rac].rdc].rac;
+				SCM f = bad2good(bad2good(y->car, g_cells)->cdr, g_cells)->rac;
 				formals = add_formals(formals, f);
 			}
 
-			if(g_cells[g_cells[x].rac].rac != cell_symbol_quote)
+			if(bad2good(y->car, g_cells)->rac != cell_symbol_quote)
 			{
-				expand_variable_(g_cells[x].rac, formals, 0);
+				expand_variable_(y->rac, formals, 0);
 			}
 		}
 		else
 		{
-			if(g_cells[x].rac == cell_symbol_lambda)
+			if(y->rac == cell_symbol_lambda)
 			{
-				SCM f = g_cells[g_cells[x].rdc].rac;
+				SCM f = bad2good(y->cdr, g_cells)->rac;
 				formals = add_formals(formals, f);
-				x = g_cells[x].rdc;
+				y = bad2good(y->cdr, g_cells);
 			}
-			else if(g_cells[x].rac == cell_symbol_define || g_cells[x].rac == cell_symbol_define_macro)
+			else if(y->rac == cell_symbol_define || y->rac == cell_symbol_define_macro)
 			{
-				SCM f = g_cells[g_cells[x].rdc].rac;
+				struct scm* f = bad2good(bad2good(y->cdr, g_cells)->car, g_cells);
 
-				if(top_p && g_cells[f].type == TPAIR)
+				if(top_p && f->type == TPAIR)
 				{
-					f = g_cells[f].rdc;
+					f = bad2good(f->cdr, g_cells);
 				}
 
-				formals = add_formals(formals, f);
-				x = g_cells[x].rdc;
+				formals = add_formals(formals, GetSCM2(f, g_cells));
+				y = bad2good(y->cdr, g_cells);
 			}
-			else if(g_cells[x].rac == cell_symbol_quote)
+			else if(y->rac == cell_symbol_quote)
 			{
 				return cell_unspecified;
 			}
-			else if(g_cells[g_cells[x].rac].type == TSYMBOL
-			        && g_cells[x].rac != cell_symbol_boot_module
-			        && g_cells[x].rac != cell_symbol_current_module
-			        && g_cells[x].rac != cell_symbol_primitive_load
-			        && !formal_p(g_cells[x].rac, formals))
+			else if(bad2good(y->car, g_cells)->type == TSYMBOL
+			        && y->rac != cell_symbol_boot_module
+			        && y->rac != cell_symbol_current_module
+			        && y->rac != cell_symbol_primitive_load
+			        && !formal_p(y->rac, formals))
 			{
-				SCM v = GetSCM2(module_variable(r0, g_cells[x].rac), g_cells);
+				SCM v = GetSCM2(module_variable(r0, y->rac), g_cells);
 
 				if(v != cell_f)
 				{
-					g_cells[x].rac = make_variable_(v);
+					y->rac = make_variable_(v);
 				}
 			}
 		}
 
-		x = g_cells[x].rdc;
+		y = bad2good(y->cdr, g_cells);
 		top_p = 0;
 	}
 
