@@ -22,6 +22,9 @@
 #include "mes.h"
 #include "mes_constants.h"
 
+SCM GetSCM(struct scm* a);
+struct scm* g2b(struct scm* a);
+
 long length__(SCM x);
 int eputs(char const* s);
 char *itoa (int number);
@@ -68,12 +71,6 @@ void gc_init_cells()  ///((internal))
 	void *p = calloc(arena_bytes + STACK_SIZE * sizeof(SCM), 1);
 	g_cells = (struct scm *)p;
 	g_stack_array = (struct scm**)((char*)p + arena_bytes);
-	g_cells[0].type = TVECTOR;
-	g_cells[0].length = 1000;
-	g_cells[0].vector = 0;
-	g_cells++;
-	g_cells[0].type = TCHAR;
-	g_cells[0].value = 'c';
 	// FIXME: remove MES_MAX_STRING, grow dynamically
 	g_buf = (char*)calloc(MAX_STRING, 1);
 }
@@ -218,10 +215,15 @@ struct scm* make_vector__(SCM k)
 	SCM v = GetSCM2(alloc(k), g_cells);
 	struct scm* x = bad2good((struct scm*)make_cell__(TVECTOR, k, v), g_cells);
 	SCM i;
+	struct scm* w;
+	struct scm* u;
 
 	for(i = 0; i < k; i = i + 1)
 	{
-		g_cells[v + i] = *vector_entry(cell_unspecified);
+		w = Getstructscm2(v, g_cells) + i;
+		u = vector_entry(cell_unspecified);
+		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+		*w = *u;
 	}
 
 	return x;
@@ -231,9 +233,13 @@ struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 {
 	fields = bad2good(fields, g_cells);
 	long size = 2 + length__(GetSCM2(fields, g_cells));
-	SCM v = GetSCM2(alloc(size), g_cells);
-	g_cells[v] = *vector_entry(type);
-	g_cells[v + 1] = *vector_entry(printer);
+	struct scm* v = alloc(size);
+	struct scm* w = v + 1;
+	struct scm* entry = vector_entry(type);
+	struct scm* print = vector_entry(printer);
+	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+	*v = *entry;
+	*w = *print;
 
 	for(long i = 2; i < size; i++)
 	{
@@ -245,10 +251,13 @@ struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 			fields = bad2good(fields->cdr, g_cells);
 		}
 
-		g_cells[v + i] = *vector_entry(e);
+		entry = vector_entry(e);
+		w = v + i;
+		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+		*w = *entry;
 	}
 
-	return Getstructscm2(make_cell__(TSTRUCT, size, v), g_cells);
+	return Getstructscm2(make_cell__(TSTRUCT, size, GetSCM2(v, g_cells)), g_cells);
 }
 
 void gc_flip()  ///((internal))
@@ -275,11 +284,11 @@ struct scm* gc_copy(SCM old)  ///((internal))
 	struct scm* o = Getstructscm2(old, g_cells);
 	if(o->type == TBROKEN_HEART)
 	{
-		return bad2good(o->car, g_news);
+		return &g_news[o->rac];
 	}
 
 	SCM new = g_free++;
-	struct scm* n = Getstructscm2(new, g_news);
+	struct scm* n = &g_news[new];
 	*n = *o;
 
 	if(n->type == TSTRUCT || n->type == TVECTOR)
@@ -287,9 +296,14 @@ struct scm* gc_copy(SCM old)  ///((internal))
 		n->vector = g_free;
 		long i;
 
+		struct scm* new;
+		struct scm* old;
 		for(i = 0; i < o->length; i++)
 		{
-			g_news[g_free + i] = g_cells[o->vector + i];
+			new = &g_news[g_free + i];
+			old = bad2good(o->cdr, g_cells) + i;
+			/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+			*new = *old;
 		}
 
 		g_free = g_free + i;;
@@ -332,7 +346,7 @@ struct scm* gc_copy_new(struct scm* old)  ///((internal))
 	}
 
 	SCM new = g_free++;
-	struct scm* n = Getstructscm2(new, g_news);
+	struct scm* n = &g_news[new];
 	*n = *old;
 
 	if(n->type == TSTRUCT || n->type == TVECTOR)
@@ -340,9 +354,15 @@ struct scm* gc_copy_new(struct scm* old)  ///((internal))
 		n->vector = g_free;
 		long i;
 
+		struct scm* l = &g_news[g_free];
+		struct scm* m;
+		struct scm* o;
 		for(i = 0; i < old->length; i++)
 		{
-			g_news[g_free + i] = g_cells[old->vector + i];
+			m = l + i;
+			o = bad2good(old->cdr, g_cells) + i;
+			/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+			*m = *o;
 		}
 
 		g_free = g_free + i;;
@@ -373,7 +393,7 @@ struct scm* gc_copy_new(struct scm* old)  ///((internal))
 	}
 
 	old->type = TBROKEN_HEART;
-	old->car = good2bad(n, g_news);
+	old->car = g2b(n);
 	return n;
 }
 
@@ -381,7 +401,7 @@ void gc_loop()  ///((internal))
 {
 	SCM scan = 1;
 	struct scm* s = g_news + 1;
-	struct scm* g = Getstructscm2(g_free, g_news);
+	struct scm* g = &g_news[g_free];
 
 	while(s < g)
 	{
@@ -396,7 +416,7 @@ void gc_loop()  ///((internal))
 		        || scan == 1 // null
 		        || s->type == TVARIABLE)
 		{
-			g_news[scan].rac = GetSCM2(gc_copy(g_news[scan].rac), g_news);
+			g_news[scan].car = g2b(gc_copy(g_news[scan].rac));
 		}
 
 		if((s->type == TCLOSURE
@@ -412,7 +432,7 @@ void gc_loop()  ///((internal))
 		        || s->type == TVALUES)
 		        && g_news[scan].cdr) // allow for 0 terminated list of symbols
 		{
-			g_news[scan].rdc = GetSCM2(gc_copy(g_news[scan].rdc), g_news);
+			g_news[scan].cdr = g2b(gc_copy(g_news[scan].rdc));
 		}
 
 		if(s->type == TBYTES)
@@ -425,7 +445,7 @@ void gc_loop()  ///((internal))
 
 		scan++;
 		s++;
-		g = Getstructscm2(g_free, g_news);
+		g = &g_news[g_free];
 	}
 
 	gc_flip();
@@ -497,14 +517,14 @@ void gc_()  ///((internal))
 		gc_copy_new(Getstructscm2(i, g_cells));
 	}
 
-	g_symbols = GetSCM2(gc_copy_new(Getstructscm2(g_symbols, g_cells)), g_news);
-	g_macros = GetSCM2(gc_copy_new(Getstructscm2(g_macros, g_cells)), g_news);
-	g_ports = GetSCM2(gc_copy_new(Getstructscm2(g_ports, g_cells)), g_news);
-	m0 = GetSCM2(gc_copy_new(Getstructscm2(m0, g_cells)), g_news);
+	g_symbols = GetSCM(gc_copy_new(Getstructscm2(g_symbols, g_cells)));
+	g_macros = GetSCM(gc_copy_new(Getstructscm2(g_macros, g_cells)));
+	g_ports = GetSCM(gc_copy_new(Getstructscm2(g_ports, g_cells)));
+	m0 = GetSCM(gc_copy_new(Getstructscm2(m0, g_cells)));
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{
-		g_stack_array[i] = good2bad(gc_copy((SCM)g_stack_array[i]), g_news);
+		g_stack_array[i] = g2b(gc_copy((SCM)g_stack_array[i]));
 	}
 
 	gc_loop();

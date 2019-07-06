@@ -19,3 +19,14 @@ struct scm* bad2good(struct scm* a, struct scm* table)
 {
 	return ((SCM)a + table);
 }
+
+extern struct scm* g_news;
+SCM GetSCM(struct scm* a)
+{
+	return(a - g_news);
+}
+
+struct scm* g2b(struct scm* a)
+{
+	return (struct scm*)(a - g_news);
+}
