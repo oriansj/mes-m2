@@ -24,8 +24,6 @@
 
 extern SCM STACK_SIZE;
 
-#define CAR(x) g_cells[x].rac
-
 SCM append2(SCM x, SCM y);
 SCM gc_push_frame();
 SCM assert_defined(SCM x, SCM e);
@@ -255,7 +253,7 @@ evlis:
 		goto eval;
 	}
 
-	push_cc(CAR(r1), r1, r0, cell_vm_evlis2);
+	push_cc(g_cells[r1].rac, r1, r0, cell_vm_evlis2);
 	goto eval;
 evlis2:
 	push_cc(g_cells[r2].rdc, r1, r0, cell_vm_evlis3);
@@ -264,31 +262,31 @@ evlis3:
 	r1 = cons_(r2, r1);
 	goto vm_return;
 apply:
-	g_stack_array[g_stack + FRAME_PROCEDURE] = (struct scm*)CAR(r1);
-	t = g_cells[CAR(r1)].type;
+	g_stack_array[g_stack + FRAME_PROCEDURE] = g_cells[r1].car;
+	t = g_cells[g_cells[r1].rac].type;
 
-	if(t == TSTRUCT && builtin_p(CAR(r1)) == cell_t)
+	if(t == TSTRUCT && builtin_p(g_cells[r1].rac) == cell_t)
 	{
-		check_formals(CAR(r1), GetSCM2(bad2good(builtin_arity(CAR(r1)), g_cells), g_cells), g_cells[r1].rdc);
-		r1 = GetSCM2(apply_builtin(CAR(r1), g_cells[r1].rdc), g_cells);    /// FIXME: move into eval_apply
+		check_formals(g_cells[r1].rac, GetSCM2(bad2good(builtin_arity(g_cells[r1].rac), g_cells), g_cells), g_cells[r1].rdc);
+		r1 = GetSCM2(apply_builtin(g_cells[r1].rac, g_cells[r1].rdc), g_cells);    /// FIXME: move into eval_apply
 		goto vm_return;
 	}
 	else if(t == TCLOSURE)
 	{
-		cl = g_cells[CAR(r1)].closure;
+		cl = g_cells[g_cells[r1].rac].closure;
 		body = g_cells[g_cells[cl].rdc].rdc;
-		formals = CAR (g_cells[cl].rdc);
+		formals = g_cells[g_cells[cl].rdc].rac;
 		args = g_cells[r1].rdc;
-		aa = g_cells[CAR (cl)].rdc;
+		aa = g_cells[g_cells[cl].rac].rdc;
 		aa = g_cells[aa].rdc;
-		check_formals(CAR(r1), formals, g_cells[r1].rdc);
+		check_formals(g_cells[r1].rac, formals, g_cells[r1].rdc);
 		p = pairlis(formals, args, aa);
 		call_lambda(body, p);
 		goto begin;
 	}
 	else if(t == TCONTINUATION)
 	{
-		v = g_cells[CAR(r1)].continuation;
+		v = g_cells[g_cells[r1].rac].continuation;
 
 		if(g_cells[v].length)
 		{
@@ -302,26 +300,26 @@ apply:
 
 		x = r1;
 		gc_pop_frame();
-		r1 = CAR (g_cells[x].rdc);
+		r1 = g_cells[g_cells[x].rdc].rac;
 		goto eval_apply;
 	}
 	else if(t == TSPECIAL)
 	{
-		c = CAR(r1);
+		c = g_cells[r1].rac;
 
 		if(c == cell_vm_apply)
 		{
-			push_cc(cons_(CAR (g_cells[r1].rdc), CAR (g_cells[g_cells[r1].rdc].rdc)), r1, r0, cell_vm_return);
+			push_cc(cons_(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[g_cells[r1].rdc].rdc].rac), r1, r0, cell_vm_return);
 			goto apply;
 		}
 		else if(c ==  cell_vm_eval)
 		{
-			push_cc(CAR (g_cells[r1].rdc), r1, CAR (g_cells[g_cells[r1].rdc].rdc), cell_vm_return);
+			push_cc(g_cells[g_cells[r1].rdc].rac, r1, g_cells[g_cells[g_cells[r1].rdc].rdc].rac, cell_vm_return);
 			goto eval;
 		}
 		else if(c ==  cell_vm_begin_expand)
 		{
-			push_cc(cons_(CAR (g_cells[r1].rdc), cell_nil), r1, CAR (g_cells[g_cells[r1].rdc].rdc), cell_vm_return);
+			push_cc(cons_(g_cells[g_cells[r1].rdc].rac, cell_nil), r1, g_cells[g_cells[g_cells[r1].rdc].rdc].rac, cell_vm_return);
 			goto begin_expand;
 		}
 		else if(c ==  cell_call_with_current_continuation)
@@ -331,24 +329,24 @@ apply:
 		}
 		else
 		{
-			check_apply(cell_f, CAR(r1));
+			check_apply(cell_f, g_cells[r1].rac);
 		}
 	}
 	else if(t == TSYMBOL)
 	{
-		if(CAR(r1) == cell_symbol_call_with_values)
+		if(g_cells[r1].rac == cell_symbol_call_with_values)
 		{
 			r1 = g_cells[r1].rdc;
 			goto call_with_values;
 		}
 
-		if(CAR(r1) == cell_symbol_current_module)
+		if(g_cells[r1].rac == cell_symbol_current_module)
 		{
 			r1 = r0;
 			goto vm_return;
 		}
 
-		if(CAR(r1) == cell_symbol_boot_module)
+		if(g_cells[r1].rac == cell_symbol_boot_module)
 		{
 			r1 = m0;
 			goto vm_return;
@@ -356,11 +354,11 @@ apply:
 	}
 	else if(t == TPAIR)
 	{
-		if(CAR (CAR (r1)) == cell_symbol_lambda)
+		if(g_cells[g_cells[r1].rac].rac == cell_symbol_lambda)
 		{
-			formals = CAR (g_cells[CAR(r1)].rdc);
+			formals = g_cells[g_cells[g_cells[r1].rac].rdc].rac;
 			args = g_cells[r1].rdc;
-			body = g_cells[g_cells[CAR(r1)].rdc].rdc;
+			body = g_cells[g_cells[g_cells[r1].rac].rdc].rdc;
 			p = pairlis(formals, g_cells[r1].rdc, r0);
 			check_formals(r1, formals, args);
 			call_lambda(body, p);
@@ -370,10 +368,10 @@ apply:
 
 	// write_error_ (CAR (r1));
 	// eputs ("\n");
-	push_cc(CAR(r1), r1, r0, cell_vm_apply2);
+	push_cc(g_cells[r1].rac, r1, r0, cell_vm_apply2);
 	goto eval;
 apply2:
-	check_apply(r1, CAR(r2));
+	check_apply(r1, g_cells[r2].rac);
 	r1 = cons_(r1, g_cells[r2].rdc);
 	goto apply;
 eval:
@@ -381,21 +379,21 @@ eval:
 
 	if(t == TPAIR)
 	{
-		c = CAR(r1);
+		c = g_cells[r1].rac;
 
 		if(c ==  cell_symbol_pmatch_car)
 		{
-			push_cc(CAR (g_cells[r1].rdc), r1, r0, cell_vm_eval_pmatch_car);
+			push_cc(g_cells[g_cells[r1].rdc].rac, r1, r0, cell_vm_eval_pmatch_car);
 			goto eval;
 eval_pmatch_car:
 			x = r1;
 			gc_pop_frame();
-			r1 = CAR(x);
+			r1 = g_cells[x].rac;
 			goto eval_apply;
 		}
 		else if(c ==  cell_symbol_pmatch_cdr)
 		{
-			push_cc(CAR (g_cells[r1].rdc), r1, r0, cell_vm_eval_pmatch_cdr);
+			push_cc(g_cells[g_cells[r1].rdc].rac, r1, r0, cell_vm_eval_pmatch_cdr);
 			goto eval;
 eval_pmatch_cdr:
 			x = r1;
@@ -407,7 +405,7 @@ eval_pmatch_cdr:
 		{
 			x = r1;
 			gc_pop_frame();
-			r1 = CAR (g_cells[x].rdc);
+			r1 = g_cells[g_cells[x].rdc].rac;
 			goto eval_apply;
 		}
 		else if(c ==  cell_symbol_begin)
@@ -416,7 +414,7 @@ eval_pmatch_cdr:
 		}
 		else if(c ==  cell_symbol_lambda)
 		{
-			r1 = make_closure_(CAR (g_cells[r1].rdc), g_cells[g_cells[r1].rdc].rdc, r0);
+			r1 = make_closure_(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[r1].rdc].rdc, r0);
 			goto vm_return;
 		}
 		else if(c ==  cell_symbol_if)
@@ -426,15 +424,15 @@ eval_pmatch_cdr:
 		}
 		else if(c ==  cell_symbol_set_x)
 		{
-			push_cc(CAR(g_cells[g_cells[r1].rdc].rdc), r1, r0, cell_vm_eval_set_x);
+			push_cc(g_cells[g_cells[g_cells[r1].rdc].rdc].rac, r1, r0, cell_vm_eval_set_x);
 			goto eval;
 eval_set_x:
-			r1 = set_env_x(CAR (g_cells[r2].rdc), r1, r0);
+			r1 = set_env_x(g_cells[g_cells[r2].rdc].rac, r1, r0);
 			goto vm_return;
 		}
 		else if(c == cell_vm_macro_expand)
 		{
-			push_cc(CAR (g_cells[r1].rdc), r1, r0, cell_vm_eval_macro_expand_eval);
+			push_cc(g_cells[g_cells[r1].rdc].rac, r1, r0, cell_vm_eval_macro_expand_eval);
 			goto eval;
 eval_macro_expand_eval:
 			push_cc(r1, r2, r0, cell_vm_eval_macro_expand_expand);
@@ -444,18 +442,18 @@ eval_macro_expand_expand:
 		}
 		else
 		{
-			if(g_cells[r1].type == TPAIR && (CAR(r1) == cell_symbol_define || CAR(r1) == cell_symbol_define_macro))
+			if(g_cells[r1].type == TPAIR && (g_cells[r1].rac == cell_symbol_define || g_cells[r1].rac == cell_symbol_define_macro))
 			{
-				global_p = CAR (CAR (r0)) != cell_closure;
-				macro_p = CAR(r1) == cell_symbol_define_macro;
+				global_p = g_cells[g_cells[r0].rac].rac != cell_closure;
+				macro_p = g_cells[r1].rac == cell_symbol_define_macro;
 
 				if(global_p)
 				{
-					name = CAR (g_cells[r1].rdc);
+					name = g_cells[g_cells[r1].rdc].rac;
 
-					if(g_cells[CAR (g_cells[r1].rdc)].type == TPAIR)
+					if(g_cells[g_cells[g_cells[r1].rdc].rac].type == TPAIR)
 					{
-						name = CAR(name);
+						name = g_cells[name].rac;
 					}
 
 					if(macro_p)
@@ -480,15 +478,15 @@ eval_macro_expand_expand:
 
 				r2 = r1;
 
-				if(g_cells[CAR (g_cells[r1].rdc)].type != TPAIR)
+				if(g_cells[g_cells[g_cells[r1].rdc].rac].type != TPAIR)
 				{
-					push_cc(CAR(g_cells[g_cells[r1].rdc].rdc), r2, cons_(cons_(CAR (g_cells[r1].rdc), CAR (g_cells[r1].rdc)), r0), cell_vm_eval_define);
+					push_cc(g_cells[g_cells[g_cells[r1].rdc].rdc].rac, r2, cons_(cons_(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[r1].rdc].rac), r0), cell_vm_eval_define);
 					goto eval;
 				}
 				else
 				{
-					p = pairlis(CAR (g_cells[r1].rdc), CAR (g_cells[r1].rdc), r0);
-					formals = g_cells[CAR (g_cells[r1].rdc)].rdc;
+					p = pairlis(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[r1].rdc].rac, r0);
+					formals = g_cells[g_cells[g_cells[r1].rdc].rac].rdc;
 					body = g_cells[g_cells[r1].rdc].rdc;
 
 					if(macro_p || global_p)
@@ -502,11 +500,11 @@ eval_macro_expand_expand:
 				}
 
 eval_define:
-				name = CAR (g_cells[r2].rdc);
+				name = g_cells[g_cells[r2].rdc].rac;
 
-				if(g_cells[CAR (g_cells[r2].rdc)].type == TPAIR)
+				if(g_cells[g_cells[g_cells[r2].rdc].rac].type == TPAIR)
 				{
-					name = CAR(name);
+					name = g_cells[name].rac;
 				}
 
 				if(macro_p)
@@ -534,14 +532,14 @@ eval_define:
 				goto vm_return;
 			}
 
-			push_cc(CAR(r1), r1, r0, cell_vm_eval_check_func);
+			push_cc(g_cells[r1].rac, r1, r0, cell_vm_eval_check_func);
 			gc_check();
 			goto eval;
 eval_check_func:
 			push_cc(g_cells[r2].rdc, r2, r0, cell_vm_eval2);
 			goto evlis;
 eval2:
-			r1 = cons_(CAR(r2), r1);
+			r1 = cons_(g_cells[r2].rac, r1);
 			goto apply;
 		}
 	}
@@ -581,12 +579,12 @@ eval2:
 	}
 
 macro_expand:
-	if(g_cells[r1].type != TPAIR || CAR(r1) == cell_symbol_quote)
+	if(g_cells[r1].type != TPAIR || g_cells[r1].rac == cell_symbol_quote)
 	{
 		goto vm_return;
 	}
 
-	if(CAR(r1) == cell_symbol_lambda)
+	if(g_cells[r1].rac == cell_symbol_lambda)
 	{
 		push_cc(g_cells[g_cells[r1].rdc].rdc, r1, r0, cell_vm_macro_expand_lambda);
 		goto macro_expand;
@@ -597,14 +595,14 @@ macro_expand_lambda:
 		goto vm_return;
 	}
 
-	if(g_cells[r1].type == TPAIR && (macro = get_macro(CAR(r1))) != cell_f)
+	if(g_cells[r1].type == TPAIR && (macro = get_macro(g_cells[r1].rac)) != cell_f)
 	{
 		r1 = cons_(macro, g_cells[r1].rdc);
 		push_cc(r1, cell_nil, r0, cell_vm_macro_expand);
 		goto apply;
 	}
 
-	if(CAR(r1) == cell_symbol_define || CAR(r1) == cell_symbol_define_macro)
+	if(g_cells[r1].rac == cell_symbol_define || g_cells[r1].rac == cell_symbol_define_macro)
 	{
 		push_cc(g_cells[g_cells[r1].rdc].rdc, r1, r0, cell_vm_macro_expand_define);
 		goto macro_expand;
@@ -613,7 +611,7 @@ macro_expand_define:
 		g_cells[g_cells[r2].rdc].rdc = r1;
 		r1 = r2;
 
-		if(CAR(r1) == cell_symbol_define_macro)
+		if(g_cells[r1].rac == cell_symbol_define_macro)
 		{
 			push_cc(r1, r1, r0, cell_vm_macro_expand_define_macro);
 			goto eval;
@@ -625,7 +623,7 @@ macro_expand_define_macro:
 		goto vm_return;
 	}
 
-	if(CAR(r1) == cell_symbol_set_x)
+	if(g_cells[r1].rac == cell_symbol_set_x)
 	{
 		push_cc(g_cells[g_cells[r1].rdc].rdc, r1, r0, cell_vm_macro_expand_set_x);
 		goto macro_expand;
@@ -636,13 +634,13 @@ macro_expand_set_x:
 		goto vm_return;
 	}
 
-	if(g_cells[r1].type == TPAIR && g_cells[CAR(r1)].type == TSYMBOL)
+	if(g_cells[r1].type == TPAIR && g_cells[g_cells[r1].rac].type == TSYMBOL)
 	{
 		macro = macro_get_handle(cell_symbol_portable_macro_expand);
 		expanders = GetSCM2(module_ref(r0, cell_symbol_sc_expander_alist), g_cells);
-		if((CAR(r1) != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
+		if((g_cells[r1].rac != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
 		{
-			macro = assq(CAR(r1), expanders);
+			macro = assq(g_cells[r1].rac, expanders);
 			if(macro != cell_f)
 			{
 				sc_expand = GetSCM2(module_ref(r0, cell_symbol_macro_expand), g_cells);
@@ -657,11 +655,11 @@ macro_expand_set_x:
 		}
 	}
 
-	push_cc(CAR(r1), r1, r0, cell_vm_macro_expand_car);
+	push_cc(g_cells[r1].rac, r1, r0, cell_vm_macro_expand_car);
 	goto macro_expand;
 
 macro_expand_car:
-	CAR(r2) = r1;
+	g_cells[r2].rac = r1;
 	r1 = r2;
 
 	if(g_cells[r1].rdc == cell_nil)
@@ -686,32 +684,32 @@ begin:
 
 		if(g_cells[r1].type == TPAIR)
 		{
-			if(CAR (CAR (r1)) == cell_symbol_primitive_load)
+			if(g_cells[g_cells[r1].rac].rac == cell_symbol_primitive_load)
 			{
-				program = cons_(CAR(r1), cell_nil);
+				program = cons_(g_cells[r1].rac, cell_nil);
 				push_cc(program, r1, r0, cell_vm_begin_primitive_load);
 				goto begin_expand;
 begin_primitive_load:
-				CAR(r2) = r1;
+				g_cells[r2].rac = r1;
 				r1 = r2;
 			}
 		}
 
-		if(g_cells[r1].type == TPAIR && g_cells[CAR(r1)].type == TPAIR)
+		if(g_cells[r1].type == TPAIR && g_cells[g_cells[r1].rac].type == TPAIR)
 		{
-			if(CAR (CAR (r1)) == cell_symbol_begin)
+			if(g_cells[g_cells[r1].rac].rac == cell_symbol_begin)
 			{
-				r1 = append2(g_cells[CAR (r1)].rdc, g_cells[r1].rdc);
+				r1 = append2(g_cells[g_cells[r1].rac].rdc, g_cells[r1].rdc);
 			}
 		}
 
 		if(g_cells[r1].rdc == cell_nil)
 		{
-			r1 = CAR(r1);
+			r1 = g_cells[r1].rac;
 			goto eval;
 		}
 
-		push_cc(CAR(r1), r1, r0, cell_vm_begin_eval);
+		push_cc(g_cells[r1].rac, r1, r0, cell_vm_begin_eval);
 		goto eval;
 begin_eval:
 		x = r1;
@@ -729,14 +727,14 @@ begin_expand:
 
 		if(g_cells[r1].type == TPAIR)
 		{
-			if(g_cells[CAR(r1)].type == TPAIR && CAR (CAR (r1)) == cell_symbol_begin)
+			if(g_cells[g_cells[r1].rac].type == TPAIR && g_cells[g_cells[r1].rac].rac == cell_symbol_begin)
 			{
-				r1 = append2(g_cells[CAR (r1)].rdc, g_cells[r1].rdc);
+				r1 = append2(g_cells[g_cells[r1].rac].rdc, g_cells[r1].rdc);
 			}
 
-			if(CAR (CAR (r1)) == cell_symbol_primitive_load)
+			if(g_cells[g_cells[r1].rac].rac == cell_symbol_primitive_load)
 			{
-				push_cc(CAR (g_cells[CAR(r1)].rdc), r1, r0, cell_vm_begin_expand_primitive_load);
+				push_cc(g_cells[g_cells[g_cells[r1].rac].rdc].rac, r1, r0, cell_vm_begin_expand_primitive_load);
 				goto eval; // FIXME: expand too?!
 begin_expand_primitive_load:
 
@@ -770,26 +768,26 @@ begin_expand_primitive_load:
 				r1 = x;
 				set_current_input_port(input);
 				r1 = cons_(cell_symbol_begin, r1);
-				CAR(r2) = r1;
+				g_cells[r2].rac = r1;
 				r1 = r2;
 				continue;
 			}
 		}
 
-		push_cc(CAR(r1), r1, r0, cell_vm_begin_expand_macro);
+		push_cc(g_cells[r1].rac, r1, r0, cell_vm_begin_expand_macro);
 		goto macro_expand;
 begin_expand_macro:
 
-		if(r1 != CAR(r2))
+		if(r1 != g_cells[r2].rac)
 		{
-			CAR(r2) = r1;
+			g_cells[r2].rac = r1;
 			r1 = r2;
 			continue;
 		}
 
 		r1 = r2;
-		expand_variable(CAR(r1), cell_nil);
-		push_cc(CAR(r1), r1, r0, cell_vm_begin_expand_eval);
+		expand_variable(g_cells[r1].rac, cell_nil);
+		push_cc(g_cells[r1].rac, r1, r0, cell_vm_begin_expand_eval);
 		goto eval;
 begin_expand_eval:
 		x = r1;
@@ -799,7 +797,7 @@ begin_expand_eval:
 	r1 = x;
 	goto vm_return;
 vm_if:
-	push_cc(CAR(r1), r1, r0, cell_vm_if_expr);
+	push_cc(g_cells[r1].rac, r1, r0, cell_vm_if_expr);
 	goto eval;
 if_expr:
 	x = r1;
@@ -807,13 +805,13 @@ if_expr:
 
 	if(x != cell_f)
 	{
-		r1 = CAR (g_cells[r1].rdc);
+		r1 = g_cells[g_cells[r1].rdc].rac;
 		goto eval;
 	}
 
 	if(g_cells[g_cells[r1].rdc].rdc != cell_nil)
 	{
-		r1 = CAR(g_cells[g_cells[r1].rdc].rdc);
+		r1 = g_cells[g_cells[g_cells[r1].rdc].rdc].rac;
 		goto eval;
 	}
 
@@ -831,7 +829,7 @@ call_with_current_continuation:
 
 	g_cells[x].continuation = v;
 	gc_pop_frame();
-	push_cc(cons_(CAR(r1), cons_(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
+	push_cc(cons_(g_cells[r1].rac, cons_(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
 	v = GetSCM2(make_vector__(STACK_SIZE - g_stack), g_cells);
@@ -844,7 +842,7 @@ call_with_current_continuation2:
 	g_cells[r2].continuation = v;
 	goto vm_return;
 call_with_values:
-	push_cc(cons_(CAR(r1), cell_nil), r1, r0, cell_vm_call_with_values2);
+	push_cc(cons_(g_cells[r1].rac, cell_nil), r1, r0, cell_vm_call_with_values2);
 	goto apply;
 call_with_values2:
 
@@ -853,7 +851,7 @@ call_with_values2:
 		r1 = g_cells[r1].rdc;
 	}
 
-	r1 = cons_(CAR (g_cells[r2].rdc), r1);
+	r1 = cons_(g_cells[g_cells[r2].rdc].rac, r1);
 	goto apply;
 vm_return:
 	x = r1;
