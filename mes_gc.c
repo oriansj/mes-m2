@@ -22,7 +22,7 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-SCM GetSCM(struct scm* a);
+SCM GetSCM(struct scm* a, struct scm* table);
 struct scm* g2b(struct scm* a);
 
 long length__(SCM x);
@@ -97,25 +97,25 @@ struct scm* make_frame(long index)
 
 	return good2bad(make_struct((SCM) make_frame_type()
 	                  , (struct scm*) cons_(cell_symbol_frame, cons_(procedure, cell_nil))
-	                  , GetSCM2(cstring_to_symbol("frame-printer"), g_cells)), g_cells);
+	                  , GetSCM2(cstring_to_symbol("frame-printer"))));
 }
 
 struct scm* make_stack()  ///((arity . n))
 {
-	SCM stack_type = GetSCM2(bad2good(make_stack_type(), g_cells), g_cells);
+	SCM stack_type = GetSCM2(bad2good(make_stack_type()));
 	long size = (STACK_SIZE - g_stack) / FRAME_SIZE;
-	SCM frames = GetSCM2(make_vector__(size), g_cells);
+	SCM frames = GetSCM2(make_vector__(size));
 
 	for(long i = 0; i < size; i++)
 	{
-		SCM frame = GetSCM2(bad2good(make_frame(i), g_cells), g_cells);
+		SCM frame = GetSCM2(bad2good(make_frame(i)));
 		vector_set_x_(frames, i, frame);
 	}
 
 	SCM values = cell_nil;
 	values = cons_(frames, values);
 	values = cons_(cell_symbol_stack, values);
-	return good2bad(make_struct(stack_type, (struct scm*)values, cell_unspecified), g_cells);
+	return good2bad(make_struct(stack_type, (struct scm*)values, cell_unspecified));
 }
 
 
@@ -134,7 +134,7 @@ struct scm* alloc(SCM n)
 		assert(!"alloc: out of memory");
 	}
 
-	return Getstructscm2(x, g_cells);
+	return Getstructscm2(x);
 }
 
 SCM make_cell__(SCM type, SCM car, SCM cdr)
@@ -143,12 +143,12 @@ SCM make_cell__(SCM type, SCM car, SCM cdr)
 	x->type = type;
 	x->rac = car;
 	x->rdc = cdr;
-	return GetSCM2(x, g_cells);
+	return GetSCM2(x);
 }
 
 SCM make_cell_(SCM type, SCM car, SCM cdr)
 {
-	struct scm* t = Getstructscm2(type, g_cells);
+	struct scm* t = Getstructscm2(type);
 	assert(t->type == TNUMBER);
 
 	if(t->value == TCHAR || t->value == TNUMBER)
@@ -157,18 +157,18 @@ SCM make_cell_(SCM type, SCM car, SCM cdr)
 		{
 			if(0 != cdr)
 			{
-				return make_cell__(t->value, Getstructscm2(car, g_cells)->rac, Getstructscm2(cdr, g_cells)->rdc);
+				return make_cell__(t->value, Getstructscm2(car)->rac, Getstructscm2(cdr)->rdc);
 			}
 			else
 			{
-				return make_cell__(t->value, Getstructscm2(car, g_cells)->rac, 0);
+				return make_cell__(t->value, Getstructscm2(car)->rac, 0);
 			}
 		}
 		else
 		{
 			if(0 != cdr)
 			{
-				return make_cell__(t->value, 0, Getstructscm2(cdr, g_cells)->rdc);
+				return make_cell__(t->value, 0, Getstructscm2(cdr)->rdc);
 			}
 			else
 			{
@@ -184,8 +184,8 @@ struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr)
 {
 	struct scm* x = alloc(1);
 	x->type = type;
-	x->car = good2bad(car, g_cells);
-	x->cdr = good2bad(cdr, g_cells);
+	x->car = good2bad(car);
+	x->cdr = good2bad(cdr);
 	return x;
 }
 
@@ -212,15 +212,15 @@ struct scm* make_bytes(char const* s, size_t length)
 
 struct scm* make_vector__(SCM k)
 {
-	SCM v = GetSCM2(alloc(k), g_cells);
-	struct scm* x = bad2good((struct scm*)make_cell__(TVECTOR, k, v), g_cells);
+	SCM v = GetSCM2(alloc(k));
+	struct scm* x = bad2good((struct scm*)make_cell__(TVECTOR, k, v));
 	SCM i;
 	struct scm* w;
 	struct scm* u;
 
 	for(i = 0; i < k; i = i + 1)
 	{
-		w = Getstructscm2(v, g_cells) + i;
+		w = Getstructscm2(v) + i;
 		u = vector_entry(cell_unspecified);
 		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
 		*w = *u;
@@ -231,8 +231,8 @@ struct scm* make_vector__(SCM k)
 
 struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 {
-	fields = bad2good(fields, g_cells);
-	long size = 2 + length__(GetSCM2(fields, g_cells));
+	fields = bad2good(fields);
+	long size = 2 + length__(GetSCM2(fields));
 	struct scm* v = alloc(size);
 	struct scm* w = v + 1;
 	struct scm* entry = vector_entry(type);
@@ -245,10 +245,10 @@ struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 	{
 		SCM e = cell_unspecified;
 
-		if(GetSCM2(fields, g_cells) != cell_nil)
+		if(GetSCM2(fields) != cell_nil)
 		{
 			e = fields->rac;
-			fields = bad2good(fields->cdr, g_cells);
+			fields = bad2good(fields->cdr);
 		}
 
 		entry = vector_entry(e);
@@ -257,7 +257,7 @@ struct scm* make_struct(SCM type, struct scm* fields, SCM printer)
 		*w = *entry;
 	}
 
-	return Getstructscm2(make_cell__(TSTRUCT, size, GetSCM2(v, g_cells)), g_cells);
+	return Getstructscm2(make_cell__(TSTRUCT, size, GetSCM2(v)));
 }
 
 void gc_flip()  ///((internal))
@@ -281,7 +281,7 @@ void gc_flip()  ///((internal))
 
 struct scm* gc_copy(SCM old)  ///((internal))
 {
-	struct scm* o = Getstructscm2(old, g_cells);
+	struct scm* o = Getstructscm2(old);
 	if(o->type == TBROKEN_HEART)
 	{
 		return &g_news[o->rac];
@@ -301,7 +301,7 @@ struct scm* gc_copy(SCM old)  ///((internal))
 		for(i = 0; i < o->length; i++)
 		{
 			new = &g_news[g_free + i];
-			old = bad2good(o->cdr, g_cells) + i;
+			old = bad2good(o->cdr) + i;
 			/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
 			*new = *old;
 		}
@@ -342,7 +342,7 @@ struct scm* gc_copy_new(struct scm* old)  ///((internal))
 {
 	if(old->type == TBROKEN_HEART)
 	{
-		return bad2good(old->car, g_cells);
+		return bad2good(old->car);
 	}
 
 	SCM new = g_free++;
@@ -360,7 +360,7 @@ struct scm* gc_copy_new(struct scm* old)  ///((internal))
 		for(i = 0; i < old->length; i++)
 		{
 			m = l + i;
-			o = bad2good(old->cdr, g_cells) + i;
+			o = bad2good(old->cdr) + i;
 			/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
 			*m = *o;
 		}
@@ -407,7 +407,7 @@ void gc_loop()  ///((internal))
 	{
 		if(s->type == TBROKEN_HEART)
 		{
-			error(cell_symbol_system_error, GetSCM2(cstring_to_symbol("gc"), g_cells));
+			error(cell_symbol_system_error, GetSCM2(cstring_to_symbol("gc")));
 		}
 
 		if(s->type == TMACRO
@@ -459,12 +459,12 @@ struct scm* gc_check()
 		gc();
 	}
 
-	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
+	return good2bad(Getstructscm2(cell_unspecified));
 }
 
 void gc_()  ///((internal))
 {
-	struct scm* nil = Getstructscm2(g_free, g_cells);
+	struct scm* nil = Getstructscm2(g_free);
 	nil->type = TVECTOR;
 	nil->length = 1000;
 	nil->vector = 0;
@@ -514,13 +514,13 @@ void gc_()  ///((internal))
 	for(long i = g_free; i < g_symbol_max; i++)
 	{
 		//gc_copy(i);
-		gc_copy_new(Getstructscm2(i, g_cells));
+		gc_copy_new(Getstructscm2(i));
 	}
 
-	g_symbols = GetSCM(gc_copy_new(Getstructscm2(g_symbols, g_cells)));
-	g_macros = GetSCM(gc_copy_new(Getstructscm2(g_macros, g_cells)));
-	g_ports = GetSCM(gc_copy_new(Getstructscm2(g_ports, g_cells)));
-	m0 = GetSCM(gc_copy_new(Getstructscm2(m0, g_cells)));
+	g_symbols = GetSCM(gc_copy_new(Getstructscm2(g_symbols)), g_news);
+	g_macros = GetSCM(gc_copy_new(Getstructscm2(g_macros)), g_news);
+	g_ports = GetSCM(gc_copy_new(Getstructscm2(g_ports)), g_news);
+	m0 = GetSCM(gc_copy_new(Getstructscm2(m0)), g_news);
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{
@@ -555,5 +555,5 @@ struct scm* gc()
 		write_error_(r0);
 		eputs("\n");
 	}
-	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
+	return good2bad(Getstructscm2(cell_unspecified));
 }

@@ -53,22 +53,22 @@ int hash_cstring(char const* s, long size)
 
 int hashq_(SCM x, long size)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* y = Getstructscm2(x);
 	if(y->type == TSPECIAL || y->type == TSYMBOL)
 	{
-		return hash_cstring((char*)&bad2good(y->cdr, g_cells)->rdc, size);    // FIXME: hash x directly
+		return hash_cstring((char*)&bad2good(y->cdr)->rdc, size);    // FIXME: hash x directly
 	}
 
-	error(cell_symbol_system_error, cons_(GetSCM2(make_string_("hashq_: not a symbol"), g_cells), x));
+	error(cell_symbol_system_error, cons_(GetSCM2(make_string_("hashq_: not a symbol")), x));
 	exit(EXIT_FAILURE);
 }
 
 int hash_(SCM x, long size)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* y = Getstructscm2(x);
 	if(y->type == TSTRING)
 	{
-		return hash_cstring((char*)&bad2good(y->cdr, g_cells)->rdc, size);
+		return hash_cstring((char*)&bad2good(y->cdr)->rdc, size);
 	}
 
 	assert(0);
@@ -77,40 +77,40 @@ int hash_(SCM x, long size)
 
 struct scm* hashq(SCM x, SCM size)
 {
-	struct scm* s = Getstructscm2(size, g_cells);
+	struct scm* s = Getstructscm2(size);
 	assert(0);
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, hashq_(x, s->value)), g_cells), g_cells);
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, hashq_(x, s->value))));
 }
 
 struct scm* hash(SCM x, SCM size)
 {
-	struct scm* s = Getstructscm2(size, g_cells);
+	struct scm* s = Getstructscm2(size);
 	assert(0);
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, hash_(x, s->value)), g_cells), g_cells);
+	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, hash_(x, s->value))));
 }
 
 struct scm* hashq_get_handle(SCM table, SCM key, SCM dflt)
 {
-	struct scm* ydflt = Getstructscm2(dflt, g_cells);
+	struct scm* ydflt = Getstructscm2(dflt);
 	if(ydflt->type == TPAIR)
 	{
-		return good2bad(bad2good(ydflt->car, g_cells), g_cells);
+		return good2bad(bad2good(ydflt->car));
 	}
 
-	struct scm* ybucket = vector_ref_(GetSCM2(struct_ref_(table, 4), g_cells), hashq_(key, struct_ref_(table, 3)->value));
+	struct scm* ybucket = vector_ref_(GetSCM2(struct_ref_(table, 4)), hashq_(key, struct_ref_(table, 3)->value));
 	if(ybucket->type == TPAIR)
 	{
-		return good2bad(Getstructscm2(assq(key, GetSCM2(ybucket, g_cells)), g_cells), g_cells);
+		return good2bad(Getstructscm2(assq(key, GetSCM2(ybucket))));
 	}
 
-	return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	return good2bad(Getstructscm2(cell_f));
 }
 
 struct scm* hashq_ref(SCM table, SCM key, SCM dflt)
 {
 	struct scm* x = hashq_get_handle(table, key, dflt);
 
-	if(GetSCM2(x, g_cells) == cell_f)
+	if(GetSCM2(x) == cell_f)
 	{
 		return x;
 	}
@@ -122,23 +122,23 @@ struct scm* hash_ref(SCM table, SCM key, SCM dflt) /* External */
 {
 	dflt = 0; /* NOP to silence checkers */
 
-	struct scm* bucket = vector_ref_(GetSCM2(struct_ref_(table, 4), g_cells), hash_(key, struct_ref_(table, 3)->value));
+	struct scm* bucket = vector_ref_(GetSCM2(struct_ref_(table, 4)), hash_(key, struct_ref_(table, 3)->value));
 	if(bucket->type == TPAIR)
 	{
-		struct scm* y = Getstructscm2(assoc(key, GetSCM2(bucket, g_cells)), g_cells);
-		if(GetSCM2(y, g_cells) != cell_f)
+		struct scm* y = Getstructscm2(assoc(key, GetSCM2(bucket)));
+		if(GetSCM2(y) != cell_f)
 		{
-			return bad2good(y->cdr, g_cells);
+			return bad2good(y->cdr);
 		}
 	}
 
-	return Getstructscm2(cell_f, g_cells);
+	return Getstructscm2(cell_f);
 }
 
 struct scm* hashq_set_x(SCM table, SCM key, SCM value)
 {
 	long size = struct_ref_(table, 3)->value;
-	SCM buckets = GetSCM2(struct_ref_(table, 4), g_cells);
+	SCM buckets = GetSCM2(struct_ref_(table, 4));
 
 	struct scm* ybucket = vector_ref_(buckets, hashq_(key, size));
 	if(ybucket->type != TPAIR)
@@ -147,19 +147,19 @@ struct scm* hashq_set_x(SCM table, SCM key, SCM value)
 	}
 	else
 	{
-		vector_set_x_(buckets, hashq_(key, size), acons_(key, value, GetSCM2(vector_ref_(buckets, hashq_(key, size)), g_cells)));
+		vector_set_x_(buckets, hashq_(key, size), acons_(key, value, GetSCM2(vector_ref_(buckets, hashq_(key, size)))));
 	}
-	return Getstructscm2(value, g_cells);
+	return Getstructscm2(value);
 }
 
 struct scm* hash_set_x(SCM table, SCM key, SCM value)
 {
 	long size = struct_ref_(table, 3)->value;
 	unsigned hash = hash_(key, size);
-	SCM buckets = GetSCM2(struct_ref_(table, 4), g_cells);
-	SCM bucket = GetSCM2(vector_ref_(buckets, hash), g_cells);
+	SCM buckets = GetSCM2(struct_ref_(table, 4));
+	SCM bucket = GetSCM2(vector_ref_(buckets, hash));
 
-	struct scm* ybucket = Getstructscm2(bucket, g_cells);
+	struct scm* ybucket = Getstructscm2(bucket);
 	if(ybucket->type != TPAIR)
 	{
 		bucket = cell_nil;
@@ -167,7 +167,7 @@ struct scm* hash_set_x(SCM table, SCM key, SCM value)
 
 	bucket = acons_(key, value, bucket);
 	vector_set_x_(buckets, hash, bucket);
-	return good2bad(Getstructscm2(value, g_cells), g_cells);
+	return good2bad(Getstructscm2(value));
 }
 
 struct scm* make_hashq_type()  ///((internal))
@@ -178,7 +178,7 @@ struct scm* make_hashq_type()  ///((internal))
 	fields = cons_(cell_symbol_size, fields);
 	fields = cons_(fields, cell_nil);
 	fields = cons_(cell_symbol_hashq_table, fields);
-	return good2bad(make_struct(record_type, fields, cell_unspecified), g_cells);
+	return good2bad(make_struct(record_type, fields, cell_unspecified));
 }
 
 struct scm* make_hash_table_(long size)
@@ -188,21 +188,21 @@ struct scm* make_hash_table_(long size)
 		size = 100;
 	}
 
-	SCM hashq_type = GetSCM2(bad2good(make_hashq_type(), g_cells), g_cells);
-	SCM buckets = GetSCM2(make_vector__(size), g_cells);
+	SCM hashq_type = GetSCM2(bad2good(make_hashq_type()));
+	SCM buckets = GetSCM2(make_vector__(size));
 	SCM values = cell_nil;
 	values = cons_(buckets, values);
 	values = cons_(make_cell__ (TNUMBER, 0, size), values);
 	values = cons_(cell_symbol_hashq_table, values);
 	//FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer");
-	return good2bad(make_struct(hashq_type, values, cell_unspecified), g_cells);
+	return good2bad(make_struct(hashq_type, values, cell_unspecified));
 }
 
 struct scm* make_hash_table(SCM x)
 {
 	long size = 0;
 
-	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* y = Getstructscm2(x);
 	if(y->type == TPAIR)
 	{
 		assert(y->type == TNUMBER);
@@ -216,10 +216,10 @@ struct scm* make_hash_table(SCM x)
 /* Externally exposed */
 struct scm* hashq_set_x_(SCM table, SCM key, SCM value)
 {
-	return good2bad(hashq_set_x(table, key, value), g_cells);
+	return good2bad(hashq_set_x(table, key, value));
 }
 
 struct scm* hash_ref_(SCM table, SCM key, SCM dflt)
 {
-	return good2bad(hash_ref(table, key, dflt), g_cells);
+	return good2bad(hash_ref(table, key, dflt));
 }

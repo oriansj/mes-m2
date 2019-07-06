@@ -192,13 +192,13 @@ void gc_init_cells();
 
 void init_symbol(SCM x, SCM type, char const* name)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* y = Getstructscm2(x);
 	y->type = type;
 	int length = strlen(name);
-	struct scm* string = bad2good(make_string(name, length), g_cells);
+	struct scm* string = bad2good(make_string(name, length));
 	y->length = length;
 	y->string = string->string;
-	hash_set_x(g_symbols, GetSCM2(string, g_cells), x);
+	hash_set_x(g_symbols, GetSCM2(string), x);
 }
 
 SCM mes_symbols()  ///((internal))
@@ -206,7 +206,7 @@ SCM mes_symbols()  ///((internal))
 	gc_init_cells();
 	g_free = cell_symbol_test + 1;
 	g_symbol_max = g_free;
-	g_symbols = GetSCM2(bad2good(make_hash_table_(500), g_cells), g_cells);
+	g_symbols = GetSCM2(bad2good(make_hash_table_(500)));
 	init_symbol(cell_nil, TSPECIAL, "()");
 	init_symbol(cell_f, TSPECIAL, "#f");
 	init_symbol(cell_t, TSPECIAL, "#t");
@@ -330,8 +330,8 @@ SCM mes_symbols()  ///((internal))
 	a = acons_(cell_symbol_boot_module, cell_symbol_boot_module, a);
 	a = acons_(cell_symbol_current_module, cell_symbol_current_module, a);
 	a = acons_(cell_symbol_call_with_current_continuation, cell_call_with_current_continuation, a);
-	a = acons_(cell_symbol_mes_version, GetSCM2(make_string_("git"), g_cells), a); // FIXME
-	a = acons_(cell_symbol_mes_prefix, GetSCM2(make_string_("mes"), g_cells), a);  // FIXME
+	a = acons_(cell_symbol_mes_version, GetSCM2(make_string_("git")), a); // FIXME
+	a = acons_(cell_symbol_mes_prefix, GetSCM2(make_string_("mes")), a);  // FIXME
 	a = acons_(cell_type_bytes, make_cell__ (TNUMBER, 0, (long)TBYTES), a);
 	a = acons_(cell_type_char, make_cell__ (TNUMBER, 0, (long)TCHAR), a);
 	a = acons_(cell_type_closure, make_cell__ (TNUMBER, 0, (long)TCLOSURE), a);
@@ -361,34 +361,34 @@ SCM make_builtin(struct scm* builtin_type, SCM name, SCM arity, SCM function)
 	values = cons_(arity, values);
 	values = cons_(name, values);
 	values = cons_(cell_symbol_builtin, values);
-	return GetSCM2(make_struct(GetSCM2(builtin_type, g_cells), values, GetSCM2(cstring_to_symbol("builtin-printer"), g_cells)), g_cells);
+	return GetSCM2(make_struct(GetSCM2(builtin_type), values, GetSCM2(cstring_to_symbol("builtin-printer"))));
 }
 
 struct scm* make_builtin_type()  ///(internal))
 {
-	struct scm* fields = Getstructscm2(cell_nil, g_cells);
+	struct scm* fields = Getstructscm2(cell_nil);
 	fields = cons(cstring_to_symbol("address"), fields);
 	fields = cons(cstring_to_symbol("arity"), fields);
 	fields = cons(cstring_to_symbol("name"), fields);
-	fields = cons(fields, Getstructscm2(cell_nil, g_cells));
-	fields = cons(Getstructscm2(cell_symbol_builtin, g_cells), fields);
-	return make_struct(cell_symbol_record_type, GetSCM2(fields, g_cells), cell_unspecified);
+	fields = cons(fields, Getstructscm2(cell_nil));
+	fields = cons(Getstructscm2(cell_symbol_builtin), fields);
+	return make_struct(cell_symbol_record_type, GetSCM2(fields), cell_unspecified);
 }
 
 struct scm* init_builtin(struct scm* builtin_type, char const* name, int arity, struct scm*(*function)(), struct scm* a)
 {
-	SCM s = GetSCM2(cstring_to_symbol(name), g_cells);
-	return Getstructscm2(acons_(s, make_builtin(builtin_type, GetSCM2(symbol_to_string(s), g_cells), make_cell__ (TNUMBER, 0, (long)arity), make_cell__ (TNUMBER, 0, (long)function)), GetSCM2(a, g_cells)), g_cells);
+	SCM s = GetSCM2(cstring_to_symbol(name));
+	return Getstructscm2(acons_(s, make_builtin(builtin_type, GetSCM2(symbol_to_string(s)), make_cell__ (TNUMBER, 0, (long)arity), make_cell__ (TNUMBER, 0, (long)function)), GetSCM2(a)));
 }
 
 struct scm* builtin_name(SCM builtin)
 {
-	return good2bad(struct_ref_(builtin, 3), g_cells);
+	return good2bad(struct_ref_(builtin, 3));
 }
 
 struct scm* builtin_arity(SCM builtin)
 {
-	return good2bad(struct_ref_(builtin, 4), g_cells);
+	return good2bad(struct_ref_(builtin, 4));
 }
 
 void* builtin_function(SCM builtin)
@@ -398,17 +398,17 @@ void* builtin_function(SCM builtin)
 
 struct scm* builtin_p(SCM x)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
-	if (y->type == TSTRUCT && GetSCM2(struct_ref_(x, 2), g_cells) == cell_symbol_builtin) return good2bad(Getstructscm2(cell_t, g_cells), g_cells);
-	return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	struct scm* y = Getstructscm2(x);
+	if (y->type == TSTRUCT && GetSCM2(struct_ref_(x, 2)) == cell_symbol_builtin) return good2bad(Getstructscm2(cell_t));
+	return good2bad(Getstructscm2(cell_f));
 }
 
 struct scm* builtin_printer(SCM builtin)
 {
 	fdputs("#<procedure ", __stdout);
-	display_(GetSCM2(bad2good(builtin_name(builtin), g_cells), g_cells));
+	display_(GetSCM2(bad2good(builtin_name(builtin))));
 	fdputc(' ', __stdout);
-	int arity = bad2good(builtin_arity(builtin), g_cells)->value;
+	int arity = bad2good(builtin_arity(builtin))->value;
 
 	if(arity == -1)
 	{
@@ -430,26 +430,26 @@ struct scm* builtin_printer(SCM builtin)
 	}
 
 	fdputc('>', __stdout);
-	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
+	return good2bad(Getstructscm2(cell_unspecified));
 }
 
 struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 {
-	int arity = bad2good(builtin_arity(fn), g_cells)->value;
-	struct scm* y = Getstructscm2(x, g_cells);
+	int arity = bad2good(builtin_arity(fn))->value;
+	struct scm* y = Getstructscm2(x);
 
-	if((arity > 0 || arity == -1) && x != cell_nil && bad2good(y->car, g_cells)->type == TVALUES)
+	if((arity > 0 || arity == -1) && x != cell_nil && bad2good(y->car)->type == TVALUES)
 	{
-		y = cons(bad2good(bad2good(bad2good(y->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells));
+		y = cons(bad2good(bad2good(bad2good(y->car)->cdr)->car), bad2good(y->cdr));
 	}
 
 	if(arity > 1 || arity == -1)
 	{
-		if(x != cell_nil && bad2good(y->cdr, g_cells)->type == TPAIR)
+		if(x != cell_nil && bad2good(y->cdr)->type == TPAIR)
 		{
-			if(bad2good(bad2good(Getstructscm2(x, g_cells)->cdr, g_cells)->car, g_cells)->type == TVALUES)
+			if(bad2good(bad2good(Getstructscm2(x)->cdr)->car)->type == TVALUES)
 			{
-				y = cons(bad2good(y->car, g_cells), cons(bad2good(bad2good(bad2good(bad2good(y->cdr, g_cells)->car, g_cells)->cdr, g_cells)->car, g_cells), bad2good(y->cdr, g_cells)));
+				y = cons(bad2good(y->car), cons(bad2good(bad2good(bad2good(bad2good(y->cdr)->car)->cdr)->car), bad2good(y->cdr)));
 			}
 		}
 	}
@@ -458,34 +458,34 @@ struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 	{
 		//function0_t fp = f->function;
 		FUNCTION0* fp = builtin_function(fn);
-		return bad2good(fp(), g_cells);
+		return bad2good(fp());
 	}
 	else if(arity == 1)
 	{
 		//function1_t fp = f->function;
 		FUNCTION1* fp = builtin_function(fn);
-		return bad2good(fp(y->car), g_cells);
+		return bad2good(fp(y->car));
 	}
 	else if(arity == 2)
 	{
 		//function2_t fp = f->function;
 		FUNCTION2* fp = builtin_function(fn);
-		return bad2good(fp(y->car, bad2good(y->cdr, g_cells)->car), g_cells);
+		return bad2good(fp(y->car, bad2good(y->cdr)->car));
 	}
 	else if(arity == 3)
 	{
 		//function3_t fp = f->function;
 		FUNCTION3* fp = builtin_function(fn);
-		return bad2good(fp(y->car, bad2good(y->cdr, g_cells)->car, bad2good(bad2good(y->cdr, g_cells)->cdr, g_cells)->car), g_cells);
+		return bad2good(fp(y->car, bad2good(y->cdr)->car, bad2good(bad2good(y->cdr)->cdr)->car));
 	}
 	else if(arity == -1)
 	{
 		//functionn_t fp = f->function;
 		FUNCTION1* fp = builtin_function(fn);
-		return bad2good(fp(good2bad(y, g_cells)), g_cells);
+		return bad2good(fp(good2bad(y)));
 	}
 
-	return Getstructscm2(cell_unspecified, g_cells);
+	return Getstructscm2(cell_unspecified);
 }
 
 

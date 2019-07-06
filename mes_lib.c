@@ -38,27 +38,27 @@ struct scm* eq_p (SCM x, SCM y);
 
 struct scm* exit_(SCM x)  ///((name . "exit"))
 {
-	struct scm* y = Getstructscm2(x, g_cells);
+	struct scm* y = Getstructscm2(x);
 	assert(y->type == TNUMBER);
 	exit(y->value);
 }
 
 struct scm* make_frame_type()  ///((internal))
 {
-	return good2bad(make_struct(cell_symbol_record_type, cons_(cell_symbol_frame, cons_(cons_(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified), g_cells);
+	return good2bad(make_struct(cell_symbol_record_type, cons_(cell_symbol_frame, cons_(cons_(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified));
 }
 
 
 struct scm* make_stack_type()  ///((internal))
 {
 	return good2bad(make_struct(cell_symbol_record_type
-	                  , cons_(cell_symbol_stack, cons_(cons_(GetSCM2(cstring_to_symbol("frames"), g_cells), cell_nil), cell_nil))
-	                  , cell_unspecified), g_cells);
+	                  , cons_(cell_symbol_stack, cons_(cons_(GetSCM2(cstring_to_symbol("frames")), cell_nil), cell_nil))
+	                  , cell_unspecified));
 }
 
 struct scm* stack_length(SCM stack)
 {
-	return vector_length(good2bad(struct_ref_(stack, 3), g_cells));
+	return vector_length(good2bad(struct_ref_(stack, 3)));
 }
 
 struct scm* stack_ref(SCM stack, SCM index)
@@ -66,21 +66,21 @@ struct scm* stack_ref(SCM stack, SCM index)
 	struct scm* y = struct_ref_(stack, 3);
 	assert(y->type == TVECTOR);
 	assert(index < y->length);
-	struct scm* e = bad2good(y->cdr + index, g_cells);
+	struct scm* e = bad2good(y->cdr + index);
 
 	if(e->type == TREF)
 	{
-		return bad2good(e->car, g_cells);
+		return bad2good(e->car);
 	}
 
 	if(e->type == TCHAR)
 	{
-		return Getstructscm2(make_cell__ (TCHAR, 0, e->value), g_cells);
+		return Getstructscm2(make_cell__ (TCHAR, 0, e->value));
 	}
 
 	if(e->type == TNUMBER)
 	{
-		return Getstructscm2(make_cell__ (TNUMBER, 0, e->value), g_cells);
+		return Getstructscm2(make_cell__ (TNUMBER, 0, e->value));
 	}
 
 	return e;
@@ -88,53 +88,53 @@ struct scm* stack_ref(SCM stack, SCM index)
 
 struct scm* xassq(SCM x, SCM a)  ///for speed in core only
 {
-	struct scm* a2 = Getstructscm2(a, g_cells);
-	while(GetSCM2(a2, g_cells) != cell_nil && x != bad2good(a2->car, g_cells)->rdc)
+	struct scm* a2 = Getstructscm2(a);
+	while(GetSCM2(a2) != cell_nil && x != bad2good(a2->car)->rdc)
 	{
-		a2 = bad2good(a2->cdr, g_cells);
+		a2 = bad2good(a2->cdr);
 	}
 
-	return GetSCM2(a2, g_cells) != cell_nil ? a2->car : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	return GetSCM2(a2) != cell_nil ? a2->car : good2bad(Getstructscm2(cell_f));
 }
 
 struct scm* memq(SCM x, SCM a)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
-	struct scm* a2 = Getstructscm2(a, g_cells);
+	struct scm* y = Getstructscm2(x);
+	struct scm* a2 = Getstructscm2(a);
 	int t = y->type;
 
 	if(t == TCHAR || t == TNUMBER)
 	{
 		SCM v = y->value;
 
-		while(GetSCM2(a2, g_cells) != cell_nil && v != bad2good(a2->car, g_cells)->value)
+		while(GetSCM2(a2) != cell_nil && v != bad2good(a2->car)->value)
 		{
-			a2 = bad2good(a2->cdr, g_cells);
+			a2 = bad2good(a2->cdr);
 		}
 	}
 	else if(t == TKEYWORD)
 	{
-		while(GetSCM2(a2, g_cells) != cell_nil && (bad2good(a2->car, g_cells)->type != TKEYWORD || GetSCM2(string_equal_p(x, a2->rac), g_cells) == cell_f))
+		while(GetSCM2(a2) != cell_nil && (bad2good(a2->car)->type != TKEYWORD || GetSCM2(string_equal_p(x, a2->rac)) == cell_f))
 		{
-			a2 = bad2good(a2->cdr, g_cells);
+			a2 = bad2good(a2->cdr);
 		}
 	}
 	else
 	{
-		while(GetSCM2(a2, g_cells) != cell_nil && x != a2->rac)
+		while(GetSCM2(a2) != cell_nil && x != a2->rac)
 		{
-			a2 = bad2good(a2->cdr, g_cells);
+			a2 = bad2good(a2->cdr);
 		}
 	}
 
-	return GetSCM2(a2, g_cells) != cell_nil ? good2bad(a2, g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	return GetSCM2(a2) != cell_nil ? good2bad(a2) : good2bad(Getstructscm2(cell_f));
 }
 
 struct scm* equal2_p(SCM a, SCM b)
 {
-	struct scm* a2 = Getstructscm2(a, g_cells);
-	struct scm* b2 = Getstructscm2(b, g_cells);
-	struct scm* tee = good2bad(Getstructscm2(cell_t, g_cells), g_cells);
+	struct scm* a2 = Getstructscm2(a);
+	struct scm* b2 = Getstructscm2(b);
+	struct scm* tee = good2bad(Getstructscm2(cell_t));
 
 	if(a == b)
 	{
@@ -144,12 +144,12 @@ struct scm* equal2_p(SCM a, SCM b)
 	if(a2->type == TPAIR && b2->type == TPAIR)
 	{
 		if((tee == equal2_p(a2->rac, b2->rac)) && (tee == equal2_p(a2->rdc, b2->rdc))) return tee;
-		return good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+		return good2bad(Getstructscm2(cell_f));
 	}
 
 	if(a2->type == TSTRING && b2->type == TSTRING)
 	{
-		return good2bad(string_equal_p(a, b), g_cells);
+		return good2bad(string_equal_p(a, b));
 	}
 
 	if(a2->type == TVECTOR && b2->type == TVECTOR)
@@ -162,17 +162,17 @@ struct scm* equal2_p(SCM a, SCM b)
 
 struct scm* last_pair(SCM x)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
-	while(GetSCM2(y, g_cells) != cell_nil && y->rdc != cell_nil)
+	struct scm* y = Getstructscm2(x);
+	while(GetSCM2(y) != cell_nil && y->rdc != cell_nil)
 	{
-		y = bad2good(y->cdr, g_cells);
+		y = bad2good(y->cdr);
 	}
 
-	return good2bad(y, g_cells);
+	return good2bad(y);
 }
 
 struct scm* pair_p(SCM x)
 {
-	struct scm* y = Getstructscm2(x, g_cells);
-	return y->type == TPAIR ? good2bad(Getstructscm2(cell_t, g_cells), g_cells) : good2bad(Getstructscm2(cell_f, g_cells), g_cells);
+	struct scm* y = Getstructscm2(x);
+	return y->type == TPAIR ? good2bad(Getstructscm2(cell_t)) : good2bad(Getstructscm2(cell_f));
 }

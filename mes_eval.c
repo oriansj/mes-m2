@@ -238,7 +238,7 @@ eval_apply:
 	}
 	else
 	{
-		error(cell_symbol_system_error, GetSCM2(bad2good(make_string ("eval/apply unknown continuation", strlen("eval/apply unknown continuation")), g_cells), g_cells));
+		error(cell_symbol_system_error, GetSCM2(bad2good(make_string ("eval/apply unknown continuation", strlen("eval/apply unknown continuation")))));
 	}
 
 evlis:
@@ -267,8 +267,8 @@ apply:
 
 	if(t == TSTRUCT && builtin_p(g_cells[r1].rac) == cell_t)
 	{
-		check_formals(g_cells[r1].rac, GetSCM2(bad2good(builtin_arity(g_cells[r1].rac), g_cells), g_cells), g_cells[r1].rdc);
-		r1 = GetSCM2(apply_builtin(g_cells[r1].rac, g_cells[r1].rdc), g_cells);    /// FIXME: move into eval_apply
+		check_formals(g_cells[r1].rac, GetSCM2(bad2good(builtin_arity(g_cells[r1].rac))), g_cells[r1].rdc);
+		r1 = GetSCM2(apply_builtin(g_cells[r1].rac, g_cells[r1].rdc));    /// FIXME: move into eval_apply
 		goto vm_return;
 	}
 	else if(t == TCLOSURE)
@@ -292,7 +292,7 @@ apply:
 		{
 			for(t = 0; t < g_cells[v].length; t++)
 			{
-				g_stack_array[STACK_SIZE - g_cells[v].length + t] = good2bad(vector_ref_(v, t), g_cells);
+				g_stack_array[STACK_SIZE - g_cells[v].length + t] = good2bad(vector_ref_(v, t));
 			}
 
 			g_stack = STACK_SIZE - g_cells[v].length;
@@ -467,7 +467,7 @@ eval_macro_expand_expand:
 					}
 					else
 					{
-						entry = GetSCM2(module_variable(r0, name), g_cells);
+						entry = GetSCM2(module_variable(r0, name));
 
 						if(entry == cell_f)
 						{
@@ -515,7 +515,7 @@ eval_define:
 				}
 				else if(global_p)
 				{
-					entry = GetSCM2(module_variable(r0, name), g_cells);
+					entry = GetSCM2(module_variable(r0, name));
 					set_cdr_x(entry, r1);
 				}
 				else
@@ -524,7 +524,7 @@ eval_define:
 					aa = cons_(entry, cell_nil);
 					set_cdr_x(aa, cdr(r0));
 					set_cdr_x(r0, aa);
-					cl = GetSCM2(module_variable(r0, cell_closure), g_cells);
+					cl = GetSCM2(module_variable(r0, cell_closure));
 					set_cdr_x(cl, aa);
 				}
 
@@ -561,7 +561,7 @@ eval2:
 			goto vm_return;
 		}
 
-		r1 = assert_defined(r1, GetSCM2(module_ref(r0, r1), g_cells));
+		r1 = assert_defined(r1, GetSCM2(module_ref(r0, r1)));
 		goto vm_return;
 	}
 	else if(t == TVARIABLE)
@@ -637,13 +637,13 @@ macro_expand_set_x:
 	if(g_cells[r1].type == TPAIR && g_cells[g_cells[r1].rac].type == TSYMBOL)
 	{
 		macro = macro_get_handle(cell_symbol_portable_macro_expand);
-		expanders = GetSCM2(module_ref(r0, cell_symbol_sc_expander_alist), g_cells);
+		expanders = GetSCM2(module_ref(r0, cell_symbol_sc_expander_alist));
 		if((g_cells[r1].rac != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
 		{
 			macro = assq(g_cells[r1].rac, expanders);
 			if(macro != cell_f)
 			{
-				sc_expand = GetSCM2(module_ref(r0, cell_symbol_macro_expand), g_cells);
+				sc_expand = GetSCM2(module_ref(r0, cell_symbol_macro_expand));
 				r2 = r1;
 
 				if(sc_expand != cell_undefined && sc_expand != cell_f)
@@ -820,7 +820,7 @@ if_expr:
 call_with_current_continuation:
 	gc_push_frame();
 	x = make_cell__ (TCONTINUATION, g_continuations++, g_stack);
-	v = GetSCM2(make_vector__(STACK_SIZE - g_stack), g_cells);
+	v = GetSCM2(make_vector__(STACK_SIZE - g_stack));
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{
@@ -832,7 +832,7 @@ call_with_current_continuation:
 	push_cc(cons_(g_cells[r1].rac, cons_(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
-	v = GetSCM2(make_vector__(STACK_SIZE - g_stack), g_cells);
+	v = GetSCM2(make_vector__(STACK_SIZE - g_stack));
 
 	for(t = g_stack; t < STACK_SIZE; t++)
 	{

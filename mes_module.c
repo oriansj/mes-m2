@@ -38,9 +38,9 @@ struct scm* make_module_type()
 {
 	SCM record_type = cell_symbol_record_type; // FIXME
 	SCM fields = cell_nil;
-	fields = cons_(GetSCM2(cstring_to_symbol("globals"), g_cells), fields);
-	fields = cons_(GetSCM2(cstring_to_symbol("locals"), g_cells), fields);
-	fields = cons_(GetSCM2(cstring_to_symbol("name"), g_cells), fields);
+	fields = cons_(GetSCM2(cstring_to_symbol("globals")), fields);
+	fields = cons_(GetSCM2(cstring_to_symbol("locals")), fields);
+	fields = cons_(GetSCM2(cstring_to_symbol("name")), fields);
 	fields = cons_(fields, cell_nil);
 	fields = cons_(cell_symbol_module, fields);
 	return make_struct(record_type, fields, cell_unspecified);
@@ -55,11 +55,11 @@ struct scm* module_variable(SCM module, SCM name)
 	if(x == cell_f)
 	{
 		module = m0;
-		SCM globals = GetSCM2(struct_ref_(module, 5), g_cells);
-		x = GetSCM2(bad2good(hashq_get_handle(globals, name, cell_f), g_cells), g_cells);
+		SCM globals = GetSCM2(struct_ref_(module, 5));
+		x = GetSCM2(bad2good(hashq_get_handle(globals, name, cell_f)));
 	}
 
-	return Getstructscm2(x, g_cells);
+	return Getstructscm2(x);
 }
 
 
@@ -67,33 +67,33 @@ struct scm* module_ref(SCM module, SCM name)
 {
 	struct scm* y = module_variable(module, name);
 
-	if(GetSCM2(y, g_cells) == cell_f)
+	if(GetSCM2(y) == cell_f)
 	{
-		return Getstructscm2(cell_undefined, g_cells);
+		return Getstructscm2(cell_undefined);
 	}
 
-	return bad2good(y->cdr, g_cells);
+	return bad2good(y->cdr);
 }
 
 struct scm* module_define_x(SCM module, SCM name, SCM value)
 {
 	module = m0;
-	SCM globals = GetSCM2(struct_ref_(module, 5), g_cells);
-	return good2bad(hashq_set_x(globals, name, value), g_cells);
+	SCM globals = GetSCM2(struct_ref_(module, 5));
+	return good2bad(hashq_set_x(globals, name, value));
 }
 
 /* External functions */
 struct scm* module_variable_(SCM module, SCM name) /* EXTERNAL */
 {
-	return good2bad(module_variable(module, name), g_cells);
+	return good2bad(module_variable(module, name));
 }
 
 struct scm* module_ref_(SCM module, SCM name) /* EXTERNAL */
 {
-	return good2bad(module_ref(module, name), g_cells);
+	return good2bad(module_ref(module, name));
 }
 
 struct scm* make_module_type_() /* EXTERNAL */
 {
-	return good2bad(make_module_type(), g_cells);
+	return good2bad(make_module_type());
 }
