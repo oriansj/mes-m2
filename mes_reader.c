@@ -223,7 +223,7 @@ struct scm* reader_read_list(int c, SCM a)
 	//return cell_nil;
 	struct scm* s = reader_read_sexp_(c, a);
 
-	if(s == &g_cells[cell_dot])
+	if(s == Getstructscm2(cell_dot, g_cells))
 	{
 		s = reader_read_list(readchar(), a);
 		return bad2good(s->car, g_cells);

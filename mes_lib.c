@@ -66,7 +66,7 @@ struct scm* stack_ref(SCM stack, SCM index)
 	struct scm* y = struct_ref_(stack, 3);
 	assert(y->type == TVECTOR);
 	assert(index < y->length);
-	struct scm* e = &g_cells[y->vector + index];
+	struct scm* e = bad2good(y->cdr + index, g_cells);
 
 	if(e->type == TREF)
 	{

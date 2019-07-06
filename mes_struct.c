@@ -49,7 +49,7 @@ struct scm* struct_ref_(struct scm* x, long i)
 	x = bad2good(x, g_cells);
 	assert(x->type == TSTRUCT);
 	assert(i < x->length);
-	struct scm* f = &g_cells[x->struc + i];
+	struct scm* f = bad2good(x->cdr, g_cells) + i;
 
 	if(f->type == TREF)
 	{
@@ -74,16 +74,23 @@ struct scm* struct_set_x_(struct scm* x, long i, SCM e)
 	x = bad2good(x, g_cells);
 	assert(x->type == TSTRUCT);
 	assert(i < x->length);
-	g_cells[x->rdc + i] = *vector_entry(e);
+	struct scm* v = vector_entry(e);
+	struct scm* y = bad2good(x->cdr, g_cells) + i;
+	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+	*y = *v;
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
 struct scm* struct_ref(SCM x, SCM i) /* External */
 {
-	return good2bad(struct_ref_(good2bad(Getstructscm2(x, g_cells), g_cells), g_cells[i].rdc), g_cells);
+	struct scm* h = Getstructscm2(i, g_cells);
+	struct scm* y = Getstructscm2(x, g_cells);
+	return good2bad(struct_ref_(good2bad(y, g_cells), h->rdc), g_cells);
 }
 
 struct scm* struct_set_x(SCM x, SCM i, SCM e)
 {
-	return struct_set_x_(good2bad(Getstructscm2(x, g_cells), g_cells), g_cells[i].rdc, e);
+	struct scm* h = Getstructscm2(i, g_cells);
+	struct scm* y = Getstructscm2(x, g_cells);
+	return struct_set_x_(good2bad(y, g_cells), h->rdc, e);
 }

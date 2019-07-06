@@ -32,7 +32,8 @@ struct scm* make_vector__(SCM k);
 
 struct scm* make_vector_(SCM n)
 {
-	return good2bad(make_vector__(g_cells[n].rdc), g_cells);
+	struct scm* m = Getstructscm2(n, g_cells);
+	return good2bad(make_vector__(m->rdc), g_cells);
 }
 
 struct scm* vector_length(struct scm* x)
@@ -104,7 +105,8 @@ struct scm* vector_equal_p(SCM a, SCM b)
 
 struct scm* vector_ref(SCM x, SCM i)
 {
-	return good2bad(vector_ref_(x, g_cells[i].rdc), g_cells);
+	struct scm* h = Getstructscm2(i, g_cells);
+	return good2bad(vector_ref_(x, h->rdc), g_cells);
 }
 
 struct scm* vector_entry(SCM x)
@@ -123,12 +125,16 @@ void vector_set_x_(SCM x, long i, SCM e)
 	struct scm* y = Getstructscm2(x, g_cells);
 	assert(y->type == TVECTOR);
 	assert(i < y->length);
-	g_cells[y->vector + i] = *vector_entry(e);
+	struct scm* z = bad2good(y->cdr, g_cells) + i;
+	struct scm* f = vector_entry(e);
+	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+	*z = *f;
 }
 
 struct scm* vector_set_x(SCM x, SCM i, SCM e)
 {
-	vector_set_x_(x, g_cells[i].rdc, e);
+	struct scm* h = Getstructscm2(i, g_cells);
+	vector_set_x_(x, h->rdc, e);
 	return good2bad(Getstructscm2(cell_unspecified, g_cells), g_cells);
 }
 
@@ -136,11 +142,15 @@ struct scm* list_to_vector(SCM x)
 {
 	struct scm* v = make_vector__(length__(x));
 	struct scm* y = Getstructscm2(x, g_cells);
-	SCM p = v->rdc;
+	struct scm* p = bad2good(v->cdr, g_cells);
+	struct scm* z;
 
 	while(GetSCM2(y, g_cells) != cell_nil)
 	{
-		g_cells[p++] = *vector_entry(y->rac);
+		z = vector_entry(y->rac);
+		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
+		*p = *z;
+		p = p + 1;
 		y = bad2good(y->cdr, g_cells);
 	}
 

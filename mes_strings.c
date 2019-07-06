@@ -42,7 +42,7 @@ char const* list_to_cstring(struct scm* list, int* size)
 	{
 		assert_max_string(i, "list_to_string", g_buf);
 
-		g_buf[i] = g_cells[list->rac].value;
+		g_buf[i] = bad2good(list->car, g_cells)->value;
 		i = i + 1;
 		list = bad2good(list->cdr, g_cells);
 	}
@@ -57,18 +57,20 @@ struct scm* make_string_(char const* s) /* internal only */
 	assert_max_string(strlen(s) , "make_string_", (char*)s);
 
 	SCM x = make_cell__(TSTRING, strlen(s), 0);
+	struct scm* y = Getstructscm2(x, g_cells);
 	SCM v = GetSCM2(make_bytes(s, strlen(s)), g_cells);
-	g_cells[x].rdc = v;
-	return Getstructscm2(x, g_cells);
+	y->rdc = v;
+	return y;
 }
 
 struct scm* make_string(char const* s, int length)
 {
 	assert_max_string(length, "make_string", (char*)s);
 	SCM x = make_cell__(TSTRING, length, 0);
+	struct scm* y = Getstructscm2(x, g_cells);
 	SCM v = GetSCM2(make_bytes(s, length), g_cells);
-	g_cells[x].rdc = v;
-	return good2bad(Getstructscm2(x, g_cells), g_cells);
+	y->rdc = v;
+	return good2bad(y, g_cells);
 }
 
 struct scm* string_equal_p(SCM a, SCM b)
