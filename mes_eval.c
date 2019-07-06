@@ -29,18 +29,9 @@ extern SCM STACK_SIZE;
 #define CDR(x) g_cells[x].rdc
 #define VALUE(x) g_cells[x].value
 #define VARIABLE(x) g_cells[x].variable
-#define STRING(x) g_cells[x].rdc
-#define LENGTH(x) g_cells[x].length
-#define VECTOR(x) g_cells[x].vector
 #define MAKE_NUMBER(n) make_cell__ (TNUMBER, 0, (long)n)
 #define MAKE_STRING0(x) make_string (x, strlen (x))
-#define MAKE_MACRO(name, x) make_cell__ (TMACRO, x, STRING (name))
-#define MAKE_CHAR(n) make_cell__ (TCHAR, 0, n)
-#define MAKE_CONTINUATION(n) make_cell__ (TCONTINUATION, n, g_stack)
-#define MACRO(x) g_cells[x].macro
-#define CLOSURE(x) g_cells[x].closure
-#define CONTINUATION(x) g_cells[x].continuation
-
+#define MAKE_MACRO(name, x) make_cell__ (TMACRO, x, g_cells[name].rdc)
 
 SCM append2(SCM x, SCM y);
 SCM gc_push_frame();
@@ -291,7 +282,7 @@ apply:
 	}
 	else if(t == TCLOSURE)
 	{
-		cl = CLOSURE(CAR(r1));
+		cl = g_cells[CAR(r1)].closure;
 		body = CDR (CDR (cl));
 		formals = CAR (CDR (cl));
 		args = CDR(r1);
@@ -304,16 +295,16 @@ apply:
 	}
 	else if(t == TCONTINUATION)
 	{
-		v = CONTINUATION(CAR(r1));
+		v = g_cells[CAR(r1)].continuation;
 
-		if(LENGTH(v))
+		if(g_cells[v].length)
 		{
-			for(t = 0; t < LENGTH(v); t++)
+			for(t = 0; t < g_cells[v].length; t++)
 			{
-				g_stack_array[STACK_SIZE - LENGTH(v) + t] = good2bad(vector_ref_(v, t), g_cells);
+				g_stack_array[STACK_SIZE - g_cells[v].length + t] = good2bad(vector_ref_(v, t), g_cells);
 			}
 
-			g_stack = STACK_SIZE - LENGTH(v);
+			g_stack = STACK_SIZE - g_cells[v].length;
 		}
 
 		x = r1;
@@ -835,7 +826,7 @@ if_expr:
 	goto vm_return;
 call_with_current_continuation:
 	gc_push_frame();
-	x = MAKE_CONTINUATION(g_continuations++);
+	x = make_cell__ (TCONTINUATION, g_continuations++, g_stack);
 	v = GetSCM2(make_vector__(STACK_SIZE - g_stack), g_cells);
 
 	for(t = g_stack; t < STACK_SIZE; t++)
@@ -843,7 +834,7 @@ call_with_current_continuation:
 		vector_set_x_(v, t - g_stack, (SCM) g_stack_array[t]);
 	}
 
-	CONTINUATION(x) = v;
+	g_cells[x].continuation = v;
 	gc_pop_frame();
 	push_cc(cons_(CAR(r1), cons_(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
 	goto apply;
@@ -855,7 +846,7 @@ call_with_current_continuation2:
 		vector_set_x_(v, t - g_stack, (SCM)g_stack_array[t]);
 	}
 
-	CONTINUATION(r2) = v;
+	g_cells[r2].continuation = v;
 	goto vm_return;
 call_with_values:
 	push_cc(cons_(CAR(r1), cell_nil), r1, r0, cell_vm_call_with_values2);
