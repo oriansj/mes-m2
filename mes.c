@@ -831,7 +831,7 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	SCM values = cons_(cell_symbol_module, cons_(name, cons_(cell_nil, cons_(globals, cell_nil))));
 	SCM module = GetSCM2(make_struct(module_type, values, GetSCM2(cstring_to_symbol("module-printer"))));
 	R0 = good2bad(Getstructscm2(cons_(b->rac, cons_(bad2good(b->cdr)->rac, cell_nil))));
-	m0 = module;
+	M0 = good2bad(Getstructscm2(module));
 
 	while(b->type == TPAIR)
 	{
@@ -852,7 +852,7 @@ int main(int argc, char *argv[])
 	R1 = good2bad(Getstructscm2(0));
 	R2 = good2bad(Getstructscm2(0));
 	R3 = good2bad(Getstructscm2(0));
-	m0 = 0;
+	M0 = good2bad(Getstructscm2(0));
 	g_macros = 0;
 	g_ports = 1;
 	g_cells = 0;
@@ -869,12 +869,12 @@ int main(int argc, char *argv[])
 	SCM a = mes_environment(argc, argv);
 	a = GetSCM2(mes_builtins(Getstructscm2(a)));
 	a = init_time(a);
-	m0 = GetSCM2(bad2good(make_initial_module(a)));
+	M0 = make_initial_module(a);
 	g_macros = GetSCM2(bad2good(make_hash_table_(0)));
 
 	if(g_debug > 4)
 	{
-		module_printer(m0);
+		module_printer(GetSCM2(bad2good(M0)));
 	}
 
 	read_boot();
@@ -905,7 +905,7 @@ int main(int argc, char *argv[])
 
 	if(g_debug)
 	{
-		if(g_debug > 4) module_printer(m0);
+		if(g_debug > 4) module_printer(GetSCM2(bad2good(M0)));
 
 		eputs("\ngc stats: [");
 		eputs(itoa(g_free));
@@ -914,7 +914,7 @@ int main(int argc, char *argv[])
 		eputs(itoa(g_free));
 		eputs("]\n");
 
-		if(g_debug > 4) module_printer(m0);
+		if(g_debug > 4) module_printer(GetSCM2(bad2good(M0)));
 
 		if(g_debug > 3)
 		{

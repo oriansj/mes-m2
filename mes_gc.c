@@ -520,7 +520,7 @@ void gc_()  ///((internal))
 	g_symbols = GetSCM(gc_copy_new(Getstructscm2(g_symbols)), g_news);
 	g_macros = GetSCM(gc_copy_new(Getstructscm2(g_macros)), g_news);
 	g_ports = GetSCM(gc_copy_new(Getstructscm2(g_ports)), g_news);
-	m0 = GetSCM(gc_copy_new(Getstructscm2(m0)), g_news);
+	M0 = g2b(gc_copy_new(bad2good(M0)));
 
 	for(long i = g_stack; i < STACK_SIZE; i++)
 	{

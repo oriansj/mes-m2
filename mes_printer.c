@@ -326,7 +326,7 @@ struct scm* hash_table_printer(struct scm* table)
 
 struct scm* module_printer(SCM module)
 {
-	//module = m0;
+	/* module = M0; */
 	fdputs("#<", __stdout);
 	display_(GetSCM2(struct_ref_(module, 2)));
 	fdputc(' ', __stdout);

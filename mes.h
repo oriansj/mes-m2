@@ -92,7 +92,6 @@ struct scm* R2;
 /* continuation */
 struct scm* R3;
 /* current-module */
-SCM m0;
 struct scm* M0;
 /* macro */
 SCM g_macros;

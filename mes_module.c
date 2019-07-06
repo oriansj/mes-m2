@@ -54,8 +54,7 @@ struct scm* module_variable(SCM module, SCM name)
 
 	if(x == cell_f)
 	{
-		module = m0;
-		SCM globals = GetSCM2(struct_ref_(module, 5));
+		SCM globals = GetSCM2(struct_ref_(GetSCM2(bad2good(M0)), 5));
 		x = GetSCM2(bad2good(hashq_get_handle(globals, name, cell_f)));
 	}
 
@@ -77,8 +76,7 @@ struct scm* module_ref(SCM module, SCM name)
 
 struct scm* module_define_x(SCM module, SCM name, SCM value)
 {
-	module = m0;
-	SCM globals = GetSCM2(struct_ref_(module, 5));
+	SCM globals = GetSCM2(struct_ref_(GetSCM2(bad2good(M0)), 5));
 	return good2bad(hashq_set_x(globals, name, value));
 }
 
