@@ -80,7 +80,7 @@ SCM mes_g_stack(SCM a)  ///((internal))
 	g_stack = STACK_SIZE;
 	r0 = a;
 	R1 = good2bad(Getstructscm2(make_cell__ (TCHAR, 0, 0)));
-	r2 = make_cell__ (TCHAR, 0, 0);
+	R2 = good2bad(Getstructscm2(make_cell__ (TCHAR, 0, 0)));
 	R3 = good2bad(Getstructscm2(make_cell__ (TCHAR, 0, 0)));
 	return r0;
 }

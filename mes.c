@@ -346,7 +346,7 @@ SCM gc_push_frame()  ///((internal))
 	g_stack_array[--g_stack] = (struct scm*) cell_f;
 	g_stack_array[--g_stack] = (struct scm*)r0;
 	g_stack_array[--g_stack] = R1;
-	g_stack_array[--g_stack] = (struct scm*)r2;
+	g_stack_array[--g_stack] = R2;
 	g_stack_array[--g_stack] = R3;
 	return g_stack;
 }
@@ -354,7 +354,7 @@ SCM gc_push_frame()  ///((internal))
 SCM gc_peek_frame()  ///((internal))
 {
 	R3 = g_stack_array[g_stack];
-	r2 = (SCM) g_stack_array[g_stack + 1];
+	R2 = g_stack_array[g_stack + 1];
 	R1 = g_stack_array[g_stack + 2];
 	r0 = (SCM) g_stack_array[g_stack + 3];
 	return (SCM) g_stack_array[g_stack + FRAME_PROCEDURE];
@@ -604,7 +604,7 @@ SCM push_cc(SCM p1, SCM p2, SCM a, SCM c)  ///((internal))
 {
 	struct scm* x = R3;
 	R3 = good2bad(Getstructscm2(c));
-	r2 = p2;
+	R2 = good2bad(Getstructscm2(p2));
 	gc_push_frame();
 	R1 = good2bad(Getstructscm2(p1));
 	r0 = a;
@@ -792,7 +792,7 @@ void read_boot()  ///((internal))
 		exit(EXIT_FAILURE);
 	}
 
-	r2 = read_input_file_env();
+	R2 = good2bad(Getstructscm2(read_input_file_env()));
 	__stdin = STDIN;
 }
 
@@ -850,7 +850,7 @@ int main(int argc, char *argv[])
 	g_stack = 0;
 	r0 = 0;
 	R1 = good2bad(Getstructscm2(0));
-	r2 = 0;
+	R2 = good2bad(Getstructscm2(0));
 	R3 = good2bad(Getstructscm2(0));
 	m0 = 0;
 	g_macros = 0;
@@ -878,7 +878,7 @@ int main(int argc, char *argv[])
 	}
 
 	read_boot();
-	push_cc(r2, cell_unspecified, r0, cell_unspecified);
+	push_cc(GetSCM2(bad2good(R2)), cell_unspecified, r0, cell_unspecified);
 
 	if(g_debug > 2)
 	{

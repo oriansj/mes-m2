@@ -89,7 +89,6 @@ struct scm* R0;
 /* param 1 */
 struct scm* R1;
 /* save 2 */
-SCM r2;
 struct scm* R2;
 /* continuation */
 struct scm* R3;
