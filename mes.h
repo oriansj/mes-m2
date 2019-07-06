@@ -87,7 +87,6 @@ int* __ungetc_buf;
 SCM r0;
 struct scm* R0;
 /* param 1 */
-SCM r1;
 struct scm* R1;
 /* save 2 */
 SCM r2;

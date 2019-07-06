@@ -252,7 +252,7 @@ eval_apply:
 	}
 	else if(r3 == cell_unspecified)
 	{
-		return r1;
+		return GetSCM2(bad2good(R1));
 	}
 	else
 	{
@@ -261,50 +261,50 @@ eval_apply:
 
 evlis:
 
-	if(r1 == cell_nil)
+	if(GetSCM2(bad2good(R1)) == cell_nil)
 	{
 		goto vm_return;
 	}
 
-	if(g_cells[r1].type != TPAIR)
+	if(bad2good(R1)->type != TPAIR)
 	{
 		goto eval;
 	}
 
-	push_cc(g_cells[r1].rac, r1, r0, cell_vm_evlis2);
+	push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_evlis2);
 	goto eval;
 evlis2:
-	push_cc(g_cells[r2].rdc, r1, r0, cell_vm_evlis3);
+	push_cc(g_cells[r2].rdc, GetSCM2(bad2good(R1)), r0, cell_vm_evlis3);
 	goto evlis;
 evlis3:
-	r1 = cons_(r2, r1);
+	R1 = good2bad(Getstructscm2(cons_(r2, GetSCM2(bad2good(R1)))));
 	goto vm_return;
 apply:
-	g_stack_array[g_stack + FRAME_PROCEDURE] = g_cells[r1].car;
-	t = g_cells[g_cells[r1].rac].type;
+	g_stack_array[g_stack + FRAME_PROCEDURE] = bad2good(R1)->car;
+	t = bad2good(bad2good(R1)->car)->type;
 
-	if(t == TSTRUCT && builtin_p(g_cells[r1].rac) == cell_t)
+	if(t == TSTRUCT && builtin_p(bad2good(R1)->rac) == cell_t)
 	{
-		check_formals(g_cells[r1].rac, GetSCM2(bad2good(builtin_arity(g_cells[r1].rac))), g_cells[r1].rdc);
-		r1 = GetSCM2(apply_builtin(g_cells[r1].rac, g_cells[r1].rdc));    /// FIXME: move into eval_apply
+		check_formals(bad2good(R1)->rac, GetSCM2(bad2good(builtin_arity(bad2good(R1)->rac))), bad2good(R1)->rdc);
+		R1 = good2bad(apply_builtin(bad2good(R1)->rac, bad2good(R1)->rdc));    /// FIXME: move into eval_apply
 		goto vm_return;
 	}
 	else if(t == TCLOSURE)
 	{
-		cl = g_cells[g_cells[r1].rac].closure;
+		cl = g_cells[bad2good(R1)->rac].closure;
 		body = g_cells[g_cells[cl].rdc].rdc;
 		formals = g_cells[g_cells[cl].rdc].rac;
-		args = g_cells[r1].rdc;
+		args = bad2good(R1)->rdc;
 		aa = g_cells[g_cells[cl].rac].rdc;
 		aa = g_cells[aa].rdc;
-		check_formals(g_cells[r1].rac, formals, g_cells[r1].rdc);
+		check_formals(bad2good(R1)->rac, formals, bad2good(R1)->rdc);
 		p = pairlis(formals, args, aa);
 		call_lambda(body, p);
 		goto begin;
 	}
 	else if(t == TCONTINUATION)
 	{
-		v = g_cells[g_cells[r1].rac].continuation;
+		v = g_cells[bad2good(R1)->rac].continuation;
 
 		if(g_cells[v].length)
 		{
@@ -316,114 +316,114 @@ apply:
 			g_stack = STACK_SIZE - g_cells[v].length;
 		}
 
-		x = r1;
+		x = GetSCM2(bad2good(R1));
 		gc_pop_frame();
-		r1 = g_cells[g_cells[x].rdc].rac;
+		R1 = g_cells[g_cells[x].rdc].car;
 		goto eval_apply;
 	}
 	else if(t == TSPECIAL)
 	{
-		c = g_cells[r1].rac;
+		c = bad2good(R1)->rac;
 
 		if(c == cell_vm_apply)
 		{
-			push_cc(cons_(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[g_cells[r1].rdc].rdc].rac), r1, r0, cell_vm_return);
+			push_cc(cons_(g_cells[bad2good(R1)->rdc].rac, g_cells[g_cells[bad2good(R1)->rdc].rdc].rac), GetSCM2(bad2good(R1)), r0, cell_vm_return);
 			goto apply;
 		}
 		else if(c ==  cell_vm_eval)
 		{
-			push_cc(g_cells[g_cells[r1].rdc].rac, r1, g_cells[g_cells[g_cells[r1].rdc].rdc].rac, cell_vm_return);
+			push_cc(g_cells[bad2good(R1)->rdc].rac, GetSCM2(bad2good(R1)), g_cells[g_cells[bad2good(R1)->rdc].rdc].rac, cell_vm_return);
 			goto eval;
 		}
 		else if(c ==  cell_vm_begin_expand)
 		{
-			push_cc(cons_(g_cells[g_cells[r1].rdc].rac, cell_nil), r1, g_cells[g_cells[g_cells[r1].rdc].rdc].rac, cell_vm_return);
+			push_cc(cons_(g_cells[bad2good(R1)->rdc].rac, cell_nil), GetSCM2(bad2good(R1)), g_cells[g_cells[bad2good(R1)->rdc].rdc].rac, cell_vm_return);
 			goto begin_expand;
 		}
 		else if(c ==  cell_call_with_current_continuation)
 		{
-			r1 = g_cells[r1].rdc;
+			R1 = bad2good(R1)->cdr;
 			goto call_with_current_continuation;
 		}
 		else
 		{
-			check_apply(cell_f, g_cells[r1].rac);
+			check_apply(cell_f, bad2good(R1)->rac);
 		}
 	}
 	else if(t == TSYMBOL)
 	{
-		if(g_cells[r1].rac == cell_symbol_call_with_values)
+		if(bad2good(R1)->rac == cell_symbol_call_with_values)
 		{
-			r1 = g_cells[r1].rdc;
+			R1 = bad2good(R1)->cdr;
 			goto call_with_values;
 		}
 
-		if(g_cells[r1].rac == cell_symbol_current_module)
+		if(bad2good(R1)->rac == cell_symbol_current_module)
 		{
-			r1 = r0;
+			R1 = good2bad(Getstructscm2(r0));
 			goto vm_return;
 		}
 
-		if(g_cells[r1].rac == cell_symbol_boot_module)
+		if(bad2good(R1)->rac == cell_symbol_boot_module)
 		{
-			r1 = m0;
+			R1 = good2bad(Getstructscm2(m0));
 			goto vm_return;
 		}
 	}
 	else if(t == TPAIR)
 	{
-		if(g_cells[g_cells[r1].rac].rac == cell_symbol_lambda)
+		if(g_cells[bad2good(R1)->rac].rac == cell_symbol_lambda)
 		{
-			formals = g_cells[g_cells[g_cells[r1].rac].rdc].rac;
-			args = g_cells[r1].rdc;
-			body = g_cells[g_cells[g_cells[r1].rac].rdc].rdc;
-			p = pairlis(formals, g_cells[r1].rdc, r0);
-			check_formals(r1, formals, args);
+			formals = g_cells[g_cells[bad2good(R1)->rac].rdc].rac;
+			args = bad2good(R1)->rdc;
+			body = g_cells[g_cells[bad2good(R1)->rac].rdc].rdc;
+			p = pairlis(formals, bad2good(R1)->rdc, r0);
+			check_formals(GetSCM2(bad2good(R1)), formals, args);
 			call_lambda(body, p);
 			goto begin;
 		}
 	}
 
-	// write_error_ (CAR (r1));
+	// write_error_ (R1->car);
 	// eputs ("\n");
-	push_cc(g_cells[r1].rac, r1, r0, cell_vm_apply2);
+	push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_apply2);
 	goto eval;
 apply2:
-	check_apply(r1, g_cells[r2].rac);
-	r1 = cons_(r1, g_cells[r2].rdc);
+	check_apply(GetSCM2(bad2good(R1)), g_cells[r2].rac);
+	R1 = good2bad(Getstructscm2(cons_(GetSCM2(bad2good(R1)), g_cells[r2].rdc)));
 	goto apply;
 eval:
-	t = g_cells[r1].type;
+	t = bad2good(R1)->type;
 
 	if(t == TPAIR)
 	{
-		c = g_cells[r1].rac;
+		c = bad2good(R1)->rac;
 
 		if(c ==  cell_symbol_pmatch_car)
 		{
-			push_cc(g_cells[g_cells[r1].rdc].rac, r1, r0, cell_vm_eval_pmatch_car);
+			push_cc(g_cells[bad2good(R1)->rdc].rac, GetSCM2(bad2good(R1)), r0, cell_vm_eval_pmatch_car);
 			goto eval;
 eval_pmatch_car:
-			x = r1;
+			x = GetSCM2(bad2good(R1));
 			gc_pop_frame();
-			r1 = g_cells[x].rac;
+			R1 = g_cells[x].car;
 			goto eval_apply;
 		}
 		else if(c ==  cell_symbol_pmatch_cdr)
 		{
-			push_cc(g_cells[g_cells[r1].rdc].rac, r1, r0, cell_vm_eval_pmatch_cdr);
+			push_cc(g_cells[bad2good(R1)->rdc].rac, GetSCM2(bad2good(R1)), r0, cell_vm_eval_pmatch_cdr);
 			goto eval;
 eval_pmatch_cdr:
-			x = r1;
+			x = GetSCM2(bad2good(R1));
 			gc_pop_frame();
-			r1 = g_cells[x].rdc;
+			R1 = g_cells[x].cdr;
 			goto eval_apply;
 		}
 		else if(c ==  cell_symbol_quote)
 		{
-			x = r1;
+			x = GetSCM2(bad2good(R1));
 			gc_pop_frame();
-			r1 = g_cells[g_cells[x].rdc].rac;
+			R1 = g_cells[g_cells[x].rdc].car;
 			goto eval_apply;
 		}
 		else if(c ==  cell_symbol_begin)
@@ -432,44 +432,44 @@ eval_pmatch_cdr:
 		}
 		else if(c ==  cell_symbol_lambda)
 		{
-			r1 = make_closure_(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[r1].rdc].rdc, r0);
+			R1 = good2bad(Getstructscm2(make_closure_(g_cells[bad2good(R1)->rdc].rac, g_cells[bad2good(R1)->rdc].rdc, r0)));
 			goto vm_return;
 		}
 		else if(c ==  cell_symbol_if)
 		{
-			r1 = g_cells[r1].rdc;
+			R1 = bad2good(R1)->cdr;
 			goto vm_if;
 		}
 		else if(c ==  cell_symbol_set_x)
 		{
-			push_cc(g_cells[g_cells[g_cells[r1].rdc].rdc].rac, r1, r0, cell_vm_eval_set_x);
+			push_cc(g_cells[g_cells[bad2good(R1)->rdc].rdc].rac, GetSCM2(bad2good(R1)), r0, cell_vm_eval_set_x);
 			goto eval;
 eval_set_x:
-			r1 = set_env_x(g_cells[g_cells[r2].rdc].rac, r1, r0);
+			R1 = good2bad(Getstructscm2(set_env_x(g_cells[g_cells[r2].rdc].rac, GetSCM2(bad2good(R1)), r0)));
 			goto vm_return;
 		}
 		else if(c == cell_vm_macro_expand)
 		{
-			push_cc(g_cells[g_cells[r1].rdc].rac, r1, r0, cell_vm_eval_macro_expand_eval);
+			push_cc(g_cells[bad2good(R1)->rdc].rac, GetSCM2(bad2good(R1)), r0, cell_vm_eval_macro_expand_eval);
 			goto eval;
 eval_macro_expand_eval:
-			push_cc(r1, r2, r0, cell_vm_eval_macro_expand_expand);
+			push_cc(GetSCM2(bad2good(R1)), r2, r0, cell_vm_eval_macro_expand_expand);
 			goto macro_expand;
 eval_macro_expand_expand:
 			goto vm_return;
 		}
 		else
 		{
-			if(g_cells[r1].type == TPAIR && (g_cells[r1].rac == cell_symbol_define || g_cells[r1].rac == cell_symbol_define_macro))
+			if(bad2good(R1)->type == TPAIR && (bad2good(R1)->rac == cell_symbol_define || bad2good(R1)->rac == cell_symbol_define_macro))
 			{
 				global_p = g_cells[g_cells[r0].rac].rac != cell_closure;
-				macro_p = g_cells[r1].rac == cell_symbol_define_macro;
+				macro_p = bad2good(R1)->rac == cell_symbol_define_macro;
 
 				if(global_p)
 				{
-					name = g_cells[g_cells[r1].rdc].rac;
+					name = g_cells[bad2good(R1)->rdc].rac;
 
-					if(g_cells[g_cells[g_cells[r1].rdc].rac].type == TPAIR)
+					if(g_cells[g_cells[bad2good(R1)->rdc].rac].type == TPAIR)
 					{
 						name = g_cells[name].rac;
 					}
@@ -494,26 +494,26 @@ eval_macro_expand_expand:
 					}
 				}
 
-				r2 = r1;
+				r2 = GetSCM2(bad2good(R1));
 
-				if(g_cells[g_cells[g_cells[r1].rdc].rac].type != TPAIR)
+				if(g_cells[g_cells[bad2good(R1)->rdc].rac].type != TPAIR)
 				{
-					push_cc(g_cells[g_cells[g_cells[r1].rdc].rdc].rac, r2, cons_(cons_(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[r1].rdc].rac), r0), cell_vm_eval_define);
+					push_cc(g_cells[g_cells[bad2good(R1)->rdc].rdc].rac, r2, cons_(cons_(g_cells[bad2good(R1)->rdc].rac, g_cells[bad2good(R1)->rdc].rac), r0), cell_vm_eval_define);
 					goto eval;
 				}
 				else
 				{
-					p = pairlis(g_cells[g_cells[r1].rdc].rac, g_cells[g_cells[r1].rdc].rac, r0);
-					formals = g_cells[g_cells[g_cells[r1].rdc].rac].rdc;
-					body = g_cells[g_cells[r1].rdc].rdc;
+					p = pairlis(g_cells[bad2good(R1)->rdc].rac, g_cells[bad2good(R1)->rdc].rac, r0);
+					formals = g_cells[g_cells[bad2good(R1)->rdc].rac].rdc;
+					body = g_cells[bad2good(R1)->rdc].rdc;
 
 					if(macro_p || global_p)
 					{
 						expand_variable(body, formals);
 					}
 
-					r1 = cons_(cell_symbol_lambda, cons_(formals, body));
-					push_cc(r1, r2, p, cell_vm_eval_define);
+					R1 = good2bad(Getstructscm2(cons_(cell_symbol_lambda, cons_(formals, body))));
+					push_cc(GetSCM2(bad2good(R1)), r2, p, cell_vm_eval_define);
 					goto eval;
 				}
 
@@ -528,17 +528,17 @@ eval_define:
 				if(macro_p)
 				{
 					entry = macro_get_handle(name);
-					r1 = make_cell__ (TMACRO, r1, g_cells[name].rdc);
-					set_cdr_x(entry, r1);
+					R1 = good2bad(Getstructscm2(make_cell__ (TMACRO, GetSCM2(bad2good(R1)), g_cells[name].rdc)));
+					set_cdr_x(entry, GetSCM2(bad2good(R1)));
 				}
 				else if(global_p)
 				{
 					entry = GetSCM2(module_variable(r0, name));
-					set_cdr_x(entry, r1);
+					set_cdr_x(entry, GetSCM2(bad2good(R1)));
 				}
 				else
 				{
-					entry = cons_(name, r1);
+					entry = cons_(name, GetSCM2(bad2good(R1)));
 					aa = cons_(entry, cell_nil);
 					set_cdr_x(aa, cdr(r0));
 					set_cdr_x(r0, aa);
@@ -546,50 +546,50 @@ eval_define:
 					set_cdr_x(cl, aa);
 				}
 
-				r1 = cell_unspecified;
+				R1 = good2bad(Getstructscm2(cell_unspecified));
 				goto vm_return;
 			}
 
-			push_cc(g_cells[r1].rac, r1, r0, cell_vm_eval_check_func);
+			push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_eval_check_func);
 			gc_check();
 			goto eval;
 eval_check_func:
 			push_cc(g_cells[r2].rdc, r2, r0, cell_vm_eval2);
 			goto evlis;
 eval2:
-			r1 = cons_(g_cells[r2].rac, r1);
+			R1 = good2bad(Getstructscm2(cons_(g_cells[r2].rac, GetSCM2(bad2good(R1)))));
 			goto apply;
 		}
 	}
 	else if(t == TSYMBOL)
 	{
-		if(r1 == cell_symbol_boot_module)
+		if(GetSCM2(bad2good(R1)) == cell_symbol_boot_module)
 		{
 			goto vm_return;
 		}
 
-		if(r1 == cell_symbol_current_module)
+		if(GetSCM2(bad2good(R1)) == cell_symbol_current_module)
 		{
 			goto vm_return;
 		}
 
-		if(r1 == cell_symbol_begin)  // FIXME
+		if(GetSCM2(bad2good(R1)) == cell_symbol_begin)  // FIXME
 		{
-			r1 = cell_begin;
+			R1 = good2bad(Getstructscm2(cell_begin));
 			goto vm_return;
 		}
 
-		r1 = assert_defined(r1, GetSCM2(module_ref(r0, r1)));
+		R1 = good2bad(Getstructscm2(assert_defined(GetSCM2(bad2good(R1)), GetSCM2(module_ref(r0, GetSCM2(bad2good(R1)))))));
 		goto vm_return;
 	}
 	else if(t == TVARIABLE)
 	{
-		r1 = g_cells[g_cells[r1].rac].rdc;
+		R1 = bad2good(bad2good(R1)->car)->cdr;
 		goto vm_return;
 	}
 	else if(t == TBROKEN_HEART)
 	{
-		error(cell_symbol_system_error,  r1);
+		error(cell_symbol_system_error,  GetSCM2(bad2good(R1)));
 	}
 	else
 	{
@@ -597,176 +597,176 @@ eval2:
 	}
 
 macro_expand:
-	if(g_cells[r1].type != TPAIR || g_cells[r1].rac == cell_symbol_quote)
+	if(bad2good(R1)->type != TPAIR || bad2good(R1)->rac == cell_symbol_quote)
 	{
 		goto vm_return;
 	}
 
-	if(g_cells[r1].rac == cell_symbol_lambda)
+	if(bad2good(R1)->rac == cell_symbol_lambda)
 	{
-		push_cc(g_cells[g_cells[r1].rdc].rdc, r1, r0, cell_vm_macro_expand_lambda);
+		push_cc(g_cells[bad2good(R1)->rdc].rdc, GetSCM2(bad2good(R1)), r0, cell_vm_macro_expand_lambda);
 		goto macro_expand;
 
 macro_expand_lambda:
-		g_cells[g_cells[r2].rdc].rdc = r1;
-		r1 = r2;
+		g_cells[g_cells[r2].rdc].rdc = GetSCM2(bad2good(R1));
+		R1 = good2bad(Getstructscm2(r2));
 		goto vm_return;
 	}
 
-	if(g_cells[r1].type == TPAIR && (macro = get_macro(g_cells[r1].rac)) != cell_f)
+	if(bad2good(R1)->type == TPAIR && (macro = get_macro(bad2good(R1)->rac)) != cell_f)
 	{
-		r1 = cons_(macro, g_cells[r1].rdc);
-		push_cc(r1, cell_nil, r0, cell_vm_macro_expand);
+		R1 = good2bad(Getstructscm2(cons_(macro, bad2good(R1)->rdc)));
+		push_cc(GetSCM2(bad2good(R1)), cell_nil, r0, cell_vm_macro_expand);
 		goto apply;
 	}
 
-	if(g_cells[r1].rac == cell_symbol_define || g_cells[r1].rac == cell_symbol_define_macro)
+	if(bad2good(R1)->rac == cell_symbol_define || bad2good(R1)->rac == cell_symbol_define_macro)
 	{
-		push_cc(g_cells[g_cells[r1].rdc].rdc, r1, r0, cell_vm_macro_expand_define);
+		push_cc(g_cells[bad2good(R1)->rdc].rdc, GetSCM2(bad2good(R1)), r0, cell_vm_macro_expand_define);
 		goto macro_expand;
 
 macro_expand_define:
-		g_cells[g_cells[r2].rdc].rdc = r1;
-		r1 = r2;
+		g_cells[g_cells[r2].rdc].rdc = GetSCM2(bad2good(R1));
+		R1 = good2bad(Getstructscm2(r2));
 
-		if(g_cells[r1].rac == cell_symbol_define_macro)
+		if(bad2good(R1)->rac == cell_symbol_define_macro)
 		{
-			push_cc(r1, r1, r0, cell_vm_macro_expand_define_macro);
+			push_cc(GetSCM2(bad2good(R1)), GetSCM2(bad2good(R1)), r0, cell_vm_macro_expand_define_macro);
 			goto eval;
 
 macro_expand_define_macro:
-			r1 = r2;
+			R1 = good2bad(Getstructscm2(r2));
 		}
 
 		goto vm_return;
 	}
 
-	if(g_cells[r1].rac == cell_symbol_set_x)
+	if(bad2good(R1)->rac == cell_symbol_set_x)
 	{
-		push_cc(g_cells[g_cells[r1].rdc].rdc, r1, r0, cell_vm_macro_expand_set_x);
+		push_cc(g_cells[bad2good(R1)->rdc].rdc, GetSCM2(bad2good(R1)), r0, cell_vm_macro_expand_set_x);
 		goto macro_expand;
 
 macro_expand_set_x:
-		g_cells[g_cells[r2].rdc].rdc = r1;
-		r1 = r2;
+		g_cells[g_cells[r2].rdc].rdc = GetSCM2(bad2good(R1));
+		R1 = good2bad(Getstructscm2(r2));
 		goto vm_return;
 	}
 
-	if(g_cells[r1].type == TPAIR && g_cells[g_cells[r1].rac].type == TSYMBOL)
+	if(bad2good(R1)->type == TPAIR && g_cells[bad2good(R1)->rac].type == TSYMBOL)
 	{
 		macro = macro_get_handle(cell_symbol_portable_macro_expand);
 		expanders = GetSCM2(module_ref(r0, cell_symbol_sc_expander_alist));
-		if((g_cells[r1].rac != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
+		if((bad2good(R1)->rac != cell_symbol_begin) && (macro != cell_f) && (expanders != cell_undefined))
 		{
-			macro = assq(g_cells[r1].rac, expanders);
+			macro = assq(bad2good(R1)->rac, expanders);
 			if(macro != cell_f)
 			{
 				sc_expand = GetSCM2(module_ref(r0, cell_symbol_macro_expand));
-				r2 = r1;
+				r2 = GetSCM2(bad2good(R1));
 
 				if(sc_expand != cell_undefined && sc_expand != cell_f)
 				{
-					r1 = cons_(sc_expand, cons_(r1, cell_nil));
+					R1 = good2bad(Getstructscm2(cons_(sc_expand, cons_(GetSCM2(bad2good(R1)), cell_nil))));
 					goto apply;
 				}
 			}
 		}
 	}
 
-	push_cc(g_cells[r1].rac, r1, r0, cell_vm_macro_expand_car);
+	push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_macro_expand_car);
 	goto macro_expand;
 
 macro_expand_car:
-	g_cells[r2].rac = r1;
-	r1 = r2;
+	g_cells[r2].rac = GetSCM2(bad2good(R1));
+	R1 = good2bad(Getstructscm2(r2));
 
-	if(g_cells[r1].rdc == cell_nil)
+	if(bad2good(R1)->rdc == cell_nil)
 	{
 		goto vm_return;
 	}
 
-	push_cc(g_cells[r1].rdc, r1, r0, cell_vm_macro_expand_cdr);
+	push_cc(bad2good(R1)->rdc, GetSCM2(bad2good(R1)), r0, cell_vm_macro_expand_cdr);
 	goto macro_expand;
 
 macro_expand_cdr:
-	g_cells[r2].rdc = r1;
-	r1 = r2;
+	g_cells[r2].rdc = GetSCM2(bad2good(R1));
+	R1 = good2bad(Getstructscm2(r2));
 	goto vm_return;
 
 begin:
 	x = cell_unspecified;
 
-	while(r1 != cell_nil)
+	while(GetSCM2(bad2good(R1)) != cell_nil)
 	{
 		gc_check();
 
-		if(g_cells[r1].type == TPAIR)
+		if(bad2good(R1)->type == TPAIR)
 		{
-			if(g_cells[g_cells[r1].rac].rac == cell_symbol_primitive_load)
+			if(g_cells[bad2good(R1)->rac].rac == cell_symbol_primitive_load)
 			{
-				program = cons_(g_cells[r1].rac, cell_nil);
-				push_cc(program, r1, r0, cell_vm_begin_primitive_load);
+				program = cons_(bad2good(R1)->rac, cell_nil);
+				push_cc(program, GetSCM2(bad2good(R1)), r0, cell_vm_begin_primitive_load);
 				goto begin_expand;
 begin_primitive_load:
-				g_cells[r2].rac = r1;
-				r1 = r2;
+				g_cells[r2].rac = GetSCM2(bad2good(R1));
+				R1 = good2bad(Getstructscm2(r2));
 			}
 		}
 
-		if(g_cells[r1].type == TPAIR && g_cells[g_cells[r1].rac].type == TPAIR)
+		if(bad2good(R1)->type == TPAIR && g_cells[bad2good(R1)->rac].type == TPAIR)
 		{
-			if(g_cells[g_cells[r1].rac].rac == cell_symbol_begin)
+			if(g_cells[bad2good(R1)->rac].rac == cell_symbol_begin)
 			{
-				r1 = append2(g_cells[g_cells[r1].rac].rdc, g_cells[r1].rdc);
+				R1 = good2bad(Getstructscm2(append2(g_cells[bad2good(R1)->rac].rdc, bad2good(R1)->rdc)));
 			}
 		}
 
-		if(g_cells[r1].rdc == cell_nil)
+		if(bad2good(R1)->rdc == cell_nil)
 		{
-			r1 = g_cells[r1].rac;
+			R1 = bad2good(R1)->car;
 			goto eval;
 		}
 
-		push_cc(g_cells[r1].rac, r1, r0, cell_vm_begin_eval);
+		push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_begin_eval);
 		goto eval;
 begin_eval:
-		x = r1;
-		r1 = g_cells[r2].rdc;
+		x = GetSCM2(bad2good(R1));
+		R1 = g_cells[r2].cdr;
 	}
 
-	r1 = x;
+	R1 = good2bad(Getstructscm2(x));
 	goto vm_return;
 begin_expand:
 	x = cell_unspecified;
 
-	while(r1 != cell_nil)
+	while(GetSCM2(bad2good(R1)) != cell_nil)
 	{
 		gc_check();
 
-		if(g_cells[r1].type == TPAIR)
+		if(bad2good(R1)->type == TPAIR)
 		{
-			if(g_cells[g_cells[r1].rac].type == TPAIR && g_cells[g_cells[r1].rac].rac == cell_symbol_begin)
+			if(g_cells[bad2good(R1)->rac].type == TPAIR && g_cells[bad2good(R1)->rac].rac == cell_symbol_begin)
 			{
-				r1 = append2(g_cells[g_cells[r1].rac].rdc, g_cells[r1].rdc);
+				R1 = good2bad(Getstructscm2(append2(g_cells[bad2good(R1)->rac].rdc, bad2good(R1)->rdc)));
 			}
 
-			if(g_cells[g_cells[r1].rac].rac == cell_symbol_primitive_load)
+			if(g_cells[bad2good(R1)->rac].rac == cell_symbol_primitive_load)
 			{
-				push_cc(g_cells[g_cells[g_cells[r1].rac].rdc].rac, r1, r0, cell_vm_begin_expand_primitive_load);
+				push_cc(g_cells[g_cells[bad2good(R1)->rac].rdc].rac, GetSCM2(bad2good(R1)), r0, cell_vm_begin_expand_primitive_load);
 				goto eval; // FIXME: expand too?!
 begin_expand_primitive_load:
 
-				if(g_cells[r1].type == TNUMBER && g_cells[r1].value == 0)
+				if(bad2good(R1)->type == TNUMBER && bad2good(R1)->value == 0)
 				{
 					;
 				}
-				else if(g_cells[r1].type == TSTRING)
+				else if(bad2good(R1)->type == TSTRING)
 				{
-					input = set_current_input_port(open_input_file(r1));
+					input = set_current_input_port(open_input_file(GetSCM2(bad2good(R1))));
 				}
-				else if(g_cells[r1].type == TPORT)
+				else if(bad2good(R1)->type == TPORT)
 				{
-					input = set_current_input_port(r1);
+					input = set_current_input_port(GetSCM2(bad2good(R1)));
 				}
 				else
 				{
@@ -782,58 +782,58 @@ begin_expand_primitive_load:
 				}
 
 				gc_pop_frame();
-				input = r1;
-				r1 = x;
+				input = GetSCM2(bad2good(R1));
+				R1 = good2bad(Getstructscm2(x));
 				set_current_input_port(input);
-				r1 = cons_(cell_symbol_begin, r1);
-				g_cells[r2].rac = r1;
-				r1 = r2;
+				R1 = good2bad(Getstructscm2(cons_(cell_symbol_begin, GetSCM2(bad2good(R1)))));
+				g_cells[r2].rac = GetSCM2(bad2good(R1));
+				R1 = good2bad(Getstructscm2(r2));
 				continue;
 			}
 		}
 
-		push_cc(g_cells[r1].rac, r1, r0, cell_vm_begin_expand_macro);
+		push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_begin_expand_macro);
 		goto macro_expand;
 begin_expand_macro:
 
-		if(r1 != g_cells[r2].rac)
+		if(GetSCM2(bad2good(R1)) != g_cells[r2].rac)
 		{
-			g_cells[r2].rac = r1;
-			r1 = r2;
+			g_cells[r2].rac = GetSCM2(bad2good(R1));
+			R1 = good2bad(Getstructscm2(r2));
 			continue;
 		}
 
-		r1 = r2;
-		expand_variable(g_cells[r1].rac, cell_nil);
-		push_cc(g_cells[r1].rac, r1, r0, cell_vm_begin_expand_eval);
+		R1 = good2bad(Getstructscm2(r2));
+		expand_variable(bad2good(R1)->rac, cell_nil);
+		push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_begin_expand_eval);
 		goto eval;
 begin_expand_eval:
-		x = r1;
-		r1 = g_cells[r2].rdc;
+		x = GetSCM2(bad2good(R1));
+		R1 = g_cells[r2].cdr;
 	}
 
-	r1 = x;
+	R1 = good2bad(Getstructscm2(x));
 	goto vm_return;
 vm_if:
-	push_cc(g_cells[r1].rac, r1, r0, cell_vm_if_expr);
+	push_cc(bad2good(R1)->rac, GetSCM2(bad2good(R1)), r0, cell_vm_if_expr);
 	goto eval;
 if_expr:
-	x = r1;
-	r1 = r2;
+	x = GetSCM2(bad2good(R1));
+	R1 = good2bad(Getstructscm2(r2));
 
 	if(x != cell_f)
 	{
-		r1 = g_cells[g_cells[r1].rdc].rac;
+		R1 = bad2good(bad2good(R1)->cdr)->car;
 		goto eval;
 	}
 
-	if(g_cells[g_cells[r1].rdc].rdc != cell_nil)
+	if(g_cells[bad2good(R1)->rdc].rdc != cell_nil)
 	{
-		r1 = g_cells[g_cells[g_cells[r1].rdc].rdc].rac;
+		R1 = bad2good(bad2good(bad2good(R1)->cdr)->cdr)->car;
 		goto eval;
 	}
 
-	r1 = cell_unspecified;
+	R1 = good2bad(Getstructscm2(cell_unspecified));
 	goto vm_return;
 call_with_current_continuation:
 	gc_push_frame();
@@ -847,7 +847,7 @@ call_with_current_continuation:
 
 	g_cells[x].continuation = v;
 	gc_pop_frame();
-	push_cc(cons_(g_cells[r1].rac, cons_(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
+	push_cc(cons_(bad2good(R1)->rac, cons_(x, cell_nil)), x, r0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
 	v = GetSCM2(make_vector__(STACK_SIZE - g_stack));
@@ -860,20 +860,20 @@ call_with_current_continuation2:
 	g_cells[r2].continuation = v;
 	goto vm_return;
 call_with_values:
-	push_cc(cons_(g_cells[r1].rac, cell_nil), r1, r0, cell_vm_call_with_values2);
+	push_cc(cons_(bad2good(R1)->rac, cell_nil), GetSCM2(bad2good(R1)), r0, cell_vm_call_with_values2);
 	goto apply;
 call_with_values2:
 
-	if(g_cells[r1].type == TVALUES)
+	if(bad2good(R1)->type == TVALUES)
 	{
-		r1 = g_cells[r1].rdc;
+		R1 = bad2good(R1)->cdr;
 	}
 
-	r1 = cons_(g_cells[g_cells[r2].rdc].rac, r1);
+	R1 = good2bad(Getstructscm2(cons_(g_cells[g_cells[r2].rdc].rac, GetSCM2(bad2good(R1)))));
 	goto apply;
 vm_return:
-	x = r1;
+	x = GetSCM2(bad2good(R1));
 	gc_pop_frame();
-	r1 = x;
+	R1 = good2bad(Getstructscm2(x));
 	goto eval_apply;
 }
