@@ -101,11 +101,11 @@ exec ${MES-mes} --no-auto-compile -L ${0%/*} -L module -C module -e '(tests boot
   (define local-answer 41))
 (pass-if-equal "begin 2" 41 (begin local-answer))
 
-(pass-if-equal "primitive-load" 42 (primitive-load "tests/data/load.scm") the-answer)
+(pass-if-equal "primitive-load" 42 (primitive-load "test/data/load.scm") the-answer)
 
 (cond-expand
  (mes
-  (pass-if-equal "include" 42 (include "tests/data/load.scm") the-answer))
+  (pass-if-equal "include" 42 (include "test/data/load.scm") the-answer))
  (else))
 
 (pass-if-eq "call/cc"
