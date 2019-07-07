@@ -56,14 +56,31 @@ results:
 
 # tests
 test: test000-binary \
-	test001-binary | results
-#	sha256sum -c test/test.answers
+	test001-binary \
+	test100-binary \
+	test131-binary \
+	test200-binary | results
+	sha256sum -c test/test.answers
 
 test000-binary: results mes-m2
 	test/test000/hello.sh
 
 test001-binary: results mes-m2
 	test/test001/hello.sh
+
+test100-binary: results mes-m2
+	test/test100/hello.sh
+
+test131-binary: results mes-m2
+	test/test131/hello.sh
+
+test200-binary: results mes-m2
+	test/test200/hello.sh
+
+# Generate test answers
+.PHONY: Generate-test-answers
+Generate-test-answers:
+	sha256sum test/results/* >| test/test.answers
 
 DESTDIR:=
 PREFIX:=/usr/local

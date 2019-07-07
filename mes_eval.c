@@ -97,145 +97,142 @@ SCM eval_apply()
 	int global_p;
 	int macro_p;
 	int t;
-	SCM c;
-	SCM r3;
 	struct scm* C;
 eval_apply:
 
-	r3 = GetSCM2(bad2good(R3));
-	if(r3 == cell_vm_evlis2)
+	if(GetSCM2(bad2good(R3)) == cell_vm_evlis2)
 	{
 		goto evlis2;
 	}
-	else if(r3 == cell_vm_evlis3)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_evlis3)
 	{
 		goto evlis3;
 	}
-	else if(r3 == cell_vm_eval_check_func)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval_check_func)
 	{
 		goto eval_check_func;
 	}
-	else if(r3 == cell_vm_eval2)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval2)
 	{
 		goto eval2;
 	}
-	else if(r3 == cell_vm_apply2)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_apply2)
 	{
 		goto apply2;
 	}
-	else if(r3 == cell_vm_if_expr)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_if_expr)
 	{
 		goto if_expr;
 	}
-	else if(r3 == cell_vm_begin_eval)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_begin_eval)
 	{
 		goto begin_eval;
 	}
-	else if(r3 == cell_vm_eval_set_x)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval_set_x)
 	{
 		goto eval_set_x;
 	}
-	else if(r3 == cell_vm_macro_expand_car)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_macro_expand_car)
 	{
 		goto macro_expand_car;
 	}
-	else if(r3 == cell_vm_return)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_return)
 	{
 		goto vm_return;
 	}
-	else if(r3 == cell_vm_macro_expand_cdr)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_macro_expand_cdr)
 	{
 		goto macro_expand_cdr;
 	}
-	else if(r3 == cell_vm_eval_define)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval_define)
 	{
 		goto eval_define;
 	}
-	else if(r3 == cell_vm_macro_expand)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_macro_expand)
 	{
 		goto macro_expand;
 	}
-	else if(r3 == cell_vm_macro_expand_lambda)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_macro_expand_lambda)
 	{
 		goto macro_expand_lambda;
 	}
-	else if(r3 == cell_vm_eval_pmatch_car)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval_pmatch_car)
 	{
 		goto eval_pmatch_car;
 	}
-	else if(r3 == cell_vm_begin_expand_macro)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_begin_expand_macro)
 	{
 		goto begin_expand_macro;
 	}
-	else if(r3 == cell_vm_macro_expand_define)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_macro_expand_define)
 	{
 		goto macro_expand_define;
 	}
-	else if(r3 == cell_vm_begin_expand_eval)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_begin_expand_eval)
 	{
 		goto begin_expand_eval;
 	}
-	else if(r3 == cell_vm_call_with_current_continuation2)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_call_with_current_continuation2)
 	{
 		goto call_with_current_continuation2;
 	}
-	else if(r3 == cell_vm_macro_expand_set_x)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_macro_expand_set_x)
 	{
 		goto macro_expand_set_x;
 	}
-	else if(r3 == cell_vm_eval_pmatch_cdr)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval_pmatch_cdr)
 	{
 		goto eval_pmatch_cdr;
 	}
-	else if(r3 == cell_vm_macro_expand_define_macro)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_macro_expand_define_macro)
 	{
 		goto macro_expand_define_macro;
 	}
-	else if(r3 == cell_vm_begin_primitive_load)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_begin_primitive_load)
 	{
 		goto begin_primitive_load;
 	}
-	else if(r3 == cell_vm_evlis)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_evlis)
 	{
 		goto evlis;
 	}
-	else if(r3 == cell_vm_apply)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_apply)
 	{
 		goto apply;
 	}
-	else if(r3 == cell_vm_eval)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval)
 	{
 		goto eval;
 	}
-	else if(r3 == cell_vm_eval_macro_expand_eval)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval_macro_expand_eval)
 	{
 		goto eval_macro_expand_eval;
 	}
-	else if(r3 == cell_vm_eval_macro_expand_expand)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_eval_macro_expand_expand)
 	{
 		goto eval_macro_expand_expand;
 	}
-	else if(r3 == cell_vm_begin)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_begin)
 	{
 		goto begin;
 	}
-	else if(r3 == cell_vm_begin_expand)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_begin_expand)
 	{
 		goto begin_expand;
 	}
-	else if(r3 == cell_vm_begin_expand_primitive_load)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_begin_expand_primitive_load)
 	{
 		goto begin_expand_primitive_load;
 	}
-	else if(r3 == cell_vm_if)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_if)
 	{
 		goto vm_if;
 	}
-	else if(r3 == cell_vm_call_with_values2)
+	else if(GetSCM2(bad2good(R3)) == cell_vm_call_with_values2)
 	{
 		goto call_with_values2;
 	}
-	else if(r3 == cell_unspecified)
+	else if(GetSCM2(bad2good(R3)) == cell_unspecified)
 	{
 		return GetSCM2(bad2good(R1));
 	}
@@ -308,24 +305,24 @@ apply:
 	}
 	else if(t == TSPECIAL)
 	{
-		c = bad2good(R1)->rac;
+		C = bad2good(R1)->car;
 
-		if(c == cell_vm_apply)
+		if(GetSCM2(bad2good(C)) == cell_vm_apply)
 		{
 			push_cc(cons_(bad2good(bad2good(R1)->cdr)->rac, bad2good(bad2good(bad2good(R1)->cdr)->cdr)->rac), GetSCM2(bad2good(R1)), GetSCM2(bad2good(R0)), cell_vm_return);
 			goto apply;
 		}
-		else if(c ==  cell_vm_eval)
+		else if(GetSCM2(bad2good(C)) ==  cell_vm_eval)
 		{
 			push_cc(bad2good(bad2good(R1)->cdr)->rac, GetSCM2(bad2good(R1)), bad2good(bad2good(bad2good(R1)->cdr)->cdr)->rac, cell_vm_return);
 			goto eval;
 		}
-		else if(c ==  cell_vm_begin_expand)
+		else if(GetSCM2(bad2good(C)) ==  cell_vm_begin_expand)
 		{
 			push_cc(cons_(bad2good(bad2good(R1)->cdr)->rac, cell_nil), GetSCM2(bad2good(R1)), bad2good(bad2good(bad2good(R1)->cdr)->cdr)->rac, cell_vm_return);
 			goto begin_expand;
 		}
-		else if(c ==  cell_call_with_current_continuation)
+		else if(GetSCM2(bad2good(C)) ==  cell_call_with_current_continuation)
 		{
 			R1 = bad2good(R1)->cdr;
 			goto call_with_current_continuation;
@@ -382,9 +379,9 @@ eval:
 
 	if(t == TPAIR)
 	{
-		c = bad2good(R1)->rac;
+		C = bad2good(R1)->car;
 
-		if(c ==  cell_symbol_pmatch_car)
+		if(GetSCM2(bad2good(C)) ==  cell_symbol_pmatch_car)
 		{
 			push_cc(bad2good(bad2good(R1)->cdr)->rac, GetSCM2(bad2good(R1)), GetSCM2(bad2good(R0)), cell_vm_eval_pmatch_car);
 			goto eval;
@@ -394,7 +391,7 @@ eval_pmatch_car:
 			R1 = bad2good(X)->car;
 			goto eval_apply;
 		}
-		else if(c ==  cell_symbol_pmatch_cdr)
+		else if(GetSCM2(bad2good(C)) ==  cell_symbol_pmatch_cdr)
 		{
 			push_cc(bad2good(bad2good(R1)->cdr)->rac, GetSCM2(bad2good(R1)), GetSCM2(bad2good(R0)), cell_vm_eval_pmatch_cdr);
 			goto eval;
@@ -404,28 +401,28 @@ eval_pmatch_cdr:
 			R1 = bad2good(X)->cdr;
 			goto eval_apply;
 		}
-		else if(c ==  cell_symbol_quote)
+		else if(GetSCM2(bad2good(C)) ==  cell_symbol_quote)
 		{
 			X = R1;
 			gc_pop_frame();
 			R1 = bad2good(bad2good(X)->cdr)->car;
 			goto eval_apply;
 		}
-		else if(c ==  cell_symbol_begin)
+		else if(GetSCM2(bad2good(C)) ==  cell_symbol_begin)
 		{
 			goto begin;
 		}
-		else if(c ==  cell_symbol_lambda)
+		else if(GetSCM2(bad2good(C)) ==  cell_symbol_lambda)
 		{
 			R1 = good2bad(Getstructscm2(make_closure_(bad2good(bad2good(R1)->cdr)->rac, bad2good(bad2good(R1)->cdr)->rdc, GetSCM2(bad2good(R0)))));
 			goto vm_return;
 		}
-		else if(c ==  cell_symbol_if)
+		else if(GetSCM2(bad2good(C)) ==  cell_symbol_if)
 		{
 			R1 = bad2good(R1)->cdr;
 			goto vm_if;
 		}
-		else if(c ==  cell_symbol_set_x)
+		else if(GetSCM2(bad2good(C)) ==  cell_symbol_set_x)
 		{
 			push_cc(bad2good(bad2good(bad2good(R1)->cdr)->cdr)->rac, GetSCM2(bad2good(R1)), GetSCM2(bad2good(R0)), cell_vm_eval_set_x);
 			goto eval;
@@ -433,7 +430,7 @@ eval_set_x:
 			R1 = good2bad(Getstructscm2(set_env_x(bad2good(bad2good(R2)->cdr)->rac, GetSCM2(bad2good(R1)), GetSCM2(bad2good(R0)))));
 			goto vm_return;
 		}
-		else if(c == cell_vm_macro_expand)
+		else if(GetSCM2(bad2good(C)) == cell_vm_macro_expand)
 		{
 			push_cc(bad2good(bad2good(R1)->cdr)->rac, GetSCM2(bad2good(R1)), GetSCM2(bad2good(R0)), cell_vm_eval_macro_expand_eval);
 			goto eval;

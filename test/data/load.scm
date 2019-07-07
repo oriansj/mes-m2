@@ -1,5 +1,7 @@
+;;; -*-scheme-*-
+
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -16,8 +18,4 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
 
-(gc)
-(define (loop n)
-  (if (> n 0) (loop (- n 1))))
-(loop 100000)
-(gc)
+(define the-answer 42)
