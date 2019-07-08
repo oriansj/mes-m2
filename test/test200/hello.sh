@@ -27,11 +27,11 @@ ${SCHEME-$MES} \
 	-e main\
 	-L /usr/local/share/guile/site/2.2\
 	-C /usr/local/lib/guile/2.2/site-ccache\
-	scripts/mescc.scm test/test200/hello.c -m 32 -o test/results/test200.answer &> test/test200/log
+	scripts/mescc.scm test/test200/hello.c -m 32 -o test/results/test200-binary &> test/test200/log
 r=$?
 [ $r = 0 ] || exit 1
 
-out=$(./test/results/test200.answer  2>&1)
+out=$(./test/results/test200-binary 2>&1)
 r=$?
 [ "$out" = "Hello, Mescc!" ] || exit 2
 [ $r = 42 ] || exit 3

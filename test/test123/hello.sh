@@ -16,5 +16,5 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-MES_DEBUG=2 MES_PREFIX=mes ./bin/mes-m2 -s test/test131/module.test &> test/results/test131.answer
+MES_DEBUG=2 MES_PREFIX=mes ./bin/mes-m2 -s test/test123/getopt-long.test &> test/results/test123.answer
 exit 0
