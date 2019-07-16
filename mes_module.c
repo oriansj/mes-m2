@@ -26,7 +26,7 @@ struct scm* struct_ref_(SCM x, long i);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_hashq_type();
 SCM cons_(SCM x, SCM y);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* make_struct(SCM type, SCM fields, SCM printer);
 SCM acons_(SCM key, SCM value, SCM alist);
 struct scm* make_hash_table_(long size);

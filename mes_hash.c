@@ -25,7 +25,7 @@
 struct scm* vector_ref_(SCM x, long i);
 struct scm* struct_ref_(SCM x, long i);
 
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
 struct scm* make_string_(char const* s);
 struct scm* make_vector__(long k);

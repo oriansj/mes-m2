@@ -49,7 +49,7 @@ struct scm* module_define_x(SCM module, SCM name, SCM value);
 struct scm* make_hashq_type();
 struct scm* make_module_type();
 struct scm* make_struct (SCM type, SCM fields, SCM printer);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr);
 struct scm* make_string_(char const* s);
 struct scm* make_string(char const* s, int length);

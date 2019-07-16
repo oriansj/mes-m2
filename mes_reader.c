@@ -38,7 +38,7 @@ struct scm* make_string_(char const* s);
 struct scm* make_string(char const* s, int length);
 int peekchar();
 int unreadchar();
-struct scm* make_cell__(long type, SCM car, SCM cdr);
+struct scm* make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* symbol_to_keyword(SCM symbol);
 struct scm* list_to_vector(SCM x);

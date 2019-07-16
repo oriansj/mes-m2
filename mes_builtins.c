@@ -90,7 +90,7 @@ SCM length (SCM x);
 SCM list (SCM x);
 SCM macro_get_handle (SCM name);
 SCM make_cell_(SCM type, SCM car, SCM cdr);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 SCM null_p (SCM x);
 SCM pairlis (SCM x, SCM y, SCM a);
 SCM reverse_x_ (SCM x, SCM t);

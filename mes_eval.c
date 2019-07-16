@@ -72,7 +72,7 @@ SCM open_input_file (SCM file_name);
 SCM set_current_input_port (SCM port);
 SCM read_input_file_env ();
 SCM init_time(SCM a);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* vector_ref_(SCM x, SCM i);
 struct scm* make_vector__(SCM k);
 struct scm* vector_set_x_(SCM x, SCM i, SCM e);

@@ -26,7 +26,7 @@
 int eputs(char const* s);
 SCM error(SCM key, SCM x);
 SCM cons (SCM x, SCM y);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 
 void assert_number(char const* name, SCM x)
 {

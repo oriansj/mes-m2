@@ -35,7 +35,7 @@ SCM gc_push_frame();
 SCM gc_pop_frame();
 struct scm* vector_entry(SCM x);
 int get_env_value(char* c, int alt);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* make_stack_type();
 struct scm* make_struct(SCM type, struct scm* fields, SCM printer);
 struct scm* make_frame_type();

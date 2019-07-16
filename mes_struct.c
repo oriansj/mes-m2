@@ -28,7 +28,7 @@
 #define STRUCT_PRINTER 1
 
 long length__(SCM x);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* vector_entry(SCM x);
 struct scm* make_struct(SCM type, struct scm* fields, SCM printer);
 

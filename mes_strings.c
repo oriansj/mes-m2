@@ -25,7 +25,7 @@
 char *itoa (int number);
 SCM cons_ (SCM x, SCM y);
 struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 struct scm* make_bytes(char const* s, size_t length);
 SCM write_error_ (SCM x);
 struct scm* hash_ref (SCM table, SCM key, SCM dflt);

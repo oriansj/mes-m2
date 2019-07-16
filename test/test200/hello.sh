@@ -25,8 +25,6 @@ export MES=bin/mes-m2
 ${SCHEME-$MES} \
 	--no-auto-compile\
 	-e main\
-	-L /usr/local/share/guile/site/2.2\
-	-C /usr/local/lib/guile/2.2/site-ccache\
 	scripts/mescc.scm test/test200/hello.c -m 32 -o test/results/test200-binary &> test/test200/log
 r=$?
 [ $r = 0 ] || exit 1

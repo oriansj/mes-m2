@@ -40,7 +40,7 @@ int eputs(char const* s);
 struct scm* make_string(char const* s, int length);
 struct scm* make_string_(char const* s);
 int fdungetc(int c, int fd);
-SCM make_cell__(long type, SCM car, SCM cdr);
+SCM make_cell__(SCM type, SCM car, SCM cdr);
 SCM cons_(SCM x, SCM y);
 long length__(SCM x);
 SCM error(SCM key, SCM x);
