@@ -22,11 +22,11 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-
 /* Imported Functions */
 SCM gc ();
 void initialize_memory();
 char *itoa (int number);
+int match(char* a, char* b);
 struct scm* mes_builtins(struct scm* a);
 struct scm* cstring_to_symbol(char const *s);
 
@@ -741,82 +741,11 @@ SCM apply(SCM f, SCM x)  ///((internal))
 // Jam Collector
 SCM g_symbol_max;
 
-int open_boot(char *prefix, char const *boot, char const *location);
-void read_boot()  ///((internal))
-{
-	__stdin = -1;
-	char prefix[1024];
-	char boot[1024];
-
-	if(getenv("MES_BOOT"))
-	{
-		strcpy(boot, getenv("MES_BOOT"));
-	}
-	else
-	{
-		strcpy(boot, "boot-0.scm");
-	}
-
-	if(getenv("MES_PREFIX"))
-	{
-		strcpy(prefix, getenv("MES_PREFIX"));
-		strcpy(prefix + strlen(prefix), "/module");
-		strcpy(prefix + strlen(prefix), "/mes/");
-		__stdin = open_boot(prefix, boot, "MES_PREFIX");
-	}
-
-	if(__stdin < 0)
-	{
-		char const *p = "module/mes/";
-		strcpy(prefix, p);
-		__stdin = open_boot(prefix, boot, "module");
-	}
-
-	if(__stdin < 0)
-	{
-		strcpy(prefix, "mes/module/mes/");
-		__stdin = open_boot(prefix, boot, ".");
-	}
-
-	if(__stdin < 0)
-	{
-		prefix[0] = 0;
-		__stdin = open_boot(prefix, boot, "<boot>");
-	}
-
-	if(__stdin < 0)
-	{
-		eputs("mes: boot failed: no such file: ");
-		eputs(boot);
-		eputs("\n");
-		exit(EXIT_FAILURE);
-	}
-
-	R2 = good2bad(Getstructscm2(read_input_file_env()));
-	__stdin = STDIN;
-}
-
 int get_env_value(char* c, int alt)
 {
 	char* s = getenv(c);
 	if(NULL == s) return alt;
 	return numerate_string(s);
-}
-
-SCM mes_environment(int argc, char *argv[])
-{
-	SCM a = mes_symbols();
-	a = acons_(cell_symbol_compiler, GetSCM2(make_string_("gnuc")), a);
-	a = acons_(cell_symbol_arch, GetSCM2(make_string_("x86_64")), a);
-
-	struct scm* lst = Getstructscm2(cell_nil);
-	for(int i = argc - 1; i >= 0; i--)
-	{
-		lst = cons(make_string_(argv[i]), lst);
-	}
-
-	a = acons_(cell_symbol_argv, GetSCM2(lst), a);
-	return mes_g_stack(a);
 }
 
 struct scm* make_initial_module(SCM a)  ///((internal))
@@ -842,12 +771,32 @@ struct scm* make_initial_module(SCM a)  ///((internal))
 	return good2bad(Getstructscm2(module));
 }
 
+int open_boot(char *boot);
+void do_it(char* file)
+{
+	if(match(file, "STDIN"))
+	{
+		__stdin = STDIN;
+	}
+	else
+	{
+		__stdin = open_boot(file);
+	}
+
+	R2 = good2bad(Getstructscm2(read_input_file_env()));
+	push_cc(GetSCM2(bad2good(R2)), cell_unspecified, GetSCM2(bad2good(R0)), cell_unspecified);
+
+	R3 = good2bad(Getstructscm2(cell_vm_begin_expand));
+	R1 = good2bad(Getstructscm2(eval_apply()));
+}
+
 int main(int argc, char *argv[])
 {
 	__ungetc_buf = calloc((RLIMIT_NOFILE + 1), sizeof(int));
 	g_continuations = 0;
 	g_symbols = 0;
 	g_stack = 0;
+	messy_display = FALSE;
 	R0 = good2bad(Getstructscm2(0));
 	R1 = good2bad(Getstructscm2(0));
 	R2 = good2bad(Getstructscm2(0));
@@ -860,71 +809,41 @@ int main(int argc, char *argv[])
 	__stdout = STDOUT;
 	__stderr = STDERR;
 
-	g_debug = get_env_value("MES_DEBUG", 0);
-
-	if(g_debug > 1) eputs(";;; MODULEDIR=module\n");
-
 	initialize_memory();
+	mes_symbols();
 
-	SCM a = mes_environment(argc, argv);
-	a = GetSCM2(mes_builtins(Getstructscm2(a)));
-	a = init_time(a);
-	M0 = make_initial_module(a);
+	M0 = make_initial_module(init_time(GetSCM2(mes_builtins(Getstructscm2(cell_nil)))));
 	g_macros = GetSCM2(bad2good(make_hash_table_(0)));
 
-	if(g_debug > 4)
+	struct scm* lst = Getstructscm2(cell_nil);
+	int i = 1;
+	char* file;
+	while(i <= argc)
 	{
-		module_printer(GetSCM2(bad2good(M0)));
-	}
-
-	read_boot();
-	push_cc(GetSCM2(bad2good(R2)), cell_unspecified, GetSCM2(bad2good(R0)), cell_unspecified);
-
-	if(g_debug > 2)
-	{
-		eputs("\ngc stats: [");
-		eputs(itoa(g_free));
-		eputs("]\n");
-	}
-
-	if(g_debug > 3)
-	{
-		eputs("program: ");
-		write_error_(GetSCM2(bad2good(R1)));
-		eputs("\n");
-	}
-
-	R3 = good2bad(Getstructscm2(cell_vm_begin_expand));
-	R1 = good2bad(Getstructscm2(eval_apply()));
-
-	if(g_debug)
-	{
-		write_error_(GetSCM2(bad2good(R1)));
-		eputs("\n");
-	}
-
-	if(g_debug)
-	{
-		if(g_debug > 4) module_printer(GetSCM2(bad2good(M0)));
-
-		eputs("\ngc stats: [");
-		eputs(itoa(g_free));
-		gc();
-		eputs(" => ");
-		eputs(itoa(g_free));
-		eputs("]\n");
-
-		if(g_debug > 4) module_printer(GetSCM2(bad2good(M0)));
-
-		if(g_debug > 3)
+		if(NULL == argv[i])
 		{
-			eputs("ports:");
-			write_error_(g_ports);
-			eputs("\n");
+			i = i + 1;
 		}
-
-		eputs("\n");
+		else if(match(argv[i], "--boot"))
+		{
+			file = argv[i + 1];
+			do_it(file);
+			i = i + 2;
+		}
+		else if(match(argv[i], "-f") || match(argv[i], "--file"))
+		{
+			file = argv[i + 1];
+			do_it(file);
+			i = i + 2;
+		}
+		else
+		{
+			lst = cons(make_string_(argv[i]), lst);
+			i = i + 1;
+		}
 	}
 
+	messy_display = TRUE;
+	do_it("STDIN");
 	return 0;
 }

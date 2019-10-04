@@ -39,6 +39,7 @@ mes-m2: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module
 	functions/in_set.c \
 	functions/numerate.c \
 	functions/file_print.c \
+	functions/match.c \
 	-o bin/mes-m2
 
 # Clean up after ourselves

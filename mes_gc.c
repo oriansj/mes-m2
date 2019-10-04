@@ -54,17 +54,6 @@ SCM STACK_SIZE;
 
 struct scm *g_news;
 
-void initialize_memory()
-{
-	g_news = 0;
-	MAX_ARENA_SIZE = get_env_value("MES_MAX_ARENA", 100000000);
-	ARENA_SIZE = get_env_value("MES_ARENA", 10000000);
-	JAM_SIZE = get_env_value("MES_JAM", ARENA_SIZE / 10);
-	GC_SAFETY = get_env_value("MES_SAFETY", ARENA_SIZE / 100);
-	STACK_SIZE = get_env_value("MES_STACK", 20000);
-	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
-}
-
 void gc_init_cells()  ///((internal))
 {
 	SCM arena_bytes = (ARENA_SIZE + JAM_SIZE) * sizeof(struct scm);
@@ -84,6 +73,20 @@ SCM mes_g_stack(SCM a)  ///((internal))
 	R3 = good2bad(Getstructscm2(make_cell__ (TCHAR, 0, 0)));
 	return GetSCM2(bad2good(R0));
 }
+
+void initialize_memory()
+{
+	g_news = 0;
+	MAX_ARENA_SIZE = get_env_value("MES_MAX_ARENA", 100000000);
+	ARENA_SIZE = get_env_value("MES_ARENA", 10000000);
+	JAM_SIZE = get_env_value("MES_JAM", ARENA_SIZE / 10);
+	GC_SAFETY = get_env_value("MES_SAFETY", ARENA_SIZE / 100);
+	STACK_SIZE = get_env_value("MES_STACK", 20000);
+	g_stack = STACK_SIZE;
+	MAX_STRING = get_env_value("MES_MAX_STRING", 524288);
+	gc_init_cells();
+}
+
 
 struct scm* make_frame(long index)
 {

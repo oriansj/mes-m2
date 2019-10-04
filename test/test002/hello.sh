@@ -16,7 +16,8 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -x
-./bin/mes-m2 --boot test/test000/exit.scm
+out=$(./bin/mes-m2 --file test/test002/display_error.scm 2>&1)
 r=$?
 [ $r = 42 ] || exit 1
+[ "$out" = "Hello, failure!!!" ] || exit 2
 exit 0

@@ -99,6 +99,9 @@ struct scm* G_MACROS;
 SCM g_ports;
 struct scm* G_PORTS;
 
+/* Try to fix native */
+int messy_display;
+SCM answer;
 
 /* Temp interface functions */
 SCM GetSCM2(struct scm* a);

@@ -30,7 +30,6 @@ int numerate_string(char *a);
 
 /* Standard Mes.c function imports */
 void assert_max_string(int i, char const* msg, char* string);
-struct scm* read_env(SCM a);
 SCM cons_(SCM x, SCM y);
 int readchar();
 struct scm* error(SCM key, SCM x);
@@ -44,6 +43,12 @@ struct scm* symbol_to_keyword(SCM symbol);
 struct scm* list_to_vector(SCM x);
 int eputs(char const* s);
 char* itoa(int number);
+
+struct scm* reader_read_sexp_(int c, SCM a);
+struct scm* read_env(SCM a)
+{
+	return good2bad(reader_read_sexp_(readchar(), a));
+}
 
 struct scm* read_input_file_env_(SCM e, SCM a)
 {
@@ -230,11 +235,6 @@ struct scm* reader_read_list(int c, SCM a)
 	}
 
 	return Getstructscm2(cons_(GetSCM2(s), GetSCM2(reader_read_list(readchar(), a))));
-}
-
-struct scm* read_env(SCM a)
-{
-	return good2bad(reader_read_sexp_(readchar(), a));
 }
 
 int index_number__(char* s, char c) /* Internal only */

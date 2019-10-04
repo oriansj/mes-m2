@@ -45,9 +45,6 @@ SCM cons_(SCM x, SCM y);
 SCM check_formals(SCM f, SCM formals, SCM args);
 char *itoa (int number);
 SCM error(SCM key, SCM x);
-int fdputc (int c, int fd);
-int fdputs (char const* s, int fd);
-int eputs (char const* s);
 struct scm* mes_builtins(struct scm* a);
 struct scm* apply_builtin(SCM fn, SCM x);
 struct scm* cstring_to_symbol(char const *s);
@@ -58,7 +55,6 @@ SCM push_cc(SCM p1, SCM p2, SCM a, SCM c);
 struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
 struct scm* hash_set_x (SCM table, SCM key, SCM value);
 struct scm* display_ (SCM x);
-struct scm* display_error_ (SCM x);
 struct scm* write_error_ (SCM x);
 SCM equal2_p (SCM a, SCM b);
 SCM reverse_x_ (SCM x, SCM t);
@@ -756,7 +752,7 @@ begin_expand_primitive_load:
 				}
 
 				push_cc(GetSCM2(bad2good(INPUT)), GetSCM2(bad2good(R2)), GetSCM2(bad2good(R0)), cell_vm_return);
-				X = good2bad(Getstructscm2(read_input_file_env()));
+				//X = good2bad(Getstructscm2(read_input_file_env()));
 
 				if(g_debug > 4)
 				{
