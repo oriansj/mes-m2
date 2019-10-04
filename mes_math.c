@@ -195,12 +195,11 @@ struct scm* modulo(SCM a, SCM b)
 	long x = a2->rdc;
 	// long x = a2->value;
 
-	while(x < 0)
+	x = x % b2->value;
+	if(b2->value < 0)
 	{
 		x = x + b2->value;
 	}
-
-	x = x ? x % b2->value : 0;
 	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, x)));
 }
 
@@ -223,13 +222,12 @@ struct scm* multiply(SCM x)  ///((name . "*") (arity . n))
 struct scm* logand(SCM x)  ///((arity . n))
 {
 	struct scm* y = Getstructscm2(x);
-	long n = 0;
+	long n = -1;
 
 	while(GetSCM2(y) != cell_nil)
 	{
 		assert_number("multiply", y->rac);
-		n = n & bad2good(y->car)->rdc;
-		// n = n & bad2good(y->car)->value;
+		n = n & bad2good(y->car)->value;
 		y = bad2good(y->cdr);
 	}
 
@@ -244,8 +242,7 @@ struct scm* logior(SCM x)  ///((arity . n))
 	while(GetSCM2(y) != cell_nil)
 	{
 		assert_number("logior", y->rac);
-		n = n | bad2good(y->car)->rdc;
-		// n = n | bad2good(y->car)->value;
+		n = n | bad2good(y->car)->value;
 		y = bad2good(y->cdr);
 	}
 
@@ -256,8 +253,7 @@ struct scm* lognot(SCM x)
 {
 	struct scm* y = Getstructscm2(x);
 	assert_number("lognot", x);
-	long n = ~y->rdc;
-	// long n = ~y->value;
+	long n = ~y->value;
 	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
 }
 
@@ -269,8 +265,7 @@ struct scm* logxor(SCM x)  ///((arity . n))
 	while(GetSCM2(y) != cell_nil)
 	{
 		assert_number("logxor", y->rac);
-		n = n ^ bad2good(y->car)->rdc;
-		// n = n ^ bad2good(y->car)->value;
+		n = n ^ bad2good(y->car)->value;
 		y = bad2good(y->cdr);
 	}
 
@@ -283,9 +278,7 @@ struct scm* ash(SCM n, SCM count)
 	struct scm* count2 = Getstructscm2(count);
 	assert_number("ash", n);
 	assert_number("ash", count);
-	long cn = n2->rdc;
-	// long cn = n2->value;
-	long ccount = count2->rdc;
-	// long ccount = count2->value;
+	long cn = n2->value;
+	long ccount = count2->value;
 	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, (ccount < 0) ? cn >> -ccount : cn << ccount)));
 }
