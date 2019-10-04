@@ -15,9 +15,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
-set -x
+set -eux
 out=$(./bin/mes-m2 --file test/test003/display_number.scm 2>&1)
-r=$?
-[ $r = 0 ] || exit 1
-[ "$out" = "42" ] || exit 2
+[ "$out" = "42" ] || exit 1
 exit 0

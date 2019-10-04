@@ -60,7 +60,9 @@ test: test000.answer \
 	test001.answer \
 	test002.answer \
 	test003.answer \
-	test004.answer
+	test004.answer \
+	test005.answer \
+	test006.answer
 #	test100.answer \
 #	test101.answer \
 #	test102.answer \
@@ -70,7 +72,7 @@ test: test000.answer \
 #	test109.answer \
 #	test133.answer \
 #	test200-binary | results
-#	sha256sum -c test/test.answers
+	sha256sum -c test/test.answers
 #	test104.answer
 #	test107.answer
 #	test108.answer
@@ -112,6 +114,12 @@ test003.answer: results mes-m2
 
 test004.answer: results mes-m2
 	test/test004/hello.sh
+
+test005.answer: results mes-m2
+	test/test005/hello.sh
+
+test006.answer: results mes-m2
+	test/test006/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh
