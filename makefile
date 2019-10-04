@@ -58,16 +58,19 @@ results:
 # tests
 test: test000.answer \
 	test001.answer \
-	test100.answer \
-	test101.answer \
-	test102.answer \
-	test103.answer \
-	test105.answer \
-	test106.answer \
-	test109.answer \
-	test133.answer \
-	test200-binary | results
-	sha256sum -c test/test.answers
+	test002.answer \
+	test003.answer \
+	test004.answer
+#	test100.answer \
+#	test101.answer \
+#	test102.answer \
+#	test103.answer \
+#	test105.answer \
+#	test106.answer \
+#	test109.answer \
+#	test133.answer \
+#	test200-binary | results
+#	sha256sum -c test/test.answers
 #	test104.answer
 #	test107.answer
 #	test108.answer
@@ -100,6 +103,15 @@ test000.answer: results mes-m2
 
 test001.answer: results mes-m2
 	test/test001/hello.sh
+
+test002.answer: results mes-m2
+	test/test002/hello.sh
+
+test003.answer: results mes-m2
+	test/test003/hello.sh
+
+test004.answer: results mes-m2
+	test/test004/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh
