@@ -27,186 +27,182 @@
 struct scm* gc_check ();
 struct scm* gc ();
 // src/hash.mes
-struct scm* hashq (SCM x, SCM size);
-struct scm* hash (SCM x, SCM size);
-struct scm* hashq_get_handle (SCM table, SCM key, SCM dflt);
-struct scm* hashq_ref (SCM table, SCM key, SCM dflt);
-struct scm* hash_ref_ (SCM table, SCM key, SCM dflt);
-struct scm* hashq_set_x_ (SCM table, SCM key, SCM value);
-struct scm* hash_set_x (SCM table, SCM key, SCM value);
+struct scm* hashq (struct scm* x, struct scm* size);
+struct scm* hash (struct scm* x, struct scm* size);
+struct scm* hashq_get_handle (struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* hashq_ref (struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* hash_ref_ (struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* hashq_set_x_ (struct scm* table, struct scm* key, struct scm* value);
+struct scm* hash_set_x (struct scm* table, struct scm* key, struct scm* value);
 struct scm* hash_table_printer (struct scm* table);
 struct scm* make_hash_table_(long size);
-struct scm* make_hash_table (SCM x);
+struct scm* make_hash_table (struct scm* x);
 // src/lib.mes
-struct scm* display_ (SCM x);
-struct scm* display_error_ (SCM x);
-struct scm* display_port_ (SCM x, SCM p);
-struct scm* write_ (SCM x);
-struct scm* write_error_ (SCM x);
-struct scm* write_port_ (SCM x, SCM p);
-struct scm* exit_ (SCM x);
-struct scm* frame_printer (SCM frame);
+struct scm* display_ (struct scm* x);
+struct scm* display_error_ (struct scm* x);
+struct scm* display_port_ (struct scm* x, struct scm* p);
+struct scm* write_ (struct scm* x);
+struct scm* write_error_ (struct scm* x);
+struct scm* write_port_ (struct scm* x, struct scm* p);
+struct scm* exit_ (struct scm* x);
+struct scm* frame_printer (struct scm* frame);
 struct scm* make_stack ();
-struct scm* stack_length (SCM stack);
-struct scm* stack_ref (SCM stack, SCM index);
-struct scm* xassq (SCM x, SCM a);
-struct scm* memq (SCM x, SCM a);
-struct scm* equal2_p (SCM a, SCM b);
-struct scm* last_pair (SCM x);
-struct scm* pair_p (SCM x);
+struct scm* stack_length (struct scm* stack);
+struct scm* stack_ref (struct scm* stack, struct scm* index);
+struct scm* xassq (struct scm* x, struct scm* a);
+struct scm* memq (struct scm* x, struct scm* a);
+struct scm* equal2_p (struct scm* a, struct scm* b);
+struct scm* last_pair (struct scm* x);
+struct scm* pair_p (struct scm* x);
 // src/math.mes
-struct scm* greater_p (SCM x);
-struct scm* less_p (SCM x);
-struct scm* is_p (SCM x);
-struct scm* minus (SCM x);
-struct scm* plus (SCM x);
-struct scm* divide (SCM x);
-struct scm* modulo (SCM a, SCM b);
-struct scm* multiply (SCM x);
-struct scm* logand (SCM x);
-struct scm* logior (SCM x);
-struct scm* lognot (SCM x);
-struct scm* logxor (SCM x);
-struct scm* ash (SCM n, SCM count);
+struct scm* greater_p (struct scm* x);
+struct scm* less_p (struct scm* x);
+struct scm* is_p (struct scm* x);
+struct scm* minus (struct scm* x);
+struct scm* plus (struct scm* x);
+struct scm* divide (struct scm* x);
+struct scm* modulo (struct scm* a, struct scm* b);
+struct scm* multiply (struct scm* x);
+struct scm* logand (struct scm* x);
+struct scm* logior (struct scm* x);
+struct scm* lognot (struct scm* x);
+struct scm* logxor (struct scm* x);
+struct scm* ash (struct scm* n, struct scm* count);
 // src/mes.mes
-SCM acons_ (SCM key, SCM value, SCM alist);
-SCM add_formals (SCM formals, SCM x);
-SCM append2 (SCM x, SCM y);
-SCM arity_ (SCM x);
-SCM assoc (SCM x, SCM a);
-SCM assq (SCM x, SCM a);
-SCM call (SCM fn, SCM x);
-SCM car (SCM x);
-SCM car_ (SCM x);
-SCM cdr (SCM x);
-SCM cdr_ (SCM x);
-SCM cons_ (SCM x, SCM y);
+struct scm* acons_ (struct scm* key, struct scm* value, struct scm* alist);
+struct scm* add_formals (struct scm* formals, struct scm* x);
+struct scm* append2 (struct scm* x, struct scm* y);
+struct scm* arity_ (struct scm* x);
+struct scm* assoc (struct scm* x, struct scm* a);
+struct scm* assq (struct scm* x, struct scm* a);
+struct scm* call (struct scm* fn, struct scm* x);
+struct scm* car (struct scm* x);
+struct scm* car_ (struct scm* x);
+struct scm* cdr (struct scm* x);
+struct scm* cdr_ (struct scm* x);
+struct scm* cons_ (struct scm* x, struct scm* y);
 struct scm* cons(struct scm* x, struct scm* y);
-SCM cons3(struct scm* x, struct scm* y);
-SCM eq_p (SCM x, SCM y);
-SCM error (SCM key, SCM x);
-SCM eval_apply ();
-SCM length (SCM x);
-SCM list (SCM x);
-SCM macro_get_handle (SCM name);
-SCM make_cell_(SCM type, SCM car, SCM cdr);
-SCM make_cell__(SCM type, SCM car, SCM cdr);
-SCM null_p (SCM x);
-SCM pairlis (SCM x, SCM y, SCM a);
-SCM reverse_x_ (SCM x, SCM t);
-SCM set_car_x (SCM x, SCM e);
-SCM set_cdr_x (SCM x, SCM e);
-SCM set_env_x (SCM x, SCM e, SCM a);
-SCM type_ (SCM x);
-SCM values (SCM x);
-struct scm* builtin_printer(SCM builtin);
+struct scm* cons3(struct scm* x, struct scm* y);
+struct scm* eq_p (struct scm* x, struct scm* y);
+struct scm* error (struct scm* key, struct scm* x);
+struct scm* eval_apply ();
+struct scm* length (struct scm* x);
+struct scm* list (struct scm* x);
+struct scm* macro_get_handle (struct scm* name);
+struct scm* make_cell_(struct scm* type, struct scm* car, struct scm* cdr);
+struct scm* make_number(SCM n);
+struct scm* null_p (struct scm* x);
+struct scm* pairlis (struct scm* x, struct scm* y, struct scm* a);
+struct scm* reverse_x_ (struct scm* x, struct scm* t);
+struct scm* set_car_x (struct scm* x, struct scm* e);
+struct scm* set_cdr_x (struct scm* x, struct scm* e);
+struct scm* set_env_x (struct scm* x, struct scm* e, struct scm* a);
+struct scm* type_ (struct scm* x);
+struct scm* values (struct scm* x);
+struct scm* builtin_printer(struct scm* builtin);
 
 // src/module.mes
 struct scm* make_module_type_ ();
-struct scm* module_printer (SCM module);
-struct scm* module_variable_ (SCM module, SCM name);
-struct scm* module_ref_ (SCM module, SCM name);
-struct scm* module_define_x (SCM module, SCM name, SCM value);
+struct scm* module_printer (struct scm* module);
+struct scm* module_variable_ (struct scm* module, struct scm* name);
+struct scm* module_ref_ (struct scm* module, struct scm* name);
+struct scm* module_define_x (struct scm* module, struct scm* name, struct scm* value);
 // src/posix.mes
 struct scm* peek_byte ();
 struct scm* read_byte ();
-struct scm* unread_byte (SCM i);
+struct scm* unread_byte (struct scm* i);
 struct scm* peek_char ();
-struct scm* read_char (SCM port);
-struct scm* unread_char (SCM i);
-struct scm* write_char (SCM i);
-struct scm* write_byte (SCM x);
-struct scm* getenv_ (SCM s);
-struct scm* setenv_ (SCM s, SCM v);
-struct scm* access_p (SCM file_name, SCM mode);
+struct scm* read_char (struct scm* port);
+struct scm* unread_char (struct scm* i);
+struct scm* write_char (struct scm* i);
+struct scm* write_byte (struct scm* x);
+struct scm* getenv_ (struct scm* s);
+struct scm* setenv_ (struct scm* s, struct scm* v);
+struct scm* access_p (struct scm* file_name, struct scm* mode);
 struct scm* current_input_port ();
-struct scm* open_input_file (SCM file_name);
-struct scm* open_input_string (SCM string);
-struct scm* set_current_input_port (SCM port);
+struct scm* open_input_file (struct scm* file_name);
+struct scm* open_input_string (struct scm* string);
+struct scm* set_current_input_port (struct scm* port);
 struct scm* current_output_port ();
 struct scm* current_error_port ();
-struct scm* open_output_file (SCM x);
-struct scm* set_current_output_port (SCM port);
-struct scm* set_current_error_port (SCM port);
-struct scm* chmod_ (SCM file_name, SCM mode);
-struct scm* isatty_p (SCM port);
+struct scm* open_output_file (struct scm* x);
+struct scm* set_current_output_port (struct scm* port);
+struct scm* set_current_error_port (struct scm* port);
+struct scm* chmod_ (struct scm* file_name, struct scm* mode);
+struct scm* isatty_p (struct scm* port);
 struct scm* primitive_fork ();
-struct scm* execl_ (SCM file_name, SCM args);
-struct scm* waitpid_ (SCM pid, SCM options);
+struct scm* execl_ (struct scm* file_name, struct scm* args);
+struct scm* waitpid_ (struct scm* pid, struct scm* options);
 struct scm* current_time ();
 struct scm* gettimeofday_ ();
 struct scm* get_internal_run_time ();
 struct scm* getcwd_ ();
-struct scm* dup_ (SCM port);
-struct scm* dup2_ (SCM old, SCM new);
-struct scm* delete_file (SCM file_name);
+struct scm* dup_ (struct scm* port);
+struct scm* dup2_ (struct scm* old, struct scm* new);
+struct scm* delete_file (struct scm* file_name);
 // src/reader.mes
-struct scm* read_input_file_env_ (SCM e, SCM a);
+struct scm* read_input_file_env_ (struct scm* e, struct scm* a);
 struct scm* read_input_file_env ();
-struct scm* read_env (SCM a);
-struct scm* reader_read_sexp (SCM c, SCM a);
+struct scm* read_env (struct scm* a);
+struct scm* reader_read_sexp (struct scm* c, struct scm* a);
 struct scm* reader_read_character ();
 struct scm* reader_read_binary ();
 struct scm* reader_read_octal ();
 struct scm* reader_read_hex ();
 struct scm* reader_read_string ();
 // src/strings.mes
-struct scm* string_equal_p_ (SCM a, SCM b);
-struct scm* symbol_to_string_ (SCM symbol);
-struct scm* symbol_to_keyword_ (SCM symbol);
-struct scm* keyword_to_string (SCM keyword);
-struct scm* string_to_symbol (SCM string);
-struct scm* make_symbol_ (SCM string);
-struct scm* string_to_list (SCM string);
-struct scm* list_to_string (SCM list);
-struct scm* read_string (SCM port);
-struct scm* string_append (SCM x);
-struct scm* string_length (SCM string);
-struct scm* string_ref (SCM str, SCM k);
+struct scm* string_equal_p_ (struct scm* a, struct scm* b);
+struct scm* symbol_to_string_ (struct scm* symbol);
+struct scm* symbol_to_keyword_ (struct scm* symbol);
+struct scm* keyword_to_string (struct scm* keyword);
+struct scm* string_to_symbol (struct scm* string);
+struct scm* make_symbol_ (struct scm* string);
+struct scm* string_to_list (struct scm* string);
+struct scm* list_to_string (struct scm* list);
+struct scm* read_string (struct scm* port);
+struct scm* string_append (struct scm* x);
+struct scm* string_length (struct scm* string);
+struct scm* string_ref (struct scm* str, struct scm* k);
 // src/struct.mes
-struct scm* make_struct_(SCM type, struct scm* fields, SCM printer);
-struct scm* struct_length (SCM x);
-struct scm* struct_ref (SCM x, SCM i);
-struct scm* struct_set_x (SCM x, SCM i, SCM e);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* struct_length (struct scm* x);
+struct scm* struct_ref (struct scm* x, struct scm* i);
+struct scm* struct_set_x (struct scm* x, struct scm* i, struct scm* e);
 // src/vector.mes
-struct scm* make_vector_ (SCM n);
-struct scm* vector_length (SCM x);
-struct scm* vector_ref (SCM x, SCM i);
-struct scm* vector_entry (SCM x);
-struct scm* vector_set_x (SCM x, SCM i, SCM e);
-struct scm* list_to_vector (SCM x);
-struct scm* vector_to_list (SCM v);
-SCM init_time(SCM a);
+struct scm* make_vector_ (struct scm* n);
+struct scm* vector_length (struct scm* x);
+struct scm* vector_ref (struct scm* x, struct scm* i);
+struct scm* vector_entry (struct scm* x);
+struct scm* vector_set_x (struct scm* x, struct scm* i, struct scm* e);
+struct scm* list_to_vector (struct scm* x);
+struct scm* vector_to_list (struct scm* v);
+struct scm* init_time(struct scm* a);
 
 /* Internal functions required*/
 struct scm* make_string(char const* s, int length);
-struct scm* make_struct (SCM type, SCM fields, SCM printer);
+struct scm* make_struct (struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_string_(char const* s);
 struct scm* cstring_to_symbol(char const *s);
-struct scm* symbol_to_string (SCM symbol);
-struct scm* struct_ref_(SCM x, SCM i);
+struct scm* symbol_to_string (struct scm* symbol);
+struct scm* struct_ref_(struct scm* x, SCM i);
 int fdputc (int c, int fd);
 int fdputs (char const* s, int fd);
 int eputs (char const* s);
-void gc_init_cells();
-
-void init_symbol(SCM x, SCM type, char const* name)
+void init_symbol(struct scm* x, SCM type, char const* name)
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	y->type = type;
-	int length = strlen(name);
-	struct scm* string = bad2good(make_string(name, length));
-	y->length = length;
+	int l = strlen(name);
+	struct scm* string = make_string(name, l);
+	y->length = l;
 	y->string = string->string;
-	hash_set_x(g_symbols, GetSCM2(string), x);
+	hash_set_x(g_symbols, string, x);
 }
 
-SCM mes_symbols()  ///((internal))
+struct scm* mes_symbols()  ///((internal))
 {
-	gc_init_cells();
-	g_free = cell_symbol_test + 1;
 	g_symbol_max = g_free;
-	g_symbols = GetSCM2(bad2good(make_hash_table_(500)));
+	g_symbols = make_hash_table_(500);
 	init_symbol(cell_nil, TSPECIAL, "()");
 	init_symbol(cell_f, TSPECIAL, "#f");
 	init_symbol(cell_t, TSPECIAL, "#t");
@@ -325,90 +321,90 @@ SCM mes_symbols()  ///((internal))
 	init_symbol(cell_type_vector, TSYMBOL, "<cell:vector>");
 	init_symbol(cell_type_broken_heart, TSYMBOL, "<cell:broken-heart>");
 	init_symbol(cell_symbol_test, TSYMBOL, "%%test");
-	SCM a = cell_nil;
+	struct scm* a = cell_nil;
 	a = acons_(cell_symbol_call_with_values, cell_symbol_call_with_values, a);
 	a = acons_(cell_symbol_boot_module, cell_symbol_boot_module, a);
 	a = acons_(cell_symbol_current_module, cell_symbol_current_module, a);
 	a = acons_(cell_symbol_call_with_current_continuation, cell_call_with_current_continuation, a);
-	a = acons_(cell_symbol_mes_version, GetSCM2(make_string_("git")), a); // FIXME
-	a = acons_(cell_symbol_mes_prefix, GetSCM2(make_string_("mes")), a);  // FIXME
-	a = acons_(cell_type_bytes, make_cell__ (TNUMBER, 0, (long)TBYTES), a);
-	a = acons_(cell_type_char, make_cell__ (TNUMBER, 0, (long)TCHAR), a);
-	a = acons_(cell_type_closure, make_cell__ (TNUMBER, 0, (long)TCLOSURE), a);
-	a = acons_(cell_type_continuation, make_cell__ (TNUMBER, 0, (long)TCONTINUATION), a);
-	a = acons_(cell_type_keyword, make_cell__ (TNUMBER, 0, (long)TKEYWORD), a);
-	a = acons_(cell_type_macro, make_cell__ (TNUMBER, 0, (long)TMACRO), a);
-	a = acons_(cell_type_number, make_cell__ (TNUMBER, 0, (long)TNUMBER), a);
-	a = acons_(cell_type_pair, make_cell__ (TNUMBER, 0, (long)TPAIR), a);
-	a = acons_(cell_type_port, make_cell__ (TNUMBER, 0, (long)TPORT), a);
-	a = acons_(cell_type_ref, make_cell__ (TNUMBER, 0, (long)TREF), a);
-	a = acons_(cell_type_special, make_cell__ (TNUMBER, 0, (long)TSPECIAL), a);
-	a = acons_(cell_type_string, make_cell__ (TNUMBER, 0, (long)TSTRING), a);
-	a = acons_(cell_type_struct, make_cell__ (TNUMBER, 0, (long)TSTRUCT), a);
-	a = acons_(cell_type_symbol, make_cell__ (TNUMBER, 0, (long)TSYMBOL), a);
-	a = acons_(cell_type_values, make_cell__ (TNUMBER, 0, (long)TVALUES), a);
-	a = acons_(cell_type_variable, make_cell__ (TNUMBER, 0, (long)TVARIABLE), a);
-	a = acons_(cell_type_vector, make_cell__ (TNUMBER, 0, (long)TVECTOR), a);
-	a = acons_(cell_type_broken_heart, make_cell__ (TNUMBER, 0, (long)TBROKEN_HEART), a);
+	a = acons_(cell_symbol_mes_version, make_string_("git"), a); // FIXME
+	a = acons_(cell_symbol_mes_prefix, make_string_("mes"), a);  // FIXME
+	a = acons_(cell_type_bytes, make_number((long)TBYTES), a);
+	a = acons_(cell_type_char, make_number(TCHAR), a);
+	a = acons_(cell_type_closure, make_number(TCLOSURE), a);
+	a = acons_(cell_type_continuation, make_number(TCONTINUATION), a);
+	a = acons_(cell_type_keyword, make_number(TKEYWORD), a);
+	a = acons_(cell_type_macro, make_number(TMACRO), a);
+	a = acons_(cell_type_number, make_number(TNUMBER), a);
+	a = acons_(cell_type_pair, make_number(TPAIR), a);
+	a = acons_(cell_type_port, make_number(TPORT), a);
+	a = acons_(cell_type_ref, make_number(TREF), a);
+	a = acons_(cell_type_special, make_number(TSPECIAL), a);
+	a = acons_(cell_type_string, make_number(TSTRING), a);
+	a = acons_(cell_type_struct, make_number(TSTRUCT), a);
+	a = acons_(cell_type_symbol, make_number(TSYMBOL), a);
+	a = acons_(cell_type_values, make_number(TVALUES), a);
+	a = acons_(cell_type_variable, make_number(TVARIABLE), a);
+	a = acons_(cell_type_vector, make_number(TVECTOR), a);
+	a = acons_(cell_type_broken_heart, make_number(TBROKEN_HEART), a);
 	a = acons_(cell_closure, a, a);
 	return a;
 }
 
-SCM make_builtin(struct scm* builtin_type, SCM name, SCM arity, SCM function)
+struct scm* make_builtin(struct scm* builtin_type, struct scm* name, struct scm* arity, struct scm* function)
 {
-	SCM values = cell_nil;
-	values = cons_(function, values);
-	values = cons_(arity, values);
-	values = cons_(name, values);
-	values = cons_(cell_symbol_builtin, values);
-	return GetSCM2(make_struct(GetSCM2(builtin_type), values, GetSCM2(cstring_to_symbol("builtin-printer"))));
+	struct scm* v = cell_nil;
+	v = cons_(function, v);
+	v = cons_(arity, v);
+	v = cons_(name, v);
+	v = cons_(cell_symbol_builtin, v);
+	return make_struct(builtin_type, v, cstring_to_symbol("builtin-printer"));
 }
 
 struct scm* make_builtin_type()  ///(internal))
 {
-	struct scm* fields = Getstructscm2(cell_nil);
+	struct scm* fields = cell_nil;
 	fields = cons(cstring_to_symbol("address"), fields);
 	fields = cons(cstring_to_symbol("arity"), fields);
 	fields = cons(cstring_to_symbol("name"), fields);
-	fields = cons(fields, Getstructscm2(cell_nil));
-	fields = cons(Getstructscm2(cell_symbol_builtin), fields);
-	return make_struct(cell_symbol_record_type, GetSCM2(fields), cell_unspecified);
+	fields = cons(fields, cell_nil);
+	fields = cons(cell_symbol_builtin, fields);
+	return make_struct(cell_symbol_record_type, fields, cell_unspecified);
 }
 
 struct scm* init_builtin(struct scm* builtin_type, char const* name, int arity, struct scm*(*function)(), struct scm* a)
 {
-	SCM s = GetSCM2(cstring_to_symbol(name));
-	return Getstructscm2(acons_(s, make_builtin(builtin_type, GetSCM2(symbol_to_string(s)), make_cell__ (TNUMBER, 0, (long)arity), make_cell__ (TNUMBER, 0, (long)function)), GetSCM2(a)));
+	struct scm* s = cstring_to_symbol(name);
+	return acons_(s, make_builtin(builtin_type, symbol_to_string(s), make_number(arity), make_number((SCM)function)), a);
 }
 
-struct scm* builtin_name(SCM builtin)
+struct scm* builtin_name(struct scm* builtin)
 {
-	return good2bad(struct_ref_(builtin, 3));
+	return struct_ref_(builtin, 3);
 }
 
-struct scm* builtin_arity(SCM builtin)
+struct scm* builtin_arity(struct scm* builtin)
 {
-	return good2bad(struct_ref_(builtin, 4));
+	return struct_ref_(builtin, 4);
 }
 
-void* builtin_function(SCM builtin)
+void* builtin_function(struct scm* builtin)
 {
 	return (void*)struct_ref_(builtin, 5)->rdc;
 }
 
-struct scm* builtin_p(SCM x)
+struct scm* builtin_p(struct scm* x)
 {
-	struct scm* y = Getstructscm2(x);
-	if (y->type == TSTRUCT && GetSCM2(struct_ref_(x, 2)) == cell_symbol_builtin) return good2bad(Getstructscm2(cell_t));
-	return good2bad(Getstructscm2(cell_f));
+	struct scm* y = x;
+	if (y->type == TSTRUCT && struct_ref_(x, 2) == cell_symbol_builtin) return cell_t;
+	return cell_f;
 }
 
-struct scm* builtin_printer(SCM builtin)
+struct scm* builtin_printer(struct scm* builtin)
 {
 	fdputs("#<procedure ", __stdout);
-	display_(GetSCM2(bad2good(builtin_name(builtin))));
+	display_(builtin_name(builtin));
 	fdputc(' ', __stdout);
-	int arity = bad2good(builtin_arity(builtin))->value;
+	int arity = builtin_arity(builtin)->value;
 
 	if(arity == -1)
 	{
@@ -430,26 +426,26 @@ struct scm* builtin_printer(SCM builtin)
 	}
 
 	fdputc('>', __stdout);
-	return good2bad(Getstructscm2(cell_unspecified));
+	return cell_unspecified;
 }
 
-struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
+struct scm* apply_builtin(struct scm* fn, struct scm* x)  ///((internal))
 {
-	int arity = bad2good(builtin_arity(fn))->value;
-	struct scm* y = Getstructscm2(x);
+	int arity = builtin_arity(fn)->value;
+	struct scm* y = x;
 
-	if((arity > 0 || arity == -1) && x != cell_nil && bad2good(y->car)->type == TVALUES)
+	if((arity > 0 || arity == -1) && x != cell_nil && y->car->type == TVALUES)
 	{
-		y = cons(bad2good(bad2good(bad2good(y->car)->cdr)->car), bad2good(y->cdr));
+		y = cons(y->car->cdr->car, y->cdr);
 	}
 
 	if(arity > 1 || arity == -1)
 	{
-		if(x != cell_nil && bad2good(y->cdr)->type == TPAIR)
+		if(x != cell_nil && y->cdr->type == TPAIR)
 		{
-			if(bad2good(bad2good(Getstructscm2(x)->cdr)->car)->type == TVALUES)
+			if(x->cdr->car->type == TVALUES)
 			{
-				y = cons(bad2good(y->car), cons(bad2good(bad2good(bad2good(bad2good(y->cdr)->car)->cdr)->car), bad2good(y->cdr)));
+				y = cons(y->car, cons(y->cdr->car->cdr->car, y->cdr));
 			}
 		}
 	}
@@ -458,34 +454,34 @@ struct scm* apply_builtin(SCM fn, SCM x)  ///((internal))
 	{
 		//function0_t fp = f->function;
 		FUNCTION0* fp = builtin_function(fn);
-		return bad2good(fp());
+		return fp();
 	}
 	else if(arity == 1)
 	{
 		//function1_t fp = f->function;
 		FUNCTION1* fp = builtin_function(fn);
-		return bad2good(fp(y->car));
+		return fp(y->car);
 	}
 	else if(arity == 2)
 	{
 		//function2_t fp = f->function;
 		FUNCTION2* fp = builtin_function(fn);
-		return bad2good(fp(y->car, bad2good(y->cdr)->car));
+		return fp(y->car, y->cdr->car);
 	}
 	else if(arity == 3)
 	{
 		//function3_t fp = f->function;
 		FUNCTION3* fp = builtin_function(fn);
-		return bad2good(fp(y->car, bad2good(y->cdr)->car, bad2good(bad2good(y->cdr)->cdr)->car));
+		return fp(y->car, y->cdr->car, y->cdr->cdr->car);
 	}
 	else if(arity == -1)
 	{
 		//functionn_t fp = f->function;
 		FUNCTION1* fp = builtin_function(fn);
-		return bad2good(fp(good2bad(y)));
+		return fp(y);
 	}
 
-	return Getstructscm2(cell_unspecified);
+	return cell_unspecified;
 }
 
 

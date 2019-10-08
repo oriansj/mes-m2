@@ -27,70 +27,68 @@
 // CONSTANT STRUCT_PRINTER 1
 #define STRUCT_PRINTER 1
 
-long length__(SCM x);
-SCM make_cell__(SCM type, SCM car, SCM cdr);
-struct scm* vector_entry(SCM x);
-struct scm* make_struct(SCM type, struct scm* fields, SCM printer);
+long length__(struct scm* x);
+struct scm* make_number(SCM n);
+struct scm* make_char(SCM c);
+struct scm* vector_entry(struct scm* x);
+struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
 
-struct scm* make_struct_(SCM type, struct scm* fields, SCM printer) /* External */
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer) /* External */
 {
-	return good2bad(make_struct(type, fields, printer));
+	return make_struct(type, fields, printer);
 }
 
 struct scm* struct_length(struct scm* x)
 {
-	x = bad2good(x);
 	assert(x->type == TSTRUCT);
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, x->length)));
+	return make_number(x->length);
 }
 
 struct scm* struct_ref_(struct scm* x, long i)
 {
-	x = bad2good(x);
 	assert(x->type == TSTRUCT);
 	assert(i < x->length);
-	struct scm* f = bad2good(x->cdr) + i;
+	struct scm* f = x->cdr + i;
 
 	if(f->type == TREF)
 	{
-		return bad2good(f->car);
+		return f->car;
 	}
 
 	if(f->type == TCHAR)
 	{
-		return Getstructscm2(make_cell__ (TCHAR, 0, f->rdc));
+		return make_char(f->rdc);
 	}
 
 	if(f->type == TNUMBER)
 	{
-		return Getstructscm2(make_cell__ (TNUMBER, 0, f->rdc));
+		return make_number(f->rdc);
 	}
 
 	return f;
 }
 
-struct scm* struct_set_x_(struct scm* x, long i, SCM e)
+struct scm* struct_set_x_(struct scm* x, long i, struct scm* e)
 {
-	x = bad2good(x);
 	assert(x->type == TSTRUCT);
 	assert(i < x->length);
 	struct scm* v = vector_entry(e);
-	struct scm* y = bad2good(x->cdr) + i;
+	struct scm* y = x->cdr + i;
 	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
 	*y = *v;
-	return good2bad(Getstructscm2(cell_unspecified));
+	return cell_unspecified;
 }
 
-struct scm* struct_ref(SCM x, SCM i) /* External */
+struct scm* struct_ref(struct scm* x, struct scm* i) /* External */
 {
-	struct scm* h = Getstructscm2(i);
-	struct scm* y = Getstructscm2(x);
-	return good2bad(struct_ref_(good2bad(y), h->rdc));
+	struct scm* h = i;
+	struct scm* y = x;
+	return struct_ref_(y, h->rdc);
 }
 
-struct scm* struct_set_x(SCM x, SCM i, SCM e)
+struct scm* struct_set_x(struct scm* x, struct scm* i, struct scm* e)
 {
-	struct scm* h = Getstructscm2(i);
-	struct scm* y = Getstructscm2(x);
-	return struct_set_x_(good2bad(y), h->rdc, e);
+	struct scm* h = i;
+	struct scm* y = x;
+	return struct_set_x_(y, h->rdc, e);
 }
