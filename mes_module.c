@@ -22,76 +22,75 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* struct_ref_(SCM x, long i);
+struct scm* struct_ref_(struct scm* x, long i);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_hashq_type();
-SCM cons_(SCM x, SCM y);
-SCM make_cell__(SCM type, SCM car, SCM cdr);
-struct scm* make_struct(SCM type, SCM fields, SCM printer);
-SCM acons_(SCM key, SCM value, SCM alist);
+struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist);
 struct scm* make_hash_table_(long size);
-SCM assq(SCM x, SCM a);
-struct scm* hashq_get_handle(SCM table, SCM key, SCM dflt);
-struct scm* hashq_set_x(SCM table, SCM key, SCM value);
+struct scm* assq(struct scm* x, struct scm* a);
+struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* hashq_set_x(struct scm* table, struct scm* key, struct scm* value);
 
 struct scm* make_module_type()
 {
-	SCM record_type = cell_symbol_record_type; // FIXME
-	SCM fields = cell_nil;
-	fields = cons_(GetSCM2(cstring_to_symbol("globals")), fields);
-	fields = cons_(GetSCM2(cstring_to_symbol("locals")), fields);
-	fields = cons_(GetSCM2(cstring_to_symbol("name")), fields);
+	struct scm* record_type = cell_symbol_record_type; // FIXME
+	struct scm* fields = cell_nil;
+	fields = cons_(cstring_to_symbol("globals"), fields);
+	fields = cons_(cstring_to_symbol("locals"), fields);
+	fields = cons_(cstring_to_symbol("name"), fields);
 	fields = cons_(fields, cell_nil);
 	fields = cons_(cell_symbol_module, fields);
 	return make_struct(record_type, fields, cell_unspecified);
 }
 
-struct scm* module_variable(SCM module, SCM name)
+struct scm* module_variable(struct scm* module, struct scm* name)
 {
-	//SCM locals = struct_ref_ (module, 3);
-	SCM locals = module;
-	SCM x = assq(name, locals);
+	//struct scm* locals = struct_ref_ (module, 3);
+	struct scm* locals = module;
+	struct scm* x = assq(name, locals);
 
 	if(x == cell_f)
 	{
-		SCM globals = GetSCM2(struct_ref_(GetSCM2(bad2good(M0)), 5));
-		x = GetSCM2(bad2good(hashq_get_handle(globals, name, cell_f)));
+		struct scm* globals = struct_ref_(M0, 5);
+		x = hashq_get_handle(globals, name, cell_f);
 	}
 
-	return Getstructscm2(x);
+	return x;
 }
 
 
-struct scm* module_ref(SCM module, SCM name)
+struct scm* module_ref(struct scm* module, struct scm* name)
 {
 	struct scm* y = module_variable(module, name);
 
-	if(GetSCM2(y) == cell_f)
+	if(y == cell_f)
 	{
-		return Getstructscm2(cell_undefined);
+		return cell_undefined;
 	}
 
-	return bad2good(y->cdr);
+	return y->cdr;
 }
 
-struct scm* module_define_x(SCM module, SCM name, SCM value)
+struct scm* module_define_x(struct scm* module, struct scm* name, struct scm* value)
 {
-	SCM globals = GetSCM2(struct_ref_(GetSCM2(bad2good(M0)), 5));
-	return good2bad(hashq_set_x(globals, name, value));
+	struct scm* globals = struct_ref_(M0, 5);
+	return hashq_set_x(globals, name, value);
 }
 
 /* External functions */
-struct scm* module_variable_(SCM module, SCM name) /* EXTERNAL */
+struct scm* module_variable_(struct scm* module, struct scm* name) /* EXTERNAL */
 {
-	return good2bad(module_variable(module, name));
+	return module_variable(module, name);
 }
 
-struct scm* module_ref_(SCM module, SCM name) /* EXTERNAL */
+struct scm* module_ref_(struct scm* module, struct scm* name) /* EXTERNAL */
 {
-	return good2bad(module_ref(module, name));
+	return module_ref(module, name);
 }
 
 struct scm* make_module_type_() /* EXTERNAL */
 {
-	return good2bad(make_module_type());
+	return make_module_type();
 }

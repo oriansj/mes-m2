@@ -24,13 +24,14 @@
 #include <limits.h>
 
 int eputs(char const* s);
-SCM error(SCM key, SCM x);
-SCM cons (SCM x, SCM y);
-SCM make_cell__(SCM type, SCM car, SCM cdr);
+struct scm* error(struct scm* key, struct scm* x);
+struct scm* cons (struct scm* x, struct scm* y);
 
-void assert_number(char const* name, SCM x)
+struct scm* make_number(SCM n);
+
+void assert_number(char const* name, struct scm* x)
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	if(y->type != TNUMBER)
 	{
 		eputs(name);
@@ -38,158 +39,158 @@ void assert_number(char const* name, SCM x)
 	}
 }
 
-struct scm* greater_p(SCM x)  ///((name . ">") (arity . n))
+struct scm* greater_p(struct scm* x)  ///((name . ">") (arity . n))
 {
-	struct scm* y = Getstructscm2(x);
-	if(GetSCM2(y) == cell_nil)
+	struct scm* y = x;
+	if(y == cell_nil)
 	{
-		return good2bad(Getstructscm2(cell_t));
+		return cell_t;
 	}
 
-	assert_number("greater_p", y->rac);
-	long n = bad2good(y->car)->value;
-	y = bad2good(y->cdr);
+	assert_number("greater_p", y->car);
+	long n = y->car->value;
+	y = y->cdr;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("greater_p", y->rac);
+		assert_number("greater_p", y->car);
 
-		if(bad2good(y->car)->value >= n)
+		if(y->car->value >= n)
 		{
-			return good2bad(Getstructscm2(cell_f));
+			return cell_f;
 		}
 
-		n = bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		n = y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(cell_t));
+	return cell_t;
 }
 
-struct scm* less_p(SCM x)  ///((name . "<") (arity . n))
+struct scm* less_p(struct scm* x)  ///((name . "<") (arity . n))
 {
-	struct scm* y = Getstructscm2(x);
-	if(GetSCM2(y) == cell_nil)
+	struct scm* y = x;
+	if(y == cell_nil)
 	{
-		return good2bad(Getstructscm2(cell_t));
+		return cell_t;
 	}
 
-	assert_number("less_p", y->rac);
-	long n = bad2good(y->car)->value;
-	y = bad2good(y->cdr);
+	assert_number("less_p", y->car);
+	long n = y->car->value;
+	y = y->cdr;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("less_p", y->rac);
+		assert_number("less_p", y->car);
 
-		if(bad2good(y->car)->value <= n)
+		if(y->car->value <= n)
 		{
-			return good2bad(Getstructscm2(cell_f));
+			return cell_f;
 		}
 
-		n = bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		n = y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(cell_t));
+	return cell_t;
 }
 
-struct scm* is_p(SCM x)  ///((name . "=") (arity . n))
+struct scm* is_p(struct scm* x)  ///((name . "=") (arity . n))
 {
-	struct scm* y = Getstructscm2(x);
-	if(GetSCM2(y) == cell_nil)
+	struct scm* y = x;
+	if(y == cell_nil)
 	{
-		return good2bad(Getstructscm2(cell_t));
+		return cell_t;
 	}
 
-	assert_number("is_p", y->rac);
-	long n = bad2good(y->car)->value;
-	y = bad2good(y->cdr);
+	assert_number("is_p", y->car);
+	long n = y->car->value;
+	y = y->cdr;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		if(bad2good(y->car)->value != n)
+		if(y->car->value != n)
 		{
-			return good2bad(Getstructscm2(cell_f));
+			return cell_f;
 		}
 
-		y = bad2good(y->cdr);
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(cell_t));
+	return cell_t;
 }
 
-struct scm* minus(SCM x)  ///((name . "-") (arity . n))
+struct scm* minus(struct scm* x)  ///((name . "-") (arity . n))
 {
-	struct scm* y = Getstructscm2(x);
-	assert_number("minus", y->rac);
-	long n = bad2good(y->car)->value;
-	y = bad2good(y->cdr);
+	struct scm* y = x;
+	assert_number("minus", y->car);
+	long n = y->car->value;
+	y = y->cdr;
 
-	if(GetSCM2(y) == cell_nil)
+	if(y == cell_nil)
 	{
 		n = -n;
 	}
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("minus", y->rac);
-		n = n - bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		assert_number("minus", y->car);
+		n = n - y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
+	return make_number(n);
 }
 
-struct scm* plus(SCM x)  ///((name . "+") (arity . n))
+struct scm* plus(struct scm* x)  ///((name . "+") (arity . n))
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	long n = 0;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("plus", y->rac);
-		n = n + bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		assert_number("plus", y->car);
+		n = n + y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
+	return make_number(n);
 }
 
-struct scm* divide(SCM x)  ///((name . "/") (arity . n))
+struct scm* divide(struct scm* x)  ///((name . "/") (arity . n))
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	long n = 1;
 
-	if(GetSCM2(y) != cell_nil)
+	if(y != cell_nil)
 	{
-		assert_number("divide", y->rac);
-		//n = bad2good(y->car)->value;
-		n = bad2good(y->car)->rdc;
-		y = bad2good(y->cdr);
+		assert_number("divide", y->car);
+		//n = y->car->value;
+		n = y->car->rdc;
+		y = y->cdr;
 	}
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("divide", y->rac);
+		assert_number("divide", y->car);
 
 		if(!n)
 		{
 			break;
 		}
 
-		n = n / bad2good(y->car)->rdc;
-		// n = n / bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		n = n / y->car->rdc;
+		// n = n / y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
+	return make_number(n);
 }
 
-struct scm* modulo(SCM a, SCM b)
+struct scm* modulo(struct scm* a, struct scm* b)
 {
-	struct scm* a2 = Getstructscm2(a);
-	struct scm* b2 = Getstructscm2(b);
+	struct scm* a2 = a;
+	struct scm* b2 = b;
 	assert_number("modulo", a);
 	assert_number("modulo", b);
 	long x = a2->rdc;
@@ -200,92 +201,91 @@ struct scm* modulo(SCM a, SCM b)
 		x = x + b2->value;
 	}
 
-	x = x ? x % b2->value : 0;
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, x)));
+	if (x)
+		x = x % b2->value;
+	return make_number(x);
 }
 
-struct scm* multiply(SCM x)  ///((name . "*") (arity . n))
+struct scm* multiply(struct scm* x)  ///((name . "*") (arity . n))
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	long n = 1;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("multiply", y->rac);
-		n = n * bad2good(y->car)->rdc;
-		//n = n * bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		assert_number("multiply", y->car);
+		n = n * y->car->rdc;
+		//n = n * y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
+	return make_number(n);
 }
 
-struct scm* logand(SCM x)  ///((arity . n))
+struct scm* logand(struct scm* x)  ///((arity . n))
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
+	long n = -1;
+
+	while(y != cell_nil)
+	{
+		assert_number("multiply", y->car);
+		n = n & y->car->value;
+		y = y->cdr;
+	}
+
+	return make_number(n);
+}
+
+struct scm* logior(struct scm* x)  ///((arity . n))
+{
+	struct scm* y = x;
 	long n = 0;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("multiply", y->rac);
-		n = n & bad2good(y->car)->rdc;
-		// n = n & bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		assert_number("logior", y->car);
+		n = n | y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
+	return make_number(n);
 }
 
-struct scm* logior(SCM x)  ///((arity . n))
+struct scm* lognot(struct scm* x)
 {
-	struct scm* y = Getstructscm2(x);
-	long n = 0;
-
-	while(GetSCM2(y) != cell_nil)
-	{
-		assert_number("logior", y->rac);
-		n = n | bad2good(y->car)->rdc;
-		// n = n | bad2good(y->car)->value;
-		y = bad2good(y->cdr);
-	}
-
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
-}
-
-struct scm* lognot(SCM x)
-{
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	assert_number("lognot", x);
-	long n = ~y->rdc;
-	// long n = ~y->value;
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
+	long n = ~y->value;
+	return make_number(n);
 }
 
-struct scm* logxor(SCM x)  ///((arity . n))
+struct scm* logxor(struct scm* x)  ///((arity . n))
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	long n = 0;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		assert_number("logxor", y->rac);
-		n = n ^ bad2good(y->car)->rdc;
-		// n = n ^ bad2good(y->car)->value;
-		y = bad2good(y->cdr);
+		assert_number("logxor", y->car);
+		n = n ^ y->car->value;
+		y = y->cdr;
 	}
 
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, n)));
+	return make_number(n);
 }
 
-struct scm* ash(SCM n, SCM count)
+struct scm* ash(struct scm* n, struct scm* count)
 {
-	struct scm* n2 = Getstructscm2(n);
-	struct scm* count2 = Getstructscm2(count);
+	struct scm* n2 = n;
+	struct scm* count2 = count;
 	assert_number("ash", n);
 	assert_number("ash", count);
-	long cn = n2->rdc;
-	// long cn = n2->value;
-	long ccount = count2->rdc;
-	// long ccount = count2->value;
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, (ccount < 0) ? cn >> -ccount : cn << ccount)));
+	long cn = n2->value;
+	long ccount = count2->value;
+	if (ccount < 0)
+		cn = cn >> -ccount;
+	else
+		cn = cn << ccount;
+	return make_number(cn);
 }

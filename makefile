@@ -20,7 +20,7 @@ VPATH = bin:test:test/results
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -D WITH_GLIBC=1
 
-mes-m2: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module.c mes_gc.c mes_lib.c mes_printer.c mes_reader.c mes_posix.c mes_builtins.c mes_eval.c mes.c temp.c functions/in_set.c functions/numerate.c functions/file_print.c | bin
+mes-m2: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module.c mes_gc.c mes_lib.c mes_printer.c mes_reader.c mes_posix.c mes_builtins.c mes_eval.c mes.c functions/in_set.c functions/numerate.c functions/file_print.c | bin
 	$(CC) $(CFLAGS) mes_vector.c \
 	mes_hash.c \
 	mes_struct.c \
@@ -34,8 +34,8 @@ mes-m2: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module
 	mes_posix.c \
 	mes_builtins.c \
 	mes_eval.c \
+	mes_init.c \
 	mes.c \
-	temp.c \
 	functions/in_set.c \
 	functions/numerate.c \
 	functions/file_print.c \

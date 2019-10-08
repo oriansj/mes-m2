@@ -22,158 +22,158 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-SCM make_cell__(SCM type, SCM car, SCM cdr);
-SCM length__(SCM x);
+struct scm* length__(struct scm* x);
 struct scm* cons(struct scm* x, struct scm* y);
-struct scm* equal2_p(SCM a, SCM b);
-struct scm* vector_entry(SCM x);
-struct scm* make_vector__(SCM k);
+struct scm* equal2_p(struct scm* a, struct scm* b);
+struct scm* vector_entry(struct scm* x);
+struct scm* make_vector__(struct scm* k);
 
+struct scm* make_number(SCM n);
+struct scm* make_char(SCM c);
+struct scm* make_tref(struct scm* x);
 
-struct scm* make_vector_(SCM n)
+struct scm* make_vector_(struct scm* n)
 {
-	struct scm* m = Getstructscm2(n);
-	return good2bad(make_vector__(m->rdc));
+	struct scm* m = n;
+	return make_vector__(m->cdr);
 }
 
 struct scm* vector_length(struct scm* x)
 {
-	x = bad2good(x);
 	assert(x->type == TVECTOR);
-	return good2bad(Getstructscm2(make_cell__ (TNUMBER, 0, x->length)));
+	return make_number(x->length);
 }
 
-struct scm* vector_ref_(SCM table, long i)
+struct scm* vector_ref_(struct scm* table, long i)
 {
-	struct scm* y = Getstructscm2(table);
+	struct scm* y = table;
 	assert(y->type == TVECTOR);
 	assert(i < y->length);
-	struct scm* e = bad2good(y->cdr) + i;
+	struct scm* e = y->cdr + i;
 
 	if(e->type == TREF)
 	{
-		return bad2good(e->car);
+		return e->car;
 	}
 
 	if(e->type == TCHAR)
 	{
-		return Getstructscm2(make_cell__ (TCHAR, 0, e->value));
+		return make_char(e->value);
 	}
 
 	if(e->type == TNUMBER)
 	{
-		return Getstructscm2(make_cell__ (TNUMBER, 0, e->value));
+		return make_number(e->value);
 	}
 
 	return e;
 }
 
-struct scm* vector_equal_p(SCM a, SCM b)
+struct scm* vector_equal_p(struct scm* a, struct scm* b)
 {
-	struct scm* a2 = Getstructscm2(a);
-	struct scm* b2 = Getstructscm2(b);
+	struct scm* a2 = a;
+	struct scm* b2 = b;
 
 	if(a2->length != b2->length)
 	{
-		return good2bad(Getstructscm2(cell_f));
+		return cell_f;
 	}
 
 	for(long i = 0; i < a2->length; i++)
 	{
-		SCM ai = a2->vector + i;
-		struct scm* ai2 = Getstructscm2(ai);
-		SCM bi = b2->vector + i;
-		struct scm* bi2 = Getstructscm2(bi);
+		struct scm* ai = a2->vector + i;
+		struct scm* ai2 = ai;
+		struct scm* bi = b2->vector + i;
+		struct scm* bi2 = bi;
 
 		if(ai2->type == TREF)
 		{
-			ai = ai2->rac;
+			ai = ai2->car;
 		}
 
 		if(bi2->type == TREF)
 		{
-			bi = bi2->rac;
+			bi = bi2->car;
 		}
 
-		if(equal2_p(ai, bi) == good2bad(Getstructscm2(cell_f)))
+		if(equal2_p(ai, bi) == cell_f)
 		{
-			return good2bad(Getstructscm2(cell_f));
+			return cell_f;
 		}
 	}
-	return good2bad(Getstructscm2(cell_t));
+	return cell_t;
 }
 
-struct scm* vector_ref(SCM x, SCM i)
+struct scm* vector_ref(struct scm* x, struct scm* i)
 {
-	struct scm* h = Getstructscm2(i);
-	return good2bad(vector_ref_(x, h->rdc));
+	struct scm* h = i;
+	return vector_ref_(x, h->rdc);
 }
 
-struct scm* vector_entry(SCM x)
+struct scm* vector_entry(struct scm* x)
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	if(y->type != TCHAR && y->type != TNUMBER)
 	{
-		return Getstructscm2(make_cell__ (TREF, x, 0));
+		return make_tref(x);
 	}
 
 	return y;
 }
 
-void vector_set_x_(SCM x, long i, SCM e)
+void vector_set_x_(struct scm* x, long i, struct scm* e)
 {
-	struct scm* y = Getstructscm2(x);
+	struct scm* y = x;
 	assert(y->type == TVECTOR);
 	assert(i < y->length);
-	struct scm* z = bad2good(y->cdr) + i;
+	struct scm* z = y->cdr + i;
 	struct scm* f = vector_entry(e);
 	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
 	*z = *f;
 }
 
-struct scm* vector_set_x(SCM x, SCM i, SCM e)
+struct scm* vector_set_x(struct scm* x, struct scm* i, struct scm* e)
 {
-	struct scm* h = Getstructscm2(i);
+	struct scm* h = i;
 	vector_set_x_(x, h->rdc, e);
-	return good2bad(Getstructscm2(cell_unspecified));
+	return cell_unspecified;
 }
 
-struct scm* list_to_vector(SCM x)
+struct scm* list_to_vector(struct scm* x)
 {
 	struct scm* v = make_vector__(length__(x));
-	struct scm* y = Getstructscm2(x);
-	struct scm* p = bad2good(v->cdr);
+	struct scm* y = x;
+	struct scm* p = v->cdr;
 	struct scm* z;
 
-	while(GetSCM2(y) != cell_nil)
+	while(y != cell_nil)
 	{
-		z = vector_entry(y->rac);
+		z = vector_entry(y->car);
 		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
 		*p = *z;
 		p = p + 1;
-		y = bad2good(y->cdr);
+		y = y->cdr;
 	}
 
-	return good2bad(v);
+	return v;
 }
 
 struct scm* vector_to_list(struct scm* v)
 {
-	v = bad2good(v);
-	struct scm* x = Getstructscm2(cell_nil);
+	struct scm* x = cell_nil;
 	SCM i;
 
 	for(i = v->length; i; i = i - 1)
 	{
-		struct scm* f = bad2good(v->cdr) + i -1;
+		struct scm* f = v->cdr + i -1;
 
 		if(f->type == TREF)
 		{
-			f = bad2good(f->car);
+			f = f->car;
 		}
 
 		x = cons(f, x);
 	}
 
-	return good2bad(x);
+	return x;
 }
