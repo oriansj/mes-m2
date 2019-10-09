@@ -35,8 +35,8 @@ struct scm* make_stack_type();
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_frame_type();
 struct scm* cons_ (struct scm* x, struct scm* y);
-struct scm* make_vector__(long k);
-void vector_set_x_(struct scm* x, long i, struct scm* e);
+struct scm* make_vector__(SCM k);
+void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
 SCM GC_SAFETY;
 SCM ARENA_SIZE;

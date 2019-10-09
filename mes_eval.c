@@ -69,8 +69,8 @@ struct scm* set_current_input_port (struct scm* port);
 struct scm* read_input_file_env ();
 struct scm* init_time(struct scm* a);
 struct scm* vector_ref_(struct scm* x, SCM i);
-struct scm* make_vector__(struct scm* k);
-struct scm* vector_set_x_(struct scm* x, struct scm* i, struct scm* e);
+struct scm* make_vector__(SCM k);
+struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
 struct scm* make_tmacro(struct scm* a, struct scm* b);
 struct scm* make_tcontinuation(SCM a, SCM b);
@@ -819,11 +819,11 @@ if_expr:
 call_with_current_continuation:
 	gc_push_frame();
 	X = make_tcontinuation(g_continuations++, g_stack);
-	V = make_vector__(STACK_SIZE - g_stack);
+	V = make_vector__(5);
 
-	for(t = g_stack; t < STACK_SIZE; t++)
+	for(t = 0; t < 5; t++)
 	{
-		vector_set_x_(V, t - g_stack, g_stack_array[t]);
+		vector_set_x_(V, t, g_stack_array[g_stack + t]);
 	}
 
 	X->continuation = V;
@@ -831,11 +831,11 @@ call_with_current_continuation:
 	push_cc(cons_(R1->car, cons_(X, cell_nil)), X, R0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
-	V = make_vector__(STACK_SIZE - g_stack);
+	V = make_vector__(5);
 
-	for(t = g_stack; t < STACK_SIZE; t++)
+	for(t = 0; t < 5; t++)
 	{
-		vector_set_x_(V, t - g_stack, g_stack_array[t]);
+		vector_set_x_(V, t , g_stack_array[g_stack + t]);
 	}
 
 	R2->continuation = V;
