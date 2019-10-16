@@ -46,7 +46,7 @@ struct scm* check_apply(struct scm* f, struct scm* e);
 struct scm* pairlis(struct scm* x, struct scm* y, struct scm* a);
 struct scm* call_lambda(struct scm* e, struct scm* x);
 struct scm* make_string(char const* s, int length);
-struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args);
 struct scm* error(struct scm* key, struct scm* x);
 struct scm* mes_builtins(struct scm* a);
@@ -262,7 +262,7 @@ evlis2:
 	push_cc(R2->cdr, R1, R0, cell_vm_evlis3);
 	goto evlis;
 evlis3:
-	R1 = cons_(R2, R1);
+	R1 = cons(R2, R1);
 	goto vm_return;
 apply:
 	g_stack_array[g_stack + FRAME_PROCEDURE] = R1->car;
@@ -312,7 +312,7 @@ apply:
 
 		if(C == cell_vm_apply)
 		{
-			push_cc(cons_(R1->cdr->car, R1->cdr->cdr->car), R1, R0, cell_vm_return);
+			push_cc(cons(R1->cdr->car, R1->cdr->cdr->car), R1, R0, cell_vm_return);
 			goto apply;
 		}
 		else if(C ==  cell_vm_eval)
@@ -322,7 +322,7 @@ apply:
 		}
 		else if(C ==  cell_vm_begin_expand)
 		{
-			push_cc(cons_(R1->cdr->car, cell_nil), R1, R1->cdr->cdr->car, cell_vm_return);
+			push_cc(cons(R1->cdr->car, cell_nil), R1, R1->cdr->cdr->car, cell_vm_return);
 			goto begin_expand;
 		}
 		else if(C ==  cell_call_with_current_continuation)
@@ -375,7 +375,7 @@ apply:
 	goto eval;
 apply2:
 	check_apply(R1, R2->car);
-	R1 = cons_(R1, R2->cdr);
+	R1 = cons(R1, R2->cdr);
 	goto apply;
 eval:
 	t = R1->type;
@@ -483,7 +483,7 @@ eval_macro_expand_expand:
 
 				if(R1->cdr->car->type != TPAIR)
 				{
-					push_cc(R1->cdr->cdr->car, R2, cons_(cons_(R1->cdr->car, R1->cdr->car), R0), cell_vm_eval_define);
+					push_cc(R1->cdr->cdr->car, R2, cons(cons(R1->cdr->car, R1->cdr->car), R0), cell_vm_eval_define);
 					goto eval;
 				}
 				else
@@ -497,7 +497,7 @@ eval_macro_expand_expand:
 						expand_variable(BODY, FORMALS);
 					}
 
-					R1 = cons_(cell_symbol_lambda, cons_(FORMALS, BODY));
+					R1 = cons(cell_symbol_lambda, cons(FORMALS, BODY));
 					push_cc(R1, R2, P, cell_vm_eval_define);
 					goto eval;
 				}
@@ -523,8 +523,8 @@ eval_define:
 				}
 				else
 				{
-					ENTRY = cons_(NAME, R1);
-					AA = cons_(ENTRY, cell_nil);
+					ENTRY = cons(NAME, R1);
+					AA = cons(ENTRY, cell_nil);
 					set_cdr_x(AA, cdr(R0));
 					set_cdr_x(R0, AA);
 					CL = module_variable(R0, cell_closure);
@@ -542,7 +542,7 @@ eval_check_func:
 			push_cc(R2->cdr, R2, R0, cell_vm_eval2);
 			goto evlis;
 eval2:
-			R1 = cons_(R2->car, R1);
+			R1 = cons(R2->car, R1);
 			goto apply;
 		}
 	}
@@ -600,7 +600,7 @@ macro_expand_lambda:
 
 	if(R1->type == TPAIR && (MACRO = get_macro(R1->car)) != cell_f)
 	{
-		R1 = cons_(MACRO, R1->cdr);
+		R1 = cons(MACRO, R1->cdr);
 		push_cc(R1, cell_nil, R0, cell_vm_macro_expand);
 		goto apply;
 	}
@@ -651,7 +651,7 @@ macro_expand_set_x:
 
 				if(SC_EXPAND != cell_undefined && SC_EXPAND != cell_f)
 				{
-					R1 = cons_(SC_EXPAND, cons_(R1, cell_nil));
+					R1 = cons(SC_EXPAND, cons(R1, cell_nil));
 					goto apply;
 				}
 			}
@@ -689,7 +689,7 @@ begin:
 		{
 			if(R1->car->car == cell_symbol_primitive_load)
 			{
-				PROGRAM = cons_(R1->car, cell_nil);
+				PROGRAM = cons(R1->car, cell_nil);
 				push_cc(PROGRAM, R1, R0, cell_vm_begin_primitive_load);
 				goto begin_expand;
 begin_primitive_load:
@@ -770,7 +770,7 @@ begin_expand_primitive_load:
 				INPUT = R1;
 				R1 = X;
 				set_current_input_port(INPUT);
-				R1 = cons_(cell_symbol_begin, R1);
+				R1 = cons(cell_symbol_begin, R1);
 				R2->car = R1;
 				R1 = R2;
 				continue;
@@ -832,7 +832,7 @@ call_with_current_continuation:
 
 	X->continuation = V;
 	gc_pop_frame();
-	push_cc(cons_(R1->car, cons_(X, cell_nil)), X, R0, cell_vm_call_with_current_continuation2);
+	push_cc(cons(R1->car, cons(X, cell_nil)), X, R0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
 	V = make_vector__(5);
@@ -845,7 +845,7 @@ call_with_current_continuation2:
 	R2->continuation = V;
 	goto vm_return;
 call_with_values:
-	push_cc(cons_(R1->car, cell_nil), R1, R0, cell_vm_call_with_values2);
+	push_cc(cons(R1->car, cell_nil), R1, R0, cell_vm_call_with_values2);
 	goto apply;
 call_with_values2:
 
@@ -854,7 +854,7 @@ call_with_values2:
 		R1 = R1->cdr;
 	}
 
-	R1 = cons_(R2->cdr->car, R1);
+	R1 = cons(R2->cdr->car, R1);
 	goto apply;
 vm_return:
 	X = R1;

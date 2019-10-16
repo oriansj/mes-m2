@@ -23,7 +23,7 @@
 #include "mes_constants.h"
 
 char *itoa (int number);
-struct scm* cons_ (struct scm* x, struct scm* y);
+struct scm* cons (struct scm* x, struct scm* y);
 struct scm* make_bytes(char const* s, size_t length);
 struct scm* write_error_ (struct scm* x);
 struct scm* hash_ref (struct scm* table, struct scm* key, struct scm* dflt);
@@ -99,8 +99,8 @@ struct scm* string_equal_p(struct scm* a, struct scm* b)
 	if(a2->length != b2->length) return nil;
 
 	/* Need to fix */
-	char* s1 = (char*)&a2->cdr->string;
-	char* s2 = (char*)&b2->cdr->string;
+	char* s1 = a2->cdr->string;
+	char* s2 = b2->cdr->string;
 
 	while(s1[0] == s2[0])
 	{
@@ -181,7 +181,7 @@ struct scm* make_symbol_(struct scm* string)
 struct scm* string_to_list(struct scm* string)
 {
 	struct scm* x = string;
-	char* s = (char*)&x->cdr->rdc;
+	char* s = x->cdr->string;
 	SCM i = strlen(s);
 	struct scm* p = cell_nil;
 
@@ -189,7 +189,7 @@ struct scm* string_to_list(struct scm* string)
 	{
 		i = i - 1;
 		int c = (0xFF & s[i]);
-		p = cons_(make_char(c), p);
+		p = cons(make_char(c), p);
 	}
 
 	return p;
@@ -213,7 +213,7 @@ struct scm* string_append(struct scm* x)  /*((arity . n))*/
 	{
 		struct scm* y2 = y1->car;
 		assert(y2->type == TSTRING);
-		memcpy(p, &y2->cdr->rdc, y2->rac + 1);
+		memcpy(p, y2->cdr->string, y2->rac + 1);
 		p += y2->length;
 		size += y2->length;
 
@@ -239,13 +239,13 @@ struct scm* string_ref(struct scm* str, struct scm* k)
 	assert(x->type == TSTRING);
 	assert(y->type == TNUMBER);
 	size_t size = x->length;
-	size_t i = y->rdc;
+	size_t i = y->value;
 
 	if(i > size)
 	{
-		error(cell_symbol_system_error, cons_(make_string("value out of range", strlen ("value out of range")), k));
+		error(cell_symbol_system_error, cons(make_string("value out of range", strlen ("value out of range")), k));
 	}
 
-	char const *p = (char*) &x->cdr->string;
+	char* p = x->cdr->string;
 	return make_char(p[i]);
 }

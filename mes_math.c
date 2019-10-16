@@ -165,8 +165,7 @@ struct scm* divide(struct scm* x)  ///((name . "/") (arity . n))
 	if(y != cell_nil)
 	{
 		assert_number("divide", y->car);
-		//n = y->car->value;
-		n = y->car->rdc;
+		n = y->car->value;
 		y = y->cdr;
 	}
 
@@ -179,8 +178,7 @@ struct scm* divide(struct scm* x)  ///((name . "/") (arity . n))
 			break;
 		}
 
-		n = n / y->car->rdc;
-		// n = n / y->car->value;
+		n = n / y->car->value;
 		y = y->cdr;
 	}
 
@@ -193,8 +191,7 @@ struct scm* modulo(struct scm* a, struct scm* b)
 	struct scm* b2 = b;
 	assert_number("modulo", a);
 	assert_number("modulo", b);
-	long x = a2->rdc;
-	// long x = a2->value;
+	long x = a2->value;
 
 	while(x < 0)
 	{
@@ -214,8 +211,7 @@ struct scm* multiply(struct scm* x)  ///((name . "*") (arity . n))
 	while(y != cell_nil)
 	{
 		assert_number("multiply", y->car);
-		n = n * y->car->rdc;
-		//n = n * y->car->value;
+		n = n * y->car->value;
 		y = y->cdr;
 	}
 
@@ -283,9 +279,12 @@ struct scm* ash(struct scm* n, struct scm* count)
 	assert_number("ash", count);
 	long cn = n2->value;
 	long ccount = count2->value;
-	if (ccount < 0)
-		cn = cn >> -ccount;
+
+	long r;
+	if(ccount < 0)
+		r = cn >> -ccount;
 	else
-		cn = cn << ccount;
-	return make_number(cn);
+		r = cn << ccount;
+
+	return make_number(r);
 }

@@ -22,11 +22,6 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-// CONSTANT STRUCT_TYPE 0
-#define STRUCT_TYPE 0
-// CONSTANT STRUCT_PRINTER 1
-#define STRUCT_PRINTER 1
-
 long length__(struct scm* x);
 struct scm* make_number(SCM n);
 struct scm* make_char(SCM c);
@@ -57,12 +52,12 @@ struct scm* struct_ref_(struct scm* x, long i)
 
 	if(f->type == TCHAR)
 	{
-		return make_char(f->rdc);
+		return make_char(f->value);
 	}
 
 	if(f->type == TNUMBER)
 	{
-		return make_number(f->rdc);
+		return make_number(f->value);
 	}
 
 	return f;
@@ -83,12 +78,12 @@ struct scm* struct_ref(struct scm* x, struct scm* i) /* External */
 {
 	struct scm* h = i;
 	struct scm* y = x;
-	return struct_ref_(y, h->rdc);
+	return struct_ref_(y, h->value);
 }
 
 struct scm* struct_set_x(struct scm* x, struct scm* i, struct scm* e)
 {
 	struct scm* h = i;
 	struct scm* y = x;
-	return struct_set_x_(y, h->rdc, e);
+	return struct_set_x_(y, h->value, e);
 }

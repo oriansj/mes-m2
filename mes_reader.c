@@ -31,7 +31,7 @@ int numerate_string(char *a);
 /* Standard Mes.c function imports */
 void assert_max_string(int i, char const* msg, char* string);
 struct scm* read_env(struct scm* a);
-struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 int readchar();
 struct scm* error(struct scm* key, struct scm* x);
 struct scm* make_string_(char const* s);
@@ -59,7 +59,7 @@ struct scm* read_input_file_env_(struct scm* e, struct scm* a)
 		return cell_nil;
 	}
 
-	return cons_(e, read_input_file_env_(read_env(a), a));
+	return cons(e, read_input_file_env_(read_env(a), a));
 }
 
 struct scm* read_input_file_env()
@@ -149,7 +149,7 @@ reset_reader:
 
 	if(c == '`')
 	{
-		return cons_(cell_symbol_quasiquote, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+		return cons(cell_symbol_quasiquote, cons(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == ',')
@@ -157,15 +157,15 @@ reset_reader:
 		if(peekchar() == '@')
 		{
 			readchar();
-			return cons_(cell_symbol_unquote_splicing, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+			return cons(cell_symbol_unquote_splicing, cons(reader_read_sexp_(readchar(), a), cell_nil));
 		}
 
-		return cons_(cell_symbol_unquote, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+		return cons(cell_symbol_unquote, cons(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '\'')
 	{
-		return cons_(cell_symbol_quote, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+		return cons(cell_symbol_quote, cons(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '"')
@@ -236,7 +236,7 @@ struct scm* reader_read_list(int c, struct scm* a)
 		return s->car;
 	}
 
-	return cons_(s, reader_read_list(readchar(), a));
+	return cons(s, reader_read_list(readchar(), a));
 }
 
 int index_number__(char* s, char c) /* Internal only */
@@ -324,20 +324,20 @@ struct scm* reader_read_hash(int c, struct scm* a)
 		if(peekchar() == '@')
 		{
 			readchar();
-			return cons_(cell_symbol_unsyntax_splicing, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+			return cons(cell_symbol_unsyntax_splicing, cons(reader_read_sexp_(readchar(), a), cell_nil));
 		}
 
-		return cons_(cell_symbol_unsyntax, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+		return cons(cell_symbol_unsyntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '\'')
 	{
-		return cons_(cell_symbol_syntax, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+		return cons(cell_symbol_syntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '`')
 	{
-		return cons_(cell_symbol_quasisyntax, cons_(reader_read_sexp_(readchar(), a), cell_nil));
+		return cons(cell_symbol_quasisyntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == ':')
@@ -346,7 +346,7 @@ struct scm* reader_read_hash(int c, struct scm* a)
 
 		if(x->type == TNUMBER)
 		{ /* READ error */
-			error(cell_symbol_system_error, cons_(make_string_("keyword perifx ':' not followed by a symbol: "), x));
+			error(cell_symbol_system_error, cons(make_string_("keyword perifx ':' not followed by a symbol: "), x));
 		}
 
 		return symbol_to_keyword(x);
@@ -565,7 +565,7 @@ struct scm* read_string(struct scm* port)  ///((arity . n))
 
 	if(x->type == TPAIR && x->car->type == TNUMBER)
 	{
-		__stdin = x->car->rdc;
+		__stdin = x->car->value;
 	}
 
 	int c = readchar();

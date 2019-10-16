@@ -55,7 +55,6 @@ struct scm
 	union
 	{
 		struct scm* cdr;
-		SCM rdc;
 		char* cbytes;
 		struct scm* closure;
 		struct scm* continuation;

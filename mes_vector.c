@@ -107,7 +107,7 @@ struct scm* vector_equal_p(struct scm* a, struct scm* b)
 struct scm* vector_ref(struct scm* x, struct scm* i)
 {
 	struct scm* h = i;
-	return vector_ref_(x, h->rdc);
+	return vector_ref_(x, h->value);
 }
 
 struct scm* vector_entry(struct scm* x)
@@ -135,7 +135,7 @@ void vector_set_x_(struct scm* x, long i, struct scm* e)
 struct scm* vector_set_x(struct scm* x, struct scm* i, struct scm* e)
 {
 	struct scm* h = i;
-	vector_set_x_(x, h->rdc, e);
+	vector_set_x_(x, h->value, e);
 	return cell_unspecified;
 }
 
