@@ -22,7 +22,7 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 struct scm* cstring_to_symbol(char const *s);
 void vector_set_x_(struct scm* x, long i, struct scm* e);
 struct scm* struct_ref_(struct scm* x, long i);
@@ -45,14 +45,14 @@ struct scm* exit_(struct scm* x)  ///((name . "exit"))
 
 struct scm* make_frame_type()  ///((internal))
 {
-	return make_struct(cell_symbol_record_type, cons_(cell_symbol_frame, cons_(cons_(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified);
+	return make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified);
 }
 
 
 struct scm* make_stack_type()  ///((internal))
 {
 	return make_struct(cell_symbol_record_type
-	                  , cons_(cell_symbol_stack, cons_(cons_(cstring_to_symbol("frames"), cell_nil), cell_nil))
+	                  , cons(cell_symbol_stack, cons(cons(cstring_to_symbol("frames"), cell_nil), cell_nil))
 	                  , cell_unspecified);
 }
 
@@ -88,71 +88,66 @@ struct scm* stack_ref(struct scm* stack, SCM index)
 
 struct scm* xassq(struct scm* x, struct scm* a)  ///for speed in core only
 {
-	struct scm* a2 = a;
-	while(a2 != cell_nil && x != a2->car->cdr)
+	while(a != cell_nil && x != a->car->cdr)
 	{
-		a2 = a2->cdr;
+		a = a->cdr;
 	}
 
-	return a2 != cell_nil ? a2->car : cell_f;
+	if(cell_nil == a) return cell_f;
+	return a->car;
 }
 
 struct scm* memq(struct scm* x, struct scm* a)
 {
-	struct scm* y = x;
-	struct scm* a2 = a;
-	int t = y->type;
+	int t = x->type;
 
 	if(t == TCHAR || t == TNUMBER)
 	{
-		SCM v = y->value;
+		SCM v = x->value;
 
-		while(a2 != cell_nil && v != a2->car->value)
+		while(a != cell_nil && v != a->car->value)
 		{
-			a2 = a2->cdr;
+			a = a->cdr;
 		}
 	}
 	else if(t == TKEYWORD)
 	{
-		while(a2 != cell_nil && (a2->car->type != TKEYWORD || string_equal_p(x, a2->car) == cell_f))
+		while(a != cell_nil && (a->car->type != TKEYWORD || string_equal_p(x, a->car) == cell_f))
 		{
-			a2 = a2->cdr;
+			a = a->cdr;
 		}
 	}
 	else
 	{
-		while(a2 != cell_nil && x != a2->car)
+		while(a != cell_nil && x != a->car)
 		{
-			a2 = a2->cdr;
+			a = a->cdr;
 		}
 	}
 
-	return a2 != cell_nil ? a2 : cell_f;
+	if(cell_nil == a) return cell_f;
+	return a;
 }
 
 struct scm* equal2_p(struct scm* a, struct scm* b)
 {
-	struct scm* a2 = a;
-	struct scm* b2 = b;
-	struct scm* tee = cell_t;
-
 	if(a == b)
 	{
-		return tee;
+		return cell_t;
 	}
 
-	if(a2->type == TPAIR && b2->type == TPAIR)
+	if(a->type == TPAIR && b->type == TPAIR)
 	{
-		if((tee == equal2_p(a2->car, b2->car)) && (tee == equal2_p(a2->cdr, b2->cdr))) return tee;
+		if((cell_t == equal2_p(a->car, b->car)) && (cell_t == equal2_p(a->cdr, b->cdr))) return cell_t;
 		return cell_f;
 	}
 
-	if(a2->type == TSTRING && b2->type == TSTRING)
+	if(a->type == TSTRING && b->type == TSTRING)
 	{
 		return string_equal_p(a, b);
 	}
 
-	if(a2->type == TVECTOR && b2->type == TVECTOR)
+	if(a->type == TVECTOR && b->type == TVECTOR)
 	{
 		return vector_equal_p(a, b);
 	}
@@ -162,17 +157,16 @@ struct scm* equal2_p(struct scm* a, struct scm* b)
 
 struct scm* last_pair(struct scm* x)
 {
-	struct scm* y = x;
-	while(y != cell_nil && y->cdr != cell_nil)
+	while(x != cell_nil && x->cdr != cell_nil)
 	{
-		y = y->cdr;
+		x = x->cdr;
 	}
 
-	return y;
+	return x;
 }
 
 struct scm* pair_p(struct scm* x)
 {
-	struct scm* y = x;
-	return y->type == TPAIR ? cell_t : cell_f;
+	if(TPAIR == x->type) return cell_t;
+	return cell_f;
 }

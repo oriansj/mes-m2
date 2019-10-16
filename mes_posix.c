@@ -40,10 +40,10 @@ int eputs(char const* s);
 struct scm* make_string(char const* s, int length);
 struct scm* make_string_(char const* s);
 int fdungetc(int c, int fd);
-struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 SCM length__(struct scm* x);
 struct scm* error(struct scm* key, struct scm* x);
-struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist);
+struct scm* acons(struct scm* key, struct scm* value, struct scm* alist);
 
 struct scm* make_number(SCM n);
 struct scm* make_port(SCM n, struct scm* s);
@@ -66,13 +66,22 @@ char* ntoab(long x, int base, int signed_p)
 	do
 	{
 		long i = u % base;
-		*p-- = i > 9 ? 'a' + i - 10 : '0' + i;
+		if(i > 9)
+		{
+			*p = 'a' + i - 10;
+		}
+		else
+		{
+			*p = '0' + i;
+		}
+		p = p - 1;
 		u = u / base;
 	} while(u);
 
 	if(sign_p && *(p + 1) != '0')
 	{
-		*p-- = '-';
+		*p = '-';
+		p = p - 1;
 	}
 
 	return p + 1;
@@ -162,7 +171,7 @@ int peekchar()
 		return -1;
 	}
 
-	char const *p = (char*)&string->cdr->rdc;
+	char *p = string->cdr->string;
 	return p[0];
 }
 
@@ -182,7 +191,7 @@ int readchar()
 		return -1;
 	}
 
-	char const *p = (char*)&string->cdr->rdc;
+	char *p = string->cdr->string;
 	int c = p[0];
 	p = p + 1;
 	port->cdr = make_string(p, length - 1);
@@ -199,10 +208,10 @@ int unreadchar(int c)
 	struct scm* port = current_input_port();
 	struct scm* string = port->cdr;
 	size_t length = string->length;
-	char *p = (char*)&string->cdr->rdc;
+	char *p = string->cdr->string;
 	p = p - 1;
 	string = make_string(p, length + 1);
-	p = (char*)&string->cdr->rdc;
+	p = string->cdr->string;
 	p[0] = c;
 	port->cdr = string;
 	return c;
@@ -255,15 +264,19 @@ struct scm* unread_char(struct scm* i)
 struct scm* getenv_(struct scm* s)  ///((name . "getenv"))
 {
 	struct scm* x = s;
-	char *p = getenv((char*)&x->cdr->rdc);
-	return p ? make_string_(p) : cell_f;
+	char* p = x->cdr->string;
+	char *pass = getenv(p);
+	if(NULL == pass) return cell_f;
+	return make_string_(pass);
 }
 
 struct scm* setenv_(struct scm* s, struct scm* v)  ///((name . "setenv"))
 {
 	struct scm* a = s;
 	struct scm* b = v;
-	setenv((char*)&a->cdr->rdc, (char*)&b->cdr->rdc, 1);
+	char* p1 = a->cdr->string;
+	char* p2 = b->cdr->string;
+	setenv(p1, p2, 1);
 	return cell_unspecified;
 }
 
@@ -271,7 +284,8 @@ struct scm* access_p(struct scm* file_name, struct scm* mode)
 {
 	struct scm* f = file_name;
 	struct scm* m = mode;
-	return access((char*)&f->cdr->rdc, m->value) == 0 ? cell_t : cell_f;
+	char* p = f->cdr->string;
+	return access(p, m->value) == 0 ? cell_t : cell_f;
 }
 
 struct scm* current_input_port()
@@ -308,13 +322,14 @@ SCM mes_open(char const *file_name, int flags, int mode)
 struct scm* open_input_file(struct scm* file_name)
 {
 	struct scm* f = file_name;
-	return make_number( mes_open((char*)&f->cdr->rdc, O_RDONLY, 0));
+	char* p = f->cdr->string;
+	return make_number( mes_open(p, O_RDONLY, 0));
 }
 
 struct scm* open_input_string(struct scm* string)
 {
 	struct scm* port = make_port( -length__ (g_ports) - 2, string);
-	g_ports = cons_(port, g_ports);
+	g_ports = cons(port, g_ports);
 	return port;
 }
 
@@ -357,7 +372,8 @@ struct scm* open_output_file(struct scm* x)  ///((arity . n))
 		mode = f->value;
 	}
 
-	SCM fl = mes_open((char*)&f->cdr->rdc, O_WRONLY | O_CREAT | O_TRUNC, mode);
+	char* p = f->cdr->string;
+	SCM fl = mes_open(p, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	struct scm* handle = make_number(fl);
 	return handle;
 }
@@ -380,7 +396,8 @@ struct scm* chmod_(struct scm* file_name, struct scm* mode)  ///((name . "chmod"
 {
 	struct scm* f = file_name;
 	struct scm* m = mode;
-	chmod((char*)&f->cdr->rdc, m->value);
+	char* p = f->cdr->string;
+	chmod(p, m->value);
 	return cell_unspecified;
 }
 
@@ -404,17 +421,19 @@ struct scm* execl_(struct scm* file_name, struct scm* args)  ///((name . "execl"
 
 	if(length__(args) > 1000)
 	{
-		error(cell_symbol_system_error, cons_(file_name, cons_(make_string_("too many arguments"), cons_(file_name, args))));
+		error(cell_symbol_system_error, cons(file_name, cons(make_string_("too many arguments"), cons(file_name, args))));
 	}
 
-	c_argv[i] = (char*)&f->cdr->rdc;
+	char* p = f->cdr->string;
+	c_argv[i] = p;
 	i = i + 1;
 
 	while(a != cell_nil)
 	{
 		struct scm* aa = a->car;
 		assert(aa->type == TSTRING);
-		c_argv[i] = (char*)&aa->cdr->rdc;
+		p = aa->cdr->string;
+		c_argv[i] = p;
 		i = i + 1;
 		a = a->cdr;
 
@@ -434,7 +453,7 @@ struct scm* waitpid_(struct scm* pid, struct scm* options)
 	struct scm* o = options;
 	int status;
 	int child = waitpid(p->value, &status, o->value);
-	return cons_(make_number( child), make_number( status));
+	return cons(make_number( child), make_number( status));
 }
 
 #if __x86_64__
@@ -449,7 +468,7 @@ struct timespec g_start_time;
 struct scm* init_time(struct scm* a)  ///((internal))
 {
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &g_start_time);
-	return acons_(cell_symbol_internal_time_units_per_second, make_number( TIME_UNITS_PER_SECOND), a);
+	return acons(cell_symbol_internal_time_units_per_second, make_number( TIME_UNITS_PER_SECOND), a);
 }
 
 struct scm* current_time()
@@ -461,7 +480,7 @@ struct scm* gettimeofday_()  ///((name . "gettimeofday"))
 {
 	struct timeval time;
 	gettimeofday(&time, 0);
-	return cons_(make_number( time.tv_sec), make_number( time.tv_usec));
+	return cons(make_number( time.tv_sec), make_number( time.tv_usec));
 }
 
 long seconds_and_nanoseconds_to_long(long s, long ns)
@@ -500,7 +519,8 @@ struct scm* dup2_(struct scm* old, struct scm* new)  ///((name . "dup2"))
 struct scm* delete_file(struct scm* file_name)
 {
 	struct scm* f = file_name;
-	unlink((char*)&f->cdr->rdc);
+	char* p = f->cdr->string;
+	unlink(p);
 	return cell_unspecified;
 }
 

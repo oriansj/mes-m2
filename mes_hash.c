@@ -31,10 +31,10 @@ struct scm* make_vector__(long k);
 
 void vector_set_x_(struct scm* x, long i, struct scm* e);
 struct scm* error(struct scm* key, struct scm* x);
-struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 struct scm* assq(struct scm* x, struct scm* a);
 struct scm* assoc(struct scm* x, struct scm* a);
-struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist);
+struct scm* acons(struct scm* key, struct scm* value, struct scm* alist);
 
 struct scm* make_number(SCM n);
 
@@ -57,10 +57,11 @@ SCM hashq_(struct scm* x, long size)
 	struct scm* y = x;
 	if(y->type == TSPECIAL || y->type == TSYMBOL)
 	{
-		return hash_cstring((char*)&y->cdr->rdc, size);    // FIXME: hash x directly
+		char* p = y->cdr->string;
+		return hash_cstring(p, size);    // FIXME: hash x directly
 	}
 
-	error(cell_symbol_system_error, cons_(make_string_("hashq_: not a symbol"), x));
+	error(cell_symbol_system_error, cons(make_string_("hashq_: not a symbol"), x));
 	exit(EXIT_FAILURE);
 }
 
@@ -69,7 +70,8 @@ SCM hash_(struct scm* x, long size)
 	struct scm* y = x;
 	if(y->type == TSTRING)
 	{
-		return hash_cstring((char*)&y->cdr->rdc, size);
+		char* p = y->cdr->string;
+		return hash_cstring(p, size);
 	}
 
 	assert(0);
@@ -142,11 +144,11 @@ struct scm* hashq_set_x(struct scm* table, struct scm* key, struct scm* value)
 	struct scm* ybucket = vector_ref_(buckets, hashq_(key, size));
 	if(ybucket->type != TPAIR)
 	{
-		vector_set_x_(buckets, hashq_(key, size), acons_(key, value, cell_nil));
+		vector_set_x_(buckets, hashq_(key, size), acons(key, value, cell_nil));
 	}
 	else
 	{
-		vector_set_x_(buckets, hashq_(key, size), acons_(key, value, vector_ref_(buckets, hashq_(key, size))));
+		vector_set_x_(buckets, hashq_(key, size), acons(key, value, vector_ref_(buckets, hashq_(key, size))));
 	}
 	return value;
 }
@@ -164,7 +166,7 @@ struct scm* hash_set_x(struct scm* table, struct scm* key, struct scm* value)
 		bucket = cell_nil;
 	}
 
-	bucket = acons_(key, value, bucket);
+	bucket = acons(key, value, bucket);
 	vector_set_x_(buckets, h, bucket);
 	return value;
 }
@@ -173,10 +175,10 @@ struct scm* make_hashq_type()  ///((internal))
 {
 	struct scm* record_type = cell_symbol_record_type; // FIXME
 	struct scm* fields = cell_nil;
-	fields = cons_(cell_symbol_buckets, fields);
-	fields = cons_(cell_symbol_size, fields);
-	fields = cons_(fields, cell_nil);
-	fields = cons_(cell_symbol_hashq_table, fields);
+	fields = cons(cell_symbol_buckets, fields);
+	fields = cons(cell_symbol_size, fields);
+	fields = cons(fields, cell_nil);
+	fields = cons(cell_symbol_hashq_table, fields);
 	return make_struct(record_type, fields, cell_unspecified);
 }
 
@@ -190,9 +192,9 @@ struct scm* make_hash_table_(long size)
 	struct scm* hashq_type = make_hashq_type();
 	struct scm* buckets = make_vector__(size);
 	struct scm* values = cell_nil;
-	values = cons_(buckets, values);
-	values = cons_(make_number(size), values);
-	values = cons_(cell_symbol_hashq_table, values);
+	values = cons(buckets, values);
+	values = cons(make_number(size), values);
+	values = cons(cell_symbol_hashq_table, values);
 	//FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer");
 	return make_struct(hashq_type, values, cell_unspecified);
 }

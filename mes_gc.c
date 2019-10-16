@@ -34,7 +34,7 @@ int get_env_value(char* c, int alt);
 struct scm* make_stack_type();
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_frame_type();
-struct scm* cons_ (struct scm* x, struct scm* y);
+struct scm* cons (struct scm* x, struct scm* y);
 struct scm* make_vector__(SCM k);
 void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
@@ -98,14 +98,14 @@ struct scm* make_stack()  ///((arity . n))
 		}
 
 		struct scm* frame = make_struct(make_frame_type()
-		                   , cons_(cell_symbol_frame, cons_(procedure, cell_nil))
+		                   , cons(cell_symbol_frame, cons(procedure, cell_nil))
 		                   , cstring_to_symbol("frame-printer"));
 		vector_set_x_(frames, i, frame);
 	}
 
 	struct scm* values = cell_nil;
-	values = cons_(frames, values);
-	values = cons_(cell_symbol_stack, values);
+	values = cons(frames, values);
+	values = cons(cell_symbol_stack, values);
 	return make_struct(stack_type, values, cell_unspecified);
 }
 
@@ -170,17 +170,13 @@ struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr)
 
 struct scm* make_bytes(char const* s, size_t length)
 {
-	size_t size = bytes_cells(length);
-	struct scm* x = calloc(size, sizeof(struct scm));
+	struct scm* x = calloc(1, sizeof(struct scm));
 	x->type = TBYTES;
 	x->length = length;
-	char *p = (char*) &x->cdr;
+	x->string = calloc(length + 1, sizeof(char));
+	char *p = x->string;
 
-	if(!length)
-	{
-		*(char*)p = 0;
-	}
-	else
+	if(0 != length)
 	{
 		memcpy(p, s, length + 1);
 	}
@@ -358,7 +354,7 @@ struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a)  //
 	struct scm* x = calloc(1, sizeof(struct scm));
 	x->type = TCLOSURE;
 	x->car = cell_f;
-	x->cdr = cons_(cons_(cell_circular, a), cons_(args, body));
+	x->cdr = cons(cons(cell_circular, a), cons(args, body));
 	return x;
 }
 

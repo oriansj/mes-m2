@@ -26,7 +26,7 @@
 // CONSTANT STRUCT_PRINTER 1
 #define STRUCT_PRINTER 1
 
-struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 struct scm* apply(struct scm* f, struct scm* x);
 struct scm* struct_ref_(struct scm* x, long i);
 struct scm* vector_ref_(struct scm* x, long i);
@@ -145,31 +145,31 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 		fdputs("#<port ", fd);
 		fdputs(itoa(y->port), fd);
 		fdputc(' ', fd);
-		char *s = (char*)y->cdr->cdr->cdr;
+		char *s = y->cdr->cdr->string;
 		raw_print(s, fd);
 		fdputs("\">", fd);
 	}
 	else if(t == TKEYWORD)
 	{
 		fdputs("#:", fd);
-		char *s = (char*)&y->cdr->cdr;
+		char *s = y->cdr->string;
 		raw_print(s, fd);
 	}
 	else if(t == TSTRING)
 	{
 		if(write_p) fdputc('"', fd);
-		char *s = (char*)&y->cdr->cdr;
+		char *s = y->cdr->string;
 		fd_print(s, fd);
 		if(write_p) fdputc('"', fd);
 	}
 	else if(t == TSPECIAL)
 	{
-		char *s = (char*)&y->cdr->cdr;
+		char *s = y->cdr->string;
 		raw_print(s, fd);
 	}
 	else if(t == TSYMBOL)
 	{
-		char *s = (char*)&y->cdr->cdr;
+		char *s = y->cdr->string;
 		raw_print(s, fd);
 	}
 	else if(t == TREF)
@@ -188,7 +188,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 
 		if(printer->type == TCLOSURE || builtin_p(printer) == cell_t)
 		{
-			apply(printer, cons_(x, cell_nil));
+			apply(printer, cons(x, cell_nil));
 		}
 		else
 		{
@@ -208,10 +208,12 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 	}
 	else if(t == TVECTOR)
 	{
-		fdputs("#( ", fd);
+		fdputs("#(", fd);
 
-		for(long i = 1; i < y->length; i++)
+		fdisplay_(y->vector, fd, write_p);
+		for(long i = 1; i < y->length; i = i + 1)
 		{
+			fdputs(" ", fd);
 			fdisplay_(y->vector + i, fd, write_p);
 		}
 

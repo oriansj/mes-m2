@@ -25,9 +25,9 @@
 struct scm* struct_ref_(struct scm* x, long i);
 struct scm* cstring_to_symbol(char const *s);
 struct scm* make_hashq_type();
-struct scm* cons_(struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist);
+struct scm* acons(struct scm* key, struct scm* value, struct scm* alist);
 struct scm* make_hash_table_(long size);
 struct scm* assq(struct scm* x, struct scm* a);
 struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
@@ -37,11 +37,11 @@ struct scm* make_module_type()
 {
 	struct scm* record_type = cell_symbol_record_type; // FIXME
 	struct scm* fields = cell_nil;
-	fields = cons_(cstring_to_symbol("globals"), fields);
-	fields = cons_(cstring_to_symbol("locals"), fields);
-	fields = cons_(cstring_to_symbol("name"), fields);
-	fields = cons_(fields, cell_nil);
-	fields = cons_(cell_symbol_module, fields);
+	fields = cons(cstring_to_symbol("globals"), fields);
+	fields = cons(cstring_to_symbol("locals"), fields);
+	fields = cons(cstring_to_symbol("name"), fields);
+	fields = cons(fields, cell_nil);
+	fields = cons(cell_symbol_module, fields);
 	return make_struct(record_type, fields, cell_unspecified);
 }
 
