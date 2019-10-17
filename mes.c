@@ -31,7 +31,7 @@ void initialize_memory();
 char *itoa (int number);
 struct scm* mes_builtins(struct scm* a);
 struct scm* cstring_to_symbol(char const *s);
-
+int string_len(char* a);
 struct scm* hashq_get_handle (struct scm* table, struct scm* key, struct scm* dflt);
 struct scm* hashq_set_x (struct scm* table, struct scm* key, struct scm* value);
 struct scm* equal2_p (struct scm* a, struct scm* b);
@@ -51,7 +51,6 @@ struct scm* module_define_x(struct scm* module, struct scm* name, struct scm* va
 struct scm* make_hashq_type();
 struct scm* make_module_type();
 struct scm* make_struct (struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_cell(struct scm* type, struct scm* car, struct scm* cdr);
 struct scm* make_string_(char const* s);
 struct scm* make_string(char const* s, int length);
 struct scm* make_hash_table_(struct scm* size);
@@ -250,7 +249,7 @@ struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args) 
 		eputs(itoa(alen));
 		eputs("\n");
 		write_error_(f);
-		struct scm* e = make_string(s, strlen(s));
+		struct scm* e = make_string(s, string_len(s));
 		return error(cell_symbol_wrong_number_of_args, cons(e, f));
 	}
 
@@ -316,7 +315,7 @@ struct scm* check_apply(struct scm* f, struct scm* e)  ///((internal))
 		eputs("[");
 		write_error_(e);
 		eputs("]\n");
-		struct scm* e = make_string(s, strlen(s));
+		struct scm* e = make_string(s, string_len(s));
 		return error(cell_symbol_wrong_type_arg, cons(e, f));
 	}
 

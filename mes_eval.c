@@ -75,7 +75,7 @@ struct scm* init_time(struct scm* a);
 struct scm* vector_ref_(struct scm* x, SCM i);
 struct scm* make_vector__(SCM k);
 struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);
-
+int string_len(char* a);
 struct scm* make_tmacro(struct scm* a, struct scm* b);
 struct scm* make_tcontinuation(SCM a, SCM b);
 
@@ -241,7 +241,7 @@ eval_apply:
 	}
 	else
 	{
-		error(cell_symbol_system_error, make_string ("eval/apply unknown continuation", strlen("eval/apply unknown continuation")));
+		error(cell_symbol_system_error, make_string ("eval/apply unknown continuation", string_len("eval/apply unknown continuation")));
 	}
 
 evlis:

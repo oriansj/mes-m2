@@ -29,7 +29,6 @@
 struct scm* cons(struct scm* x, struct scm* y);
 struct scm* apply(struct scm* f, struct scm* x);
 struct scm* struct_ref_(struct scm* x, long i);
-struct scm* vector_ref_(struct scm* x, long i);
 struct scm* builtin_p(struct scm* x);
 struct scm* fdisplay_(struct scm*, int, int);
 struct scm* vector_ref_(struct scm* table, long i);
@@ -37,10 +36,11 @@ struct scm* vector_ref_(struct scm* table, long i);
 int fdputs(char* s, int fd);
 int fdputc(int c, int fd);
 char *itoa(int number);
-int eputs(char const* s);
+int eputs(char* s);
 struct scm* error(struct scm* key, struct scm* x);
 
 /* Imported Functions */
+int string_len(char* a);
 void raw_print(char* s, int fd);
 void fd_print(char* s, int f);
 char* char_lookup(int c, int type);
@@ -345,7 +345,7 @@ struct scm* module_printer(struct scm* module)
 	return cell_unspecified;
 }
 
-void assert_max_string(int i, char const* msg, char* string)
+void assert_max_string(int i, char* msg, char* string)
 {
 	if(i > MAX_STRING)
 	{
@@ -359,9 +359,9 @@ void assert_max_string(int i, char const* msg, char* string)
 	}
 }
 
-int eputs(char const* s)
+int eputs(char* s)
 {
-	write(__stderr, s, strlen(s));
+	write(__stderr, s, string_len(s));
 	return 0;
 }
 

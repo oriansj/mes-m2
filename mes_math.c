@@ -193,13 +193,10 @@ struct scm* modulo(struct scm* a, struct scm* b)
 	assert_number("modulo", b);
 	long x = a2->value;
 
-	while(x < 0)
-	{
+	x = x % b2->value;
+	if(b2->value < 0)
 		x = x + b2->value;
-	}
 
-	if (x)
-		x = x % b2->value;
 	return make_number(x);
 }
 
