@@ -110,58 +110,25 @@ struct scm* make_stack()  ///((arity . n))
 }
 
 
-size_t bytes_cells(size_t length)
+struct scm* make_cell(struct scm* type, struct scm* car, struct scm* cdr)
 {
-	return (1 + sizeof(long) + sizeof(long) + length + sizeof(SCM)) / sizeof(SCM);
-}
+	assert(type->type == TNUMBER);
 
-struct scm* make_cell__(SCM type, struct scm* car, struct scm* cdr)
-{
-	struct scm* x = calloc(1, sizeof(struct scm));
-	x->type = type;
-	x->car = car;
-	x->cdr = cdr;
-	return x;
-}
-
-struct scm* make_cell_(struct scm* type, struct scm* car, struct scm* cdr)
-{
-	struct scm* t = type;
-	assert(t->type == TNUMBER);
-
-	if(t->value == TCHAR || t->value == TNUMBER)
+	if(type->value == TCHAR || type->value == TNUMBER)
 	{
 		if(0 != car)
 		{
-			if(0 != cdr)
-			{
-				return make_cell__(t->value, car->car, cdr->cdr);
-			}
-			else
-			{
-				return make_cell__(t->value, car->car, 0);
-			}
+			car = car->car;
 		}
-		else
+
+		if(0 != cdr)
 		{
-			if(0 != cdr)
-			{
-				return make_cell__(t->value, 0, cdr->cdr);
-			}
-			else
-			{
-				return make_cell__(t->value, 0, 0);
-			}
+			cdr = cdr->cdr;
 		}
 	}
 
-	return make_cell__(t->value, car, cdr);
-}
-
-struct scm* make_cell(SCM type, struct scm* car, struct scm* cdr)
-{
 	struct scm* x = calloc(1, sizeof(struct scm));
-	x->type = type;
+	x->type = type->value;
 	x->car = car;
 	x->cdr = cdr;
 	return x;
@@ -184,23 +151,29 @@ struct scm* make_bytes(char const* s, size_t length)
 	return x;
 }
 
+struct scm* make_tref(struct scm* y)
+{
+	struct scm* x = calloc(1, sizeof(struct scm));
+	x->type = TREF;
+	x->car = y;
+	x->cdr = 0;
+	return x;
+}
+
 struct scm* make_vector__(SCM k)
 {
-	struct scm* v = calloc(k, sizeof(struct scm));
 	struct scm* x = calloc(1, sizeof(struct scm));
+	struct scm* v = calloc(k, sizeof(struct scm));
 	x->type = TVECTOR;
 	x->length = k;
 	x->cdr = v;
-	SCM i;
-	struct scm* w;
-	struct scm* u;
 
-	for(i = 0; i < k; i = i + 1)
+	for(k = k - 1; k >= 0; k = k - 1)
 	{
-		w = v + i;
-		u = vector_entry(cell_unspecified);
-		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
-		*w = *u;
+		v->type = TREF;
+		v->car = cell_unspecified;
+		v->cdr = 0;
+		v = v + CELL_SIZE;
 	}
 
 	return x;
@@ -248,15 +221,6 @@ struct scm* gc_check()
 struct scm* gc()
 {
 	return cell_unspecified;
-}
-
-struct scm* make_tref(struct scm* y)
-{
-	struct scm* x = calloc(1, sizeof(struct scm));
-	x->type = TREF;
-	x->car = y;
-	x->cdr = 0;
-	return x;
 }
 
 struct scm* make_tstring1(SCM n)

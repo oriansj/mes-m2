@@ -29,16 +29,16 @@
 struct scm* cons(struct scm* x, struct scm* y);
 struct scm* apply(struct scm* f, struct scm* x);
 struct scm* struct_ref_(struct scm* x, long i);
-struct scm* vector_ref_(struct scm* x, long i);
 struct scm* builtin_p(struct scm* x);
 struct scm* fdisplay_(struct scm*, int, int);
-int fdputs(char const* s, int fd);
+int fdputs(char* s, int fd);
 int fdputc(int c, int fd);
 char *itoa(int number);
-int eputs(char const* s);
+int eputs(char* s);
 struct scm* error(struct scm* key, struct scm* x);
 
 /* Imported Functions */
+int string_len(char* a);
 void raw_print(char* s, int fd);
 void fd_print(char* s, int f);
 char* char_lookup(int c, int type);
@@ -285,45 +285,6 @@ struct scm* frame_printer(struct scm* frame)
 	return cell_unspecified;
 }
 
-struct scm* hash_table_printer(struct scm* table)
-{
-	fdputs("#<", __stdout);
-	display_(struct_ref_(table, 2));
-	fdputc(' ', __stdout);
-	fdputs("size: ", __stdout);
-	display_(struct_ref_(table, 3));
-	fdputc(' ', __stdout);
-	struct scm* buckets = struct_ref_(table, 4);
-	fdputs("buckets: ", __stdout);
-
-	struct scm* ybuckets = buckets;
-	for(int i = 0; i < ybuckets->length; i++)
-	{
-		struct scm* f = vector_ref_(buckets, i);
-
-		if(f != cell_unspecified)
-		{
-			fdputc('[', __stdout);
-
-			while(f->type == TPAIR)
-			{
-				write_(f->car->car);
-				f = f->cdr;
-
-				if(f->type == TPAIR)
-				{
-					fdputc(' ', __stdout);
-				}
-			}
-
-			fdputs("]\n  ", __stdout);
-		}
-	}
-
-	fdputc('>', __stdout);
-	return cell_unspecified;
-}
-
 struct scm* module_printer(struct scm* module)
 {
 	/* module = M0; */
@@ -343,7 +304,7 @@ struct scm* module_printer(struct scm* module)
 	return cell_unspecified;
 }
 
-void assert_max_string(int i, char const* msg, char* string)
+void assert_max_string(int i, char* msg, char* string)
 {
 	if(i > MAX_STRING)
 	{
@@ -357,9 +318,9 @@ void assert_max_string(int i, char const* msg, char* string)
 	}
 }
 
-int eputs(char const* s)
+int eputs(char* s)
 {
-	write(__stderr, s, strlen(s));
+	write(__stderr, s, string_len(s));
 	return 0;
 }
 

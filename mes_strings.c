@@ -39,6 +39,13 @@ struct scm* make_keyword(struct scm* a, struct scm* b);
 struct scm* make_tsymbol(struct scm* a, struct scm* b);
 
 
+int string_len(char* a)
+{
+	int i = 0;
+	while(0 != a[i]) i = i + 1;
+	return i;
+}
+
 char const* list_to_cstring(struct scm* list, int* size)
 {
 	int i = 0;
@@ -57,10 +64,10 @@ char const* list_to_cstring(struct scm* list, int* size)
 	return g_buf;
 }
 
-struct scm* make_string_(char const* s) /* internal only */
+struct scm* make_string_(char* s) /* internal only */
 {
-	SCM l = strlen(s);
-	assert_max_string(l , "make_string_", (char*)s);
+	SCM l = string_len(s);
+	assert_max_string(l , "make_string_", s);
 
 	struct scm* y = make_tstring1(l);
 	y->cdr = make_bytes(s, l);
@@ -144,7 +151,7 @@ struct scm* string_to_symbol(struct scm* string)
 	return x;
 }
 
-struct scm* cstring_to_symbol(char const *s)
+struct scm* cstring_to_symbol(char* s)
 {
 	struct scm* string = make_string_(s);
 	return string_to_symbol(string);
@@ -182,7 +189,7 @@ struct scm* string_to_list(struct scm* string)
 {
 	struct scm* x = string;
 	char* s = x->cdr->string;
-	SCM i = strlen(s);
+	SCM i = string_len(s);
 	struct scm* p = cell_nil;
 
 	while(0 != i)
@@ -243,7 +250,7 @@ struct scm* string_ref(struct scm* str, struct scm* k)
 
 	if(i > size)
 	{
-		error(cell_symbol_system_error, cons(make_string("value out of range", strlen ("value out of range")), k));
+		error(cell_symbol_system_error, cons(make_string("value out of range", string_len("value out of range")), k));
 	}
 
 	char* p = x->cdr->string;

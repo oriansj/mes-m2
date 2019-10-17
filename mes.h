@@ -65,6 +65,9 @@ struct scm
 	};
 };
 
+// CONSTANT CELL_SIZE sizeof(struct scm)
+#define CELL_SIZE 1
+
 struct scm *g_cells;
 
 char **environ;

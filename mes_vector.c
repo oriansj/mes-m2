@@ -56,16 +56,6 @@ struct scm* vector_ref_(struct scm* table, long i)
 		return e->car;
 	}
 
-	if(e->type == TCHAR)
-	{
-		return make_char(e->value);
-	}
-
-	if(e->type == TNUMBER)
-	{
-		return make_number(e->value);
-	}
-
 	return e;
 }
 
@@ -79,7 +69,8 @@ struct scm* vector_equal_p(struct scm* a, struct scm* b)
 		return cell_f;
 	}
 
-	for(long i = 0; i < a2->length; i++)
+	SCM i;
+	for(i = 0; i < a2->length; i = i + 1)
 	{
 		struct scm* ai = a2->vector + i;
 		struct scm* ai2 = ai;
@@ -106,36 +97,56 @@ struct scm* vector_equal_p(struct scm* a, struct scm* b)
 
 struct scm* vector_ref(struct scm* x, struct scm* i)
 {
-	struct scm* h = i;
-	return vector_ref_(x, h->value);
+	assert(x->type == TVECTOR);
+	assert(i->value < x->length);
+	struct scm* e = x->cdr + i->value;
+
+	if(e->type == TREF)
+	{
+		return e->car;
+	}
+
+	return e;
 }
 
 struct scm* vector_entry(struct scm* x)
 {
-	struct scm* y = x;
-	if(y->type != TCHAR && y->type != TNUMBER)
+	if(TCHAR == x->type)
 	{
-		return make_tref(x);
+		return x;
 	}
 
-	return y;
+	if(TNUMBER == x->type)
+	{
+		return x;
+	}
+
+	return make_tref(x);
 }
 
 void vector_set_x_(struct scm* x, long i, struct scm* e)
 {
-	struct scm* y = x;
-	assert(y->type == TVECTOR);
-	assert(i < y->length);
-	struct scm* z = y->cdr + i;
+	assert(x->type == TVECTOR);
+	assert(i < x->length);
+	struct scm* z = x->cdr + i;
 	struct scm* f = vector_entry(e);
-	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
-	*z = *f;
+
+	z->type = f->type;
+	z->car = f->car;
+	z->cdr = f->cdr;
 }
 
-struct scm* vector_set_x(struct scm* x, struct scm* i, struct scm* e)
+struct scm* vector_set_x(struct scm* x)
 {
-	struct scm* h = i;
-	vector_set_x_(x, h->value, e);
+	SCM i = x->cdr->car->value;
+	assert(x->car->type == TVECTOR);
+	assert(i < x->car->length);
+	struct scm* z = x->car->cdr + (i * CELL_SIZE);
+	struct scm* f = vector_entry(x->cdr->cdr->car);
+
+	z->type = f->type;
+	z->car = f->car;
+	z->cdr = f->cdr;
 	return cell_unspecified;
 }
 
@@ -149,8 +160,9 @@ struct scm* list_to_vector(struct scm* x)
 	while(y != cell_nil)
 	{
 		z = vector_entry(y->car);
-		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
-		*p = *z;
+		p->type = z->type;
+		p->car = z->car;
+		p->cdr = z->cdr;
 		p = p + 1;
 		y = y->cdr;
 	}

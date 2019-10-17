@@ -28,11 +28,6 @@ struct scm* make_char(SCM c);
 struct scm* vector_entry(struct scm* x);
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
 
-struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer) /* External */
-{
-	return make_struct(type, fields, printer);
-}
-
 struct scm* struct_length(struct scm* x)
 {
 	assert(x->type == TSTRUCT);
