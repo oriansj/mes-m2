@@ -23,33 +23,34 @@
 #include "mes_constants.h"
 
 struct scm* cons(struct scm* x, struct scm* y);
-struct scm* cstring_to_symbol(char const *s);
-void vector_set_x_(struct scm* x, long i, struct scm* e);
-struct scm* struct_ref_(struct scm* x, long i);
+struct scm* cstring_to_symbol(char* s);
+void vector_set_x_(struct scm* x, SCM i, struct scm* e);
+struct scm* struct_ref_(struct scm* x, SCM i);
 struct scm* vector_length (struct scm* x);
-struct scm* make_vector__(long k);
+struct scm* make_vector__(SCM k);
 struct scm* make_struct (struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* string_equal_p (struct scm* a, struct scm* b);
 struct scm* vector_equal_p(struct scm* a, struct scm* b);
 struct scm* eq_p (struct scm* x, struct scm* y);
 
+void require(int bool, char* error);
 struct scm* make_number(SCM n);
 struct scm* make_char(SCM c);
 
-struct scm* exit_(struct scm* x)  ///((name . "exit"))
+struct scm* exit_(struct scm* x)  /* ((name . "exit")) */
 {
 	struct scm* y = x;
-	assert(y->type == TNUMBER);
+	require(TNUMBER == y->type, "exit_ in mes_lib.c didn't recieve a number\n");
 	exit(y->value);
 }
 
-struct scm* make_frame_type()  ///((internal))
+struct scm* make_frame_type()  /* ((internal)) */
 {
 	return make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified);
 }
 
 
-struct scm* make_stack_type()  ///((internal))
+struct scm* make_stack_type()  /* ((internal)) */
 {
 	return make_struct(cell_symbol_record_type
 	                  , cons(cell_symbol_stack, cons(cons(cstring_to_symbol("frames"), cell_nil), cell_nil))
@@ -64,8 +65,8 @@ struct scm* stack_length(struct scm* stack)
 struct scm* stack_ref(struct scm* stack, SCM index)
 {
 	struct scm* y = struct_ref_(stack, 3);
-	assert(y->type == TVECTOR);
-	assert(index < y->length);
+	require(TVECTOR == y->type, "stack_ref in mes_lib.c did not recieve a TVECTOR\n");
+	require(index < y->length, "y->length in stack_ref in mes_lib.c was less than or equal to index\n");
 	struct scm* e = y->cdr + index;
 
 	if(e->type == TREF)
@@ -86,7 +87,7 @@ struct scm* stack_ref(struct scm* stack, SCM index)
 	return e;
 }
 
-struct scm* xassq(struct scm* x, struct scm* a)  ///for speed in core only
+struct scm* xassq(struct scm* x, struct scm* a)  /* for speed in core only */
 {
 	while(a != cell_nil && x != a->car->cdr)
 	{
