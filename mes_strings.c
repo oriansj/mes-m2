@@ -209,6 +209,18 @@ struct scm* list_to_string(struct scm* list)
 	return make_string(s, size);
 }
 
+void block_copy(void* source, void* destination, int num)
+{
+	char* s;
+	char* d = destination;
+	for(s = source; 0 < num; num = num - 1)
+	{
+		d[0] = s[0];
+		d = d + 1;
+		s = s + 1;
+	}
+}
+
 struct scm* string_append(struct scm* x)  /*((arity . n))*/
 {
 	char *p = g_buf;

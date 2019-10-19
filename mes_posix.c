@@ -48,6 +48,7 @@ struct scm* acons(struct scm* key, struct scm* value, struct scm* alist);
 struct scm* make_number(SCM n);
 struct scm* make_port(SCM n, struct scm* s);
 struct scm* make_char(SCM c);
+int match(char* a, char* b);
 
 char* ntoab(long x, int base, int signed_p)
 {
@@ -261,11 +262,25 @@ struct scm* unread_char(struct scm* i)
 	return x;
 }
 
+char* env_lookup(char* token, char** envp)
+{
+	if(NULL == envp) return NULL;
+	int i = 0;
+	char* ret = NULL;
+	do
+	{
+		if(match(token, envp[i])) ret = envp[i];
+		if(NULL != ret) return ret;
+		i = i + 1;
+	} while(NULL != envp[i]);
+	return NULL;
+}
+
 struct scm* getenv_(struct scm* s)  ///((name . "getenv"))
 {
 	struct scm* x = s;
 	char* p = x->cdr->string;
-	char *pass = getenv(p);
+	char *pass = env_lookup(p, global_envp);
 	if(NULL == pass) return cell_f;
 	return make_string_(pass);
 }

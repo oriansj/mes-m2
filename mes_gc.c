@@ -22,11 +22,11 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-long length__(struct scm* x);
-int eputs(char const* s);
+SCM length__(struct scm* x);
+int eputs(char* s);
 char *itoa (int number);
 struct scm* error(struct scm* key, struct scm* x);
-struct scm* cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char* s);
 struct scm* write_error_ (struct scm* x);
 SCM gc_pop_frame();
 struct scm* vector_entry(struct scm* x);
@@ -37,7 +37,10 @@ struct scm* cons (struct scm* x, struct scm* y);
 struct scm* make_vector__(SCM k);
 void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
+void require(int bool, char* error);
+char* env_lookup(char* token, char** envp);
 int numerate_string(char *a);
+void block_copy(void* source, void* destination, int num);
 
 SCM GC_SAFETY;
 SCM ARENA_SIZE;
@@ -48,14 +51,14 @@ SCM JAM_SIZE;
 
 int get_env_value(char* c, int alt)
 {
-	char* s = getenv(c);
+	char* s = env_lookup(c, global_envp);
 	if(NULL == s) return alt;
 	return numerate_string(s);
 }
 
 struct scm *g_news;
 
-void gc_init_cells()  ///((internal))
+void gc_init_cells()  /* ((internal)) */
 {
 	SCM stack_size = ((ARENA_SIZE + JAM_SIZE) * sizeof(struct scm)) + (STACK_SIZE * sizeof(SCM));
 	g_stack_array = calloc(stack_size, 1);
@@ -63,7 +66,7 @@ void gc_init_cells()  ///((internal))
 }
 
 struct scm* make_char(SCM c);
-struct scm* mes_g_stack(struct scm* a)  ///((internal))
+struct scm* mes_g_stack(struct scm* a)  /* ((internal)) */
 {
 	g_stack = STACK_SIZE;
 	R0 = a;
@@ -87,15 +90,16 @@ void initialize_memory()
 }
 
 
-struct scm* make_stack()  ///((arity . n))
+struct scm* make_stack()  /* ((arity . n)) */
 {
 	struct scm* stack_type = make_stack_type();
-	long size = (STACK_SIZE - g_stack) / FRAME_SIZE;
+	SCM size = (STACK_SIZE - g_stack) / FRAME_SIZE;
 	struct scm* frames = make_vector__(size);
+	SCM i;
 
-	for(long i = 0; i < size; i++)
+	for(i = 0; i < size; i = i + 1)
 	{
-		long array_index = (STACK_SIZE - (i * FRAME_SIZE));
+		SCM array_index = (STACK_SIZE - (i * FRAME_SIZE));
 		struct scm* procedure = g_stack_array[array_index + FRAME_PROCEDURE];
 
 		if(!procedure)
@@ -118,7 +122,7 @@ struct scm* make_stack()  ///((arity . n))
 
 struct scm* make_cell(struct scm* type, struct scm* car, struct scm* cdr)
 {
-	assert(type->type == TNUMBER);
+	require(type->type == TNUMBER, "type does not match TNUMBER in mes_gc.c: make_cell\n");
 
 	if(type->value == TCHAR || type->value == TNUMBER)
 	{
@@ -141,7 +145,7 @@ struct scm* make_cell(struct scm* type, struct scm* car, struct scm* cdr)
 }
 
 
-struct scm* make_bytes(char const* s, size_t length)
+struct scm* make_bytes(char* s, SCM length)
 {
 	struct scm* x = calloc(1, sizeof(struct scm));
 	x->type = TBYTES;
@@ -151,7 +155,7 @@ struct scm* make_bytes(char const* s, size_t length)
 
 	if(0 != length)
 	{
-		memcpy(p, s, length + 1);
+		block_copy(s, p, length + 1);
 	}
 
 	return x;
@@ -187,16 +191,22 @@ struct scm* make_vector__(SCM k)
 
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer)
 {
-	long size = 2 + length__(fields);
+	SCM size = 2 + length__(fields);
 	struct scm* v = calloc(size, sizeof(struct scm));
 	struct scm* w = v + 1;
 	struct scm* entry = vector_entry(type);
 	struct scm* print = vector_entry(printer);
-	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
-	*v = *entry;
-	*w = *print;
 
-	for(long i = 2; i < size; i++)
+	v->type = entry->type;
+	v->car = entry->car;
+	v->cdr = entry->cdr;
+
+	w->type = print->type;
+	w->car = print->car;
+	w->cdr = print->cdr;
+
+	SCM i;
+	for(i = 2; i < size; i = i + 1)
 	{
 		struct scm* e = cell_unspecified;
 
@@ -208,8 +218,10 @@ struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printe
 
 		entry = vector_entry(e);
 		w = v + i;
-		/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
-		*w = *entry;
+
+		w->type = entry->type;
+		w->car = entry->car;
+		w->cdr = entry->cdr;
 	}
 
 	struct scm* r = calloc(1, sizeof(struct scm));
@@ -319,7 +331,7 @@ struct scm* make_tpair(struct scm* a, struct scm* b)
 	return x;
 }
 
-struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a)  ///((internal))
+struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a)  /* ((internal)) */
 {
 	struct scm* x = calloc(1, sizeof(struct scm));
 	x->type = TCLOSURE;
@@ -328,7 +340,7 @@ struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a)  //
 	return x;
 }
 
-struct scm* make_variable_(struct scm* var)  ///((internal))
+struct scm* make_variable_(struct scm* var)  /* ((internal)) */
 {
 	struct scm* x = calloc(1, sizeof(struct scm));
 	x->type = TVARIABLE;
