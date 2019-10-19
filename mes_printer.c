@@ -28,16 +28,16 @@
 
 struct scm* cons(struct scm* x, struct scm* y);
 struct scm* apply(struct scm* f, struct scm* x);
-struct scm* struct_ref_(struct scm* x, long i);
+struct scm* struct_ref_(struct scm* x, SCM i);
 struct scm* builtin_p(struct scm* x);
 struct scm* fdisplay_(struct scm*, int, int);
 int fdputs(char* s, int fd);
 int fdputc(int c, int fd);
 char *itoa(int number);
-int eputs(char* s);
 struct scm* error(struct scm* key, struct scm* x);
 
 /* Imported Functions */
+void require(int bool, char* error);
 int string_len(char* a);
 void raw_print(char* s, int fd);
 void fd_print(char* s, int f);
@@ -107,8 +107,9 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 			int i = 0;
 			y = y->cdr;
 
-			while(y != cell_nil && i++ < 10)
+			while(y != cell_nil && i < 10)
 			{
+				i = i + 1;
 				fdisplay_(y->car->car, fd, write_p);
 				fdputc(' ', fd);
 				y = y->cdr;
@@ -178,7 +179,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 	}
 	else if(t == TSTRUCT)
 	{
-		//struct scm* printer = STRUCT (x) + 1;
+		/* struct scm* printer = STRUCT (x) + 1; */
 		struct scm* printer = struct_ref_(x, STRUCT_PRINTER);
 
 		if(printer->type == TREF)
@@ -195,9 +196,10 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 			fdputs("#<", fd);
 			fdisplay_(y->struc, fd, write_p);
 
-			long size = y->length;
+			SCM size = y->length;
+			SCM i;
 
-			for(long i = 2; i < size; i++)
+			for(i = 2; i < size; i = i + 1)
 			{
 				fdputc(' ', fd);
 				fdisplay_(y->struc + i, fd, write_p);
@@ -211,7 +213,8 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 		fdputs("#(", fd);
 
 		fdisplay_(y->vector, fd, write_p);
-		for(long i = 1; i < y->length; i = i + 1)
+		SCM i;
+		for(i = 1; i < y->length; i = i + 1)
 		{
 			fdputs(" ", fd);
 			fdisplay_(y->vector + i, fd, write_p);
@@ -224,7 +227,11 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 		fdputs("<", fd);
 		fdputs(itoa(t), fd);
 		fdputs(":", fd);
-		fdputs(itoa((SCM)x), fd);
+		fdputs(itoa(x->type), fd);
+		fdputs(":", fd);
+		fdputs(itoa(x->rac), fd);
+		fdputs(":", fd);
+		fdputs(itoa(x->value), fd);
 		fdputs(">", fd);
 	}
 
@@ -246,7 +253,7 @@ struct scm* display_error_(struct scm* x)
 struct scm* display_port_(struct scm* x, struct scm* p)
 {
 	struct scm* p2 = p;
-	assert(p2->type == TNUMBER);
+	require(TNUMBER == p2->type, "mes_printer.c: display_port_ did not recieve TNUMBER\n");
 	return fdisplay_(x, p2->value, 0);
 }
 
@@ -265,11 +272,11 @@ struct scm* write_error_(struct scm* x)
 struct scm* write_port_(struct scm* x, struct scm* p)
 {
 	struct scm* p2 = p;
-	assert(p2->type == TNUMBER);
+	require(TNUMBER == p2->type, "mes_printer: write_port_ did not recieve TNUMBER\n");
 	return fdisplay_(x, p2->value, 1);
 }
 
-struct scm* fdisplay_(struct scm* x, int fd, int write_p)  ///((internal))
+struct scm* fdisplay_(struct scm* x, int fd, int write_p)  /* ((internal)) */
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", fd, write_p);
@@ -308,24 +315,17 @@ void assert_max_string(int i, char* msg, char* string)
 {
 	if(i > MAX_STRING)
 	{
-		eputs(msg);
-		eputs(":string too long[");
-		eputs(itoa(i));
-		eputs("]:");
+		raw_print(msg, __stderr);
+		raw_print(":string too long[", __stderr);
+		raw_print(itoa(i), __stderr);
+		raw_print("]:", __stderr);
 		string[MAX_STRING - 1] = 0;
-		eputs(string);
+		raw_print(string, __stderr);
 		error(cell_symbol_system_error, cell_f);
 	}
 }
 
-int eputs(char* s)
-{
-	write(__stderr, s, string_len(s));
-	return 0;
-}
-
-
-struct scm* write_byte(struct scm* x)  ///((arity . n))
+struct scm* write_byte(struct scm* x)  /* ((arity . n)) */
 {
 	struct scm* y = x;
 	struct scm* c = y->car;
@@ -341,12 +341,12 @@ struct scm* write_byte(struct scm* x)  ///((arity . n))
 	if(1 == fd) fd = __stdout;
 	if(2 == fd) fd = __stderr;
 
-	write(fd, &c->string, 1);
-	assert(c->type == TNUMBER || c->type == TCHAR);
+	fdputc(fd, c->string[0]);
+	require(c->type == TNUMBER || c->type == TCHAR, "mes_printer.c: write_byte was not TNUMBER or TCHAR\n");
 	return c;
 }
 
-struct scm* write_char(struct scm* i)  ///((arity . n))
+struct scm* write_char(struct scm* i)  /* ((arity . n)) */
 {
 	struct scm* x = i;
 	write_byte(x);

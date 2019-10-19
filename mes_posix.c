@@ -36,9 +36,8 @@ int readchar();
 int unreadchar();
 struct scm* current_input_port();
 int fdgetc(int fd);
-int eputs(char const* s);
-struct scm* make_string(char const* s, int length);
-struct scm* make_string_(char const* s);
+struct scm* make_string(char* s, int length);
+struct scm* make_string_(char* s);
 int fdungetc(int c, int fd);
 struct scm* cons(struct scm* x, struct scm* y);
 SCM length__(struct scm* x);
@@ -50,13 +49,20 @@ struct scm* make_port(SCM n, struct scm* s);
 struct scm* make_char(SCM c);
 int match(char* a, char* b);
 
-char* ntoab(long x, int base, int signed_p)
+void raw_print(char* s, int fd);
+int eputs(char* s)
+{
+	raw_print(s, __stderr);
+	return 0;
+}
+
+char* ntoab(SCM x, int base, int signed_p)
 {
 	static char itoa_buf[20];
 	char *p = itoa_buf + 11;
 	*p-- = 0;
 	int sign_p = 0;
-	unsigned long u = x;
+	SCM u = x;
 
 	if(signed_p && x < 0)
 	{
@@ -66,7 +72,7 @@ char* ntoab(long x, int base, int signed_p)
 
 	do
 	{
-		long i = u % base;
+		SCM i = u % base;
 		if(i > 9)
 		{
 			*p = 'a' + i - 10;
@@ -321,7 +327,7 @@ struct scm* current_input_port()
 }
 
 // The Mes C Library defines and initializes these in crt1
-SCM mes_open(char const *file_name, int flags, int mode)
+SCM mes_open(char* file_name, int flags, int mode)
 {
 	__ungetc_init();
 	int r = open(file_name, flags, mode);
@@ -507,7 +513,7 @@ struct scm* gettimeofday_()  ///((name . "gettimeofday"))
 	return cons(make_number( time.tv_sec), make_number( time.tv_usec));
 }
 
-long seconds_and_nanoseconds_to_long(long s, long ns)
+SCM seconds_and_nanoseconds_to_long(SCM s, SCM ns)
 {
 	return s * TIME_UNITS_PER_SECOND + ns / (1000000000 / TIME_UNITS_PER_SECOND);
 }
@@ -516,7 +522,7 @@ struct scm* get_internal_run_time()
 {
 	struct timespec ts;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
-	long time = seconds_and_nanoseconds_to_long(ts.tv_sec - g_start_time.tv_sec, ts.tv_nsec - g_start_time.tv_nsec);
+	SCM time = seconds_and_nanoseconds_to_long(ts.tv_sec - g_start_time.tv_sec, ts.tv_nsec - g_start_time.tv_nsec);
 	return make_number( time);
 }
 
