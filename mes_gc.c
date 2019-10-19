@@ -30,13 +30,14 @@ struct scm* cstring_to_symbol(char const *s);
 struct scm* write_error_ (struct scm* x);
 SCM gc_pop_frame();
 struct scm* vector_entry(struct scm* x);
-int get_env_value(char* c, int alt);
 struct scm* make_stack_type();
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_frame_type();
 struct scm* cons (struct scm* x, struct scm* y);
 struct scm* make_vector__(SCM k);
 void vector_set_x_(struct scm* x, SCM i, struct scm* e);
+
+int numerate_string(char *a);
 
 SCM GC_SAFETY;
 SCM ARENA_SIZE;
@@ -46,6 +47,12 @@ SCM STACK_SIZE;
 // CONSTANT FRAME_SIZE 5
 #define FRAME_SIZE 5
 
+int get_env_value(char* c, int alt)
+{
+	char* s = getenv(c);
+	if(NULL == s) return alt;
+	return numerate_string(s);
+}
 
 struct scm *g_news;
 

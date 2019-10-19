@@ -104,6 +104,7 @@ struct scm* G_PORTS;
 /* Try to fix native */
 int messy_display;
 SCM answer;
+char** global_envp;
 
 struct scm* cell_nil;
 struct scm* cell_f;

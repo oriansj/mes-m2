@@ -412,6 +412,15 @@ struct scm* primitive_fork()
 	return make_number( fork());
 }
 
+void require(int bool, char* error)
+{
+	if(!bool)
+	{
+		fprintf(stderr, "%s", error);
+		exit(EXIT_FAILURE);
+	}
+}
+
 struct scm* execl_(struct scm* file_name, struct scm* args)  ///((name . "execl"))
 {
 	struct scm* f = file_name;

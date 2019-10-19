@@ -29,7 +29,7 @@ void initialize_memory();
 char *itoa (int number);
 int match(char* a, char* b);
 struct scm* mes_builtins(struct scm* a);
-struct scm* cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char* s);
 int string_len(char* a);
 struct scm* hashq_get_handle (struct scm* table, struct scm* key, struct scm* dflt);
 struct scm* hashq_set_x (struct scm* table, struct scm* key, struct scm* value);
@@ -37,7 +37,7 @@ struct scm* equal2_p (struct scm* a, struct scm* b);
 struct scm* string_equal_p (struct scm* a, struct scm* b);
 struct scm* reverse_x_ (struct scm* x, struct scm* t);
 struct scm* builtin_p (struct scm* x);
-int eputs (char const* s);
+int eputs (char* s);
 struct scm* display_error_ (struct scm* x);
 struct scm* write_error_ (struct scm* x);
 struct scm* module_printer (struct scm* module);
@@ -50,13 +50,14 @@ struct scm* module_define_x(struct scm* module, struct scm* name, struct scm* va
 struct scm* make_hashq_type();
 struct scm* make_module_type();
 struct scm* make_struct (struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_string_(char const* s);
-struct scm* make_string(char const* s, int length);
+struct scm* make_string_(char* s);
+struct scm* make_string(char* s, int length);
 struct scm* make_hash_table_(struct scm* size);
 struct scm* mes_g_stack(struct scm* a);
 
 struct scm* eval_apply();
 struct scm* mes_symbols();
+void require(int bool, char* error);
 
 /* M2-Planet Imports */
 int numerate_string(char *a);
@@ -66,7 +67,7 @@ struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_variable_(struct scm* var);
 
 
-struct scm* assoc_string(struct scm* x, struct scm* a)  ///((internal))
+struct scm* assoc_string(struct scm* x, struct scm* a)  /* ((internal)) */
 {
 	struct scm* b = a;
 	struct scm* c;
@@ -107,7 +108,7 @@ struct scm* cdr(struct scm* x)
 	return y->cdr;
 }
 
-struct scm* list(struct scm* x)  ///((arity . n))
+struct scm* list(struct scm* x)  /* ((arity . n)) */
 {
 	return x;
 }
@@ -131,7 +132,7 @@ struct scm* eq_p(struct scm* x, struct scm* y)
 	return cell_f;
 }
 
-struct scm* values(struct scm* x)  ///((arity . n))
+struct scm* values(struct scm* x)  /* ((arity . n)) */
 {
 	struct scm* v = cons(0, x);
 	struct scm* y = v;
@@ -144,7 +145,7 @@ struct scm* acons(struct scm* key, struct scm* value, struct scm* alist)
 	return cons(cons(key, value), alist);
 }
 
-SCM length__(struct scm* x)  ///((internal))
+SCM length__(struct scm* x)  /* ((internal)) */
 {
 	SCM n = 0;
 
@@ -183,12 +184,10 @@ struct scm* error(struct scm* key, struct scm* x)
 	eputs(": ");
 	write_error_(x);
 	eputs("\n");
-	assert(0);
 	exit(EXIT_FAILURE);
 }
 
-//  extra lib
-struct scm* assert_defined(struct scm* x, struct scm* e)  ///((internal))
+struct scm* assert_defined(struct scm* x, struct scm* e)  /* ((internal)) */
 {
 	if(e == cell_undefined)
 	{
@@ -198,7 +197,7 @@ struct scm* assert_defined(struct scm* x, struct scm* e)  ///((internal))
 	return e;
 }
 
-struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args)  ///((internal))
+struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args)  /* ((internal)) */
 {
 	struct scm* formal = formals;
 	SCM flen;
@@ -228,7 +227,7 @@ struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args) 
 	return cell_unspecified;
 }
 
-struct scm* check_apply(struct scm* f, struct scm* e)  ///((internal))
+struct scm* check_apply(struct scm* f, struct scm* e)  /* ((internal)) */
 {
 	char* type = 0;
 
@@ -294,14 +293,11 @@ struct scm* check_apply(struct scm* f, struct scm* e)  ///((internal))
 	return cell_unspecified;
 }
 
-void gc_push_frame()  ///((internal))
+void gc_push_frame()  /* ((internal)) */
 {
-	if(g_stack < 5)
-	{
-		assert(!"STACK FULL");
-	}
+	require( g_stack > 5, "STACK FULL");
 
-	g_stack_array[g_stack - 1] = (struct scm*) cell_f;
+	g_stack_array[g_stack - 1] = cell_f;
 	g_stack_array[g_stack - 2] = R0;
 	g_stack_array[g_stack - 3] = R1;
 	g_stack_array[g_stack - 4] = R2;
@@ -309,7 +305,7 @@ void gc_push_frame()  ///((internal))
 	g_stack = g_stack - 5;
 }
 
-SCM gc_pop_frame()  ///((internal))
+SCM gc_pop_frame()  /* ((internal)) */
 {
 	/* POP VALUES */
 	R3 = g_stack_array[g_stack];
@@ -506,7 +502,7 @@ struct scm* set_env_x(struct scm* x, struct scm* e, struct scm* a)
 	return set_cdr_x(p, e);
 }
 
-struct scm* call_lambda(struct scm* e, struct scm* x)  ///((internal))
+struct scm* call_lambda(struct scm* e, struct scm* x)  /* ((internal)) */
 {
 	struct scm* cl = cons(cons(cell_closure, x), x);
 	R1 = e;
@@ -525,7 +521,7 @@ struct scm* macro_get_handle(struct scm* name)
 	return cell_f;
 }
 
-struct scm* get_macro(struct scm* name)  ///((internal))
+struct scm* get_macro(struct scm* name)  /* ((internal)) */
 {
 	struct scm* m = macro_get_handle(name);
 
@@ -537,12 +533,12 @@ struct scm* get_macro(struct scm* name)  ///((internal))
 	return cell_f;
 }
 
-struct scm* macro_set_x(struct scm* name, struct scm* value)  ///((internal))
+struct scm* macro_set_x(struct scm* name, struct scm* value)  /* ((internal)) */
 {
 	return hashq_set_x(g_macros, name, value);
 }
 
-struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c)  ///((internal))
+struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c)  /* ((internal)) */
 {
 	struct scm* x = R3;
 	R3 = c;
@@ -571,7 +567,7 @@ struct scm* add_formals(struct scm* formals, struct scm* x)
 	return formals;
 }
 
-struct scm* formal_p(struct scm* x, struct scm* formals)  /// ((internal))
+struct scm* formal_p(struct scm* x, struct scm* formals)  /*  ((internal)) */
 {
 	struct scm* f = formals;
 	if(f->type == TSYMBOL)
@@ -601,7 +597,7 @@ struct scm* formal_p(struct scm* x, struct scm* formals)  /// ((internal))
 	return cell_f;
 }
 
-struct scm* expand_variable_(struct scm* x, struct scm* formals, int top_p)  ///((internal))
+struct scm* expand_variable_(struct scm* x, struct scm* formals, int top_p)  /* ((internal)) */
 {
 	struct scm* y = x;
 	while(y->type == TPAIR)
@@ -670,29 +666,21 @@ struct scm* expand_variable_(struct scm* x, struct scm* formals, int top_p)  ///
 	return cell_unspecified;
 }
 
-struct scm* expand_variable(struct scm* x, struct scm* formals)  ///((internal))
+struct scm* expand_variable(struct scm* x, struct scm* formals)  /* ((internal)) */
 {
 	return expand_variable_(x, formals, 1);
 }
 
-struct scm* apply(struct scm* f, struct scm* x)  ///((internal))
+struct scm* apply(struct scm* f, struct scm* x)  /* ((internal)) */
 {
 	push_cc(cons(f, x), cell_unspecified, R0, cell_unspecified);
 	R3 = cell_vm_apply;
 	return eval_apply();
 }
 
-// Jam Collector
 SCM g_symbol_max;
 
-int get_env_value(char* c, int alt)
-{
-	char* s = getenv(c);
-	if(NULL == s) return alt;
-	return numerate_string(s);
-}
-
-struct scm* make_initial_module(struct scm* a)  ///((internal))
+struct scm* make_initial_module(struct scm* a)  /* ((internal)) */
 {
 	struct scm* module_type = make_module_type();
 	a = acons(cell_symbol_module, module_type, a);
@@ -701,8 +689,8 @@ struct scm* make_initial_module(struct scm* a)  ///((internal))
 	struct scm* b = a;
 	struct scm* name = cons(cstring_to_symbol("boot"), cell_nil);
 	struct scm* globals = make_hash_table_(0);
-	struct scm* values = cons(cell_symbol_module, cons(name, cons(cell_nil, cons(globals, cell_nil))));
-	struct scm* module = make_struct(module_type, values, cstring_to_symbol("module-printer"));
+	struct scm* v = cons(cell_symbol_module, cons(name, cons(cell_nil, cons(globals, cell_nil))));
+	struct scm* module = make_struct(module_type, v, cstring_to_symbol("module-printer"));
 	R0 = cons(b->car, cons(b->cdr->car, cell_nil));
 	M0 = module;
 
@@ -735,8 +723,9 @@ void do_it(char* file)
 }
 
 void gc_init_cells();
-int main(int argc, char *argv[])
+int main(int argc, char** argv, char** envp)
 {
+	global_envp = envp;
 	__ungetc_buf = calloc((RLIMIT_NOFILE + 1), sizeof(int));
 	g_continuations = 0;
 	g_symbols = 0;
