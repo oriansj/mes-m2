@@ -23,13 +23,13 @@
 #include "mes_constants.h"
 #include <limits.h>
 
-int eputs(char const* s);
+int eputs(char* s);
 struct scm* error(struct scm* key, struct scm* x);
 struct scm* cons (struct scm* x, struct scm* y);
 
 struct scm* make_number(SCM n);
 
-void assert_number(char const* name, struct scm* x)
+void assert_number(char* name, struct scm* x)
 {
 	struct scm* y = x;
 	if(y->type != TNUMBER)
@@ -39,7 +39,7 @@ void assert_number(char const* name, struct scm* x)
 	}
 }
 
-struct scm* greater_p(struct scm* x)  ///((name . ">") (arity . n))
+struct scm* greater_p(struct scm* x)  /* ((name . ">") (arity . n)) */
 {
 	struct scm* y = x;
 	if(y == cell_nil)
@@ -48,7 +48,7 @@ struct scm* greater_p(struct scm* x)  ///((name . ">") (arity . n))
 	}
 
 	assert_number("greater_p", y->car);
-	long n = y->car->value;
+	SCM n = y->car->value;
 	y = y->cdr;
 
 	while(y != cell_nil)
@@ -67,7 +67,7 @@ struct scm* greater_p(struct scm* x)  ///((name . ">") (arity . n))
 	return cell_t;
 }
 
-struct scm* less_p(struct scm* x)  ///((name . "<") (arity . n))
+struct scm* less_p(struct scm* x)  /* ((name . "<") (arity . n)) */
 {
 	struct scm* y = x;
 	if(y == cell_nil)
@@ -76,7 +76,7 @@ struct scm* less_p(struct scm* x)  ///((name . "<") (arity . n))
 	}
 
 	assert_number("less_p", y->car);
-	long n = y->car->value;
+	SCM n = y->car->value;
 	y = y->cdr;
 
 	while(y != cell_nil)
@@ -95,7 +95,7 @@ struct scm* less_p(struct scm* x)  ///((name . "<") (arity . n))
 	return cell_t;
 }
 
-struct scm* is_p(struct scm* x)  ///((name . "=") (arity . n))
+struct scm* is_p(struct scm* x)  /* ((name . "=") (arity . n)) */
 {
 	struct scm* y = x;
 	if(y == cell_nil)
@@ -104,7 +104,7 @@ struct scm* is_p(struct scm* x)  ///((name . "=") (arity . n))
 	}
 
 	assert_number("is_p", y->car);
-	long n = y->car->value;
+	SCM n = y->car->value;
 	y = y->cdr;
 
 	while(y != cell_nil)
@@ -120,11 +120,11 @@ struct scm* is_p(struct scm* x)  ///((name . "=") (arity . n))
 	return cell_t;
 }
 
-struct scm* minus(struct scm* x)  ///((name . "-") (arity . n))
+struct scm* minus(struct scm* x)  /* ((name . "-") (arity . n)) */
 {
 	struct scm* y = x;
 	assert_number("minus", y->car);
-	long n = y->car->value;
+	SCM n = y->car->value;
 	y = y->cdr;
 
 	if(y == cell_nil)
@@ -142,10 +142,10 @@ struct scm* minus(struct scm* x)  ///((name . "-") (arity . n))
 	return make_number(n);
 }
 
-struct scm* plus(struct scm* x)  ///((name . "+") (arity . n))
+struct scm* plus(struct scm* x)  /* ((name . "+") (arity . n)) */
 {
 	struct scm* y = x;
-	long n = 0;
+	SCM n = 0;
 
 	while(y != cell_nil)
 	{
@@ -157,10 +157,10 @@ struct scm* plus(struct scm* x)  ///((name . "+") (arity . n))
 	return make_number(n);
 }
 
-struct scm* divide(struct scm* x)  ///((name . "/") (arity . n))
+struct scm* divide(struct scm* x)  /* ((name . "/") (arity . n)) */
 {
 	struct scm* y = x;
-	long n = 1;
+	SCM n = 1;
 
 	if(y != cell_nil)
 	{
@@ -191,7 +191,7 @@ struct scm* modulo(struct scm* a, struct scm* b)
 	struct scm* b2 = b;
 	assert_number("modulo", a);
 	assert_number("modulo", b);
-	long x = a2->value;
+	SCM x = a2->value;
 
 	x = x % b2->value;
 	if(b2->value < 0)
@@ -201,10 +201,10 @@ struct scm* modulo(struct scm* a, struct scm* b)
 	return make_number(x);
 }
 
-struct scm* multiply(struct scm* x)  ///((name . "*") (arity . n))
+struct scm* multiply(struct scm* x)  /* ((name . "*") (arity . n)) */
 {
 	struct scm* y = x;
-	long n = 1;
+	SCM n = 1;
 
 	while(y != cell_nil)
 	{
@@ -216,10 +216,10 @@ struct scm* multiply(struct scm* x)  ///((name . "*") (arity . n))
 	return make_number(n);
 }
 
-struct scm* logand(struct scm* x)  ///((arity . n))
+struct scm* logand(struct scm* x)  /* ((arity . n)) */
 {
 	struct scm* y = x;
-	long n = -1;
+	SCM n = -1;
 
 	while(y != cell_nil)
 	{
@@ -231,10 +231,10 @@ struct scm* logand(struct scm* x)  ///((arity . n))
 	return make_number(n);
 }
 
-struct scm* logior(struct scm* x)  ///((arity . n))
+struct scm* logior(struct scm* x)  /* ((arity . n)) */
 {
 	struct scm* y = x;
-	long n = 0;
+	SCM n = 0;
 
 	while(y != cell_nil)
 	{
@@ -250,14 +250,14 @@ struct scm* lognot(struct scm* x)
 {
 	struct scm* y = x;
 	assert_number("lognot", x);
-	long n = ~y->value;
+	SCM n = ~y->value;
 	return make_number(n);
 }
 
-struct scm* logxor(struct scm* x)  ///((arity . n))
+struct scm* logxor(struct scm* x)  /* ((arity . n)) */
 {
 	struct scm* y = x;
-	long n = 0;
+	SCM n = 0;
 
 	while(y != cell_nil)
 	{
@@ -275,10 +275,10 @@ struct scm* ash(struct scm* n, struct scm* count)
 	struct scm* count2 = count;
 	assert_number("ash", n);
 	assert_number("ash", count);
-	long cn = n2->value;
-	long ccount = count2->value;
+	SCM cn = n2->value;
+	SCM ccount = count2->value;
 
-	long r;
+	SCM r;
 	if(ccount < 0) r = cn >> -ccount;
 	else r= cn << ccount;
 
