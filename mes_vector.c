@@ -31,6 +31,7 @@ struct scm* make_vector__(struct scm* k);
 struct scm* make_number(SCM n);
 struct scm* make_char(SCM c);
 struct scm* make_tref(struct scm* x);
+void require(int bool, char* error);
 
 struct scm* make_vector_(struct scm* n)
 {
@@ -40,15 +41,15 @@ struct scm* make_vector_(struct scm* n)
 
 struct scm* vector_length(struct scm* x)
 {
-	assert(x->type == TVECTOR);
+	require(x->type == TVECTOR, "mes_vector.c: vector_length x was not a TVECTOR\n");
 	return make_number(x->length);
 }
 
-struct scm* vector_ref_(struct scm* table, long i)
+struct scm* vector_ref_(struct scm* table, SCM i)
 {
 	struct scm* y = table;
-	assert(y->type == TVECTOR);
-	assert(i < y->length);
+	require(y->type == TVECTOR, "mes_vector.c: vector_ref_ table was not a TVECTOR\n");
+	require(i < y->length, "mes_vector.c: vector_ref_ i was not less than table->length\n");
 	struct scm* e = y->cdr + i;
 
 	if(e->type == TREF)
@@ -97,8 +98,8 @@ struct scm* vector_equal_p(struct scm* a, struct scm* b)
 
 struct scm* vector_ref(struct scm* x, struct scm* i)
 {
-	assert(x->type == TVECTOR);
-	assert(i->value < x->length);
+	require(x->type == TVECTOR, "mes_vector.c: vector_ref x was not of type TVECTOR\n");
+	require(i->value < x->length, "mes_vector.c: vector_ref i->value was not less than x->length\n");
 	struct scm* e = x->cdr + i->value;
 
 	if(e->type == TREF)
@@ -124,10 +125,10 @@ struct scm* vector_entry(struct scm* x)
 	return make_tref(x);
 }
 
-void vector_set_x_(struct scm* x, long i, struct scm* e)
+void vector_set_x_(struct scm* x, SCM i, struct scm* e)
 {
-	assert(x->type == TVECTOR);
-	assert(i < x->length);
+	require(x->type == TVECTOR, "mes_vector.c: vector_set_x_ x was not of type TVECTOR\n");
+	require(i < x->length, "mes_vector.c: vector_set_x i was not less than x->length\n");
 	struct scm* z = x->cdr + i;
 	struct scm* f = vector_entry(e);
 
@@ -139,8 +140,8 @@ void vector_set_x_(struct scm* x, long i, struct scm* e)
 struct scm* vector_set_x(struct scm* x)
 {
 	SCM i = x->cdr->car->value;
-	assert(x->car->type == TVECTOR);
-	assert(i < x->car->length);
+	require(x->car->type == TVECTOR, "mes_vector.c: vector_set_x x->car was not of type TVECTOR\n");
+	require(i < x->car->length, "mes_vector.c: vector_set_x i was not less than x->car->length\n");
 	struct scm* z = x->car->cdr + (i * CELL_SIZE);
 	struct scm* f = vector_entry(x->cdr->cdr->car);
 
