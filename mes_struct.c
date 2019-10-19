@@ -22,22 +22,23 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-long length__(struct scm* x);
+SCM length__(struct scm* x);
 struct scm* make_number(SCM n);
 struct scm* make_char(SCM c);
 struct scm* vector_entry(struct scm* x);
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
+void require(int bool, char* error);
 
 struct scm* struct_length(struct scm* x)
 {
-	assert(x->type == TSTRUCT);
+	require(x->type == TSTRUCT, "mes_struct.c: struct_length x was not of type TSTRUCT\n");
 	return make_number(x->length);
 }
 
-struct scm* struct_ref_(struct scm* x, long i)
+struct scm* struct_ref_(struct scm* x, SCM i)
 {
-	assert(x->type == TSTRUCT);
-	assert(i < x->length);
+	require(x->type == TSTRUCT, "mes_struct.c: struct_ref_ x was not of type TSTRUCT\n");
+	require(i < x->length, "mes_struct.c: struct_ref_ i was not less than x->length\n");
 	struct scm* f = x->cdr + i;
 
 	if(f->type == TREF)
@@ -58,14 +59,16 @@ struct scm* struct_ref_(struct scm* x, long i)
 	return f;
 }
 
-struct scm* struct_set_x_(struct scm* x, long i, struct scm* e)
+struct scm* struct_set_x_(struct scm* x, SCM i, struct scm* e)
 {
-	assert(x->type == TSTRUCT);
-	assert(i < x->length);
+	require(x->type == TSTRUCT, "mes_struct.c: struct_set_x_ x was not of type TSTRUCT\n");
+	require(i < x->length, "mes_struct.c: struct_set_x_ i was not less than x->length\n");
 	struct scm* v = vector_entry(e);
 	struct scm* y = x->cdr + i;
-	/* The below is likely going to be a problem for M2-Planet until we add pointer dereferencing */
-	*y = *v;
+
+	y->type = v->type;
+	y->car = v->car;
+	y->cdr = v->cdr;
 	return cell_unspecified;
 }
 
