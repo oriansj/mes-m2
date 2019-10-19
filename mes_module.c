@@ -22,20 +22,20 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* struct_ref_(struct scm* x, long i);
-struct scm* cstring_to_symbol(char const *s);
+struct scm* struct_ref_(struct scm* x, SCM i);
+struct scm* cstring_to_symbol(char* s);
 struct scm* make_hashq_type();
 struct scm* cons(struct scm* x, struct scm* y);
 struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* acons(struct scm* key, struct scm* value, struct scm* alist);
-struct scm* make_hash_table_(long size);
+struct scm* make_hash_table_(SCM size);
 struct scm* assq(struct scm* x, struct scm* a);
 struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
 struct scm* hashq_set_x(struct scm* table, struct scm* key, struct scm* value);
 
 struct scm* make_module_type()
 {
-	struct scm* record_type = cell_symbol_record_type; // FIXME
+	struct scm* record_type = cell_symbol_record_type; /* FIXME */
 	struct scm* fields = cell_nil;
 	fields = cons(cstring_to_symbol("globals"), fields);
 	fields = cons(cstring_to_symbol("locals"), fields);
@@ -47,7 +47,7 @@ struct scm* make_module_type()
 
 struct scm* module_variable(struct scm* module, struct scm* name)
 {
-	//struct scm* locals = struct_ref_ (module, 3);
+	/* struct scm* locals = struct_ref_ (module, 3); */
 	struct scm* locals = module;
 	struct scm* x = assq(name, locals);
 
