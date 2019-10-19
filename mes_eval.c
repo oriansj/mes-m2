@@ -22,8 +22,6 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-extern SCM STACK_SIZE;
-
 struct scm* append2(struct scm* x, struct scm* y);
 void gc_push_frame();
 struct scm* assert_defined(struct scm* x, struct scm* e);
@@ -40,14 +38,14 @@ struct scm* gc_pop_frame();
 struct scm* check_apply(struct scm* f, struct scm* e);
 struct scm* pairlis(struct scm* x, struct scm* y, struct scm* a);
 struct scm* call_lambda(struct scm* e, struct scm* x);
-struct scm* make_string(char const* s, int length);
+struct scm* make_string(char* s, int length);
 struct scm* cons(struct scm* x, struct scm* y);
 struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args);
 char *itoa (int number);
 struct scm* error(struct scm* key, struct scm* x);
 struct scm* mes_builtins(struct scm* a);
 struct scm* apply_builtin(struct scm* fn, struct scm* x);
-struct scm* cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char* s);
 struct scm* make_hash_table_(struct scm* size);
 struct scm* gc_check ();
 struct scm* gc ();
@@ -74,7 +72,7 @@ struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);
 int string_len(char* a);
 struct scm* make_tmacro(struct scm* a, struct scm* b);
 struct scm* make_tcontinuation(SCM a, SCM b);
-
+void require(int bool, char* error);
 
 struct scm* eval_apply()
 {
@@ -267,7 +265,7 @@ apply:
 	if(t == TSTRUCT && builtin_p(R1->car) == cell_t)
 	{
 		check_formals(R1->car, builtin_arity(R1->car), R1->cdr);
-		R1 = apply_builtin(R1->car, R1->cdr);    /// FIXME: move into eval_apply
+		R1 = apply_builtin(R1->car, R1->cdr);    /* FIXME: move into eval_apply */
 		goto vm_return;
 	}
 	else if(t == TCLOSURE)
@@ -289,7 +287,7 @@ apply:
 
 		if(V->length)
 		{
-			for(t = 0; t < V->length; t++)
+			for(t = 0; t < V->length; t = t + 1)
 			{
 				g_stack_array[STACK_SIZE - V->length + t] = vector_ref_(V, t);
 			}
@@ -365,8 +363,8 @@ apply:
 		}
 	}
 
-	// write_error_ (R1->car);
-	// eputs ("\n");
+	/* write_error_ (R1->car); */
+	/* eputs ("\n"); */
 	push_cc(R1->car, R1, R0, cell_vm_apply2);
 	goto eval;
 apply2:
@@ -554,7 +552,7 @@ eval2:
 			goto vm_return;
 		}
 
-		if(R1 == cell_symbol_begin)  // FIXME
+		if(R1 == cell_symbol_begin)  /* FIXME */
 		{
 			R1 = cell_begin;
 			goto vm_return;
@@ -734,12 +732,12 @@ begin_expand:
 			if(R1->car->car == cell_symbol_primitive_load)
 			{
 				push_cc(R1->car->cdr->car, R1, R0, cell_vm_begin_expand_primitive_load);
-				goto eval; // FIXME: expand too?!
+				goto eval; /* FIXME: expand too?! */
 begin_expand_primitive_load:
 
 				if(R1->type == TNUMBER && R1->value == 0)
 				{
-					;
+					R1->value = 0; /* Not needed but haven't cleaned this block up yet */
 				}
 				else if(R1->type == TSTRING)
 				{
@@ -751,11 +749,11 @@ begin_expand_primitive_load:
 				}
 				else
 				{
-					assert(0);
+					require(FALSE, "Error in mes_eval.c: begin_expand_primitive_load");
 				}
 
 				push_cc(INPUT, R2, R0, cell_vm_return);
-				//X = read_input_file_env();
+				/* X = read_input_file_env(); */
 
 				if(g_debug > 4)
 				{
@@ -818,10 +816,11 @@ if_expr:
 	goto vm_return;
 call_with_current_continuation:
 	gc_push_frame();
-	X = make_tcontinuation(g_continuations++, g_stack);
+	X = make_tcontinuation(g_continuations, g_stack);
+	g_continuations = g_continuations + 1;
 	V = make_vector__(5);
 
-	for(t = 0; t < 5; t++)
+	for(t = 0; t < 5; t = t + 1)
 	{
 		vector_set_x_(V, t, g_stack_array[g_stack + t]);
 	}
@@ -833,7 +832,7 @@ call_with_current_continuation:
 call_with_current_continuation2:
 	V = make_vector__(5);
 
-	for(t = 0; t < 5; t++)
+	for(t = 0; t < 5; t = t + 1)
 	{
 		vector_set_x_(V, t , g_stack_array[g_stack + t]);
 	}

@@ -105,6 +105,7 @@ struct scm* G_PORTS;
 int messy_display;
 SCM answer;
 char** global_envp;
+SCM STACK_SIZE;
 
 struct scm* cell_nil;
 struct scm* cell_f;
