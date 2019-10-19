@@ -24,11 +24,11 @@
 
 char *itoa (int number);
 struct scm* cons (struct scm* x, struct scm* y);
-struct scm* make_bytes(char const* s, size_t length);
+struct scm* make_bytes(char* s, SCM length);
 struct scm* write_error_ (struct scm* x);
 struct scm* hash_ref (struct scm* table, struct scm* key, struct scm* dflt);
 struct scm* hash_set_x (struct scm* table, struct scm* key, struct scm* value);
-void assert_max_string(int i, char const* msg, char* string);
+void assert_max_string(int i, char* msg, char* string);
 struct scm* error(struct scm* key, struct scm* x);
 
 struct scm* make_char(SCM c);
@@ -37,7 +37,7 @@ struct scm* make_tstring1(SCM n);
 struct scm* make_tstring2(struct scm* a, struct scm* b);
 struct scm* make_keyword(struct scm* a, struct scm* b);
 struct scm* make_tsymbol(struct scm* a, struct scm* b);
-
+void require(int bool, char* error);
 
 int string_len(char* a)
 {
@@ -46,7 +46,7 @@ int string_len(char* a)
 	return i;
 }
 
-char const* list_to_cstring(struct scm* list, int* size)
+char* list_to_cstring(struct scm* list)
 {
 	int i = 0;
 
@@ -60,7 +60,6 @@ char const* list_to_cstring(struct scm* list, int* size)
 	}
 
 	g_buf[i] = 0;
-	*size = i;
 	return g_buf;
 }
 
@@ -74,9 +73,9 @@ struct scm* make_string_(char* s) /* internal only */
 	return y;
 }
 
-struct scm* make_string(char const* s, int length)
+struct scm* make_string(char* s, int length)
 {
-	assert_max_string(length, "make_string", (char*)s);
+	assert_max_string(length, "make_string", s);
 	struct scm* x = make_tstring1(length);
 	struct scm* y = x;
 	struct scm* v = make_bytes(s, length);
@@ -88,8 +87,8 @@ struct scm* string_equal_p(struct scm* a, struct scm* b)
 {
 	struct scm* a2 = a;
 	struct scm* b2 = b;
-	assert(a2->type == TSTRING || a2->type == TKEYWORD);
-	assert(b2->type == TSTRING || b2->type == TKEYWORD);
+	require(a2->type == TSTRING || a2->type == TKEYWORD, "mes_strings.c: string_equal_p did not get correct a\n");
+	require(b2->type == TSTRING || b2->type == TKEYWORD, "mes_strings.c: string_equal_p did not get correct b\n");
 	struct scm* tee = cell_t;
 	struct scm* nil = cell_f;
 
@@ -204,8 +203,8 @@ struct scm* string_to_list(struct scm* string)
 
 struct scm* list_to_string(struct scm* list)
 {
-	int size;
-	char const *s = list_to_cstring(list, &size);
+	char* s = list_to_cstring(list);
+	int size = string_len(s);
 	return make_string(s, size);
 }
 
@@ -231,10 +230,10 @@ struct scm* string_append(struct scm* x)  /*((arity . n))*/
 	while(y1 != cell_nil)
 	{
 		struct scm* y2 = y1->car;
-		assert(y2->type == TSTRING);
-		memcpy(p, y2->cdr->string, y2->rac + 1);
-		p += y2->length;
-		size += y2->length;
+		require(y2->type == TSTRING, "mes_strings.c: string_append reached a non-TSTRING\n");
+		block_copy(y2->cdr->string, p, y2->rac + 1);
+		p = p + y2->length;
+		size = size + y2->length;
 
 		assert_max_string(size, "string_append", g_buf);
 
@@ -247,7 +246,7 @@ struct scm* string_append(struct scm* x)  /*((arity . n))*/
 struct scm* string_length(struct scm* string)
 {
 	struct scm* x = string;
-	assert(x->type == TSTRING);
+	require(x->type == TSTRING, "mes_strings.c: string_length type was not a TSTRING\n");
 	return make_number(x->length);
 }
 
@@ -255,10 +254,10 @@ struct scm* string_ref(struct scm* str, struct scm* k)
 {
 	struct scm* x = str;
 	struct scm* y = k;
-	assert(x->type == TSTRING);
-	assert(y->type == TNUMBER);
-	size_t size = x->length;
-	size_t i = y->value;
+	require(x->type == TSTRING, "mes_strings.c: string_ref str was not a TSTRING\n");
+	require(y->type == TNUMBER, "mes_strings.c: string_ref k was not a TNUMBER\n");
+	SCM size = x->length;
+	SCM i = y->value;
 
 	if(i > size)
 	{
