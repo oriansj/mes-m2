@@ -22,23 +22,24 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* vector_ref_(struct scm* x, long i);
-struct scm* struct_ref_(struct scm* x, long i);
+struct scm* vector_ref_(struct scm* x, SCM i);
+struct scm* struct_ref_(struct scm* x, SCM i);
 
 struct scm* make_struct (struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_string_(char const* s);
-struct scm* make_vector__(long k);
+struct scm* make_string_(char* s);
+struct scm* make_vector__(SCM k);
 
-void vector_set_x_(struct scm* x, long i, struct scm* e);
+void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 struct scm* error(struct scm* key, struct scm* x);
 struct scm* cons(struct scm* x, struct scm* y);
 struct scm* assq(struct scm* x, struct scm* a);
 struct scm* assoc(struct scm* x, struct scm* a);
 struct scm* acons(struct scm* key, struct scm* value, struct scm* alist);
 
+void require(int bool, char* error);
 struct scm* make_number(SCM n);
 
-SCM hash_cstring(char const* s, long size)
+SCM hash_cstring(char* s, SCM size)
 {
 	int h = s[0] * 37;
 
@@ -47,25 +48,25 @@ SCM hash_cstring(char const* s, long size)
 		h = h + s[1] * 43;
 	}
 
-	assert(size);
+	require(0 != size, "mes_hash.c: hash_cstring must not be zero");
 	h = h % size;
 	return h;
 }
 
-SCM hashq_(struct scm* x, long size)
+SCM hashq_(struct scm* x, SCM size)
 {
 	struct scm* y = x;
 	if(y->type == TSPECIAL || y->type == TSYMBOL)
 	{
 		char* p = y->cdr->string;
-		return hash_cstring(p, size);    // FIXME: hash x directly
+		return hash_cstring(p, size);    /* FIXME: hash x directly */
 	}
 
 	error(cell_symbol_system_error, cons(make_string_("hashq_: not a symbol"), x));
 	exit(EXIT_FAILURE);
 }
 
-SCM hash_(struct scm* x, long size)
+SCM hash_(struct scm* x, SCM size)
 {
 	struct scm* y = x;
 	if(y->type == TSTRING)
@@ -74,22 +75,20 @@ SCM hash_(struct scm* x, long size)
 		return hash_cstring(p, size);
 	}
 
-	assert(0);
+	require(FALSE, "mes_hash.c: hash_ impossible condition hit");
 	return hashq_(x, size);
 }
 
 struct scm* hashq(struct scm* x, struct scm* size)
 {
-	struct scm* s = size;
-	assert(0);
-	return make_number(hashq_(x, s->value));
+	require(FALSE, "mes_hash.c: hashq impossible condition hit");
+	return make_number(hashq_(x, size->value));
 }
 
 struct scm* hash(struct scm* x, struct scm* size)
 {
-	struct scm* s = size;
-	assert(0);
-	return make_number(hash_(x, s->value));
+	require(FALSE, "mes_hash.c: hash impossible condition hit");
+	return make_number(hash_(x, size->value));
 }
 
 struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt)
@@ -138,7 +137,7 @@ struct scm* hash_ref(struct scm* table, struct scm* key, struct scm* dflt) /* Ex
 
 struct scm* hashq_set_x(struct scm* table, struct scm* key, struct scm* value)
 {
-	long size = struct_ref_(table, 3)->value;
+	SCM size = struct_ref_(table, 3)->value;
 	struct scm* buckets = struct_ref_(table, 4);
 
 	struct scm* ybucket = vector_ref_(buckets, hashq_(key, size));
@@ -155,7 +154,7 @@ struct scm* hashq_set_x(struct scm* table, struct scm* key, struct scm* value)
 
 struct scm* hash_set_x(struct scm* table, struct scm* key, struct scm* value)
 {
-	long size = struct_ref_(table, 3)->value;
+	SCM size = struct_ref_(table, 3)->value;
 	unsigned h = hash_(key, size);
 	struct scm* buckets = struct_ref_(table, 4);
 	struct scm* bucket = vector_ref_(buckets, h);
@@ -171,9 +170,9 @@ struct scm* hash_set_x(struct scm* table, struct scm* key, struct scm* value)
 	return value;
 }
 
-struct scm* make_hashq_type()  ///((internal))
+struct scm* make_hashq_type()  /* ((internal)) */
 {
-	struct scm* record_type = cell_symbol_record_type; // FIXME
+	struct scm* record_type = cell_symbol_record_type; /* FIXME */
 	struct scm* fields = cell_nil;
 	fields = cons(cell_symbol_buckets, fields);
 	fields = cons(cell_symbol_size, fields);
@@ -182,7 +181,7 @@ struct scm* make_hashq_type()  ///((internal))
 	return make_struct(record_type, fields, cell_unspecified);
 }
 
-struct scm* make_hash_table_(long size)
+struct scm* make_hash_table_(SCM size)
 {
 	if(!size)
 	{
@@ -195,18 +194,18 @@ struct scm* make_hash_table_(long size)
 	values = cons(buckets, values);
 	values = cons(make_number(size), values);
 	values = cons(cell_symbol_hashq_table, values);
-	//FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer");
+	/* FIXME: symbol/printer return make_struct (hashq_type, values, cstring_to_symbol ("hash-table-printer"); */
 	return make_struct(hashq_type, values, cell_unspecified);
 }
 
 struct scm* make_hash_table(struct scm* x)
 {
-	long size = 0;
+	SCM size = 0;
 
 	struct scm* y = x;
 	if(y->type == TPAIR)
 	{
-		assert(y->type == TNUMBER);
+		require(TNUMBER == y->type, "y->type must be TNUMBER\nmes_hash.c: make_hash_table\n");
 		size = y->value;
 	}
 

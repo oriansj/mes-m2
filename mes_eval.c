@@ -753,7 +753,7 @@ begin_expand_primitive_load:
 				}
 
 				push_cc(INPUT, R2, R0, cell_vm_return);
-				/* X = read_input_file_env(); */
+				X = read_input_file_env();
 
 				if(g_debug > 4)
 				{
