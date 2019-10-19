@@ -30,7 +30,6 @@ int numerate_string(char *a);
 
 /* Standard Mes.c function imports */
 void assert_max_string(int i, char const* msg, char* string);
-struct scm* read_env(struct scm* a);
 struct scm* cons(struct scm* x, struct scm* y);
 int readchar();
 struct scm* error(struct scm* key, struct scm* x);

@@ -22,13 +22,12 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-
 /* Imported Functions */
 void initialize_constants();
 SCM gc ();
-void gc_init_cells();
 void initialize_memory();
 char *itoa (int number);
+int match(char* a, char* b);
 struct scm* mes_builtins(struct scm* a);
 struct scm* cstring_to_symbol(char const *s);
 int string_len(char* a);
@@ -89,33 +88,6 @@ struct scm* type_(struct scm* x)
 {
 	struct scm* y = x;
 	return make_number(y->type);
-}
-
-struct scm* car_(struct scm* x)
-{
-	struct scm* y = x;
-	if(y->type == TPAIR) return y->car;
-	return make_number(y->rac);
-}
-
-struct scm* cdr_(struct scm* x)
-{
-	struct scm* y = x;
-	if(y->type == TCHAR) return make_number(y->value);
-	if(y->type == TNUMBER) return make_number(y->value);
-	if(y->type == TPORT) return make_number(y->value);
-	struct scm* z = y->cdr;
-	if(z->type == TPAIR) return y->cdr;
-	if(z->type == TREF) return y->cdr;
-	if(z->type == TSPECIAL) return y->cdr;
-	if(z->type == TSYMBOL) return y->cdr;
-	if(z->type == TSTRING) return y->cdr;
-	return make_number(y->value);
-}
-
-struct scm* cons_(struct scm* x, struct scm* y)
-{
-	return make_tpair(x, y);
 }
 
 struct scm* cons(struct scm* x, struct scm* y)
@@ -713,82 +685,11 @@ struct scm* apply(struct scm* f, struct scm* x)  ///((internal))
 // Jam Collector
 SCM g_symbol_max;
 
-int open_boot(char *prefix, char const *boot, char const *location);
-void read_boot()  ///((internal))
-{
-	__stdin = -1;
-	char prefix[1024];
-	char boot[1024];
-
-	if(getenv("MES_BOOT"))
-	{
-		strcpy(boot, getenv("MES_BOOT"));
-	}
-	else
-	{
-		strcpy(boot, "boot-0.scm");
-	}
-
-	if(getenv("MES_PREFIX"))
-	{
-		strcpy(prefix, getenv("MES_PREFIX"));
-		strcpy(prefix + strlen(prefix), "/module");
-		strcpy(prefix + strlen(prefix), "/mes/");
-		__stdin = open_boot(prefix, boot, "MES_PREFIX");
-	}
-
-	if(__stdin < 0)
-	{
-		char const *p = "module/mes/";
-		strcpy(prefix, p);
-		__stdin = open_boot(prefix, boot, "module");
-	}
-
-	if(__stdin < 0)
-	{
-		strcpy(prefix, "mes/module/mes/");
-		__stdin = open_boot(prefix, boot, ".");
-	}
-
-	if(__stdin < 0)
-	{
-		prefix[0] = 0;
-		__stdin = open_boot(prefix, boot, "<boot>");
-	}
-
-	if(__stdin < 0)
-	{
-		eputs("mes: boot failed: no such file: ");
-		eputs(boot);
-		eputs("\n");
-		exit(EXIT_FAILURE);
-	}
-
-	R2 = read_input_file_env();
-	__stdin = STDIN;
-}
-
 int get_env_value(char* c, int alt)
 {
 	char* s = getenv(c);
 	if(NULL == s) return alt;
 	return numerate_string(s);
-}
-
-struct scm* mes_environment(int argc, char *argv[])
-{
-	struct scm* a = mes_symbols();
-	a = acons(cell_symbol_compiler, make_string_("gnuc"), a);
-	a = acons(cell_symbol_arch, make_string_("x86_64"), a);
-
-	struct scm* lst = cell_nil;
-	for(int i = argc - 1; i >= 0; i--)
-	{
-		lst = cons(make_string_(argv[i]), lst);
-	}
-
-	a = acons(cell_symbol_argv, lst, a);
-	return mes_g_stack(a);
 }
 
 struct scm* make_initial_module(struct scm* a)  ///((internal))
@@ -814,91 +715,82 @@ struct scm* make_initial_module(struct scm* a)  ///((internal))
 	return module;
 }
 
+int open_boot(char *boot);
+void do_it(char* file)
+{
+	if(match(file, "STDIN"))
+	{
+		__stdin = STDIN;
+	}
+	else
+	{
+		__stdin = open_boot(file);
+	}
+
+	R2 = read_input_file_env();
+	push_cc(R2, cell_unspecified, R0, cell_unspecified);
+
+	R3 = cell_vm_begin_expand;
+	R1 = eval_apply();
+}
+
+void gc_init_cells();
 int main(int argc, char *argv[])
 {
 	__ungetc_buf = calloc((RLIMIT_NOFILE + 1), sizeof(int));
 	g_continuations = 0;
 	g_symbols = 0;
 	g_stack = 0;
+	messy_display = FALSE;
 	R0 = 0;
 	R1 = 0;
 	R2 = 0;
 	R3 = 0;
 	M0 = 0;
 	g_macros = 0;
+	g_ports = 0;
 	g_cells = 0;
 	__stdin = STDIN;
 	__stdout = STDOUT;
 	__stderr = STDERR;
 
-	g_debug = get_env_value("MES_DEBUG", 0);
-
-	if(g_debug > 1) eputs(";;; MODULEDIR=module\n");
-
 	initialize_constants();
 	initialize_memory();
 	gc_init_cells();
-	g_ports = cell_nil;
+	mes_symbols();
 
-	struct scm* a = mes_environment(argc, argv);
-	a = mes_builtins(a);
-	a = init_time(a);
-	M0 = make_initial_module(a);
+	M0 = make_initial_module(init_time(mes_builtins(cell_nil)));
 	g_macros = make_hash_table_(0);
 
-	if(g_debug > 4)
+	struct scm* lst = cell_nil;
+	int i = 1;
+	char* file;
+	while(i <= argc)
 	{
-		module_printer(M0);
-	}
-
-	read_boot();
-	push_cc(R2, cell_unspecified, R0, cell_unspecified);
-
-	if(g_debug > 2)
-	{
-		eputs("\ngc stats: [");
-		eputs(itoa(g_free));
-		eputs("]\n");
-	}
-
-	if(g_debug > 3)
-	{
-		eputs("program: ");
-		write_error_(R1);
-		eputs("\n");
-	}
-
-	R3 = cell_vm_begin_expand;
-	R1 = eval_apply();
-
-	if(g_debug)
-	{
-		write_error_(R1);
-		eputs("\n");
-	}
-
-	if(g_debug)
-	{
-		if(g_debug > 4) module_printer(M0);
-
-		eputs("\ngc stats: [");
-		eputs(itoa(g_free));
-		gc();
-		eputs(" => ");
-		eputs(itoa(g_free));
-		eputs("]\n");
-
-		if(g_debug > 4) module_printer(M0);
-
-		if(g_debug > 3)
+		if(NULL == argv[i])
 		{
-			eputs("ports:");
-			write_error_(g_ports);
-			eputs("\n");
+			i = i + 1;
 		}
-
-		eputs("\n");
+		else if(match(argv[i], "--boot"))
+		{
+			file = argv[i + 1];
+			do_it(file);
+			i = i + 2;
+		}
+		else if(match(argv[i], "-f") || match(argv[i], "--file"))
+		{
+			file = argv[i + 1];
+			do_it(file);
+			i = i + 2;
+		}
+		else
+		{
+			lst = cons(make_string_(argv[i]), lst);
+			i = i + 1;
+		}
 	}
 
+	messy_display = TRUE;
+	do_it("STDIN");
 	return 0;
 }

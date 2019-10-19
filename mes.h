@@ -101,6 +101,9 @@ struct scm* G_MACROS;
 struct scm* g_ports;
 struct scm* G_PORTS;
 
+/* Try to fix native */
+int messy_display;
+SCM answer;
 
 struct scm* cell_nil;
 struct scm* cell_f;

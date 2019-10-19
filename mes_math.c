@@ -195,8 +195,9 @@ struct scm* modulo(struct scm* a, struct scm* b)
 
 	x = x % b2->value;
 	if(b2->value < 0)
+	{
 		x = x + b2->value;
-
+	}
 	return make_number(x);
 }
 
@@ -278,10 +279,8 @@ struct scm* ash(struct scm* n, struct scm* count)
 	long ccount = count2->value;
 
 	long r;
-	if(ccount < 0)
-		r = cn >> -ccount;
-	else
-		r = cn << ccount;
+	if(ccount < 0) r = cn >> -ccount;
+	else r= cn << ccount;
 
 	return make_number(r);
 }

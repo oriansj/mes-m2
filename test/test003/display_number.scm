@@ -16,4 +16,5 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
-(prim:exit 42)
+(prim:display 42)
+(prim:exit 0)

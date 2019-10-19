@@ -15,8 +15,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
-set -x
-./bin/mes-m2 --boot test/test000/exit.scm
-r=$?
-[ $r = 42 ] || exit 1
+set -eux
+out=$(./bin/mes-m2 --file test/test004/display_cons.scm 2>&1)
+[ "$out" = "(4 . 2)" ] || exit 1
 exit 0

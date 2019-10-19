@@ -524,25 +524,29 @@ struct scm* delete_file(struct scm* file_name)
 	return cell_unspecified;
 }
 
-int open_boot(char *prefix, char const *boot, char const *location)
+int open_boot(char *boot)
 {
-	strcpy(prefix + strlen(prefix), boot);
-
 	if(g_debug > 1)
 	{
 		eputs("mes: reading boot-0 [");
-		eputs(location);
-		eputs("]: ");
-		eputs(prefix);
-		eputs("\n");
+		eputs(boot);
+		eputs("]\n");
 	}
 
-	int fd = (int)mes_open(prefix, O_RDONLY, 0);
+	int fd = (int)mes_open(boot, O_RDONLY, 0);
+
+	if(__stdin < 0)
+	{
+		eputs("mes: no such file: ");
+		eputs(boot);
+		eputs("\n");
+		exit(EXIT_FAILURE);
+	}
 
 	if(g_debug && fd > 0)
 	{
 		eputs("mes: read boot-0: ");
-		eputs(prefix);
+		eputs(boot);
 		eputs("\n");
 	}
 

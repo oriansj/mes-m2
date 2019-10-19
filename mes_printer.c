@@ -31,8 +31,6 @@ struct scm* apply(struct scm* f, struct scm* x);
 struct scm* struct_ref_(struct scm* x, long i);
 struct scm* builtin_p(struct scm* x);
 struct scm* fdisplay_(struct scm*, int, int);
-struct scm* vector_ref_(struct scm* table, long i);
-
 int fdputs(char* s, int fd);
 int fdputc(int c, int fd);
 char *itoa(int number);
@@ -283,45 +281,6 @@ struct scm* frame_printer(struct scm* frame)
 	display_(struct_ref_(frame, 2));
 	fdputs(" procedure: ", __stdout);
 	display_(struct_ref_(frame, 3));
-	fdputc('>', __stdout);
-	return cell_unspecified;
-}
-
-struct scm* hash_table_printer(struct scm* table)
-{
-	fdputs("#<", __stdout);
-	display_(struct_ref_(table, 2));
-	fdputc(' ', __stdout);
-	fdputs("size: ", __stdout);
-	display_(struct_ref_(table, 3));
-	fdputc(' ', __stdout);
-	struct scm* buckets = struct_ref_(table, 4);
-	fdputs("buckets: ", __stdout);
-
-	struct scm* ybuckets = buckets;
-	for(int i = 0; i < ybuckets->length; i++)
-	{
-		struct scm* f = vector_ref_(buckets, i);
-
-		if(f != cell_unspecified)
-		{
-			fdputc('[', __stdout);
-
-			while(f->type == TPAIR)
-			{
-				write_(f->car->car);
-				f = f->cdr;
-
-				if(f->type == TPAIR)
-				{
-					fdputc(' ', __stdout);
-				}
-			}
-
-			fdputs("]\n  ", __stdout);
-		}
-	}
-
 	fdputc('>', __stdout);
 	return cell_unspecified;
 }

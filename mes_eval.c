@@ -24,11 +24,6 @@
 
 extern SCM STACK_SIZE;
 
-char *itoa (int number);
-int fdputc (int c, int fd);
-int fdputs (char const* s, int fd);
-int eputs (char const* s);
-
 struct scm* append2(struct scm* x, struct scm* y);
 void gc_push_frame();
 struct scm* assert_defined(struct scm* x, struct scm* e);
@@ -48,6 +43,7 @@ struct scm* call_lambda(struct scm* e, struct scm* x);
 struct scm* make_string(char const* s, int length);
 struct scm* cons(struct scm* x, struct scm* y);
 struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args);
+char *itoa (int number);
 struct scm* error(struct scm* key, struct scm* x);
 struct scm* mes_builtins(struct scm* a);
 struct scm* apply_builtin(struct scm* fn, struct scm* x);
@@ -759,7 +755,7 @@ begin_expand_primitive_load:
 				}
 
 				push_cc(INPUT, R2, R0, cell_vm_return);
-				X = read_input_file_env();
+				//X = read_input_file_env();
 
 				if(g_debug > 4)
 				{

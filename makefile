@@ -39,6 +39,7 @@ mes-m2: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module
 	functions/in_set.c \
 	functions/numerate.c \
 	functions/file_print.c \
+	functions/match.c \
 	-o bin/mes-m2
 
 # Clean up after ourselves
@@ -57,15 +58,22 @@ results:
 # tests
 test: test000.answer \
 	test001.answer \
-	test100.answer \
-	test101.answer \
-	test102.answer \
-	test103.answer \
-	test105.answer \
-	test106.answer \
-	test109.answer \
-	test133.answer \
-	test200-binary | results
+	test002.answer \
+	test003.answer \
+	test004.answer \
+	test005.answer \
+	test006.answer \
+	test007.answer \
+	test008.answer
+#	test100.answer \
+#	test101.answer \
+#	test102.answer \
+#	test103.answer \
+#	test105.answer \
+#	test106.answer \
+#	test109.answer \
+#	test133.answer \
+#	test200-binary | results
 	sha256sum -c test/test.answers
 #	test104.answer
 #	test107.answer
@@ -99,6 +107,27 @@ test000.answer: results mes-m2
 
 test001.answer: results mes-m2
 	test/test001/hello.sh
+
+test002.answer: results mes-m2
+	test/test002/hello.sh
+
+test003.answer: results mes-m2
+	test/test003/hello.sh
+
+test004.answer: results mes-m2
+	test/test004/hello.sh
+
+test005.answer: results mes-m2
+	test/test005/hello.sh
+
+test006.answer: results mes-m2
+	test/test006/hello.sh
+
+test007.answer: results mes-m2
+	test/test007/hello.sh
+
+test008.answer: results mes-m2
+	test/test008/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh
