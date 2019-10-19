@@ -21,26 +21,14 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include "gcc_req.h"
 
 // CONSTANT TRUE 1
 #define TRUE 1
 // CONSTANT FALSE 0
 #define FALSE 0
 
-void file_print(char* s, FILE* f)
-{
-	while(0 != s[0])
-	{
-		fputc(s[0], f);
-		s = s + 1;
-	}
-}
-
-int fdputc(int c, int fd)
-{
-	write(fd, (char*)&c, 1);
-	return 0;
-}
 
 void fd_print(char* s, int f)
 {
@@ -51,18 +39,17 @@ void fd_print(char* s, int f)
 	}
 }
 
-int fdputs(char const* s, int fd)
+int fdputs(char* s, int fd)
 {
-	fd_print((char*)s, fd);
+	fd_print(s, fd);
 	return 0;
 }
 
 int char2hex(int c);
-char block[4];
 char* char_lookup(int c, int type)
 {
-	static char* s = block;
-	s[0] = '\\';
+	char* s;
+
 	if(type)
 	{
 		if(c == '\0') return "\\nul";
@@ -76,12 +63,16 @@ char* char_lookup(int c, int type)
 		else if(c == ' ') return "\\space";
 		else
 		{
+			s = calloc(4, sizeof(char));
+			s[0] = '\\';
 			s[1] = char2hex((c & 0xF0) >> 4);
 			s[2] = char2hex(c & 0xF);
 		}
 	}
 	else
 	{
+		s = calloc(4, sizeof(char));
+		s[0] = '\\';
 		s[2] = 0;
 		if(c == '\0') s[1] = '0';
 		else if(c == '\a') s[1] = 'a';

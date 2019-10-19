@@ -27,22 +27,24 @@
 /* M2-Planet function imports*/
 int in_set(int c, char* s);
 int numerate_string(char *a);
+int toupper(int c);
+int match(char* a, char* b);
 
 /* Standard Mes.c function imports */
-void assert_max_string(int i, char const* msg, char* string);
+void assert_max_string(int i, char* msg, char* string);
 struct scm* cons(struct scm* x, struct scm* y);
 int readchar();
 struct scm* error(struct scm* key, struct scm* x);
-struct scm* make_string_(char const* s);
-struct scm* make_string(char const* s, int length);
+struct scm* make_string_(char* s);
+struct scm* make_string(char* s, int length);
 int peekchar();
 int unreadchar();
 struct scm* make_number(SCM n);
 struct scm* make_char(SCM c);
-struct scm* cstring_to_symbol(char const *s);
+struct scm* cstring_to_symbol(char* s);
 struct scm* symbol_to_keyword(struct scm* symbol);
 struct scm* list_to_vector(struct scm* x);
-int eputs(char const* s);
+int eputs(char* s);
 char* itoa(int number);
 
 struct scm* reader_read_sexp_(int c, struct scm* a);
@@ -90,7 +92,8 @@ struct scm* reader_read_identifier_or_number(int c)
 	/* Fallthrough: Note that `+', `-', `4a', `+1b' are identifiers */
 	while(!reader_end_of_word_p(c))
 	{
-		g_buf[i++] = c;
+		g_buf[i] = c;
+		i = i + 1;
 		c = readchar();
 	}
 
@@ -192,7 +195,7 @@ int reader_read_block_comment(int s, int c)
 
 int reader_eat_whitespace(int c)
 {
-	while(isspace(c))
+	while(in_set(c, " \t\n"))
 	{
 		c = readchar();
 	}
@@ -250,7 +253,7 @@ int index_number__(char* s, char c) /* Internal only */
 
 struct scm* set_reader__(char* set, int mult) /* Internal only*/
 {
-	long n = 0;
+	SCM n = 0;
 	int c = peekchar();
 	int negative_p = 0;
 
@@ -396,6 +399,7 @@ struct scm* reader_read_character()
 	int c = readchar();
 	int p = peekchar();
 	int i = 0;
+	struct scm* x;
 
 	if(in_set(c, "01234567") && in_set(p, "01234567"))
 	{
@@ -403,21 +407,22 @@ struct scm* reader_read_character()
 
 		while(in_set(p, "01234567"))
 		{
-			c <<= 3;
-			c += readchar() - '0';
+			c = c << 3;
+			c = c + readchar() - '0';
 			p = peekchar();
 		}
 	}
 	else if(c == 'x' && in_set(p, "01234567abcdefABCDEF"))
 	{
-		c = reader_read_hex()->value;
+		x = reader_read_hex();
+		c = x->value;
 		eputs("reading hex c=");
 		eputs(itoa(c));
 		eputs("\n");
 	}
 	else if(in_set(c, "abcdefghijklmnopqrstuvwxyz*") && in_set(p, "abcdefghijklmnopqrstuvwxyz*"))
 	{
-		char buf[10];
+		char* buf = reader_buf;
 		buf[i] = c;
 		i = i + 1;
 
@@ -430,71 +435,71 @@ struct scm* reader_read_character()
 
 		buf[i] = 0;
 
-		if(!strcmp(buf, "*eof*"))
+		if(match(buf, "*eof*"))
 		{
 			c = EOF;
 		}
-		else if(!strcmp(buf, "nul"))
+		else if(match(buf, "nul"))
 		{
 			c = '\0';
 		}
-		else if(!strcmp(buf, "alarm"))
+		else if(match(buf, "alarm"))
 		{
 			c = '\a';
 		}
-		else if(!strcmp(buf, "backspace"))
+		else if(match(buf, "backspace"))
 		{
 			c = '\b';
 		}
-		else if(!strcmp(buf, "tab"))
+		else if(match(buf, "tab"))
 		{
 			c = '\t';
 		}
-		else if(!strcmp(buf, "linefeed"))
+		else if(match(buf, "linefeed"))
 		{
 			c = '\n';
 		}
-		else if(!strcmp(buf, "newline"))
+		else if(match(buf, "newline"))
 		{
 			c = '\n';
 		}
-		else if(!strcmp(buf, "vtab"))
+		else if(match(buf, "vtab"))
 		{
 			c = '\v';
 		}
-		else if(!strcmp(buf, "page"))
+		else if(match(buf, "page"))
 		{
 			c = '\f';
 		}
-		else if(!strcmp(buf, "return"))
+		else if(match(buf, "return"))
 		{
 			c = '\r';
 		}
-		else if(!strcmp(buf, "esc"))
+		else if(match(buf, "esc"))
 		{
 			c = '\e';
 		}
-		else if(!strcmp(buf, "space"))
+		else if(match(buf, "space"))
 		{
 			c = ' ';
 		}
-		else if(!strcmp(buf, "bel"))
+		else if(match(buf, "bel"))
 		{
 			c = '\a';
 		}
-		else if(!strcmp(buf, "bs"))
+		else if(match(buf, "bs"))
 		{
 			c = '\b';
 		}
-		else if(!strcmp(buf, "ht"))
+		else if(match(buf, "ht"))
 		{
 			c = '\t';
 		}
-		else if(!strcmp(buf, "vt"))
+		else if(match(buf, "vt"))
 		{
 			c = '\v';
 		}
-		else if(!strcmp(buf, "cr"))
+		else if(match(buf, "cr"))
 		{
 			c = '\r';
 		}
@@ -512,6 +517,7 @@ struct scm* reader_read_character()
 
 int escape_lookup(int c)
 {
+
 	if(c == '0') return '\0';
 	else if(c == 'a') return '\a';
 	else if(c == 'b') return '\b';
@@ -521,7 +527,11 @@ int escape_lookup(int c)
 	else if(c == 'f') return '\f';
 	else if(c == 'r') return '\r';
 	else if(c == 'e') return '\e';
-	else if(c == 'x') return reader_read_hex()->value;
+	else if(c == 'x')
+	{
+		struct scm* x = reader_read_hex();
+		return x->value;
+	}
 	/* Any other escaped character is itself */
 	else return c;
 }
@@ -550,14 +560,15 @@ struct scm* reader_read_string()
 			c = escape_lookup(readchar());
 		}
 
-		g_buf[i++] = c;
+		g_buf[i] = c;
+		i = i + 1;
 	} while(1);
 
 	g_buf[i] = 0;
 	return make_string_(g_buf);
 }
 
-struct scm* read_string(struct scm* port)  ///((arity . n))
+struct scm* read_string(struct scm* port)  /* ((arity . n)) */
 {
 	int fd = __stdin;
 	struct scm* x = port;
