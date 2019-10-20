@@ -727,6 +727,8 @@ int main(int argc, char** argv, char** envp)
 {
 	global_envp = envp;
 	reader_buf = calloc(10, sizeof(char));
+	itoa_buf = calloc(20, sizeof(char));
+	execl_argv = calloc(4096, sizeof(char*));
 	__ungetc_buf = calloc((RLIMIT_NOFILE + 1), sizeof(int));
 	g_continuations = 0;
 	g_symbols = 0;

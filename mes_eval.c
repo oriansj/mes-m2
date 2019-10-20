@@ -65,7 +65,6 @@ struct scm* module_define_x (struct scm* module, struct scm* name, struct scm* v
 struct scm* open_input_file (struct scm* file_name);
 struct scm* set_current_input_port (struct scm* port);
 struct scm* read_input_file_env ();
-struct scm* init_time(struct scm* a);
 struct scm* vector_ref_(struct scm* x, SCM i);
 struct scm* make_vector__(SCM k);
 struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);

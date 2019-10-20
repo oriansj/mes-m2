@@ -81,6 +81,8 @@ struct scm** g_stack_array;
 int MAX_STRING;
 char* g_buf;
 char* reader_buf;
+char* itoa_buf;
+char** execl_argv;
 SCM g_free;
 int g_debug;
 SCM g_symbol_max;

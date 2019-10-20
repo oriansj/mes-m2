@@ -19,10 +19,74 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fcntl.h>
+#include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
+
 int fdputc(int c, int fd)
 {
 	write(fd, (char*)&c, 1);
 	return 0;
+}
+
+int file_getc(int fd)
+{
+	int c;
+	int r = read(fd, &c, 1);
+
+	if(r < 1)
+	{
+		return -1;
+	}
+
+	c = c & 0xFF;
+	return c;
+}
+
+int file_open(char* name, int flags, int mode)
+{
+	return open(name, flags, mode);
+}
+
+int env_update(char* key, char* value, int override)
+{
+	setenv(key, value, override);
+	return 0;
+}
+
+int file_access(char* name, int mode)
+{
+	return access(name, mode);
+}
+
+void file_chmod(char* name, int mode)
+{
+	chmod(name, mode);
+}
+
+int tty_detect(int fd)
+{
+	return isatty(fd);
+}
+
+int fork_process()
+{
+	return fork();
+}
+
+int file_execute(char* name, char** argv, char** envp)
+{
+	return execve(name, argv, envp);
+}
+
+int wait_exit(int pid, int* status_ptr, int options)
+{
+	return waitpid(pid, status_ptr, options);
 }

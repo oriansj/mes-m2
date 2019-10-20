@@ -158,7 +158,6 @@ struct scm* vector_ref(struct scm* x, struct scm* i);
 struct scm* vector_set_x(struct scm* x);
 struct scm* list_to_vector(struct scm* x);
 struct scm* vector_to_list(struct scm* v);
-struct scm* init_time(struct scm* a);
 
 /* Internal functions required*/
 struct scm* make_string(char* s, int length);
