@@ -24,16 +24,15 @@
 
 SCM length__(struct scm* x);
 int eputs(char* s);
-char *itoa (int number);
-struct scm* error(struct scm* key, struct scm* x);
+char* itoa(int number);
 struct scm* cstring_to_symbol(char* s);
-struct scm* write_error_ (struct scm* x);
+struct scm* write_error_(struct scm* x);
 SCM gc_pop_frame();
 struct scm* vector_entry(struct scm* x);
 struct scm* make_stack_type();
-struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_frame_type();
-struct scm* cons (struct scm* x, struct scm* y);
+struct scm* cons(struct scm* x, struct scm* y);
 struct scm* make_vector__(SCM k);
 void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
@@ -89,9 +88,18 @@ void initialize_memory()
 	gc_init_cells();
 }
 
-
-struct scm* make_stack()  /* ((arity . n)) */
+struct scm* make_tpair(struct scm* a, struct scm* b)
 {
+	struct scm* x = calloc(1, sizeof(struct scm));
+	x->type = TPAIR;
+	x->car = a;
+	x->cdr = b;
+	return x;
+}
+
+struct scm* make_stack(struct scm* x)  /* External */
+{
+	require(cell_nil == x, "mes_gc.c: make_stack recieved non-nil list\n");
 	struct scm* stack_type = make_stack_type();
 	SCM size = (STACK_SIZE - g_stack) / FRAME_SIZE;
 	struct scm* frames = make_vector__(size);
@@ -107,21 +115,24 @@ struct scm* make_stack()  /* ((arity . n)) */
 			procedure = cell_f;
 		}
 
-		struct scm* frame = make_struct(make_frame_type()
-		                   , cons(cell_symbol_frame, cons(procedure, cell_nil))
+		struct scm* frame = make_struct_(make_frame_type()
+		                   , make_tpair(cell_symbol_frame, make_tpair(procedure, cell_nil))
 		                   , cstring_to_symbol("frame-printer"));
 		vector_set_x_(frames, i, frame);
 	}
 
 	struct scm* values = cell_nil;
-	values = cons(frames, values);
-	values = cons(cell_symbol_stack, values);
-	return make_struct(stack_type, values, cell_unspecified);
+	values = make_tpair(frames, values);
+	values = make_tpair(cell_symbol_stack, values);
+	return make_struct_(stack_type, values, cell_unspecified);
 }
 
 
-struct scm* make_cell(struct scm* type, struct scm* car, struct scm* cdr)
+struct scm* make_cell(struct scm* x) /* External */
 {
+	struct scm* type = x->car;
+	struct scm* car = x->cdr->car;
+	struct scm* cdr = x->cdr->cdr->car;
 	require(type->type == TNUMBER, "type does not match TNUMBER in mes_gc.c: make_cell\n");
 
 	if(type->value == TCHAR || type->value == TNUMBER)
@@ -137,11 +148,11 @@ struct scm* make_cell(struct scm* type, struct scm* car, struct scm* cdr)
 		}
 	}
 
-	struct scm* x = calloc(1, sizeof(struct scm));
-	x->type = type->value;
-	x->car = car;
-	x->cdr = cdr;
-	return x;
+	struct scm* y = calloc(1, sizeof(struct scm));
+	y->type = type->value;
+	y->car = car;
+	y->cdr = cdr;
+	return y;
 }
 
 
@@ -189,7 +200,7 @@ struct scm* make_vector__(SCM k)
 	return x;
 }
 
-struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer)
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer) /* Internal */
 {
 	SCM size = 2 + length__(fields);
 	struct scm* v = calloc(size, sizeof(struct scm));
@@ -231,14 +242,32 @@ struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printe
 	return r;
 }
 
-struct scm* gc_check()
+struct scm* make_struct(struct scm* x) /* External */
+{
+	return(make_struct_(x->car, x->cdr->car, x->cdr->cdr->car));
+}
+
+
+struct scm* gc_check_() /* Internal*/
 {
 	return cell_unspecified;
 }
 
-struct scm* gc()
+struct scm* gc_check(struct scm* x) /* External */
+{
+	require(cell_nil == x, "mes_gc.c: gc_check recieved non-nil list\n");
+	return gc_check_();
+}
+
+struct scm* gc_() /* Internal */
 {
 	return cell_unspecified;
+}
+
+struct scm* gc(struct scm* x) /* External */
+{
+	require(cell_nil == x, "mes_gc.c: gc recieved non-nil list\n");
+	return gc_();
 }
 
 struct scm* make_tstring1(SCM n)
@@ -295,13 +324,32 @@ struct scm* make_char(SCM c)
 	return x;
 }
 
-struct scm* make_number(SCM n)
+struct scm* make_number_(SCM n) /* Internal */
 {
 	struct scm* x = calloc(1, sizeof(struct scm));
 	x->type = TNUMBER;
 	x->car = 0;
 	x->value = n;
 	return x;
+}
+
+struct scm* make_number(struct scm* x) /* External */
+{
+	return make_number_(x->rac);
+}
+
+struct scm* make_function_(FUNCTION n) /* Internal */
+{
+	struct scm* x = calloc(1, sizeof(struct scm));
+	x->type = TNUMBER;
+	x->car = 0;
+	x->func_cdr = n;
+	return x;
+}
+
+struct scm* make_function(struct scm* x) /* External */
+{
+	return make_function_(x->func_car);
 }
 
 struct scm* make_tmacro(struct scm* a, struct scm* b)
@@ -322,21 +370,12 @@ struct scm* make_tcontinuation(SCM a, SCM b)
 	return x;
 }
 
-struct scm* make_tpair(struct scm* a, struct scm* b)
-{
-	struct scm* x = calloc(1, sizeof(struct scm));
-	x->type = TPAIR;
-	x->car = a;
-	x->cdr = b;
-	return x;
-}
-
 struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a)  /* ((internal)) */
 {
 	struct scm* x = calloc(1, sizeof(struct scm));
 	x->type = TCLOSURE;
 	x->car = cell_f;
-	x->cdr = cons(cons(cell_circular, a), cons(args, body));
+	x->cdr = make_tpair(make_tpair(cell_circular, a), make_tpair(args, body));
 	return x;
 }
 

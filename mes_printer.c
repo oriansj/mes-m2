@@ -21,12 +21,10 @@
 
 #include "mes.h"
 #include "mes_constants.h"
-#include <unistd.h>
 
 // CONSTANT STRUCT_PRINTER 1
 #define STRUCT_PRINTER 1
 
-struct scm* cons(struct scm* x, struct scm* y);
 struct scm* apply(struct scm* f, struct scm* x);
 struct scm* struct_ref_(struct scm* x, SCM i);
 struct scm* builtin_p(struct scm* x);
@@ -34,9 +32,10 @@ struct scm* fdisplay_(struct scm*, int, int);
 int fdputs(char* s, int fd);
 int fdputc(int c, int fd);
 char *itoa(int number);
-struct scm* error(struct scm* key, struct scm* x);
+struct scm* error_(struct scm* key, struct scm* x);
 
 /* Imported Functions */
+struct scm* make_tpair(struct scm* a, struct scm* b);
 void require(int bool, char* error);
 int string_len(char* a);
 void raw_print(char* s, int fd);
@@ -179,7 +178,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 	}
 	else if(t == TSTRUCT)
 	{
-		/* struct scm* printer = STRUCT (x) + 1; */
+		/* struct scm* printer = STRUCT(x) + 1; */
 		struct scm* printer = struct_ref_(x, STRUCT_PRINTER);
 
 		if(printer->type == TREF)
@@ -189,7 +188,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 
 		if(printer->type == TCLOSURE || builtin_p(printer) == cell_t)
 		{
-			apply(printer, cons(x, cell_nil));
+			apply(printer, make_tpair(x, cell_nil));
 		}
 		else
 		{
@@ -238,42 +237,62 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 	return 0;
 }
 
-struct scm* display_(struct scm* x)
+struct scm* display_(struct scm* x) /* Internal */
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", __stdout, 0);
 }
 
-struct scm* display_error_(struct scm* x)
+struct scm* display(struct scm* x) /* External */
+{
+	return display_(x->car);
+}
+
+struct scm* display_error_(struct scm* x) /* Internal */
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", __stderr, 0);
 }
 
-struct scm* display_port_(struct scm* x, struct scm* p)
+struct scm* display_error(struct scm* x) /* External */
 {
-	struct scm* p2 = p;
+	return display_error_(x->car);
+}
+
+struct scm* display_port_(struct scm* x, struct scm* port) /* Internal */
+{
+	struct scm* p2 = port;
 	require(TNUMBER == p2->type, "mes_printer.c: display_port_ did not recieve TNUMBER\n");
 	return fdisplay_(x, p2->value, 0);
 }
 
-struct scm* write_(struct scm* x)
+struct scm* display_port(struct scm* x) /* External */
 {
-	g_depth = 5;
-	return display_helper(x, 0, "", __stdout, 1);
+	return display_port_(x->car, x->cdr->car);
 }
 
-struct scm* write_error_(struct scm* x)
+struct scm* scm_write(struct scm* x) /* External */
+{
+	g_depth = 5;
+	return display_helper(x->car, 0, "", __stdout, 1);
+}
+
+struct scm* write_error_(struct scm* x) /* Internal */
 {
 	g_depth = 5;
 	return display_helper(x, 0, "", __stderr, 1);
 }
 
-struct scm* write_port_(struct scm* x, struct scm* p)
+struct scm* write_error(struct scm* x) /* External */
 {
-	struct scm* p2 = p;
+	return write_error_(x->car);
+}
+
+struct scm* write_port(struct scm* x) /* External */
+{
+	struct scm* p2 = x->cdr->car;
 	require(TNUMBER == p2->type, "mes_printer: write_port_ did not recieve TNUMBER\n");
-	return fdisplay_(x, p2->value, 1);
+	return fdisplay_(x->car, p2->value, 1);
 }
 
 struct scm* fdisplay_(struct scm* x, int fd, int write_p)  /* ((internal)) */
@@ -282,8 +301,9 @@ struct scm* fdisplay_(struct scm* x, int fd, int write_p)  /* ((internal)) */
 	return display_helper(x, 0, "", fd, write_p);
 }
 
-struct scm* frame_printer(struct scm* frame)
+struct scm* frame_printer(struct scm* frame) /* External */
 {
+	frame = frame->car;
 	fdputs("#<", __stdout);
 	display_(struct_ref_(frame, 2));
 	fdputs(" procedure: ", __stdout);
@@ -292,7 +312,7 @@ struct scm* frame_printer(struct scm* frame)
 	return cell_unspecified;
 }
 
-struct scm* module_printer(struct scm* module)
+struct scm* module_printer_(struct scm* module) /* Internal */
 {
 	/* module = M0; */
 	fdputs("#<", __stdout);
@@ -311,6 +331,11 @@ struct scm* module_printer(struct scm* module)
 	return cell_unspecified;
 }
 
+struct scm* module_printer(struct scm* x) /* External */
+{
+	return module_printer_(x->car);
+}
+
 void assert_max_string(int i, char* msg, char* string)
 {
 	if(i > MAX_STRING)
@@ -321,11 +346,11 @@ void assert_max_string(int i, char* msg, char* string)
 		raw_print("]:", __stderr);
 		string[MAX_STRING - 1] = 0;
 		raw_print(string, __stderr);
-		error(cell_symbol_system_error, cell_f);
+		error_(cell_symbol_system_error, cell_f);
 	}
 }
 
-struct scm* write_byte(struct scm* x)  /* ((arity . n)) */
+struct scm* write_byte_(struct scm* x)  /* Internal */
 {
 	struct scm* y = x;
 	struct scm* c = y->car;
@@ -346,9 +371,14 @@ struct scm* write_byte(struct scm* x)  /* ((arity . n)) */
 	return c;
 }
 
-struct scm* write_char(struct scm* i)  /* ((arity . n)) */
+struct scm* write_byte(struct scm* x) /* External */
 {
-	struct scm* x = i;
-	write_byte(x);
+	return write_byte_(x->car);
+}
+
+struct scm* write_char(struct scm* x)  /* External */
+{
+	x = x->car;
+	write_byte_(x);
 	return x;
 }

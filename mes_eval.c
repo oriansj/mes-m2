@@ -22,49 +22,44 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* append2(struct scm* x, struct scm* y);
+struct scm* append2_(struct scm* x, struct scm* y);
 void gc_push_frame();
 struct scm* assert_defined(struct scm* x, struct scm* e);
 struct scm* get_macro(struct scm* name);
-struct scm* cdr(struct scm* x);
-struct scm* set_cdr_x(struct scm* x, struct scm* e);
 struct scm* expand_variable(struct scm* x, struct scm* formals);
-struct scm* macro_get_handle(struct scm* name);
-struct scm* assq(struct scm* x, struct scm* a);
+struct scm* macro_get_handle_(struct scm* name);
+struct scm* assq_(struct scm* x, struct scm* a);
 struct scm* macro_set_x(struct scm* name, struct scm* value);
 struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a);
-struct scm* set_env_x(struct scm* x, struct scm* e, struct scm* a);
+struct scm* set_env_x_(struct scm* x, struct scm* e, struct scm* a);
 struct scm* gc_pop_frame();
 struct scm* check_apply(struct scm* f, struct scm* e);
-struct scm* pairlis(struct scm* x, struct scm* y, struct scm* a);
+struct scm* pairlis_(struct scm* x, struct scm* y, struct scm* a);
 struct scm* call_lambda(struct scm* e, struct scm* x);
 struct scm* make_string(char* s, int length);
-struct scm* cons(struct scm* x, struct scm* y);
-struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args);
-char *itoa (int number);
-struct scm* error(struct scm* key, struct scm* x);
+/* struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args); */
+char *itoa(int number);
+struct scm* error_(struct scm* key, struct scm* x);
 struct scm* mes_builtins(struct scm* a);
 struct scm* apply_builtin(struct scm* fn, struct scm* x);
 struct scm* cstring_to_symbol(char* s);
 struct scm* make_hash_table_(struct scm* size);
-struct scm* gc_check ();
-struct scm* gc ();
+struct scm* gc_check_();
+struct scm* gc();
 struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c);
-struct scm* hashq_get_handle (struct scm* table, struct scm* key, struct scm* dflt);
-struct scm* hash_set_x (struct scm* table, struct scm* key, struct scm* value);
-struct scm* display_ (struct scm* x);
-struct scm* write_error_ (struct scm* x);
-struct scm* equal2_p (struct scm* a, struct scm* b);
-struct scm* reverse_x_ (struct scm* x, struct scm* t);
-struct scm* builtin_arity (struct scm* builtin);
-struct scm* builtin_p (struct scm* x);
-struct scm* module_printer (struct scm* module);
-struct scm* module_variable (struct scm* module, struct scm* name);
-struct scm* module_ref (struct scm* module, struct scm* name);
-struct scm* module_define_x (struct scm* module, struct scm* name, struct scm* value);
-struct scm* open_input_file (struct scm* file_name);
-struct scm* set_current_input_port (struct scm* port);
-struct scm* read_input_file_env ();
+struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* display_(struct scm* x);
+struct scm* write_error_(struct scm* x);
+struct scm* reverse_x_(struct scm* x, struct scm* t);
+/* struct scm* builtin_arity(struct scm* builtin); */
+struct scm* builtin_p(struct scm* x);
+struct scm* module_printer_(struct scm* module);
+struct scm* module_variable_(struct scm* module, struct scm* name);
+struct scm* module_ref_(struct scm* module, struct scm* name);
+struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
+struct scm* open_input_file_(struct scm* file_name);
+struct scm* set_current_input_port_(struct scm* port);
+struct scm* read_input_file_env__();
 struct scm* vector_ref_(struct scm* x, SCM i);
 struct scm* make_vector__(SCM k);
 struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);
@@ -72,8 +67,9 @@ int string_len(char* a);
 struct scm* make_tmacro(struct scm* a, struct scm* b);
 struct scm* make_tcontinuation(SCM a, SCM b);
 void require(int bool, char* error);
+struct scm* make_tpair(struct scm* a, struct scm* b);
 
-struct scm* eval_apply()
+struct scm* eval_apply_()
 {
 	struct scm* AA;
 	struct scm* ARGS;
@@ -94,7 +90,7 @@ struct scm* eval_apply()
 	int macro_p;
 	int t;
 	struct scm* C;
-eval_apply:
+eval_apply__:
 
 	if(R3 == cell_vm_evlis2)
 	{
@@ -234,7 +230,7 @@ eval_apply:
 	}
 	else
 	{
-		error(cell_symbol_system_error, make_string ("eval/apply unknown continuation", string_len("eval/apply unknown continuation")));
+		error_(cell_symbol_system_error, make_string("eval/apply unknown continuation", string_len("eval/apply unknown continuation")));
 	}
 
 evlis:
@@ -255,7 +251,7 @@ evlis2:
 	push_cc(R2->cdr, R1, R0, cell_vm_evlis3);
 	goto evlis;
 evlis3:
-	R1 = cons(R2, R1);
+	R1 = make_tpair(R2, R1);
 	goto vm_return;
 apply:
 	g_stack_array[g_stack + FRAME_PROCEDURE] = R1->car;
@@ -263,7 +259,7 @@ apply:
 
 	if(t == TSTRUCT && builtin_p(R1->car) == cell_t)
 	{
-		check_formals(R1->car, builtin_arity(R1->car), R1->cdr);
+		/* check_formals(R1->car, builtin_arity(R1->car), R1->cdr); */
 		R1 = apply_builtin(R1->car, R1->cdr);    /* FIXME: move into eval_apply */
 		goto vm_return;
 	}
@@ -275,8 +271,8 @@ apply:
 		ARGS = R1->cdr;
 		AA = CL->car->cdr;
 		AA = AA->cdr;
-		check_formals(R1->car, FORMALS, R1->cdr);
-		P = pairlis(FORMALS, ARGS, AA);
+		/* check_formals(R1->car, FORMALS, R1->cdr); */
+		P = pairlis_(FORMALS, ARGS, AA);
 		call_lambda(BODY, P);
 		goto begin;
 	}
@@ -297,7 +293,7 @@ apply:
 		X = R1;
 		gc_pop_frame();
 		R1 = X->cdr->car;
-		goto eval_apply;
+		goto eval_apply__;
 	}
 	else if(t == TSPECIAL)
 	{
@@ -305,7 +301,7 @@ apply:
 
 		if(C == cell_vm_apply)
 		{
-			push_cc(cons(R1->cdr->car, R1->cdr->cdr->car), R1, R0, cell_vm_return);
+			push_cc(make_tpair(R1->cdr->car, R1->cdr->cdr->car), R1, R0, cell_vm_return);
 			goto apply;
 		}
 		else if(C ==  cell_vm_eval)
@@ -315,7 +311,7 @@ apply:
 		}
 		else if(C ==  cell_vm_begin_expand)
 		{
-			push_cc(cons(R1->cdr->car, cell_nil), R1, R1->cdr->cdr->car, cell_vm_return);
+			push_cc(make_tpair(R1->cdr->car, cell_nil), R1, R1->cdr->cdr->car, cell_vm_return);
 			goto begin_expand;
 		}
 		else if(C ==  cell_call_with_current_continuation)
@@ -355,20 +351,20 @@ apply:
 			FORMALS = R1->car->cdr->car;
 			ARGS = R1->cdr;
 			BODY = R1->car->cdr->cdr;
-			P = pairlis(FORMALS, R1->cdr, R0);
-			check_formals(R1, FORMALS, ARGS);
+			P = pairlis_(FORMALS, R1->cdr, R0);
+			/* check_formals(R1, FORMALS, ARGS); */
 			call_lambda(BODY, P);
 			goto begin;
 		}
 	}
 
-	/* write_error_ (R1->car); */
-	/* eputs ("\n"); */
+	/* write_error_(R1->car); */
+	/* eputs("\n"); */
 	push_cc(R1->car, R1, R0, cell_vm_apply2);
 	goto eval;
 apply2:
 	check_apply(R1, R2->car);
-	R1 = cons(R1, R2->cdr);
+	R1 = make_tpair(R1, R2->cdr);
 	goto apply;
 eval:
 	t = R1->type;
@@ -385,7 +381,7 @@ eval_pmatch_car:
 			X = R1;
 			gc_pop_frame();
 			R1 = X->car;
-			goto eval_apply;
+			goto eval_apply__;
 		}
 		else if(C ==  cell_symbol_pmatch_cdr)
 		{
@@ -395,14 +391,14 @@ eval_pmatch_cdr:
 			X = R1;
 			gc_pop_frame();
 			R1 = X->cdr;
-			goto eval_apply;
+			goto eval_apply__;
 		}
 		else if(C ==  cell_symbol_quote)
 		{
 			X = R1;
 			gc_pop_frame();
 			R1 = X->cdr->car;
-			goto eval_apply;
+			goto eval_apply__;
 		}
 		else if(C ==  cell_symbol_begin)
 		{
@@ -423,7 +419,7 @@ eval_pmatch_cdr:
 			push_cc(R1->cdr->cdr->car, R1, R0, cell_vm_eval_set_x);
 			goto eval;
 eval_set_x:
-			R1 = set_env_x(R2->cdr->car, R1, R0);
+			R1 = set_env_x_(R2->cdr->car, R1, R0);
 			goto vm_return;
 		}
 		else if(C == cell_vm_macro_expand)
@@ -454,7 +450,7 @@ eval_macro_expand_expand:
 
 					if(macro_p)
 					{
-						ENTRY = assq(NAME, g_macros);
+						ENTRY = assq_(NAME, g_macros);
 
 						if(ENTRY == cell_f)
 						{
@@ -463,11 +459,11 @@ eval_macro_expand_expand:
 					}
 					else
 					{
-						ENTRY = module_variable(R0, NAME);
+						ENTRY = module_variable_(R0, NAME);
 
 						if(ENTRY == cell_f)
 						{
-							module_define_x(M0, NAME, cell_f);
+							module_define_x_(M0, NAME, cell_f);
 						}
 					}
 				}
@@ -476,12 +472,12 @@ eval_macro_expand_expand:
 
 				if(R1->cdr->car->type != TPAIR)
 				{
-					push_cc(R1->cdr->cdr->car, R2, cons(cons(R1->cdr->car, R1->cdr->car), R0), cell_vm_eval_define);
+					push_cc(R1->cdr->cdr->car, R2, make_tpair(make_tpair(R1->cdr->car, R1->cdr->car), R0), cell_vm_eval_define);
 					goto eval;
 				}
 				else
 				{
-					P = pairlis(R1->cdr->car, R1->cdr->car, R0);
+					P = pairlis_(R1->cdr->car, R1->cdr->car, R0);
 					FORMALS = R1->cdr->car->cdr;
 					BODY = R1->cdr->cdr;
 
@@ -490,7 +486,7 @@ eval_macro_expand_expand:
 						expand_variable(BODY, FORMALS);
 					}
 
-					R1 = cons(cell_symbol_lambda, cons(FORMALS, BODY));
+					R1 = make_tpair(cell_symbol_lambda, make_tpair(FORMALS, BODY));
 					push_cc(R1, R2, P, cell_vm_eval_define);
 					goto eval;
 				}
@@ -505,23 +501,23 @@ eval_define:
 
 				if(macro_p)
 				{
-					ENTRY = macro_get_handle(NAME);
+					ENTRY = macro_get_handle_(NAME);
 					R1 = make_tmacro(R1, NAME->cdr);
-					set_cdr_x(ENTRY, R1);
+					ENTRY->cdr = R1;
 				}
 				else if(global_p)
 				{
-					ENTRY = module_variable(R0, NAME);
-					set_cdr_x(ENTRY, R1);
+					ENTRY = module_variable_(R0, NAME);
+					ENTRY->cdr = R1;
 				}
 				else
 				{
-					ENTRY = cons(NAME, R1);
-					AA = cons(ENTRY, cell_nil);
-					set_cdr_x(AA, cdr(R0));
-					set_cdr_x(R0, AA);
-					CL = module_variable(R0, cell_closure);
-					set_cdr_x(CL, AA);
+					ENTRY = make_tpair(NAME, R1);
+					AA = make_tpair(ENTRY, cell_nil);
+					AA->cdr =  R0->cdr;
+					R0->cdr = AA;
+					CL = module_variable_(R0, cell_closure);
+					CL->cdr = AA;
 				}
 
 				R1 = cell_unspecified;
@@ -529,13 +525,13 @@ eval_define:
 			}
 
 			push_cc(R1->car, R1, R0, cell_vm_eval_check_func);
-			gc_check();
+			gc_check_();
 			goto eval;
 eval_check_func:
 			push_cc(R2->cdr, R2, R0, cell_vm_eval2);
 			goto evlis;
 eval2:
-			R1 = cons(R2->car, R1);
+			R1 = make_tpair(R2->car, R1);
 			goto apply;
 		}
 	}
@@ -557,7 +553,7 @@ eval2:
 			goto vm_return;
 		}
 
-		R1 = assert_defined(R1, module_ref(R0, R1));
+		R1 = assert_defined(R1, module_ref_(R0, R1));
 		goto vm_return;
 	}
 	else if(t == TVARIABLE)
@@ -567,7 +563,7 @@ eval2:
 	}
 	else if(t == TBROKEN_HEART)
 	{
-		error(cell_symbol_system_error,  R1);
+		error_(cell_symbol_system_error,  R1);
 	}
 	else
 	{
@@ -593,7 +589,7 @@ macro_expand_lambda:
 
 	if(R1->type == TPAIR && (MACRO = get_macro(R1->car)) != cell_f)
 	{
-		R1 = cons(MACRO, R1->cdr);
+		R1 = make_tpair(MACRO, R1->cdr);
 		push_cc(R1, cell_nil, R0, cell_vm_macro_expand);
 		goto apply;
 	}
@@ -632,19 +628,19 @@ macro_expand_set_x:
 
 	if(R1->type == TPAIR && R1->car->type == TSYMBOL)
 	{
-		MACRO = macro_get_handle(cell_symbol_portable_macro_expand);
-		EXPANDERS = module_ref(R0, cell_symbol_sc_expander_alist);
+		MACRO = macro_get_handle_(cell_symbol_portable_macro_expand);
+		EXPANDERS = module_ref_(R0, cell_symbol_sc_expander_alist);
 		if((R1->car != cell_symbol_begin) && (MACRO != cell_f) && (EXPANDERS != cell_undefined))
 		{
-			MACRO = assq(R1->car, EXPANDERS);
+			MACRO = assq_(R1->car, EXPANDERS);
 			if(MACRO != cell_f)
 			{
-				SC_EXPAND = module_ref(R0, cell_symbol_macro_expand);
+				SC_EXPAND = module_ref_(R0, cell_symbol_macro_expand);
 				R2 = R1;
 
 				if(SC_EXPAND != cell_undefined && SC_EXPAND != cell_f)
 				{
-					R1 = cons(SC_EXPAND, cons(R1, cell_nil));
+					R1 = make_tpair(SC_EXPAND, make_tpair(R1, cell_nil));
 					goto apply;
 				}
 			}
@@ -676,13 +672,13 @@ begin:
 
 	while(R1 != cell_nil)
 	{
-		gc_check();
+		gc_check_();
 
 		if(R1->type == TPAIR)
 		{
 			if(R1->car->car == cell_symbol_primitive_load)
 			{
-				PROGRAM = cons(R1->car, cell_nil);
+				PROGRAM = make_tpair(R1->car, cell_nil);
 				push_cc(PROGRAM, R1, R0, cell_vm_begin_primitive_load);
 				goto begin_expand;
 begin_primitive_load:
@@ -695,7 +691,7 @@ begin_primitive_load:
 		{
 			if(R1->car->car == cell_symbol_begin)
 			{
-				R1 = append2(R1->car->cdr, R1->cdr);
+				R1 = append2_(R1->car->cdr, R1->cdr);
 			}
 		}
 
@@ -719,13 +715,13 @@ begin_expand:
 
 	while(R1 != cell_nil)
 	{
-		gc_check();
+		gc_check_();
 
 		if(R1->type == TPAIR)
 		{
 			if(R1->car->type == TPAIR && R1->car->car == cell_symbol_begin)
 			{
-				R1 = append2(R1->car->cdr, R1->cdr);
+				R1 = append2_(R1->car->cdr, R1->cdr);
 			}
 
 			if(R1->car->car == cell_symbol_primitive_load)
@@ -740,11 +736,11 @@ begin_expand_primitive_load:
 				}
 				else if(R1->type == TSTRING)
 				{
-					INPUT = set_current_input_port(open_input_file(R1));
+					INPUT = set_current_input_port_(open_input_file_(R1));
 				}
 				else if(R1->type == TPORT)
 				{
-					INPUT = set_current_input_port(R1);
+					INPUT = set_current_input_port_(R1);
 				}
 				else
 				{
@@ -752,18 +748,18 @@ begin_expand_primitive_load:
 				}
 
 				push_cc(INPUT, R2, R0, cell_vm_return);
-				X = read_input_file_env();
+				X = read_input_file_env__();
 
 				if(g_debug > 4)
 				{
-					module_printer(M0);
+					module_printer_(M0);
 				}
 
 				gc_pop_frame();
 				INPUT = R1;
 				R1 = X;
-				set_current_input_port(INPUT);
-				R1 = cons(cell_symbol_begin, R1);
+				set_current_input_port_(INPUT);
+				R1 = make_tpair(cell_symbol_begin, R1);
 				R2->car = R1;
 				R1 = R2;
 				continue;
@@ -826,7 +822,7 @@ call_with_current_continuation:
 
 	X->continuation = V;
 	gc_pop_frame();
-	push_cc(cons(R1->car, cons(X, cell_nil)), X, R0, cell_vm_call_with_current_continuation2);
+	push_cc(make_tpair(R1->car, make_tpair(X, cell_nil)), X, R0, cell_vm_call_with_current_continuation2);
 	goto apply;
 call_with_current_continuation2:
 	V = make_vector__(5);
@@ -839,7 +835,7 @@ call_with_current_continuation2:
 	R2->continuation = V;
 	goto vm_return;
 call_with_values:
-	push_cc(cons(R1->car, cell_nil), R1, R0, cell_vm_call_with_values2);
+	push_cc(make_tpair(R1->car, cell_nil), R1, R0, cell_vm_call_with_values2);
 	goto apply;
 call_with_values2:
 
@@ -848,11 +844,17 @@ call_with_values2:
 		R1 = R1->cdr;
 	}
 
-	R1 = cons(R2->cdr->car, R1);
+	R1 = make_tpair(R2->cdr->car, R1);
 	goto apply;
 vm_return:
 	X = R1;
 	gc_pop_frame();
 	R1 = X;
-	goto eval_apply;
+	goto eval_apply__;
+}
+
+struct scm* eval_apply(struct scm* x) /* External */
+{
+	require(cell_nil == x, "mes_eval.c: mes_eval recieved arguments with eval_apply\n");
+	return eval_apply_();
 }

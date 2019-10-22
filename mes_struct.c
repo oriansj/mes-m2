@@ -23,16 +23,15 @@
 #include "mes_constants.h"
 
 SCM length__(struct scm* x);
-struct scm* make_number(SCM n);
+struct scm* make_number_(SCM n);
 struct scm* make_char(SCM c);
 struct scm* vector_entry(struct scm* x);
-struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
 void require(int bool, char* error);
 
-struct scm* struct_length(struct scm* x)
+struct scm* struct_length(struct scm* x) /* External*/
 {
-	require(x->type == TSTRUCT, "mes_struct.c: struct_length x was not of type TSTRUCT\n");
-	return make_number(x->length);
+	require(x->car->type == TSTRUCT, "mes_struct.c: struct_length x was not of type TSTRUCT\n");
+	return make_number_(x->car->length);
 }
 
 struct scm* struct_ref_(struct scm* x, SCM i)
@@ -53,7 +52,7 @@ struct scm* struct_ref_(struct scm* x, SCM i)
 
 	if(f->type == TNUMBER)
 	{
-		return make_number(f->value);
+		return make_number_(f->value);
 	}
 
 	return f;
@@ -72,16 +71,16 @@ struct scm* struct_set_x_(struct scm* x, SCM i, struct scm* e)
 	return cell_unspecified;
 }
 
-struct scm* struct_ref(struct scm* x, struct scm* i) /* External */
+struct scm* struct_ref(struct scm* x) /* External */
 {
-	struct scm* h = i;
-	struct scm* y = x;
+	struct scm* h = x->cdr->car;
+	struct scm* y = x->car;
 	return struct_ref_(y, h->value);
 }
 
-struct scm* struct_set_x(struct scm* x, struct scm* i, struct scm* e)
+struct scm* struct_set_x(struct scm* x) /* External */
 {
-	struct scm* h = i;
-	struct scm* y = x;
-	return struct_set_x_(y, h->value, e);
+	struct scm* i = x->cdr->car;
+	struct scm* e = x->cdr->cdr->car;
+	return struct_set_x_(x->car, i->value, e);
 }

@@ -76,7 +76,7 @@ int file_getc(int fd)
 	    ":FUNCTION_file_getc_Done");
 }
 
-int file_open(char* name, int flags, int mode)
+int open(char* name, int flags, int mode)
 {
 	asm("LOAD_EFFECTIVE_ADDRESS_rdi %24"
 	    "LOAD_INTEGER_rdi"
@@ -88,7 +88,7 @@ int file_open(char* name, int flags, int mode)
 	    "SYSCALL");
 }
 
-void file_chmod(char* name, int mode)
+void chmod(char* name, int mode)
 {
 	asm("LOAD_EFFECTIVE_ADDRESS_rdi %16"
 	    "LOAD_INTEGER_rdi"
@@ -98,19 +98,19 @@ void file_chmod(char* name, int mode)
 	    "SYSCALL");
 }
 
-int tty_detect(int fd)
+int isatty(int fd)
 {
 	/* TODO */
 }
 
-int fork_process()
+int fork()
 {
 	asm("LOAD_IMMEDIATE_rax %57"
 	    "LOAD_IMMEDIATE_rdi %0"
 	    "SYSCALL");
 }
 
-int file_execute(char* name, char** argv, char** envp)
+int execve(char* name, char** argv, char** envp)
 {
 	asm("LOAD_EFFECTIVE_ADDRESS_rdi %24"
 	    "LOAD_INTEGER_rdi"
@@ -122,7 +122,7 @@ int file_execute(char* name, char** argv, char** envp)
 	    "SYSCALL");
 }
 
-int wait_exit(int pid, int* status_ptr, int options)
+int waitpid(int pid, int* status_ptr, int options)
 {
 	/* Uses wait4 with struct rusage *ru set to NULL */
 	asm("LOAD_EFFECTIVE_ADDRESS_rdi %24"
@@ -134,4 +134,41 @@ int wait_exit(int pid, int* status_ptr, int options)
 	    "LOAD_IMMEDIATE_r10 %0"
 	    "LOAD_IMMEDIATE_rax %61"
 	    "SYSCALL");
+}
+
+int env_update(char* key, char* value, int override)
+{
+	/* TODO */
+	return 0;
+}
+
+int access(char* name, int mode)
+{
+	/* TODO */
+	return 0;
+}
+
+// CONSTANT PATH_MAX 4096
+char* getcwd(char *buf, int size)
+{
+	/* TODO */
+	return buf;
+}
+
+int dup(int oldfd)
+{
+	/* TODO */
+	return oldfd;
+}
+
+int dup2(int oldfd, int newfd)
+{
+	/* TODO */
+	return newfd;
+}
+
+int unlink(char* pathname)
+{
+	/* TODO */
+	return 0;
 }

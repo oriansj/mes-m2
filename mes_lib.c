@@ -22,48 +22,51 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* cons(struct scm* x, struct scm* y);
+
 struct scm* cstring_to_symbol(char* s);
 void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 struct scm* struct_ref_(struct scm* x, SCM i);
-struct scm* vector_length (struct scm* x);
+struct scm* vector_length_(struct scm* x);
 struct scm* make_vector__(SCM k);
-struct scm* make_struct (struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* string_equal_p (struct scm* a, struct scm* b);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* string_equal_p_(struct scm* a, struct scm* b);
 struct scm* vector_equal_p(struct scm* a, struct scm* b);
-struct scm* eq_p (struct scm* x, struct scm* y);
+struct scm* eq_p_(struct scm* x, struct scm* y);
 
 void require(int bool, char* error);
-struct scm* make_number(SCM n);
+struct scm* make_number_(SCM n);
 struct scm* make_char(SCM c);
+struct scm* make_tpair(struct scm* a, struct scm* b);
 
-struct scm* exit_(struct scm* x)  /* ((name . "exit")) */
+struct scm* scm_exit(struct scm* x)  /* External */
 {
-	struct scm* y = x;
+	struct scm* y = x->car;
 	require(TNUMBER == y->type, "exit_ in mes_lib.c didn't recieve a number\n");
 	exit(y->value);
 }
 
 struct scm* make_frame_type()  /* ((internal)) */
 {
-	return make_struct(cell_symbol_record_type, cons(cell_symbol_frame, cons(cons(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified);
+	return make_struct_(cell_symbol_record_type, make_tpair(cell_symbol_frame, make_tpair(make_tpair(cell_symbol_procedure, cell_nil), cell_nil)), cell_unspecified);
 }
 
 
 struct scm* make_stack_type()  /* ((internal)) */
 {
-	return make_struct(cell_symbol_record_type
-	                  , cons(cell_symbol_stack, cons(cons(cstring_to_symbol("frames"), cell_nil), cell_nil))
+	return make_struct_(cell_symbol_record_type
+	                  , make_tpair(cell_symbol_stack, make_tpair(make_tpair(cstring_to_symbol("frames"), cell_nil), cell_nil))
 	                  , cell_unspecified);
 }
 
-struct scm* stack_length(struct scm* stack)
+struct scm* stack_length(struct scm* stack) /* External */
 {
-	return vector_length(struct_ref_(stack, 3));
+	return vector_length_(struct_ref_(stack->car, 3));
 }
 
-struct scm* stack_ref(struct scm* stack, SCM index)
+struct scm* stack_ref(struct scm* x) /* External */
 {
+	SCM index = x->cdr->rac;
+	struct scm* stack = x->car;
 	struct scm* y = struct_ref_(stack, 3);
 	require(TVECTOR == y->type, "stack_ref in mes_lib.c did not recieve a TVECTOR\n");
 	require(index < y->length, "y->length in stack_ref in mes_lib.c was less than or equal to index\n");
@@ -81,14 +84,16 @@ struct scm* stack_ref(struct scm* stack, SCM index)
 
 	if(e->type == TNUMBER)
 	{
-		return make_number(e->value);
+		return make_number_(e->value);
 	}
 
 	return e;
 }
 
-struct scm* xassq(struct scm* x, struct scm* a)  /* for speed in core only */
+struct scm* xassq(struct scm* x)  /* External */
 {
+	struct scm* a = x->cdr->car;
+	x = x->car;
 	while(a != cell_nil && x != a->car->cdr)
 	{
 		a = a->cdr;
@@ -98,8 +103,10 @@ struct scm* xassq(struct scm* x, struct scm* a)  /* for speed in core only */
 	return a->car;
 }
 
-struct scm* memq(struct scm* x, struct scm* a)
+struct scm* memq(struct scm* x) /* External */
 {
+	struct scm* a = x->cdr->car;
+	x = x->car;
 	int t = x->type;
 
 	if(t == TCHAR || t == TNUMBER)
@@ -113,7 +120,7 @@ struct scm* memq(struct scm* x, struct scm* a)
 	}
 	else if(t == TKEYWORD)
 	{
-		while(a != cell_nil && (a->car->type != TKEYWORD || string_equal_p(x, a->car) == cell_f))
+		while(a != cell_nil && (a->car->type != TKEYWORD || string_equal_p_(x, a->car) == cell_f))
 		{
 			a = a->cdr;
 		}
@@ -130,7 +137,7 @@ struct scm* memq(struct scm* x, struct scm* a)
 	return a;
 }
 
-struct scm* equal2_p(struct scm* a, struct scm* b)
+struct scm* equal2_p_(struct scm* a, struct scm* b) /* Internal */
 {
 	if(a == b)
 	{
@@ -139,13 +146,13 @@ struct scm* equal2_p(struct scm* a, struct scm* b)
 
 	if(a->type == TPAIR && b->type == TPAIR)
 	{
-		if((cell_t == equal2_p(a->car, b->car)) && (cell_t == equal2_p(a->cdr, b->cdr))) return cell_t;
+		if((cell_t == equal2_p_(a->car, b->car)) && (cell_t == equal2_p_(a->cdr, b->cdr))) return cell_t;
 		return cell_f;
 	}
 
 	if(a->type == TSTRING && b->type == TSTRING)
 	{
-		return string_equal_p(a, b);
+		return string_equal_p_(a, b);
 	}
 
 	if(a->type == TVECTOR && b->type == TVECTOR)
@@ -153,11 +160,17 @@ struct scm* equal2_p(struct scm* a, struct scm* b)
 		return vector_equal_p(a, b);
 	}
 
-	return eq_p(a, b);
+	return eq_p_(a, b);
 }
 
-struct scm* last_pair(struct scm* x)
+struct scm* equal2_p(struct scm* x) /* External */
 {
+	return equal2_p_(x->car, x->cdr->car);
+}
+
+struct scm* last_pair(struct scm* x) /* External */
+{
+	x = x->car;
 	while(x != cell_nil && x->cdr != cell_nil)
 	{
 		x = x->cdr;
@@ -166,8 +179,9 @@ struct scm* last_pair(struct scm* x)
 	return x;
 }
 
-struct scm* pair_p(struct scm* x)
+struct scm* pair_p(struct scm* x) /* External */
 {
+	x = x->car;
 	if(TPAIR == x->type) return cell_t;
 	return cell_f;
 }

@@ -42,6 +42,9 @@ mes-m2: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module
 	functions/match.c \
 	-o bin/mes-m2
 
+mes: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module.c mes_gc.c mes_lib.c mes_printer.c mes_reader.c mes_posix.c mes_builtins.c mes_eval.c mes.c functions/in_set.c functions/numerate.c functions/file_print.c | bin
+	kaem --verbose --strict
+
 # Clean up after ourselves
 .PHONY: clean
 clean:

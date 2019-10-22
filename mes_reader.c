@@ -32,40 +32,51 @@ int match(char* a, char* b);
 
 /* Standard Mes.c function imports */
 void assert_max_string(int i, char* msg, char* string);
-struct scm* cons(struct scm* x, struct scm* y);
 int readchar();
-struct scm* error(struct scm* key, struct scm* x);
+struct scm* error_(struct scm* key, struct scm* x);
 struct scm* make_string_(char* s);
 struct scm* make_string(char* s, int length);
 int peekchar();
 int unreadchar();
-struct scm* make_number(SCM n);
+struct scm* make_number_(SCM n);
 struct scm* make_char(SCM c);
 struct scm* cstring_to_symbol(char* s);
-struct scm* symbol_to_keyword(struct scm* symbol);
-struct scm* list_to_vector(struct scm* x);
+struct scm* symbol_to_keyword_(struct scm* symbol);
+struct scm* list_to_vector_(struct scm* x);
 int eputs(char* s);
 char* itoa(int number);
+struct scm* make_tpair(struct scm* a, struct scm* b);
+void require(int bool, char* error);
 
 struct scm* reader_read_sexp_(int c, struct scm* a);
-struct scm* read_env(struct scm* a)
+struct scm* read_env_(struct scm* a) /* Internal */
 {
 	return reader_read_sexp_(readchar(), a);
 }
 
-struct scm* read_input_file_env_(struct scm* e, struct scm* a)
+struct scm* read_env(struct scm* x) /* External */
+{
+	return read_env_(x->car);
+}
+
+struct scm* read_input_file_env_(struct scm* e, struct scm* a) /* Internal */
 {
 	if(e == cell_nil)
 	{
 		return cell_nil;
 	}
 
-	return cons(e, read_input_file_env_(read_env(a), a));
+	return make_tpair(e, read_input_file_env_(read_env_(a), a));
 }
 
-struct scm* read_input_file_env()
+struct scm* read_input_file_env(struct scm* x) /* External */
 {
-	return read_input_file_env_(read_env(cell_nil), cell_nil);
+	return read_input_file_env_(x->car, x->cdr->car);
+}
+
+struct scm* read_input_file_env__() /* Internal */
+{
+	return read_input_file_env_(read_env_(cell_nil), cell_nil);
 }
 
 int reader_read_line_comment(int c)
@@ -76,7 +87,7 @@ int reader_read_line_comment(int c)
 		c = readchar();
 	}
 
-	error(cell_symbol_system_error, make_string_("reader_read_line_comment"));
+	error_(cell_symbol_system_error, make_string_("reader_read_line_comment"));
 	exit(EXIT_FAILURE);
 }
 
@@ -104,16 +115,16 @@ struct scm* reader_read_identifier_or_number(int c)
 
 	if((0 != number || '0' == g_buf[0]))
 	{
-		return make_number(number);
+		return make_number_(number);
 	}
 	return cstring_to_symbol(g_buf);
 }
 
 struct scm* reader_read_hash(int c, struct scm* a);
 struct scm* reader_read_list(int c, struct scm* a);
-struct scm* reader_read_string ();
+struct scm* reader_read_string_();
 
-struct scm* reader_read_sexp_(int c, struct scm* a)
+struct scm* reader_read_sexp_(int c, struct scm* a) /* Internal */
 {
 reset_reader:
 
@@ -151,7 +162,7 @@ reset_reader:
 
 	if(c == '`')
 	{
-		return cons(cell_symbol_quasiquote, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return make_tpair(cell_symbol_quasiquote, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == ',')
@@ -159,20 +170,20 @@ reset_reader:
 		if(peekchar() == '@')
 		{
 			readchar();
-			return cons(cell_symbol_unquote_splicing, cons(reader_read_sexp_(readchar(), a), cell_nil));
+			return make_tpair(cell_symbol_unquote_splicing, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 		}
 
-		return cons(cell_symbol_unquote, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return make_tpair(cell_symbol_unquote, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '\'')
 	{
-		return cons(cell_symbol_quote, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return make_tpair(cell_symbol_quote, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '"')
 	{
-		return reader_read_string();
+		return reader_read_string_();
 	}
 
 	if(c == '.' && (reader_end_of_word_p(peekchar())))
@@ -226,7 +237,7 @@ struct scm* reader_read_list(int c, struct scm* a)
 
 	if(c == EOF)
 	{
-		error(cell_symbol_not_a_pair, make_string_("EOF in list"));
+		error_(cell_symbol_not_a_pair, make_string_("EOF in list"));
 	}
 
 	//return cell_nil;
@@ -238,7 +249,7 @@ struct scm* reader_read_list(int c, struct scm* a)
 		return s->car;
 	}
 
-	return cons(s, reader_read_list(readchar(), a));
+	return make_tpair(s, reader_read_list(readchar(), a));
 }
 
 int index_number__(char* s, char c) /* Internal only */
@@ -277,25 +288,28 @@ struct scm* set_reader__(char* set, int mult) /* Internal only*/
 		n = 0 - n;
 	}
 
-	return make_number(n);
+	return make_number_(n);
 }
 
-struct scm* reader_read_binary()
+struct scm* reader_read_binary(struct scm* x) /* External */
 {
+	require(cell_nil == x, "mes_reader.c: reader_read_binary recieved arguments\n");
 	return set_reader__("01", 2);
 }
 
-struct scm* reader_read_octal()
+struct scm* reader_read_octal(struct scm* x) /* External */
 {
+	require(cell_nil == x, "mes_reader.c: reader_read_octal recieved arguments\n");
 	return set_reader__("01234567", 8);
 }
 
-struct scm* reader_read_hex()
+struct scm* reader_read_hex(struct scm* x) /* External */
 {
+	require(cell_nil == x, "mes_reader.c: reader_read_hex recieved arguments\n");
 	return set_reader__("0123456789ABCDEFabcdef", 16);
 }
 
-struct scm* reader_read_character ();
+struct scm* reader_read_character_();
 
 struct scm* reader_read_hash(int c, struct scm* a)
 {
@@ -326,20 +340,20 @@ struct scm* reader_read_hash(int c, struct scm* a)
 		if(peekchar() == '@')
 		{
 			readchar();
-			return cons(cell_symbol_unsyntax_splicing, cons(reader_read_sexp_(readchar(), a), cell_nil));
+			return make_tpair(cell_symbol_unsyntax_splicing, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 		}
 
-		return cons(cell_symbol_unsyntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return make_tpair(cell_symbol_unsyntax, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '\'')
 	{
-		return cons(cell_symbol_syntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return make_tpair(cell_symbol_syntax, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == '`')
 	{
-		return cons(cell_symbol_quasisyntax, cons(reader_read_sexp_(readchar(), a), cell_nil));
+		return make_tpair(cell_symbol_quasisyntax, make_tpair(reader_read_sexp_(readchar(), a), cell_nil));
 	}
 
 	if(c == ':')
@@ -348,35 +362,35 @@ struct scm* reader_read_hash(int c, struct scm* a)
 
 		if(x->type == TNUMBER)
 		{ /* READ error */
-			error(cell_symbol_system_error, cons(make_string_("keyword perifx ':' not followed by a symbol: "), x));
+			error_(cell_symbol_system_error, make_tpair(make_string_("keyword perifx ':' not followed by a symbol: "), x));
 		}
 
-		return symbol_to_keyword(x);
+		return symbol_to_keyword_(x);
 	}
 
 	if(c == 'b')
 	{
-		return reader_read_binary();
+		return set_reader__("01", 2);
 	}
 
 	if(c == 'o')
 	{
-		return reader_read_octal();
+		return set_reader__("01234567", 8);
 	}
 
 	if(c == 'x')
 	{
-		return reader_read_hex();
+		return set_reader__("0123456789ABCDEFabcdef", 16);
 	}
 
 	if(c == '\\')
 	{
-		return reader_read_character();
+		return reader_read_character_();
 	}
 
 	if(c == '(')
 	{
-		return list_to_vector(reader_read_list(readchar(), a));
+		return list_to_vector_(reader_read_list(readchar(), a));
 	}
 
 	if(c == ';')
@@ -388,13 +402,14 @@ struct scm* reader_read_hash(int c, struct scm* a)
 	return reader_read_sexp_(readchar(), a);
 }
 
-struct scm* reader_read_sexp(struct scm* c, struct scm* a)
+struct scm* reader_read_sexp(struct scm* x) /* External */
 {
-	struct scm* x = c;
-	return reader_read_sexp_(x->value, a);
+	struct scm* c = x->car;
+	struct scm* a = x->cdr->car;
+	return reader_read_sexp_(c->value, a);
 }
 
-struct scm* reader_read_character()
+struct scm* reader_read_character_() /* Internal */
 {
 	int c = readchar();
 	int p = peekchar();
@@ -414,7 +429,7 @@ struct scm* reader_read_character()
 	}
 	else if(c == 'x' && in_set(p, "01234567abcdefABCDEF"))
 	{
-		x = reader_read_hex();
+		x = set_reader__("0123456789ABCDEFabcdef", 16);
 		c = x->value;
 		eputs("reading hex c=");
 		eputs(itoa(c));
@@ -508,11 +523,17 @@ struct scm* reader_read_character()
 			eputs("char not supported: ");
 			eputs(buf);
 			eputs("\n");
-			error(cell_symbol_system_error, make_string_("char not supported"));
+			error_(cell_symbol_system_error, make_string_("char not supported"));
 		}
 	}
 
 	return make_char(c);
+}
+
+struct scm* reader_read_character(struct scm* x) /* External */
+{
+	require(cell_nil == x, "mes_reader.c: reader_read_character recieved arguments\n");
+	return reader_read_character_();
 }
 
 int escape_lookup(int c)
@@ -529,14 +550,14 @@ int escape_lookup(int c)
 	else if(c == 'e') return '\e';
 	else if(c == 'x')
 	{
-		struct scm* x = reader_read_hex();
+		struct scm* x = set_reader__("0123456789ABCDEFabcdef", 16);
 		return x->value;
 	}
 	/* Any other escaped character is itself */
 	else return c;
 }
 
-struct scm* reader_read_string()
+struct scm* reader_read_string_() /* Internal */
 {
 	int i = 0;
 	int c;
@@ -545,7 +566,7 @@ struct scm* reader_read_string()
 	{
 		if(i > MAX_STRING)
 		{
-			assert_max_string(i, "reader_read_string", g_buf);
+			assert_max_string(i, "reader_read_string_", g_buf);
 		}
 
 		c = readchar();
@@ -568,10 +589,16 @@ struct scm* reader_read_string()
 	return make_string_(g_buf);
 }
 
-struct scm* read_string(struct scm* port)  /* ((arity . n)) */
+struct scm* reader_read_string(struct scm* x) /* External */
+{
+	require(cell_nil == x, "mes_reader.c: reader_read_string recieved arguments\n");
+	return reader_read_string_();
+}
+
+struct scm* read_string(struct scm* x)  /* External */
 {
 	int fd = __stdin;
-	struct scm* x = port;
+	x = x->car;
 
 	if(x->type == TPAIR && x->car->type == TNUMBER)
 	{

@@ -22,19 +22,19 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-char *itoa (int number);
-struct scm* cons (struct scm* x, struct scm* y);
+char *itoa(int number);
 struct scm* make_bytes(char* s, SCM length);
-struct scm* write_error_ (struct scm* x);
-struct scm* hash_ref (struct scm* table, struct scm* key, struct scm* dflt);
-struct scm* hash_set_x (struct scm* table, struct scm* key, struct scm* value);
+struct scm* write_error_(struct scm* x);
+struct scm* hash_ref_(struct scm* table, struct scm* key);
+struct scm* hash_set_x_(struct scm* table, struct scm* key, struct scm* value);
 void assert_max_string(int i, char* msg, char* string);
-struct scm* error(struct scm* key, struct scm* x);
+struct scm* error_(struct scm* key, struct scm* x);
 
 struct scm* make_char(SCM c);
-struct scm* make_number(SCM n);
+struct scm* make_number_(SCM n);
 struct scm* make_tstring1(SCM n);
 struct scm* make_tstring2(struct scm* a, struct scm* b);
+struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_keyword(struct scm* a, struct scm* b);
 struct scm* make_tsymbol(struct scm* a, struct scm* b);
 void require(int bool, char* error);
@@ -83,12 +83,12 @@ struct scm* make_string(char* s, int length)
 	return y;
 }
 
-struct scm* string_equal_p(struct scm* a, struct scm* b)
+struct scm* string_equal_p_(struct scm* a, struct scm* b) /* Internal */
 {
 	struct scm* a2 = a;
 	struct scm* b2 = b;
-	require(a2->type == TSTRING || a2->type == TKEYWORD, "mes_strings.c: string_equal_p did not get correct a\n");
-	require(b2->type == TSTRING || b2->type == TKEYWORD, "mes_strings.c: string_equal_p did not get correct b\n");
+	require(a2->type == TSTRING || a2->type == TKEYWORD, "mes_strings.c: string_equal_p_ did not get correct a\n");
+	require(b2->type == TSTRING || b2->type == TKEYWORD, "mes_strings.c: string_equal_p_ did not get correct b\n");
 	struct scm* tee = cell_t;
 	struct scm* nil = cell_f;
 
@@ -118,33 +118,33 @@ struct scm* string_equal_p(struct scm* a, struct scm* b)
 	return nil;
 }
 
-struct scm* symbol_to_string(struct scm* symbol)
+struct scm* symbol_to_string_(struct scm* symbol) /* Internal */
 {
 	struct scm* a = symbol;
 	return make_tstring2(a->car, a->cdr);
 }
 
-struct scm* symbol_to_keyword(struct scm* symbol)
+struct scm* symbol_to_keyword_(struct scm* symbol) /* Internal */
 {
 	struct scm* a = symbol;
 	return make_keyword(a->car, a->cdr);
 }
 
-struct scm* make_symbol(struct scm* string)
+struct scm* make_symbol_(struct scm* string) /* Internal */
 {
 	struct scm* s = string;
 	struct scm* x = make_tsymbol(s->car, s->cdr);
-	hash_set_x(g_symbols, string, x);
+	hash_set_x_(g_symbols, string, x);
 	return x;
 }
 
-struct scm* string_to_symbol(struct scm* string)
+struct scm* string_to_symbol_(struct scm* string) /* Internal */
 {
-	struct scm* x = hash_ref(g_symbols, string, cell_f);
+	struct scm* x = hash_ref_(g_symbols, string);
 
 	if(x == cell_f)
 	{
-		x = make_symbol(string);
+		x = make_symbol_(string);
 	}
 
 	return x;
@@ -153,40 +153,43 @@ struct scm* string_to_symbol(struct scm* string)
 struct scm* cstring_to_symbol(char* s)
 {
 	struct scm* string = make_string_(s);
-	return string_to_symbol(string);
+	return string_to_symbol_(string);
 }
 
-/* EXTERNAL */
-
-struct scm* string_equal_p_(struct scm* a, struct scm* b)
+struct scm* string_to_symbol(struct scm* x) /* External */
 {
-	return string_equal_p(a, b);
+	return string_to_symbol_(x->car);
 }
 
-struct scm* symbol_to_string_(struct scm* symbol)
+struct scm* string_equal_p(struct scm* x) /* External */
 {
-	return symbol_to_string(symbol);
+	return string_equal_p_(x->car, x->cdr->car);
 }
 
-struct scm* symbol_to_keyword_(struct scm* symbol)
+struct scm* symbol_to_string(struct scm* x) /* External */
 {
-	return symbol_to_keyword(symbol);
+	return symbol_to_string_(x->car);
 }
 
-struct scm* keyword_to_string(struct scm* keyword)
+struct scm* symbol_to_keyword(struct scm* x) /* External */
 {
-	struct scm* a = keyword;
+	return symbol_to_keyword_(x->car);
+}
+
+struct scm* keyword_to_string(struct scm* x) /* External */
+{
+	struct scm* a = x->car;
 	return make_tstring2(a->car, a->cdr);
 }
 
-struct scm* make_symbol_(struct scm* string)
+struct scm* make_symbol(struct scm* x) /* External */
 {
-	return make_symbol(string);
+	return make_symbol_(x->car);
 }
 
-struct scm* string_to_list(struct scm* string)
+struct scm* string_to_list(struct scm* x) /* External */
 {
-	struct scm* x = string;
+	x = x->car;
 	char* s = x->cdr->string;
 	SCM i = string_len(s);
 	struct scm* p = cell_nil;
@@ -195,14 +198,15 @@ struct scm* string_to_list(struct scm* string)
 	{
 		i = i - 1;
 		int c = (0xFF & s[i]);
-		p = cons(make_char(c), p);
+		p = make_tpair(make_char(c), p);
 	}
 
 	return p;
 }
 
-struct scm* list_to_string(struct scm* list)
+struct scm* list_to_string(struct scm* x) /* External */
 {
+	struct scm* list = x->car;
 	char* s = list_to_cstring(list);
 	int size = string_len(s);
 	return make_string(s, size);
@@ -220,12 +224,12 @@ void block_copy(void* source, void* destination, int num)
 	}
 }
 
-struct scm* string_append(struct scm* x)  /*((arity . n))*/
+struct scm* string_append(struct scm* x)  /* External */
 {
 	char *p = g_buf;
 	g_buf[0] = 0;
 	int size = 0;
-	struct scm* y1 = x;
+	struct scm* y1 = x->car;
 
 	while(y1 != cell_nil)
 	{
@@ -243,17 +247,17 @@ struct scm* string_append(struct scm* x)  /*((arity . n))*/
 	return make_string(g_buf, size);
 }
 
-struct scm* string_length(struct scm* string)
+struct scm* string_length(struct scm* x) /* External */
 {
-	struct scm* x = string;
+	x = x->car;
 	require(x->type == TSTRING, "mes_strings.c: string_length type was not a TSTRING\n");
-	return make_number(x->length);
+	return make_number_(x->length);
 }
 
-struct scm* string_ref(struct scm* str, struct scm* k)
+struct scm* string_ref(struct scm* x) /* External */
 {
-	struct scm* x = str;
-	struct scm* y = k;
+	struct scm* y = x->cdr->car;
+	x = x->car;
 	require(x->type == TSTRING, "mes_strings.c: string_ref str was not a TSTRING\n");
 	require(y->type == TNUMBER, "mes_strings.c: string_ref k was not a TNUMBER\n");
 	SCM size = x->length;
@@ -261,7 +265,7 @@ struct scm* string_ref(struct scm* str, struct scm* k)
 
 	if(i > size)
 	{
-		error(cell_symbol_system_error, cons(make_string("value out of range", string_len("value out of range")), k));
+		error_(cell_symbol_system_error, make_tpair(make_string("value out of range", string_len("value out of range")), y));
 	}
 
 	char* p = x->cdr->string;

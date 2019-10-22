@@ -51,6 +51,7 @@ struct scm
 		SCM length;
 		struct scm* macro;
 		SCM port;
+		FUNCTION* func_car;
 	};
 	union
 	{
@@ -62,6 +63,7 @@ struct scm
 		struct scm* vector;
 		char* string;
 		struct scm* struc;
+		FUNCTION* func_cdr;
 	};
 };
 
@@ -82,6 +84,7 @@ int MAX_STRING;
 char* g_buf;
 char* reader_buf;
 char* itoa_buf;
+char* cwd_buf;
 char** execl_argv;
 SCM g_free;
 int g_debug;

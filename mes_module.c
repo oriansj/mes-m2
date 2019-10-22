@@ -25,45 +25,45 @@
 struct scm* struct_ref_(struct scm* x, SCM i);
 struct scm* cstring_to_symbol(char* s);
 struct scm* make_hashq_type();
-struct scm* cons(struct scm* x, struct scm* y);
-struct scm* make_struct(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* acons(struct scm* key, struct scm* value, struct scm* alist);
+struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_hash_table_(SCM size);
-struct scm* assq(struct scm* x, struct scm* a);
-struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
-struct scm* hashq_set_x(struct scm* table, struct scm* key, struct scm* value);
+struct scm* assq_(struct scm* x, struct scm* a);
+struct scm* hashq_get_handle_(struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* hashq_set_x_(struct scm* table, struct scm* key, struct scm* value);
+void require(int bool, char* error);
 
-struct scm* make_module_type()
+struct scm* make_module_type_()
 {
 	struct scm* record_type = cell_symbol_record_type; /* FIXME */
 	struct scm* fields = cell_nil;
-	fields = cons(cstring_to_symbol("globals"), fields);
-	fields = cons(cstring_to_symbol("locals"), fields);
-	fields = cons(cstring_to_symbol("name"), fields);
-	fields = cons(fields, cell_nil);
-	fields = cons(cell_symbol_module, fields);
-	return make_struct(record_type, fields, cell_unspecified);
+	fields = make_tpair(cstring_to_symbol("globals"), fields);
+	fields = make_tpair(cstring_to_symbol("locals"), fields);
+	fields = make_tpair(cstring_to_symbol("name"), fields);
+	fields = make_tpair(fields, cell_nil);
+	fields = make_tpair(cell_symbol_module, fields);
+	return make_struct_(record_type, fields, cell_unspecified);
 }
 
-struct scm* module_variable(struct scm* module, struct scm* name)
+struct scm* module_variable_(struct scm* module, struct scm* name)
 {
-	/* struct scm* locals = struct_ref_ (module, 3); */
+	/* struct scm* locals = struct_ref_(module, 3); */
 	struct scm* locals = module;
-	struct scm* x = assq(name, locals);
+	struct scm* x = assq_(name, locals);
 
 	if(x == cell_f)
 	{
 		struct scm* globals = struct_ref_(M0, 5);
-		x = hashq_get_handle(globals, name, cell_f);
+		x = hashq_get_handle_(globals, name, cell_f);
 	}
 
 	return x;
 }
 
 
-struct scm* module_ref(struct scm* module, struct scm* name)
+struct scm* module_ref_(struct scm* module, struct scm* name) /* Internal */
 {
-	struct scm* y = module_variable(module, name);
+	struct scm* y = module_variable_(module, name);
 
 	if(y == cell_f)
 	{
@@ -73,24 +73,31 @@ struct scm* module_ref(struct scm* module, struct scm* name)
 	return y->cdr;
 }
 
-struct scm* module_define_x(struct scm* module, struct scm* name, struct scm* value)
+struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value) /* Internal */
 {
+	require(cell_nil != module, "mes_module.c: module_define_x false test to quiet checker\n");
 	struct scm* globals = struct_ref_(M0, 5);
-	return hashq_set_x(globals, name, value);
+	return hashq_set_x_(globals, name, value);
 }
 
 /* External functions */
-struct scm* module_variable_(struct scm* module, struct scm* name) /* EXTERNAL */
+struct scm* module_variable(struct scm* x) /* EXTERNAL */
 {
-	return module_variable(module, name);
+	return module_variable_(x->car, x->cdr->car);
 }
 
-struct scm* module_ref_(struct scm* module, struct scm* name) /* EXTERNAL */
+struct scm* module_define_x(struct scm* x)
 {
-	return module_ref(module, name);
+	return module_define_x_(x->car, x->cdr->car, x->cdr->cdr->car);
 }
 
-struct scm* make_module_type_() /* EXTERNAL */
+struct scm* module_ref(struct scm* x) /* EXTERNAL */
 {
-	return make_module_type();
+	return module_ref_(x->car, x->cdr->car);
+}
+
+struct scm* make_module_type(struct scm* x) /* EXTERNAL */
+{
+	require(cell_nil == x, "mes_module.c: make_module_type recieved arguments\n");
+	return make_module_type_();
 }

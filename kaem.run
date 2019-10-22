@@ -1,0 +1,60 @@
+#!/bin/bash
+## Copyright (C) 2019 Jeremiah Orians
+## This file is part of Gnu Mes
+##
+## Gnu Mes is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## Gnu Mes is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
+
+M2-Planet --debug --architecture amd64 \
+	-f mes.h -f mes_constants.h \
+	-f ../M2-Planet/test/common_amd64/functions/exit.c \
+	-f ../M2-Planet/test/common_amd64/functions/malloc.c \
+	-f functions/fdputc.c \
+	-f ../M2-Planet/functions/calloc.c \
+	-f functions/file_print.c \
+	-f functions/numerate.c \
+	-f functions/in_set.c \
+	-f functions/match.c \
+	-f mes_builtins.c \
+	-f mes.c \
+	-f mes_eval.c \
+	-f mes_gc.c \
+	-f mes_hash.c \
+	-f mes_init.c \
+	-f mes_lib.c \
+	-f mes_math.c \
+	-f mes_module.c \
+	-f mes_posix.c \
+	-f mes_printer.c \
+	-f mes_reader.c \
+	-f mes_strings.c \
+	-f mes_struct.c \
+	-f mes_vector.c -o bin/mes.M1
+
+blood-elf --64 -f bin/mes.M1 -o bin/mes-footer.M1
+
+M1 -f ../M2-Planet/test/common_amd64/amd64_defs.M1 \
+	-f ../M2-Planet/test/common_amd64/libc-core.M1 \
+	-f bin/mes.M1 \
+	-f bin/mes-footer.M1 \
+	--LittleEndian \
+	--architecture amd64 \
+	-o bin/mes.hex2
+
+hex2 -f ../M2-Planet/test/common_amd64/ELF-amd64-debug.hex2 \
+	-f bin/mes.hex2 \
+	--LittleEndian \
+	--architecture amd64 \
+	--BaseAddress 0x00600000 \
+	-o bin/mes-m2 \
+	--exec_enable

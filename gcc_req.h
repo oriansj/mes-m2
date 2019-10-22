@@ -22,7 +22,4 @@
 #include <stdlib.h>
 #include <stdio.h>
 typedef long SCM;
-typedef struct scm* (FUNCTION0)();
-typedef struct scm* (FUNCTION1)(struct scm *);
-typedef struct scm* (FUNCTION2)(struct scm *, struct scm *);
-typedef struct scm* (FUNCTION3)(struct scm *, struct scm *, struct scm *);
+typedef struct scm* (FUNCTION)(struct scm *);

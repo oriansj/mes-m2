@@ -23,29 +23,34 @@
 #include "mes_constants.h"
 
 struct scm* length__(struct scm* x);
-struct scm* cons(struct scm* x, struct scm* y);
-struct scm* equal2_p(struct scm* a, struct scm* b);
+struct scm* equal2_p_(struct scm* a, struct scm* b);
 struct scm* vector_entry(struct scm* x);
 struct scm* make_vector__(struct scm* k);
 
-struct scm* make_number(SCM n);
+struct scm* make_number_(SCM n);
+struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_char(SCM c);
 struct scm* make_tref(struct scm* x);
 void require(int bool, char* error);
 
-struct scm* make_vector_(struct scm* n)
+struct scm* make_vector(struct scm* x) /* External */
 {
-	struct scm* m = n;
+	struct scm* m = x->car;
 	return make_vector__(m->cdr);
 }
 
-struct scm* vector_length(struct scm* x)
+struct scm* vector_length_(struct scm* x) /* Internal */
 {
 	require(x->type == TVECTOR, "mes_vector.c: vector_length x was not a TVECTOR\n");
-	return make_number(x->length);
+	return make_number_(x->length);
 }
 
-struct scm* vector_ref_(struct scm* table, SCM i)
+struct scm* vector_length(struct scm* x) /* External */
+{
+	return vector_length_(x->car);
+}
+
+struct scm* vector_ref_(struct scm* table, SCM i) /* Internal */
 {
 	struct scm* y = table;
 	require(y->type == TVECTOR, "mes_vector.c: vector_ref_ table was not a TVECTOR\n");
@@ -60,10 +65,10 @@ struct scm* vector_ref_(struct scm* table, SCM i)
 	return e;
 }
 
-struct scm* vector_equal_p(struct scm* a, struct scm* b)
+struct scm* vector_equal_p(struct scm* a)
 {
-	struct scm* a2 = a;
-	struct scm* b2 = b;
+	struct scm* a2 = a->car;
+	struct scm* b2 = a->cdr->car;
 
 	if(a2->length != b2->length)
 	{
@@ -88,7 +93,7 @@ struct scm* vector_equal_p(struct scm* a, struct scm* b)
 			bi = bi2->car;
 		}
 
-		if(equal2_p(ai, bi) == cell_f)
+		if(equal2_p_(ai, bi) == cell_f)
 		{
 			return cell_f;
 		}
@@ -96,18 +101,9 @@ struct scm* vector_equal_p(struct scm* a, struct scm* b)
 	return cell_t;
 }
 
-struct scm* vector_ref(struct scm* x, struct scm* i)
+struct scm* vector_ref(struct scm* x) /* External */
 {
-	require(x->type == TVECTOR, "mes_vector.c: vector_ref x was not of type TVECTOR\n");
-	require(i->value < x->length, "mes_vector.c: vector_ref i->value was not less than x->length\n");
-	struct scm* e = x->cdr + i->value;
-
-	if(e->type == TREF)
-	{
-		return e->car;
-	}
-
-	return e;
+	return vector_ref_(x->car, x->cdr->car->value);
 }
 
 struct scm* vector_entry(struct scm* x)
@@ -125,7 +121,7 @@ struct scm* vector_entry(struct scm* x)
 	return make_tref(x);
 }
 
-void vector_set_x_(struct scm* x, SCM i, struct scm* e)
+void vector_set_x_(struct scm* x, SCM i, struct scm* e) /* Internal */
 {
 	require(x->type == TVECTOR, "mes_vector.c: vector_set_x_ x was not of type TVECTOR\n");
 	require(i < x->length, "mes_vector.c: vector_set_x i was not less than x->length\n");
@@ -137,21 +133,13 @@ void vector_set_x_(struct scm* x, SCM i, struct scm* e)
 	z->cdr = f->cdr;
 }
 
-struct scm* vector_set_x(struct scm* x)
+struct scm* vector_set_x(struct scm* x) /* External */
 {
-	SCM i = x->cdr->car->value;
-	require(x->car->type == TVECTOR, "mes_vector.c: vector_set_x x->car was not of type TVECTOR\n");
-	require(i < x->car->length, "mes_vector.c: vector_set_x i was not less than x->car->length\n");
-	struct scm* z = x->car->cdr + (i * CELL_SIZE);
-	struct scm* f = vector_entry(x->cdr->cdr->car);
-
-	z->type = f->type;
-	z->car = f->car;
-	z->cdr = f->cdr;
+	vector_set_x_(x->car, x->cdr->car->value, x->cdr->cdr->car);
 	return cell_unspecified;
 }
 
-struct scm* list_to_vector(struct scm* x)
+struct scm* list_to_vector_(struct scm* x) /* Internal*/
 {
 	struct scm* v = make_vector__(length__(x));
 	struct scm* y = x;
@@ -171,22 +159,28 @@ struct scm* list_to_vector(struct scm* x)
 	return v;
 }
 
-struct scm* vector_to_list(struct scm* v)
+struct scm* list_to_vector(struct scm* x) /* External */
 {
-	struct scm* x = cell_nil;
+	return list_to_vector_(x->car);
+}
+
+struct scm* vector_to_list(struct scm* x) /* External */
+{
+	x = x->car;
+	struct scm* r = cell_nil;
 	SCM i;
 
-	for(i = v->length; i; i = i - 1)
+	for(i = x->length; i; i = i - 1)
 	{
-		struct scm* f = v->cdr + i -1;
+		struct scm* f = x->cdr + i -1;
 
 		if(f->type == TREF)
 		{
 			f = f->car;
 		}
 
-		x = cons(f, x);
+		r = make_tpair(f, r);
 	}
 
-	return x;
+	return r;
 }

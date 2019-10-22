@@ -24,45 +24,43 @@
 
 /* Imported Functions */
 void initialize_constants();
-SCM gc ();
+SCM gc();
 void initialize_memory();
-char *itoa (int number);
+char *itoa(int number);
 int match(char* a, char* b);
 struct scm* mes_builtins(struct scm* a);
 struct scm* cstring_to_symbol(char* s);
 int string_len(char* a);
-struct scm* hashq_get_handle (struct scm* table, struct scm* key, struct scm* dflt);
-struct scm* hashq_set_x (struct scm* table, struct scm* key, struct scm* value);
-struct scm* equal2_p (struct scm* a, struct scm* b);
-struct scm* string_equal_p (struct scm* a, struct scm* b);
-struct scm* reverse_x_ (struct scm* x, struct scm* t);
-struct scm* builtin_p (struct scm* x);
-int eputs (char* s);
-struct scm* display_error_ (struct scm* x);
-struct scm* write_error_ (struct scm* x);
-struct scm* module_printer (struct scm* module);
-struct scm* module_variable (struct scm* module, struct scm* name);
-struct scm* module_ref (struct scm* module, struct scm* name);
-struct scm* read_input_file_env ();
-struct scm* init_time(struct scm* a);
-struct scm* module_define_x(struct scm* module, struct scm* name, struct scm* value);
+struct scm* hashq_get_handle_(struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* hashq_set_x_(struct scm* table, struct scm* key, struct scm* value);
+struct scm* equal2_p_(struct scm* a, struct scm* b);
+struct scm* string_equal_p_(struct scm* a, struct scm* b);
+struct scm* reverse_x_(struct scm* x, struct scm* t);
+struct scm* builtin_p(struct scm* x);
+int eputs(char* s);
+struct scm* display_error_(struct scm* x);
+struct scm* write_error_(struct scm* x);
+struct scm* module_variable_(struct scm* module, struct scm* name);
+struct scm* module_ref_(struct scm* module, struct scm* name);
+struct scm* read_input_file_env__();
+struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
 
 struct scm* make_hashq_type();
-struct scm* make_module_type();
-struct scm* make_struct (struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* make_module_type_();
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_string_(char* s);
 struct scm* make_string(char* s, int length);
 struct scm* make_hash_table_(struct scm* size);
 struct scm* mes_g_stack(struct scm* a);
 
-struct scm* eval_apply();
+struct scm* eval_apply_();
 struct scm* mes_symbols();
 void require(int bool, char* error);
 
 /* M2-Planet Imports */
 int numerate_string(char *a);
 
-struct scm* make_number(SCM n);
+struct scm* make_number_(SCM n);
 struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_variable_(struct scm* var);
 
@@ -78,71 +76,80 @@ struct scm* assoc_string(struct scm* x, struct scm* a)  /* ((internal)) */
 	{
 		if(b == nil) return cell_f;
 		c = b->car;
-		if(string_equal_p(x, c->car) == tee) return b->car;
+		if(string_equal_p_(x, c->car) == tee) return b->car;
 		c = c->car;
 		if(c->type != TSTRING) return cell_f;
 		b = b->cdr;
 	} while(TRUE);
 }
 
-struct scm* type_(struct scm* x)
+struct scm* type(struct scm* x) /* External */
 {
-	struct scm* y = x;
-	return make_number(y->type);
+	struct scm* y = x->car;
+	return make_number_(y->type);
 }
 
-struct scm* cons(struct scm* x, struct scm* y)
+struct scm* cons(struct scm* x, struct scm* y) /* External */
 {
-	return make_tpair(x, y);
+	return make_tpair(x->car, y->cdr->car);
 }
 
-struct scm* car(struct scm* x)
+struct scm* car(struct scm* x) /* External */
 {
-	struct scm* y = x;
+	struct scm* y = x->car;
 	return y->car;
 }
 
-struct scm* cdr(struct scm* x)
+struct scm* cdr(struct scm* x) /* External */
 {
-	struct scm* y = x;
+	struct scm* y = x->car;
 	return y->cdr;
 }
 
-struct scm* list(struct scm* x)  /* ((arity . n)) */
+struct scm* list(struct scm* x)  /* External */
 {
 	return x;
 }
 
-struct scm* null_p(struct scm* x)
+struct scm* null_p(struct scm* x) /* External */
 {
-	if(cell_nil == x) return cell_t;
+	if(cell_nil == x->car) return cell_t;
 	return cell_f;
 }
 
-struct scm* eq_p(struct scm* x, struct scm* y)
+struct scm* eq_p_(struct scm* x, struct scm* y) /* Internal */
 {
 	struct scm* a = x;
 	struct scm* b = y;
 	struct scm* tee = cell_t;
 
 	if(a == b) return cell_t;
-	if(((a->type == TKEYWORD && b->type == TKEYWORD && tee == string_equal_p(x, y)))) return cell_t;
+	if(((a->type == TKEYWORD && b->type == TKEYWORD && tee == string_equal_p_(x, y)))) return cell_t;
 	if((a->type == TCHAR && b->type == TCHAR && a->value == b->value)) return cell_t;
 	if((a->type == TNUMBER && b->type == TNUMBER && a->value == b->value)) return cell_t;
 	return cell_f;
 }
 
-struct scm* values(struct scm* x)  /* ((arity . n)) */
+struct scm* eq_p(struct scm* x) /* External */
 {
-	struct scm* v = cons(0, x);
-	struct scm* y = v;
-	y->type = TVALUES;
+	return eq_p_(x->car, x->cdr->car);
+}
+
+struct scm* values(struct scm* x)  /* External */
+{
+	struct scm* v = make_tpair(0, x->car);
+	v->type = TVALUES;
 	return v;
 }
 
-struct scm* acons(struct scm* key, struct scm* value, struct scm* alist)
+struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist) /* Internal */
 {
-	return cons(cons(key, value), alist);
+	return make_tpair(make_tpair(key, value), alist);
+}
+
+struct scm* acons(struct scm* x) /* External */
+{
+	return acons_(x->car, x->cdr->car, x->cdr->cdr->car);
 }
 
 SCM length__(struct scm* x)  /* ((internal)) */
@@ -164,20 +171,20 @@ SCM length__(struct scm* x)  /* ((internal)) */
 	return n;
 }
 
-struct scm* length(struct scm* x)
+struct scm* length(struct scm* x) /* External */
 {
-	return make_number((length__(x)));
+	return make_number_((length__(x->car)));
 }
 
 struct scm* apply(struct scm*, struct scm*);
 
-struct scm* error(struct scm* key, struct scm* x)
+struct scm* error_(struct scm* key, struct scm* x) /* Internal */
 {
-	struct scm* throw= module_ref(R0, cell_symbol_throw);
+	struct scm* throw= module_ref_(R0, cell_symbol_throw);
 
 	if(throw != cell_undefined)
 	{
-		return apply(throw, cons(key, cons(x, cell_nil)));
+		return apply(throw, make_tpair(key, make_tpair(x, cell_nil)));
 	}
 
 	display_error_(key);
@@ -187,11 +194,16 @@ struct scm* error(struct scm* key, struct scm* x)
 	exit(EXIT_FAILURE);
 }
 
+struct scm* error(struct scm* x) /* External */
+{
+	return error_(x->car, x->cdr->car);
+}
+
 struct scm* assert_defined(struct scm* x, struct scm* e)  /* ((internal)) */
 {
 	if(e == cell_undefined)
 	{
-		return error(cell_symbol_unbound_variable, x);
+		return error_(cell_symbol_unbound_variable, x);
 	}
 
 	return e;
@@ -221,7 +233,7 @@ struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args) 
 		eputs("\n");
 		write_error_(f);
 		struct scm* e = make_string(s, string_len(s));
-		return error(cell_symbol_wrong_number_of_args, cons(e, f));
+		return error_(cell_symbol_wrong_number_of_args, make_tpair(e, f));
 	}
 
 	return cell_unspecified;
@@ -287,7 +299,7 @@ struct scm* check_apply(struct scm* f, struct scm* e)  /* ((internal)) */
 		write_error_(e);
 		eputs("]\n");
 		struct scm* e = make_string(s, string_len(s));
-		return error(cell_symbol_wrong_type_arg, cons(e, f));
+		return error_(cell_symbol_wrong_type_arg, make_tpair(e, f));
 	}
 
 	return cell_unspecified;
@@ -324,7 +336,7 @@ SCM gc_pop_frame()  /* ((internal)) */
 	return g_stack;
 }
 
-struct scm* append2(struct scm* x, struct scm* y)
+struct scm* append2_(struct scm* x, struct scm* y) /* Internal */
 {
 	struct scm* z = x;
 	if(x == cell_nil)
@@ -334,26 +346,31 @@ struct scm* append2(struct scm* x, struct scm* y)
 
 	if(z->type != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("append2")));
+		error_(cell_symbol_not_a_pair, make_tpair(x, cstring_to_symbol("append2")));
 	}
 
 	struct scm* r = cell_nil;
 
 	while(z != cell_nil)
 	{
-		r = cons(z->car, r);
+		r = make_tpair(z->car, r);
 		z = z->cdr;
 	}
 
 	return reverse_x_(r, y);
 }
 
-struct scm* reverse_x_(struct scm* x, struct scm* t)
+struct scm* append2(struct scm* x) /* External */
+{
+	return append2_(x->car, x->cdr->car);
+}
+
+struct scm* reverse_x_(struct scm* x, struct scm* t) /* Internal */
 {
 	struct scm* y = x;
 	if(x != cell_nil && y->type != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("core:reverse!")));
+		error_(cell_symbol_not_a_pair, make_tpair(x, cstring_to_symbol("core:reverse!")));
 	}
 
 	struct scm* r = t;
@@ -370,7 +387,12 @@ struct scm* reverse_x_(struct scm* x, struct scm* t)
 	return r;
 }
 
-struct scm* pairlis(struct scm* x, struct scm* y, struct scm* a)
+struct scm* reverse_x(struct scm* x) /* External */
+{
+	return reverse_x_(x->car, x->cdr->car);
+}
+
+struct scm* pairlis_(struct scm* x, struct scm* y, struct scm* a) /* Internal */
 {
 	if(x == cell_nil)
 	{
@@ -380,13 +402,18 @@ struct scm* pairlis(struct scm* x, struct scm* y, struct scm* a)
 	struct scm* z = x;
 	if(z->type != TPAIR)
 	{
-		return cons(cons(x, y), a);
+		return make_tpair(make_tpair(x, y), a);
 	}
 
-	return cons(cons(car(x), car(y)), pairlis(cdr(x), cdr(y), a));
+	return make_tpair(make_tpair(x->car, y->car), pairlis_(x->cdr, y->cdr, a));
 }
 
-struct scm* assq(struct scm* x, struct scm* a)
+struct scm* pairlis(struct scm* x) /* External */
+{
+	return pairlis_(x->car, x->cdr->car, x->cdr->cdr->car);
+}
+
+struct scm* assq_(struct scm* x, struct scm* a) /* Internal */
 {
 	struct scm* b = a;
 	struct scm* y = x;
@@ -425,7 +452,7 @@ struct scm* assq(struct scm* x, struct scm* a)
 		struct scm* F = cell_f;
 		while(b != NIL)
 		{
-			if(F == string_equal_p(x, b->car->car)) return b->car;
+			if(F == string_equal_p_(x, b->car->car)) return b->car;
 			b = b->cdr;
 		}
 		return cell_f;
@@ -440,7 +467,12 @@ struct scm* assq(struct scm* x, struct scm* a)
 	return cell_f;
 }
 
-struct scm* assoc(struct scm* x, struct scm* a)
+struct scm* assq(struct scm* x) /* External */
+{
+	return assq_(x->car, x->cdr->car);
+}
+
+struct scm* assoc_(struct scm* x, struct scm* a) /* Internal */
 {
 	if(x->type == TSTRING)
 	{
@@ -449,38 +481,45 @@ struct scm* assoc(struct scm* x, struct scm* a)
 
 	while(a != cell_nil)
 	{
-		if(cell_f != equal2_p(x, a->car->car)) return a->car;
+		if(cell_f != equal2_p_(x, a->car->car)) return a->car;
 		a = a->cdr;
 	}
 
 	return cell_f;
 }
 
-struct scm* set_car_x(struct scm* x, struct scm* e)
+struct scm* assoc(struct scm* x) /* External */
 {
-	struct scm* y = x;
-	if(y->type != TPAIR)
+	return assoc_(x->car, x->cdr->car);
+}
+
+struct scm* set_car_x(struct scm* x) /* External */
+{
+	struct scm* e = x->cdr->car;
+	x = x->car;
+	if(x->type != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("set-car!")));
+		error_(cell_symbol_not_a_pair, make_tpair(x, cstring_to_symbol("set-car!")));
 	}
 
-	y->car = e;
+	x->car = e;
 	return cell_unspecified;
 }
 
-struct scm* set_cdr_x(struct scm* x, struct scm* e)
+struct scm* set_cdr_x(struct scm* x) /* External */
 {
-	struct scm* y = x;
-	if(y->type != TPAIR)
+	struct scm* e = x->cdr->car;
+	x = x->car;
+	if(x->type != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(x, cstring_to_symbol("set-cdr!")));
+		error_(cell_symbol_not_a_pair, make_tpair(x, cstring_to_symbol("set-cdr!")));
 	}
 
-	y->cdr = e;
+	x->cdr = e;
 	return cell_unspecified;
 }
 
-struct scm* set_env_x(struct scm* x, struct scm* e, struct scm* a)
+struct scm* set_env_x_(struct scm* x, struct scm* e, struct scm* a) /* Internal */
 {
 	struct scm* y = x;
 	struct scm* p;
@@ -491,39 +530,50 @@ struct scm* set_env_x(struct scm* x, struct scm* e, struct scm* a)
 	}
 	else
 	{
-		p = assert_defined(x, module_variable(a, x));
+		p = assert_defined(x, module_variable_(a, x));
 	}
 
 	if(p->type != TPAIR)
 	{
-		error(cell_symbol_not_a_pair, cons(p, x));
+		error_(cell_symbol_not_a_pair, make_tpair(p, x));
 	}
 
-	return set_cdr_x(p, e);
+	p->cdr = e;
+	return cell_unspecified;
+}
+
+struct scm* set_env_x(struct scm* x) /* External */
+{
+	return set_env_x_(x->car, x->cdr->car, x->cdr->cdr->car);
 }
 
 struct scm* call_lambda(struct scm* e, struct scm* x)  /* ((internal)) */
 {
-	struct scm* cl = cons(cons(cell_closure, x), x);
+	struct scm* cl = make_tpair(make_tpair(cell_closure, x), x);
 	R1 = e;
 	R0 = cl;
 	return cell_unspecified;
 }
 
-struct scm* macro_get_handle(struct scm* name)
+struct scm* macro_get_handle_(struct scm* name) /* Internal */
 {
 	struct scm* n = name;
 	if(n->type == TSYMBOL)
 	{
-		return hashq_get_handle(g_macros, name, cell_nil);
+		return hashq_get_handle_(g_macros, name, cell_nil);
 	}
 
 	return cell_f;
 }
 
+struct scm* macro_get_handle(struct scm* x) /* External */
+{
+	return macro_get_handle_(x->car);
+}
+
 struct scm* get_macro(struct scm* name)  /* ((internal)) */
 {
-	struct scm* m = macro_get_handle(name);
+	struct scm* m = macro_get_handle_(name);
 
 	if(m != cell_f)
 	{
@@ -535,7 +585,7 @@ struct scm* get_macro(struct scm* name)  /* ((internal)) */
 
 struct scm* macro_set_x(struct scm* name, struct scm* value)  /* ((internal)) */
 {
-	return hashq_set_x(g_macros, name, value);
+	return hashq_set_x_(g_macros, name, value);
 }
 
 struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c)  /* ((internal)) */
@@ -550,21 +600,26 @@ struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c
 	return cell_unspecified;
 }
 
-struct scm* add_formals(struct scm* formals, struct scm* x)
+struct scm* add_formals_(struct scm* formals, struct scm* x) /* Internal */
 {
 	struct scm* y = x;
 	while(y->type == TPAIR)
 	{
-		formals = cons(y->car, formals);
+		formals = make_tpair(y->car, formals);
 		y = y->cdr;
 	}
 
 	if(y->type == TSYMBOL)
 	{
-		formals = cons(y, formals);
+		formals = make_tpair(y, formals);
 	}
 
 	return formals;
+}
+
+struct scm* add_formals(struct scm* x) /* External */
+{
+	return add_formals_(x->car, x->cdr->car);
 }
 
 struct scm* formal_p(struct scm* x, struct scm* formals)  /*  ((internal)) */
@@ -607,12 +662,12 @@ struct scm* expand_variable_(struct scm* x, struct scm* formals, int top_p)  /* 
 			if(y->car->car == cell_symbol_lambda)
 			{
 				struct scm* f = y->car->cdr->car;
-				formals = add_formals(formals, f);
+				formals = add_formals_(formals, f);
 			}
 			else if(y->car->car == cell_symbol_define || y->car->car == cell_symbol_define_macro)
 			{
 				struct scm* f = y->car->cdr->car;
-				formals = add_formals(formals, f);
+				formals = add_formals_(formals, f);
 			}
 
 			if(y->car->car != cell_symbol_quote)
@@ -625,7 +680,7 @@ struct scm* expand_variable_(struct scm* x, struct scm* formals, int top_p)  /* 
 			if(y->car == cell_symbol_lambda)
 			{
 				struct scm* f = y->cdr->car;
-				formals = add_formals(formals, f);
+				formals = add_formals_(formals, f);
 				y = y->cdr;
 			}
 			else if(y->car == cell_symbol_define || y->car == cell_symbol_define_macro)
@@ -637,7 +692,7 @@ struct scm* expand_variable_(struct scm* x, struct scm* formals, int top_p)  /* 
 					f = f->cdr;
 				}
 
-				formals = add_formals(formals, f);
+				formals = add_formals_(formals, f);
 				y = y->cdr;
 			}
 			else if(y->car == cell_symbol_quote)
@@ -650,7 +705,7 @@ struct scm* expand_variable_(struct scm* x, struct scm* formals, int top_p)  /* 
 			        && y->car != cell_symbol_primitive_load
 			        && !formal_p(y->car, formals))
 			{
-				struct scm* v = module_variable(R0, y->car);
+				struct scm* v = module_variable_(R0, y->car);
 
 				if(v != cell_f)
 				{
@@ -673,30 +728,30 @@ struct scm* expand_variable(struct scm* x, struct scm* formals)  /* ((internal))
 
 struct scm* apply(struct scm* f, struct scm* x)  /* ((internal)) */
 {
-	push_cc(cons(f, x), cell_unspecified, R0, cell_unspecified);
+	push_cc(make_tpair(f, x), cell_unspecified, R0, cell_unspecified);
 	R3 = cell_vm_apply;
-	return eval_apply();
+	return eval_apply_();
 }
 
 SCM g_symbol_max;
 
 struct scm* make_initial_module(struct scm* a)  /* ((internal)) */
 {
-	struct scm* module_type = make_module_type();
-	a = acons(cell_symbol_module, module_type, a);
+	struct scm* module_type = make_module_type_();
+	a = acons_(cell_symbol_module, module_type, a);
 	struct scm* hashq_type = make_hashq_type();
-	a = acons(cell_symbol_hashq_table, hashq_type, a);
+	a = acons_(cell_symbol_hashq_table, hashq_type, a);
 	struct scm* b = a;
-	struct scm* name = cons(cstring_to_symbol("boot"), cell_nil);
+	struct scm* name = make_tpair(cstring_to_symbol("boot"), cell_nil);
 	struct scm* globals = make_hash_table_(0);
-	struct scm* v = cons(cell_symbol_module, cons(name, cons(cell_nil, cons(globals, cell_nil))));
-	struct scm* module = make_struct(module_type, v, cstring_to_symbol("module-printer"));
-	R0 = cons(b->car, cons(b->cdr->car, cell_nil));
+	struct scm* v = make_tpair(cell_symbol_module, make_tpair(name, make_tpair(cell_nil, make_tpair(globals, cell_nil))));
+	struct scm* module = make_struct_(module_type, v, cstring_to_symbol("module-printer"));
+	R0 = make_tpair(b->car, make_tpair(b->cdr->car, cell_nil));
 	M0 = module;
 
 	while(b->type == TPAIR)
 	{
-		module_define_x(module, b->car->car, b->car->cdr);
+		module_define_x_(module, b->car->car, b->car->cdr);
 		b = b->cdr;
 	}
 
@@ -715,20 +770,22 @@ void do_it(char* file)
 		__stdin = open_boot(file);
 	}
 
-	R2 = read_input_file_env();
+	R2 = read_input_file_env__();
 	push_cc(R2, cell_unspecified, R0, cell_unspecified);
 
 	R3 = cell_vm_begin_expand;
-	R1 = eval_apply();
+	R1 = eval_apply_();
 }
 
 void gc_init_cells();
+// void fd_print(char* s, int f);
 int main(int argc, char** argv, char** envp)
 {
 	global_envp = envp;
 	reader_buf = calloc(10, sizeof(char));
 	itoa_buf = calloc(20, sizeof(char));
 	execl_argv = calloc(4096, sizeof(char*));
+	cwd_buf = calloc(4096, sizeof(char));
 	__ungetc_buf = calloc((RLIMIT_NOFILE + 1), sizeof(int));
 	g_continuations = 0;
 	g_symbols = 0;
@@ -749,9 +806,11 @@ int main(int argc, char** argv, char** envp)
 	initialize_constants();
 	initialize_memory();
 	gc_init_cells();
+//	fd_print("made it1\n", STDOUT);
 	mes_symbols();
+//	fd_print("made it2\n", STDOUT);
 
-	M0 = make_initial_module(init_time(mes_builtins(cell_nil)));
+	M0 = make_initial_module(mes_builtins(cell_nil));
 	g_macros = make_hash_table_(0);
 
 	struct scm* lst = cell_nil;
@@ -777,7 +836,7 @@ int main(int argc, char** argv, char** envp)
 		}
 		else
 		{
-			lst = cons(make_string_(argv[i]), lst);
+			lst = make_tpair(make_string_(argv[i]), lst);
 			i = i + 1;
 		}
 	}
