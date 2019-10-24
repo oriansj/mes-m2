@@ -22,22 +22,19 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* vector_ref_(struct scm* x, SCM i);
-struct scm* struct_ref_(struct scm* x, SCM i);
-
-struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_string_(char* s);
-struct scm* make_vector__(SCM k);
-
-void vector_set_x_(struct scm* x, SCM i, struct scm* e);
-struct scm* error_(struct scm* key, struct scm* x);
-struct scm* assq_(struct scm* x, struct scm* a);
-struct scm* assoc_(struct scm* x, struct scm* a);
 struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist);
-struct scm* make_tpair(struct scm* a, struct scm* b);
-
-void require(int bool, char* error);
+struct scm* assoc_(struct scm* x, struct scm* a);
+struct scm* assq_(struct scm* x, struct scm* a);
+struct scm* error_(struct scm* key, struct scm* x);
 struct scm* make_number_(SCM n);
+struct scm* make_string_(char* s);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* make_vector__(SCM k);
+struct scm* struct_ref_(struct scm* x, SCM i);
+struct scm* vector_ref_(struct scm* x, SCM i);
+void require(int bool, char* error);
+void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
 SCM hash_cstring(char* s, SCM size)
 {
@@ -228,9 +225,9 @@ struct scm* make_hash_table(struct scm* x) /* External */
 }
 
 
-struct scm* hashq_set_x(struct scm* table, struct scm* key, struct scm* value) /* External */
+struct scm* hashq_set_x(struct scm* x) /* External */
 {
-	return hashq_set_x_(table, key, value);
+	return hashq_set_x_(x->car, x->cdr->car, x->cdr->cdr->car);
 }
 
 struct scm* hash_ref(struct scm* x) /* External */

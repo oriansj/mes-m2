@@ -22,52 +22,52 @@
 #include "mes.h"
 #include "mes_constants.h"
 
+/* struct scm* builtin_arity_(struct scm* builtin); */
+/* struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args); */
+char* itoa(int number);
+int string_len(char* a);
 struct scm* append2_(struct scm* x, struct scm* y);
-void gc_push_frame();
+struct scm* apply_builtin(struct scm* fn, struct scm* x);
 struct scm* assert_defined(struct scm* x, struct scm* e);
-struct scm* get_macro(struct scm* name);
-struct scm* expand_variable(struct scm* x, struct scm* formals);
-struct scm* macro_get_handle_(struct scm* name);
 struct scm* assq_(struct scm* x, struct scm* a);
+struct scm* builtin_p_(struct scm* x);
+struct scm* call_lambda(struct scm* e, struct scm* x);
+struct scm* check_apply(struct scm* f, struct scm* e);
+struct scm* cstring_to_symbol(char* s);
+struct scm* display_(struct scm* x);
+struct scm* error_(struct scm* key, struct scm* x);
+struct scm* expand_variable(struct scm* x, struct scm* formals);
+struct scm* gc();
+struct scm* gc_check_();
+struct scm* gc_pop_frame();
+struct scm* get_macro(struct scm* name);
+struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
+struct scm* macro_get_handle_(struct scm* name);
 struct scm* macro_set_x(struct scm* name, struct scm* value);
 struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a);
-struct scm* set_env_x_(struct scm* x, struct scm* e, struct scm* a);
-struct scm* gc_pop_frame();
-struct scm* check_apply(struct scm* f, struct scm* e);
-struct scm* pairlis_(struct scm* x, struct scm* y, struct scm* a);
-struct scm* call_lambda(struct scm* e, struct scm* x);
-struct scm* make_string(char* s, int length);
-/* struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args); */
-char *itoa(int number);
-struct scm* error_(struct scm* key, struct scm* x);
-struct scm* mes_builtins(struct scm* a);
-struct scm* apply_builtin(struct scm* fn, struct scm* x);
-struct scm* cstring_to_symbol(char* s);
 struct scm* make_hash_table_(struct scm* size);
-struct scm* gc_check_();
-struct scm* gc();
-struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c);
-struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
-struct scm* display_(struct scm* x);
-struct scm* write_error_(struct scm* x);
-struct scm* reverse_x_(struct scm* x, struct scm* t);
-/* struct scm* builtin_arity(struct scm* builtin); */
-struct scm* builtin_p(struct scm* x);
-struct scm* module_printer_(struct scm* module);
-struct scm* module_variable_(struct scm* module, struct scm* name);
-struct scm* module_ref_(struct scm* module, struct scm* name);
-struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
-struct scm* open_input_file_(struct scm* file_name);
-struct scm* set_current_input_port_(struct scm* port);
-struct scm* read_input_file_env__();
-struct scm* vector_ref_(struct scm* x, SCM i);
-struct scm* make_vector__(SCM k);
-struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);
-int string_len(char* a);
-struct scm* make_tmacro(struct scm* a, struct scm* b);
+struct scm* make_string(char* s, int length);
 struct scm* make_tcontinuation(SCM a, SCM b);
-void require(int bool, char* error);
+struct scm* make_tmacro(struct scm* a, struct scm* b);
 struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* make_vector__(SCM k);
+struct scm* mes_builtins(struct scm* a);
+struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
+struct scm* module_printer_(struct scm* module);
+struct scm* module_ref_(struct scm* module, struct scm* name);
+struct scm* module_variable_(struct scm* module, struct scm* name);
+struct scm* open_input_file_(struct scm* file_name);
+struct scm* pairlis_(struct scm* x, struct scm* y, struct scm* a);
+struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c);
+struct scm* read_input_file_env__();
+struct scm* reverse_x_(struct scm* x, struct scm* t);
+struct scm* set_current_input_port_(struct scm* port);
+struct scm* set_env_x_(struct scm* x, struct scm* e, struct scm* a);
+struct scm* vector_ref_(struct scm* x, SCM i);
+struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);
+struct scm* write_error_(struct scm* x);
+void gc_push_frame();
+void require(int bool, char* error);
 
 struct scm* eval_apply_()
 {
@@ -257,9 +257,9 @@ apply:
 	g_stack_array[g_stack + FRAME_PROCEDURE] = R1->car;
 	t = R1->car->type;
 
-	if(t == TSTRUCT && builtin_p(R1->car) == cell_t)
+	if(t == TSTRUCT && builtin_p_(R1->car) == cell_t)
 	{
-		/* check_formals(R1->car, builtin_arity(R1->car), R1->cdr); */
+		/* check_formals(R1->car, builtin_arity_(R1->car), R1->cdr); */
 		R1 = apply_builtin(R1->car, R1->cdr);    /* FIXME: move into eval_apply */
 		goto vm_return;
 	}

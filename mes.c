@@ -23,46 +23,41 @@
 #include "mes_constants.h"
 
 /* Imported Functions */
-void initialize_constants();
 SCM gc();
-void initialize_memory();
-char *itoa(int number);
+char* itoa(int number);
+int eputs(char* s);
 int match(char* a, char* b);
-struct scm* mes_builtins(struct scm* a);
-struct scm* cstring_to_symbol(char* s);
+int numerate_string(char* a);
 int string_len(char* a);
+struct scm* builtin_p_(struct scm* x);
+struct scm* cstring_to_symbol(char* s);
+struct scm* display_error_(struct scm* x);
+struct scm* equal2_p_(struct scm* a, struct scm* b);
+struct scm* eval_apply_();
 struct scm* hashq_get_handle_(struct scm* table, struct scm* key, struct scm* dflt);
 struct scm* hashq_set_x_(struct scm* table, struct scm* key, struct scm* value);
-struct scm* equal2_p_(struct scm* a, struct scm* b);
-struct scm* string_equal_p_(struct scm* a, struct scm* b);
-struct scm* reverse_x_(struct scm* x, struct scm* t);
-struct scm* builtin_p(struct scm* x);
-int eputs(char* s);
-struct scm* display_error_(struct scm* x);
-struct scm* write_error_(struct scm* x);
-struct scm* module_variable_(struct scm* module, struct scm* name);
-struct scm* module_ref_(struct scm* module, struct scm* name);
-struct scm* read_input_file_env__();
-struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
-
+struct scm* make_hash_table_(struct scm* size);
 struct scm* make_hashq_type();
 struct scm* make_module_type_();
-struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_string_(char* s);
-struct scm* make_string(char* s, int length);
-struct scm* make_hash_table_(struct scm* size);
-struct scm* mes_g_stack(struct scm* a);
-
-struct scm* eval_apply_();
-struct scm* mes_symbols();
-void require(int bool, char* error);
-
-/* M2-Planet Imports */
-int numerate_string(char *a);
-
 struct scm* make_number_(SCM n);
+struct scm* make_string(char* s, int length);
+struct scm* make_string_(char* s);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_variable_(struct scm* var);
+struct scm* mes_builtins(struct scm* a);
+struct scm* mes_g_stack(struct scm* a);
+struct scm* mes_symbols();
+struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
+struct scm* module_ref_(struct scm* module, struct scm* name);
+struct scm* module_variable_(struct scm* module, struct scm* name);
+struct scm* read_input_file_env__();
+struct scm* reverse_x_(struct scm* x, struct scm* t);
+struct scm* string_equal_p_(struct scm* a, struct scm* b);
+struct scm* write_error_(struct scm* x);
+void initialize_constants();
+void initialize_memory();
+void require(int bool, char* error);
 
 
 struct scm* assoc_string(struct scm* x, struct scm* a)  /* ((internal)) */
@@ -89,9 +84,9 @@ struct scm* type(struct scm* x) /* External */
 	return make_number_(y->type);
 }
 
-struct scm* cons(struct scm* x, struct scm* y) /* External */
+struct scm* cons(struct scm* x) /* External */
 {
-	return make_tpair(x->car, y->cdr->car);
+	return make_tpair(x->car, x->cdr->car);
 }
 
 struct scm* car(struct scm* x) /* External */
@@ -225,7 +220,7 @@ struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args) 
 
 	if(alen != flen && alen != -1 && flen != -1)
 	{
-		char *s = "apply: wrong number of arguments; expected: ";
+		char* s = "apply: wrong number of arguments; expected: ";
 		eputs(s);
 		eputs(itoa(flen));
 		eputs(", got: ");
@@ -280,7 +275,7 @@ struct scm* check_apply(struct scm* f, struct scm* e)  /* ((internal)) */
 		type = "string";
 	}
 
-	if(g->type == TSTRUCT && builtin_p(f) == cell_f)
+	if(g->type == TSTRUCT && builtin_p_(f) == cell_f)
 	{
 		type = "#<...>";
 	}
@@ -292,7 +287,7 @@ struct scm* check_apply(struct scm* f, struct scm* e)  /* ((internal)) */
 
 	if(type)
 	{
-		char *s = "cannot apply: ";
+		char* s = "cannot apply: ";
 		eputs(s);
 		eputs(type);
 		eputs("[");
@@ -758,7 +753,7 @@ struct scm* make_initial_module(struct scm* a)  /* ((internal)) */
 	return module;
 }
 
-int open_boot(char *boot);
+int open_boot(char* boot);
 void do_it(char* file)
 {
 	if(match(file, "STDIN"))

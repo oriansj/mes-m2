@@ -25,22 +25,20 @@
 // CONSTANT STRUCT_PRINTER 1
 #define STRUCT_PRINTER 1
 
-struct scm* apply(struct scm* f, struct scm* x);
-struct scm* struct_ref_(struct scm* x, SCM i);
-struct scm* builtin_p(struct scm* x);
-struct scm* fdisplay_(struct scm*, int, int);
-int fdputs(char* s, int fd);
-int fdputc(int c, int fd);
-char *itoa(int number);
-struct scm* error_(struct scm* key, struct scm* x);
-
-/* Imported Functions */
-struct scm* make_tpair(struct scm* a, struct scm* b);
-void require(int bool, char* error);
-int string_len(char* a);
-void raw_print(char* s, int fd);
-void fd_print(char* s, int f);
 char* char_lookup(int c, int type);
+char* itoa(int number);
+int fdputc(int c, int fd);
+int fdputs(char* s, int fd);
+int string_len(char* a);
+struct scm* apply(struct scm* f, struct scm* x);
+struct scm* builtin_p_(struct scm* x);
+struct scm* error_(struct scm* key, struct scm* x);
+struct scm* fdisplay_(struct scm*, int, int);
+struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* struct_ref_(struct scm* x, SCM i);
+void fd_print(char* s, int f);
+void raw_print(char* s, int fd);
+void require(int bool, char* error);
 
 /* Globals */
 int g_depth;
@@ -145,31 +143,31 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 		fdputs("#<port ", fd);
 		fdputs(itoa(y->port), fd);
 		fdputc(' ', fd);
-		char *s = y->cdr->cdr->string;
+		char* s = y->cdr->cdr->string;
 		raw_print(s, fd);
 		fdputs("\">", fd);
 	}
 	else if(t == TKEYWORD)
 	{
 		fdputs("#:", fd);
-		char *s = y->cdr->string;
+		char* s = y->cdr->string;
 		raw_print(s, fd);
 	}
 	else if(t == TSTRING)
 	{
 		if(write_p) fdputc('"', fd);
-		char *s = y->cdr->string;
+		char* s = y->cdr->string;
 		fd_print(s, fd);
 		if(write_p) fdputc('"', fd);
 	}
 	else if(t == TSPECIAL)
 	{
-		char *s = y->cdr->string;
+		char* s = y->cdr->string;
 		raw_print(s, fd);
 	}
 	else if(t == TSYMBOL)
 	{
-		char *s = y->cdr->string;
+		char* s = y->cdr->string;
 		raw_print(s, fd);
 	}
 	else if(t == TREF)
@@ -186,7 +184,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 			printer = printer->car;
 		}
 
-		if(printer->type == TCLOSURE || builtin_p(printer) == cell_t)
+		if(printer->type == TCLOSURE || builtin_p_(printer) == cell_t)
 		{
 			apply(printer, make_tpair(x, cell_nil));
 		}
@@ -201,7 +199,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 			for(i = 2; i < size; i = i + 1)
 			{
 				fdputc(' ', fd);
-				fdisplay_(y->struc + i, fd, write_p);
+				fdisplay_(y->struc + (i*CELL_SIZE), fd, write_p);
 			}
 
 			fdputc('>', fd);
@@ -216,7 +214,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 		for(i = 1; i < y->length; i = i + 1)
 		{
 			fdputs(" ", fd);
-			fdisplay_(y->vector + i, fd, write_p);
+			fdisplay_(y->vector + (i*CELL_SIZE), fd, write_p);
 		}
 
 		fdputc(')', fd);

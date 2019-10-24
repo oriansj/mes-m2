@@ -24,31 +24,29 @@
 #include <ctype.h>
 #include <stdio.h>
 
-/* M2-Planet function imports*/
-int in_set(int c, char* s);
-int numerate_string(char *a);
-int toupper(int c);
-int match(char* a, char* b);
 
-/* Standard Mes.c function imports */
-void assert_max_string(int i, char* msg, char* string);
-int readchar();
-struct scm* error_(struct scm* key, struct scm* x);
-struct scm* make_string_(char* s);
-struct scm* make_string(char* s, int length);
-int peekchar();
-int unreadchar();
-struct scm* make_number_(SCM n);
-struct scm* make_char(SCM c);
-struct scm* cstring_to_symbol(char* s);
-struct scm* symbol_to_keyword_(struct scm* symbol);
-struct scm* list_to_vector_(struct scm* x);
-int eputs(char* s);
 char* itoa(int number);
+int eputs(char* s);
+int in_set(int c, char* s);
+int match(char* a, char* b);
+int numerate_string(char* a);
+int peekchar();
+int readchar();
+int toupper(int c);
+int unreadchar();
+struct scm* cstring_to_symbol(char* s);
+struct scm* error_(struct scm* key, struct scm* x);
+struct scm* list_to_vector_(struct scm* x);
+struct scm* make_char(SCM c);
+struct scm* make_number_(SCM n);
+struct scm* make_string(char* s, int length);
+struct scm* make_string_(char* s);
 struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* reader_read_sexp_(int c, struct scm* a);
+struct scm* symbol_to_keyword_(struct scm* symbol);
+void assert_max_string(int i, char* msg, char* string);
 void require(int bool, char* error);
 
-struct scm* reader_read_sexp_(int c, struct scm* a);
 struct scm* read_env_(struct scm* a) /* Internal */
 {
 	return reader_read_sexp_(readchar(), a);

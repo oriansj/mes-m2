@@ -22,24 +22,22 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-SCM length__(struct scm* x);
-int eputs(char* s);
-char* itoa(int number);
-struct scm* cstring_to_symbol(char* s);
-struct scm* write_error_(struct scm* x);
 SCM gc_pop_frame();
-struct scm* vector_entry(struct scm* x);
+SCM length__(struct scm* x);
+char* env_lookup(char* token, char** envp);
+char* itoa(int number);
+int eputs(char* s);
+int numerate_string(char* a);
+struct scm* cons(struct scm* x, struct scm* y);
+struct scm* cstring_to_symbol(char* s);
+struct scm* make_frame_type();
 struct scm* make_stack_type();
 struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_frame_type();
-struct scm* cons(struct scm* x, struct scm* y);
-struct scm* make_vector__(SCM k);
-void vector_set_x_(struct scm* x, SCM i, struct scm* e);
-
-void require(int bool, char* error);
-char* env_lookup(char* token, char** envp);
-int numerate_string(char *a);
+struct scm* vector_entry(struct scm* x);
+struct scm* write_error_(struct scm* x);
 void block_copy(void* source, void* destination, int num);
+void require(int bool, char* error);
+void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
 SCM GC_SAFETY;
 SCM ARENA_SIZE;
@@ -99,31 +97,23 @@ struct scm* make_tpair(struct scm* a, struct scm* b)
 
 struct scm* make_stack(struct scm* x)  /* External */
 {
-	require(cell_nil == x, "mes_gc.c: make_stack recieved non-nil list\n");
+	require(cell_t == x->car, "mes_gc.c: make_stack recieved non-nil list\n");
 	struct scm* stack_type = make_stack_type();
 	SCM size = (STACK_SIZE - g_stack) / FRAME_SIZE;
-	struct scm* frames = make_vector__(size);
-	SCM i;
+	struct scm* values = calloc(1, sizeof(struct scm));
+	struct scm* v = calloc(size, sizeof(struct scm));
+	values->type = TVECTOR;
+	values->length = size;
+	values->cdr = v;
 
-	for(i = 0; i < size; i = i + 1)
+	for(size = size - 1; size >= 0; size = size - 1)
 	{
-		SCM array_index = (STACK_SIZE - (i * FRAME_SIZE));
-		struct scm* procedure = g_stack_array[array_index + FRAME_PROCEDURE];
-
-		if(!procedure)
-		{
-			procedure = cell_f;
-		}
-
-		struct scm* frame = make_struct_(make_frame_type()
-		                   , make_tpair(cell_symbol_frame, make_tpair(procedure, cell_nil))
-		                   , cstring_to_symbol("frame-printer"));
-		vector_set_x_(frames, i, frame);
+		v->type = TREF;
+		v->car = cell_unspecified;
+		v->cdr = 0;
+		v = v + CELL_SIZE;
 	}
 
-	struct scm* values = cell_nil;
-	values = make_tpair(frames, values);
-	values = make_tpair(cell_symbol_stack, values);
 	return make_struct_(stack_type, values, cell_unspecified);
 }
 
@@ -162,7 +152,7 @@ struct scm* make_bytes(char* s, SCM length)
 	x->type = TBYTES;
 	x->length = length;
 	x->string = calloc(length + 1, sizeof(char));
-	char *p = x->string;
+	char* p = x->string;
 
 	if(0 != length)
 	{
@@ -204,7 +194,7 @@ struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* print
 {
 	SCM size = 2 + length__(fields);
 	struct scm* v = calloc(size, sizeof(struct scm));
-	struct scm* w = v + 1;
+	struct scm* w = v + CELL_SIZE;
 	struct scm* entry = vector_entry(type);
 	struct scm* print = vector_entry(printer);
 
@@ -217,9 +207,10 @@ struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* print
 	w->cdr = print->cdr;
 
 	SCM i;
+	struct scm* e;
 	for(i = 2; i < size; i = i + 1)
 	{
-		struct scm* e = cell_unspecified;
+		e = cell_unspecified;
 
 		if(fields != cell_nil)
 		{
@@ -228,7 +219,7 @@ struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* print
 		}
 
 		entry = vector_entry(e);
-		w = v + i;
+		w = v + (i*CELL_SIZE);
 
 		w->type = entry->type;
 		w->car = entry->car;

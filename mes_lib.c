@@ -22,21 +22,19 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-
 struct scm* cstring_to_symbol(char* s);
-void vector_set_x_(struct scm* x, SCM i, struct scm* e);
-struct scm* struct_ref_(struct scm* x, SCM i);
-struct scm* vector_length_(struct scm* x);
-struct scm* make_vector__(SCM k);
-struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* string_equal_p_(struct scm* a, struct scm* b);
-struct scm* vector_equal_p(struct scm* a, struct scm* b);
 struct scm* eq_p_(struct scm* x, struct scm* y);
-
-void require(int bool, char* error);
-struct scm* make_number_(SCM n);
 struct scm* make_char(SCM c);
+struct scm* make_number_(SCM n);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* make_vector__(SCM k);
+struct scm* string_equal_p_(struct scm* a, struct scm* b);
+struct scm* struct_ref_(struct scm* x, SCM i);
+struct scm* vector_equal_p_(struct scm* a, struct scm* b);
+struct scm* vector_length_(struct scm* x);
+void require(int bool, char* error);
+void vector_set_x_(struct scm* x, SCM i, struct scm* e);
 
 struct scm* scm_exit(struct scm* x)  /* External */
 {
@@ -157,7 +155,7 @@ struct scm* equal2_p_(struct scm* a, struct scm* b) /* Internal */
 
 	if(a->type == TVECTOR && b->type == TVECTOR)
 	{
-		return vector_equal_p(a, b);
+		return vector_equal_p_(a, b);
 	}
 
 	return eq_p_(a, b);

@@ -22,15 +22,15 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-struct scm* struct_ref_(struct scm* x, SCM i);
-struct scm* cstring_to_symbol(char* s);
-struct scm* make_hashq_type();
-struct scm* make_tpair(struct scm* a, struct scm* b);
-struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_hash_table_(SCM size);
 struct scm* assq_(struct scm* x, struct scm* a);
+struct scm* cstring_to_symbol(char* s);
 struct scm* hashq_get_handle_(struct scm* table, struct scm* key, struct scm* dflt);
 struct scm* hashq_set_x_(struct scm* table, struct scm* key, struct scm* value);
+struct scm* make_hash_table_(SCM size);
+struct scm* make_hashq_type();
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* struct_ref_(struct scm* x, SCM i);
 void require(int bool, char* error);
 
 struct scm* make_module_type_()

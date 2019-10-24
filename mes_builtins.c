@@ -23,153 +23,154 @@
 #include "mes_constants.h"
 
 /* Imported Functions */
-struct scm* gc_check(struct scm* x);
-struct scm* gc(struct scm* x);
-struct scm* hashq(struct scm* x);
-struct scm* hash(struct scm* x);
-struct scm* hashq_get_handle(struct scm* x);
-struct scm* hashq_ref(struct scm* x);
-struct scm* hash_ref(struct scm* x);
-struct scm* hashq_set_x(struct scm* x);
-struct scm* hash_set_x(struct scm* x);
-struct scm* make_hash_table(struct scm* x);
+struct scm* access_p(struct scm* x);
+struct scm* acons(struct scm* x);
+struct scm* add_formals(struct scm* x);
+struct scm* append2(struct scm* x);
+struct scm* ash(struct scm* x);
+struct scm* assoc(struct scm* x);
+struct scm* assq(struct scm* x);
+struct scm* builtin_printer(struct scm* x);
+struct scm* car(struct scm* x);
+struct scm* cdr(struct scm* x);
+struct scm* cons(struct scm* x);
+struct scm* current_error_port(struct scm* x);
+struct scm* current_input_port(struct scm* x);
+struct scm* current_output_port(struct scm* x);
+struct scm* delete_file(struct scm* x);
 struct scm* display(struct scm* x);
 struct scm* display_error(struct scm* x);
 struct scm* display_port(struct scm* x);
-struct scm* scm_write(struct scm* x);
-struct scm* write_error(struct scm* x);
-struct scm* write_port(struct scm* x);
-struct scm* scm_exit(struct scm* x);
-struct scm* frame_printer(struct scm* x);
-struct scm* make_stack(struct scm* x);
-struct scm* stack_length(struct scm* x);
-struct scm* stack_ref(struct scm* x);
-struct scm* xassq(struct scm* x);
-struct scm* memq(struct scm* x);
-struct scm* equal2_p(struct scm* x);
-struct scm* last_pair(struct scm* x);
-struct scm* pair_p(struct scm* x);
-struct scm* greater_p(struct scm* x);
-struct scm* less_p(struct scm* x);
-struct scm* is_p(struct scm* x);
-struct scm* minus(struct scm* x);
-struct scm* plus(struct scm* x);
 struct scm* divide(struct scm* x);
-struct scm* modulo(struct scm* x);
-struct scm* multiply(struct scm* x);
+struct scm* eq_p(struct scm* x);
+struct scm* equal2_p(struct scm* x);
+struct scm* error(struct scm* x);
+struct scm* eval_apply(struct scm* x);
+struct scm* exec(struct scm* x);
+struct scm* file_chmod(struct scm* x);
+struct scm* file_dup(struct scm* x);
+struct scm* file_dup2(struct scm* x);
+struct scm* frame_printer(struct scm* x);
+struct scm* gc(struct scm* x);
+struct scm* gc_check(struct scm* x);
+struct scm* get_cwd(struct scm* x);
+struct scm* get_env(struct scm* x);
+struct scm* greater_p(struct scm* x);
+struct scm* hash(struct scm* x);
+struct scm* hash_ref(struct scm* x);
+struct scm* hash_set_x(struct scm* x);
+struct scm* hashq(struct scm* x);
+struct scm* hashq_get_handle(struct scm* x);
+struct scm* hashq_ref(struct scm* x);
+struct scm* hashq_set_x(struct scm* x);
+struct scm* is_p(struct scm* x);
+struct scm* isatty_p(struct scm* x);
+struct scm* keyword_to_string(struct scm* x);
+struct scm* last_pair(struct scm* x);
+struct scm* length(struct scm* x);
+struct scm* less_p(struct scm* x);
+struct scm* list(struct scm* x);
+struct scm* list_to_string(struct scm* x);
+struct scm* list_to_vector(struct scm* x);
 struct scm* logand(struct scm* x);
 struct scm* logior(struct scm* x);
 struct scm* lognot(struct scm* x);
 struct scm* logxor(struct scm* x);
-struct scm* ash(struct scm* x);
-struct scm* acons(struct scm* x);
-struct scm* add_formals(struct scm* x);
-struct scm* append2(struct scm* x);
-struct scm* assoc(struct scm* x);
-struct scm* assq(struct scm* x);
-struct scm* car(struct scm* x);
-struct scm* cdr(struct scm* x);
-struct scm* cons(struct scm* x);
-struct scm* eq_p(struct scm* x);
-struct scm* error(struct scm* x);
-struct scm* eval_apply(struct scm* x);
-struct scm* length(struct scm* x);
-struct scm* list(struct scm* x);
 struct scm* macro_get_handle(struct scm* x);
 struct scm* make_cell(struct scm* x);
-struct scm* make_number(struct scm* x);
 struct scm* make_function(struct scm* x);
-struct scm* null_p(struct scm* x);
-struct scm* pairlis(struct scm* x);
-struct scm* reverse_x(struct scm* x);
-struct scm* set_car_x(struct scm* x);
-struct scm* set_cdr_x(struct scm* x);
-struct scm* set_env_x(struct scm* x);
-struct scm* type(struct scm* x);
-struct scm* values(struct scm* x);
-struct scm* builtin_printer(struct scm* x);
+struct scm* make_hash_table(struct scm* x);
 struct scm* make_module_type(struct scm* x);
-struct scm* module_printer(struct scm* x);
-struct scm* module_variable(struct scm* x);
-struct scm* module_ref(struct scm* x);
+struct scm* make_number(struct scm* x);
+struct scm* make_stack(struct scm* x);
+struct scm* make_struct(struct scm* x);
+struct scm* make_symbol(struct scm* x);
+struct scm* make_vector(struct scm* x);
+struct scm* memq(struct scm* x);
+struct scm* minus(struct scm* x);
 struct scm* module_define_x(struct scm* x);
-struct scm* peek_byte(struct scm* x);
-struct scm* read_byte(struct scm* x);
-struct scm* unread_byte(struct scm* x);
-struct scm* peek_char(struct scm* x);
-struct scm* read_char(struct scm* x);
-struct scm* unread_char(struct scm* x);
-struct scm* write_char(struct scm* x);
-struct scm* write_byte(struct scm* x);
-struct scm* get_env(struct scm* x);
-struct scm* set_env(struct scm* x);
-struct scm* access_p(struct scm* x);
-struct scm* current_input_port(struct scm* x);
+struct scm* module_printer(struct scm* x);
+struct scm* module_ref(struct scm* x);
+struct scm* module_variable(struct scm* x);
+struct scm* modulo(struct scm* x);
+struct scm* multiply(struct scm* x);
+struct scm* null_p(struct scm* x);
 struct scm* open_input_file(struct scm* x);
 struct scm* open_input_string(struct scm* x);
-struct scm* set_current_input_port(struct scm* x);
-struct scm* current_output_port(struct scm* x);
-struct scm* current_error_port(struct scm* x);
 struct scm* open_output_file(struct scm* x);
-struct scm* set_current_output_port(struct scm* x);
-struct scm* set_current_error_port(struct scm* x);
-struct scm* file_chmod(struct scm* x);
-struct scm* isatty_p(struct scm* x);
+struct scm* pair_p(struct scm* x);
+struct scm* pairlis(struct scm* x);
+struct scm* peek_byte(struct scm* x);
+struct scm* peek_char(struct scm* x);
+struct scm* plus(struct scm* x);
 struct scm* primitive_fork(struct scm* x);
-struct scm* exec(struct scm* x);
-struct scm* wait_pid(struct scm* x);
-struct scm* get_cwd(struct scm* x);
-struct scm* file_dup(struct scm* x);
-struct scm* file_dup2(struct scm* x);
-struct scm* delete_file(struct scm* x);
-struct scm* read_input_file_env(struct scm* x);
+struct scm* read_byte(struct scm* x);
+struct scm* read_char(struct scm* x);
 struct scm* read_env(struct scm* x);
-struct scm* reader_read_sexp(struct scm* x);
-struct scm* reader_read_character(struct scm* x);
-struct scm* reader_read_binary(struct scm* x);
-struct scm* reader_read_octal(struct scm* x);
-struct scm* reader_read_hex(struct scm* x);
-struct scm* reader_read_string(struct scm* x);
-struct scm* string_equal_p(struct scm* x);
-struct scm* symbol_to_string(struct scm* x);
-struct scm* symbol_to_keyword(struct scm* x);
-struct scm* keyword_to_string(struct scm* x);
-struct scm* string_to_symbol(struct scm* x);
-struct scm* make_symbol(struct scm* x);
-struct scm* string_to_list(struct scm* x);
-struct scm* list_to_string(struct scm* x);
+struct scm* read_input_file_env(struct scm* x);
 struct scm* read_string(struct scm* x);
+struct scm* reader_read_binary(struct scm* x);
+struct scm* reader_read_character(struct scm* x);
+struct scm* reader_read_hex(struct scm* x);
+struct scm* reader_read_octal(struct scm* x);
+struct scm* reader_read_sexp(struct scm* x);
+struct scm* reader_read_string(struct scm* x);
+struct scm* reverse_x(struct scm* x);
+struct scm* scm_exit(struct scm* x);
+struct scm* scm_write(struct scm* x);
+struct scm* set_car_x(struct scm* x);
+struct scm* set_cdr_x(struct scm* x);
+struct scm* set_current_error_port(struct scm* x);
+struct scm* set_current_input_port(struct scm* x);
+struct scm* set_current_output_port(struct scm* x);
+struct scm* set_env(struct scm* x);
+struct scm* set_env_x(struct scm* x);
+struct scm* stack_length(struct scm* x);
+struct scm* stack_ref(struct scm* x);
 struct scm* string_append(struct scm* x);
+struct scm* string_equal_p(struct scm* x);
 struct scm* string_length(struct scm* x);
 struct scm* string_ref(struct scm* x);
-struct scm* make_struct(struct scm* x);
+struct scm* string_to_list(struct scm* x);
+struct scm* string_to_symbol(struct scm* x);
 struct scm* struct_length(struct scm* x);
 struct scm* struct_ref(struct scm* x);
 struct scm* struct_set_x(struct scm* x);
-struct scm* make_vector(struct scm* x);
+struct scm* symbol_to_keyword(struct scm* x);
+struct scm* symbol_to_string(struct scm* x);
+struct scm* type(struct scm* x);
+struct scm* unread_byte(struct scm* x);
+struct scm* unread_char(struct scm* x);
+struct scm* values(struct scm* x);
 struct scm* vector_length(struct scm* x);
 struct scm* vector_ref(struct scm* x);
 struct scm* vector_set_x(struct scm* x);
-struct scm* list_to_vector(struct scm* x);
 struct scm* vector_to_list(struct scm* x);
+struct scm* wait_pid(struct scm* x);
+struct scm* write_byte(struct scm* x);
+struct scm* write_char(struct scm* x);
+struct scm* write_error(struct scm* x);
+struct scm* write_port(struct scm* x);
+struct scm* xassq(struct scm* x);
 
 /* Internal functions required*/
-struct scm* make_function_(FUNCTION n);
-struct scm* make_number_(SCM n);
-struct scm* make_hash_table_(SCM size);
-struct scm* hash_set_x_(struct scm* table, struct scm* key, struct scm* value);
-struct scm* make_string(char* s, int length);
-struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
-struct scm* make_string_(char* s);
-struct scm* cstring_to_symbol(char* s);
-struct scm* symbol_to_string_(struct scm* symbol);
-struct scm* make_tpair(struct scm* a, struct scm* b);
-struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist);
-struct scm* display_(struct scm* x);
+int eputs(char* s);
 int fdputc(int c, int fd);
 int fdputs(char* s, int fd);
-int eputs(char* s);
 int string_len(char* a);
+struct scm* acons_(struct scm* key, struct scm* value, struct scm* alist);
+struct scm* cstring_to_symbol(char* s);
+struct scm* display_(struct scm* x);
+struct scm* hash_set_x_(struct scm* table, struct scm* key, struct scm* value);
+struct scm* make_function_(FUNCTION n);
+struct scm* make_hash_table_(SCM size);
+struct scm* make_number_(SCM n);
+struct scm* make_string(char* s, int length);
+struct scm* make_string_(char* s);
+struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
+struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* struct_ref_(struct scm* x, SCM i);
+struct scm* symbol_to_string_(struct scm* symbol);
 
 void init_symbol(struct scm* x, SCM type, char* name)
 {
@@ -365,30 +366,45 @@ struct scm* init_builtin(struct scm* builtin_type, char* name, int arity, FUNCTI
 	return acons_(s, make_builtin_(builtin_type, symbol_to_string_(s), make_number_(arity), make_function_(function)), a);
 }
 
-struct scm* builtin_name(struct scm* builtin)
+struct scm* builtin_name(struct scm* builtin) /* External */
 {
-	struct scm* x = builtin->cdr + (3 * CELL_SIZE);
-	return x->car;
+	struct scm* x = struct_ref_(builtin->car, 3);
+	return x;
 }
 
-struct scm* builtin_arity(struct scm* builtin)
+struct scm* builtin_arity_(struct scm* builtin) /* Internal */
 {
-	struct scm* x = builtin->cdr + (4 * CELL_SIZE);
+	struct scm* x = struct_ref_(builtin, 4);
 	return make_number_(x->value);
 }
 
-void* builtin_function(struct scm* builtin)
+struct scm* builtin_arity(struct scm* x) /* External */
 {
-	struct scm* x = builtin->cdr + (5 * CELL_SIZE);
+	return builtin_arity_(x->car);
+}
+
+void* builtin_function(struct scm* builtin) /* Internal */
+{
+	struct scm* x = struct_ref_(builtin, 5);
 	return x->cdr;
 }
 
-struct scm* builtin_p(struct scm* x)
+struct scm* builtin_p_(struct scm* builtin) /* Internal */
 {
-	struct scm* y = x->cdr + (2 * CELL_SIZE);
-	if(x->type == TSTRUCT && cell_symbol_builtin == y->car) return cell_t;
+	/* make sure of correct type first */
+	if(TSTRUCT != builtin->type) return cell_f;
+
+	/* Do the actual check*/
+	struct scm* x = struct_ref_(builtin, 2);
+	if(cell_symbol_builtin == x) return cell_t;
 	return cell_f;
 }
+
+struct scm* builtin_p(struct scm* x) /* External */
+{
+	return builtin_p_(x->car);
+}
+
 
 struct scm* builtin_printer(struct scm* x) /* External */
 {
@@ -396,7 +412,7 @@ struct scm* builtin_printer(struct scm* x) /* External */
 	fdputs("#<procedure ", __stdout);
 	display_(builtin_name(builtin));
 	fdputc(' ', __stdout);
-	int arity = builtin_arity(builtin)->value;
+	int arity = builtin_arity_(builtin)->value;
 
 	if(arity == -1)
 	{

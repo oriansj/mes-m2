@@ -23,8 +23,8 @@
 #include "mes_constants.h"
 
 SCM length__(struct scm* x);
-struct scm* make_number_(SCM n);
 struct scm* make_char(SCM c);
+struct scm* make_number_(SCM n);
 struct scm* vector_entry(struct scm* x);
 void require(int bool, char* error);
 
@@ -38,7 +38,7 @@ struct scm* struct_ref_(struct scm* x, SCM i)
 {
 	require(x->type == TSTRUCT, "mes_struct.c: struct_ref_ x was not of type TSTRUCT\n");
 	require(i < x->length, "mes_struct.c: struct_ref_ i was not less than x->length\n");
-	struct scm* f = x->cdr + i;
+	struct scm* f = x->cdr + (i*CELL_SIZE);
 
 	if(f->type == TREF)
 	{
@@ -63,7 +63,7 @@ struct scm* struct_set_x_(struct scm* x, SCM i, struct scm* e)
 	require(x->type == TSTRUCT, "mes_struct.c: struct_set_x_ x was not of type TSTRUCT\n");
 	require(i < x->length, "mes_struct.c: struct_set_x_ i was not less than x->length\n");
 	struct scm* v = vector_entry(e);
-	struct scm* y = x->cdr + i;
+	struct scm* y = x->cdr + (i*CELL_SIZE);
 
 	y->type = v->type;
 	y->car = v->car;

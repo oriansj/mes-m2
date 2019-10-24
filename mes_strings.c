@@ -22,21 +22,20 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-char *itoa(int number);
-struct scm* make_bytes(char* s, SCM length);
-struct scm* write_error_(struct scm* x);
+char* itoa(int number);
+struct scm* error_(struct scm* key, struct scm* x);
 struct scm* hash_ref_(struct scm* table, struct scm* key);
 struct scm* hash_set_x_(struct scm* table, struct scm* key, struct scm* value);
-void assert_max_string(int i, char* msg, char* string);
-struct scm* error_(struct scm* key, struct scm* x);
-
+struct scm* make_bytes(char* s, SCM length);
 struct scm* make_char(SCM c);
+struct scm* make_keyword(struct scm* a, struct scm* b);
 struct scm* make_number_(SCM n);
+struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_tstring1(SCM n);
 struct scm* make_tstring2(struct scm* a, struct scm* b);
-struct scm* make_tpair(struct scm* a, struct scm* b);
-struct scm* make_keyword(struct scm* a, struct scm* b);
 struct scm* make_tsymbol(struct scm* a, struct scm* b);
+struct scm* write_error_(struct scm* x);
+void assert_max_string(int i, char* msg, char* string);
 void require(int bool, char* error);
 
 int string_len(char* a)
@@ -226,7 +225,7 @@ void block_copy(void* source, void* destination, int num)
 
 struct scm* string_append(struct scm* x)  /* External */
 {
-	char *p = g_buf;
+	char* p = g_buf;
 	g_buf[0] = 0;
 	int size = 0;
 	struct scm* y1 = x->car;

@@ -35,19 +35,18 @@
 #include <unistd.h>
 
 
-struct scm* make_string(char* s, int length);
-struct scm* make_string_(char* s);
 SCM length__(struct scm* x);
+int file_getc(int fd);
+int match(char* a, char* b);
 struct scm* error_(struct scm* key, struct scm* x);
-void require(int bool, char* error);
-struct scm* make_tpair(struct scm* a, struct scm* b);
+struct scm* make_char(SCM c);
 struct scm* make_number_(SCM n);
 struct scm* make_port(SCM n, struct scm* s);
-struct scm* make_char(SCM c);
-int match(char* a, char* b);
-
+struct scm* make_string(char* s, int length);
+struct scm* make_string_(char* s);
+struct scm* make_tpair(struct scm* a, struct scm* b);
 void raw_print(char* s, int fd);
-int file_getc(int fd);
+void require(int bool, char* error);
 
 int eputs(char* s)
 {
@@ -57,7 +56,7 @@ int eputs(char* s)
 
 char* ntoab(SCM x, int base, int signed_p)
 {
-	char *p = itoa_buf + 11;
+	char* p = itoa_buf + 11;
 	p[1] = 0;
 	int sign_p = 0;
 	SCM u = x;
@@ -167,7 +166,7 @@ int peekchar()
 		return -1;
 	}
 
-	char *p = string->cdr->string;
+	char* p = string->cdr->string;
 	return p[0];
 }
 
@@ -187,7 +186,7 @@ int readchar()
 		return -1;
 	}
 
-	char *p = string->cdr->string;
+	char* p = string->cdr->string;
 	int c = p[0];
 	p = p + 1;
 	port->cdr = make_string(p, length - 1);
@@ -204,7 +203,7 @@ int unreadchar(int c)
 	struct scm* port = current_input_port_();
 	struct scm* string = port->cdr;
 	SCM length = string->length;
-	char *p = string->cdr->string;
+	char* p = string->cdr->string;
 	p = p - 1;
 	string = make_string(p, length + 1);
 	p = string->cdr->string;
@@ -278,7 +277,7 @@ struct scm* get_env(struct scm* x)  /* External */
 {
 	x = x->car;
 	char* p = x->cdr->string;
-	char *pass = env_lookup(p, global_envp);
+	char* pass = env_lookup(p, global_envp);
 	if(NULL == pass) return cell_f;
 	return make_string_(pass);
 }
@@ -538,7 +537,7 @@ struct scm* delete_file(struct scm* x) /* External */
 	return cell_unspecified;
 }
 
-int open_boot(char *boot)
+int open_boot(char* boot)
 {
 	if(g_debug > 1)
 	{
