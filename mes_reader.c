@@ -91,7 +91,7 @@ int reader_read_line_comment(int c)
 
 int reader_end_of_word_p(int c)
 {
-	return in_set(c, "\";() \t\n\r") || c == EOF;
+	return in_set(c, "\";() \t\n\r") || (c == EOF);
 }
 
 struct scm* reader_read_identifier_or_number(int c)
@@ -238,7 +238,7 @@ struct scm* reader_read_list(int c, struct scm* a)
 		error_(cell_symbol_not_a_pair, make_string_("EOF in list"));
 	}
 
-	//return cell_nil;
+	/* return cell_nil; */
 	struct scm* s = reader_read_sexp_(c, a);
 
 	if(s == cell_dot)

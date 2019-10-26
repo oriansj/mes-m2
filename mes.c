@@ -773,7 +773,6 @@ void do_it(char* file)
 }
 
 void gc_init_cells();
-// void fd_print(char* s, int f);
 int main(int argc, char** argv, char** envp)
 {
 	global_envp = envp;
@@ -801,9 +800,7 @@ int main(int argc, char** argv, char** envp)
 	initialize_constants();
 	initialize_memory();
 	gc_init_cells();
-//	fd_print("made it1\n", STDOUT);
 	mes_symbols();
-//	fd_print("made it2\n", STDOUT);
 
 	M0 = make_initial_module(mes_builtins(cell_nil));
 	g_macros = make_hash_table_(0);
