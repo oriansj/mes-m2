@@ -171,7 +171,7 @@ struct scm* divide(struct scm* x)  /* External */
 	{
 		assert_number("divide", y->car);
 
-		if(!n)
+		if(0 == n)
 		{
 			break;
 		}
