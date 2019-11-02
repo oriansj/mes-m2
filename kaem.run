@@ -19,7 +19,7 @@ M2-Planet --debug --architecture amd64 \
 	-f mes.h -f mes_constants.h \
 	-f ../M2-Planet/test/common_amd64/functions/exit.c \
 	-f ../M2-Planet/test/common_amd64/functions/malloc.c \
-	-f functions/fdputc.c \
+	-f functions/AMD64/fdputc.c \
 	-f ../M2-Planet/functions/calloc.c \
 	-f functions/file_print.c \
 	-f functions/numerate.c \
