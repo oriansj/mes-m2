@@ -24,6 +24,7 @@
 
 /* Imported Functions */
 SCM gc();
+char* env_lookup(char* token, char** envp);
 char* itoa(int number);
 int eputs(char* s);
 int match(char* a, char* b);
@@ -55,6 +56,7 @@ struct scm* read_input_file_env__();
 struct scm* reverse_x_(struct scm* x, struct scm* t);
 struct scm* string_equal_p_(struct scm* a, struct scm* b);
 struct scm* write_error_(struct scm* x);
+void fd_print(char* s, int f);
 void initialize_constants();
 void initialize_memory();
 void require(int bool, char* error);
@@ -805,35 +807,51 @@ int main(int argc, char** argv, char** envp)
 	M0 = make_initial_module(mes_builtins(cell_nil));
 	g_macros = make_hash_table_(0);
 
-	struct scm* lst = cell_nil;
-	int i = 1;
-	char* file;
-	while(i <= argc)
+	char* testing = env_lookup("MES_CORE", global_envp);
+	if(NULL != testing)
 	{
-		if(NULL == argv[i])
+		int i = 1;
+		char* file;
+		while(i <= argc)
 		{
-			i = i + 1;
+			if(NULL == argv[i])
+			{
+				i = i + 1;
+			}
+			else if(match(argv[i], "--boot"))
+			{
+				file = argv[i + 1];
+				do_it(file);
+				i = i + 2;
+			}
+			else if(match(argv[i], "-f") || match(argv[i], "--file"))
+			{
+				file = argv[i + 1];
+				do_it(file);
+				i = i + 2;
+			}
+			else
+			{
+				fd_print("Received unknown option: ", STDERR);
+				fd_print(argv[i], STDERR);
+				fd_print("\nAborting\n", STDERR);
+				exit(EXIT_FAILURE);
+			}
 		}
-		else if(match(argv[i], "--boot"))
+
+		messy_display = TRUE;
+		do_it("STDIN");
+	}
+	else
+	{
+		char* mes_boot = env_lookup("MES_BOOT", global_envp);
+		if(NULL == mes_boot)
 		{
-			file = argv[i + 1];
-			do_it(file);
-			i = i + 2;
+			mes_boot = "boot-0.scm";
 		}
-		else if(match(argv[i], "-f") || match(argv[i], "--file"))
-		{
-			file = argv[i + 1];
-			do_it(file);
-			i = i + 2;
-		}
-		else
-		{
-			lst = make_tpair(make_string_(argv[i]), lst);
-			i = i + 1;
-		}
+
+		do_it(mes_boot);
 	}
 
-	messy_display = TRUE;
-	do_it("STDIN");
 	return 0;
 }

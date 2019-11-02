@@ -16,6 +16,6 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-out=$(./bin/mes-m2 --file test/test004/display_cons.scm 2>&1)
+out=$(MES_CORE=0 ./bin/mes-m2 --file test/test004/display_cons.scm 2>&1)
 [ "$out" = "(4 . 2)" ] || exit 1
 exit 0

@@ -16,7 +16,7 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -x
-./bin/mes-m2 --boot test/test000/exit.scm
+MES_CORE=0 ./bin/mes-m2 --boot test/test000/exit.scm
 r=$?
 [ $r = 42 ] || exit 1
 exit 0

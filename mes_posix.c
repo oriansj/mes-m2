@@ -259,6 +259,17 @@ struct scm* unread_char(struct scm* x) /* External */
 	return x;
 }
 
+char* prematch(char* search, char* field)
+{
+	do
+	{
+		if(search[0] != field[0]) return NULL;
+		search = search + 1;
+		field = field + 1;
+	} while(0 != search[0]);
+	return field;
+}
+
 char* env_lookup(char* token, char** envp)
 {
 	if(NULL == envp) return NULL;
@@ -266,7 +277,7 @@ char* env_lookup(char* token, char** envp)
 	char* ret = NULL;
 	do
 	{
-		if(match(token, envp[i])) ret = envp[i];
+		ret = prematch(token, envp[i]);
 		if(NULL != ret) return ret;
 		i = i + 1;
 	} while(NULL != envp[i]);
@@ -381,7 +392,7 @@ struct scm* set_current_input_port_(struct scm* port) /* Internal */
 
 struct scm* set_current_input_port(struct scm* x) /* External */
 {
-	return set_current_input_port(x->car);
+	return set_current_input_port_(x->car);
 }
 
 struct scm* current_output_port(struct scm* x) /* External */

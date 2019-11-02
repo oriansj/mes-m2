@@ -16,5 +16,5 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-./bin/mes-m2 --file test/test008/vector.scm
+MES_CORE=0 ./bin/mes-m2 --file test/test008/vector.scm
 exit 0
