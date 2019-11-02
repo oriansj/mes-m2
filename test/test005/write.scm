@@ -16,9 +16,9 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
-(prim:set-current-output-port (prim:open-output-file "test/results/test005.answer"))
-(prim:display "hello world\n")
-(prim:display 42)
-(prim:display #\newline)
-(prim:display (prim:cons 4 2))
-(prim:exit 0)
+(set-current-output-port (open-output-file "test/results/test005.answer"))
+(core:display "hello world\n")
+(core:display 42)
+(core:display #\newline)
+(core:display (cons 4 2))
+(exit 0)

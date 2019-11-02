@@ -17,42 +17,42 @@
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
 ;; Setup output file
-(prim:set-current-output-port (prim:open-output-file "test/results/test008.answer"))
+(set-current-output-port (open-output-file "test/results/test008.answer"))
 
 ;; Demonstrate making a vector
-(prim:display "making vector with make-vector\n")
-(define v (prim:make-vector 4))
-(prim:display v)
+(core:display "making vector with make-vector\n")
+(define v (core:make-vector 4))
+(core:display v)
 
 ;; Test vector-length
-(prim:display "\nusing vector-length\n")
-(prim:display (prim:vector-length v))
+(core:display "\nusing vector-length\n")
+(core:display (vector-length v))
 
 ;; Test vector-set!
-(prim:display "\nusing vector-set!\n")
-(prim:vector-set! v 0 3)
-(prim:vector-set! v 1 9)
-(prim:vector-set! v 2 7)
-(prim:vector-set! v 3 8)
-(prim:display v)
+(core:display "\nusing vector-set!\n")
+(vector-set! v 0 3)
+(vector-set! v 1 9)
+(vector-set! v 2 7)
+(vector-set! v 3 8)
+(core:display v)
 
 ;; Validate vector->list
-(prim:display "\nusing vector->list\n")
-(prim:display (prim:vector->list v))
+(core:display "\nusing vector->list\n")
+(core:display (vector->list v))
 
 ;; Validate list->vector
-(prim:display "\nusing list->vector\n")
-(set! v (prim:list->vector (prim:list 1 2 3 4)))
-(prim:display v)
+(core:display "\nusing list->vector\n")
+(set! v (list->vector (list 1 2 3 4)))
+(core:display v)
 
 ;; Validate vector-ref
-(prim:display "\nUsing vector-ref\n")
-(prim:display (prim:vector-ref v 3))
-(prim:display #\newline)
-(prim:display (prim:vector-ref v 2))
-(prim:display #\newline)
-(prim:display (prim:vector-ref v 1))
-(prim:display #\newline)
-(prim:display (prim:vector-ref v 0))
-(prim:display #\newline)
-(prim:exit 0)
+(core:display "\nUsing vector-ref\n")
+(core:display (vector-ref v 3))
+(core:display #\newline)
+(core:display (vector-ref v 2))
+(core:display #\newline)
+(core:display (vector-ref v 1))
+(core:display #\newline)
+(core:display (vector-ref v 0))
+(core:display #\newline)
+(exit 0)
