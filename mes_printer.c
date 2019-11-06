@@ -73,21 +73,21 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 		fdputs("#<closure ", fd);
 		struct scm* name = y->cdr->car->cdr->car;
 		struct scm* args = y->cdr->cdr->car->car;
-		display_helper(name->car, 0, "", fd, 0);
+		display_helper(name->car, 0, "", fd, FALSE);
 		fdputc(' ', fd);
-		display_helper(args, 0, "", fd, 0);
+		display_helper(args, 0, "", fd, FALSE);
 		fdputc('>', fd);
 	}
 	else if(t == TMACRO)
 	{
 		fdputs("#<macro ", fd);
-		display_helper(y->cdr, cont, "", fd, 0);
+		display_helper(y->cdr, cont, "", fd, FALSE);
 		fdputc('>', fd);
 	}
 	else if(t == TVARIABLE)
 	{
 		fdputs("#<variable ", fd);
-		display_helper(y->car->car, cont, "", fd, 0);
+		display_helper(y->car->car, cont, "", fd, FALSE);
 		fdputc('>', fd);
 	}
 	else if(t == TNUMBER)
@@ -211,10 +211,12 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 
 		fdisplay_(y->vector, fd, write_p);
 		SCM i;
+		struct scm* z = y->cdr->cdr;
 		for(i = 1; i < y->length; i = i + 1)
 		{
 			fdputs(" ", fd);
-			fdisplay_(y->vector + (i*CELL_SIZE), fd, write_p);
+			fdisplay_(z, fd, write_p);
+			z = z->cdr;
 		}
 
 		fdputc(')', fd);
@@ -238,7 +240,7 @@ struct scm* display_helper(struct scm* x, int cont, char* sep, int fd, int write
 struct scm* display_(struct scm* x) /* Internal */
 {
 	g_depth = 5;
-	return display_helper(x, 0, "", __stdout, 0);
+	return display_helper(x, 0, "", __stdout, FALSE);
 }
 
 struct scm* display(struct scm* x) /* External */
@@ -249,7 +251,7 @@ struct scm* display(struct scm* x) /* External */
 struct scm* display_error_(struct scm* x) /* Internal */
 {
 	g_depth = 5;
-	return display_helper(x, 0, "", __stderr, 0);
+	return display_helper(x, 0, "", __stderr, FALSE);
 }
 
 struct scm* display_error(struct scm* x) /* External */
@@ -261,7 +263,7 @@ struct scm* display_port_(struct scm* x, struct scm* port) /* Internal */
 {
 	struct scm* p2 = port;
 	require(TNUMBER == p2->type, "mes_printer.c: display_port_ did not recieve TNUMBER\n");
-	return fdisplay_(x, p2->value, 0);
+	return fdisplay_(x, p2->value, FALSE);
 }
 
 struct scm* display_port(struct scm* x) /* External */
@@ -272,13 +274,13 @@ struct scm* display_port(struct scm* x) /* External */
 struct scm* scm_write(struct scm* x) /* External */
 {
 	g_depth = 5;
-	return display_helper(x->car, 0, "", __stdout, 1);
+	return display_helper(x->car, 0, "", __stdout, TRUE);
 }
 
 struct scm* write_error_(struct scm* x) /* Internal */
 {
 	g_depth = 5;
-	return display_helper(x, 0, "", __stderr, 1);
+	return display_helper(x, 0, "", __stderr, TRUE);
 }
 
 struct scm* write_error(struct scm* x) /* External */
@@ -290,7 +292,7 @@ struct scm* write_port(struct scm* x) /* External */
 {
 	struct scm* p2 = x->cdr->car;
 	require(TNUMBER == p2->type, "mes_printer: write_port_ did not recieve TNUMBER\n");
-	return fdisplay_(x->car, p2->value, 1);
+	return fdisplay_(x->car, p2->value, TRUE);
 }
 
 struct scm* fdisplay_(struct scm* x, int fd, int write_p)  /* ((internal)) */

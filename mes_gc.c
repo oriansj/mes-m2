@@ -32,6 +32,7 @@ struct scm* cons(struct scm* x, struct scm* y);
 struct scm* cstring_to_symbol(char* s);
 struct scm* make_frame_type();
 struct scm* make_stack_type();
+struct scm* make_tref(struct scm* y);
 struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* vector_entry(struct scm* x);
 struct scm* write_error_(struct scm* x);
@@ -174,7 +175,7 @@ struct scm* make_tref(struct scm* y)
 struct scm* make_vector__(SCM k)
 {
 	struct scm* x = calloc(1, sizeof(struct scm));
-	struct scm* v = calloc(k, sizeof(struct scm));
+	struct scm* v = calloc(k+1, sizeof(struct scm));
 	x->type = TVECTOR;
 	x->length = k;
 	x->cdr = v;
@@ -183,7 +184,7 @@ struct scm* make_vector__(SCM k)
 	{
 		v->type = TREF;
 		v->car = cell_unspecified;
-		v->cdr = 0;
+		v->cdr = v + CELL_SIZE;
 		v = v + CELL_SIZE;
 	}
 
@@ -192,19 +193,18 @@ struct scm* make_vector__(SCM k)
 
 struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer) /* Internal */
 {
-	SCM size = 2 + length__(fields);
+	SCM size = 3 + length__(fields);
 	struct scm* v = calloc(size, sizeof(struct scm));
 	struct scm* w = v + CELL_SIZE;
-	struct scm* entry = vector_entry(type);
-	struct scm* print = vector_entry(printer);
+	struct scm* print = make_tref(printer);
 
-	v->type = entry->type;
-	v->car = entry->car;
-	v->cdr = entry->cdr;
+	v->type = TREF;
+	v->car = type;
+	v->cdr = w;
 
 	w->type = print->type;
 	w->car = print->car;
-	w->cdr = print->cdr;
+	w->cdr = w + CELL_SIZE;
 
 	SCM i;
 	struct scm* e;
@@ -218,12 +218,11 @@ struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* print
 			fields = fields->cdr;
 		}
 
-		entry = vector_entry(e);
-		w = v + (i*CELL_SIZE);
+		w = w + CELL_SIZE;
 
-		w->type = entry->type;
-		w->car = entry->car;
-		w->cdr = entry->cdr;
+		w->type = TREF;
+		w->car = e;
+		w->cdr = w + CELL_SIZE;
 	}
 
 	struct scm* r = calloc(1, sizeof(struct scm));

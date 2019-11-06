@@ -161,7 +161,7 @@ int peekchar()
 	struct scm* string = port->cdr;
 	SCM length = string->length;
 
-	if(!length)
+	if(0 == length)
 	{
 		return -1;
 	}
@@ -181,7 +181,7 @@ int readchar()
 	struct scm* string = port->cdr;
 	SCM length = string->length;
 
-	if(!length)
+	if(0 == length)
 	{
 		return -1;
 	}

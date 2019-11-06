@@ -195,7 +195,7 @@ struct scm* make_hashq_type()  /* ((internal)) */
 
 struct scm* make_hash_table_(SCM size) /* Internal */
 {
-	if(!size)
+	if(0 == size)
 	{
 		size = 100;
 	}

@@ -48,7 +48,13 @@ struct scm* vector_ref_(struct scm* table, SCM i) /* Internal */
 	struct scm* y = table;
 	require(y->type == TVECTOR, "mes_vector.c: vector_ref_ table was not a TVECTOR\n");
 	require(i < y->length, "mes_vector.c: vector_ref_ i was not less than table->length\n");
-	struct scm* e = y->cdr + (i*CELL_SIZE);
+	struct scm* e = y->cdr;
+
+	while(0 < i)
+	{
+		e = e->cdr;
+		i = i - 1;
+	}
 
 	if(e->type == TREF)
 	{
@@ -122,12 +128,13 @@ void vector_set_x_(struct scm* x, SCM i, struct scm* e) /* Internal */
 {
 	require(x->type == TVECTOR, "mes_vector.c: vector_set_x_ x was not of type TVECTOR\n");
 	require(i < x->length, "mes_vector.c: vector_set_x i was not less than x->length\n");
-	struct scm* z = x->cdr + (i*CELL_SIZE);
-	struct scm* f = vector_entry(e);
-
-	z->type = f->type;
-	z->car = f->car;
-	z->cdr = f->cdr;
+	struct scm* z = x->cdr;
+	while(i > 0)
+	{
+		z = z->cdr;
+		i = i - 1;
+	}
+	z->car = e;
 }
 
 struct scm* vector_set_x(struct scm* x) /* External */
@@ -139,19 +146,16 @@ struct scm* vector_set_x(struct scm* x) /* External */
 struct scm* length__(struct scm* x);
 struct scm* list_to_vector_(struct scm* x) /* Internal*/
 {
-	struct scm* v = make_vector__(length__(x));
-	struct scm* y = x;
+	struct scm* v = make_vector__(0);
+	v->car = length__(x);
+	v->cdr = x;
 	struct scm* p = v->cdr;
-	struct scm* z;
 
-	while(y != cell_nil)
+	while(p != cell_nil)
 	{
-		z = vector_entry(y->car);
-		p->type = z->type;
-		p->car = z->car;
-		p->cdr = z->cdr;
-		p = p + CELL_SIZE;
-		y = y->cdr;
+
+		p->type = TREF;
+		p = p->cdr;
 	}
 
 	return v;
@@ -165,21 +169,17 @@ struct scm* list_to_vector(struct scm* x) /* External */
 struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* vector_to_list(struct scm* x) /* External */
 {
-	x = x->car;
-	struct scm* r = cell_nil;
+	struct scm* r = x->car;
+	x = r;
 	SCM i;
 
-	for(i = x->length; i; i = i - 1)
+	for(i = r->length; i > 0; i = i - 1)
 	{
-		struct scm* f = x->cdr + ((i - 1)*CELL_SIZE);
-
-		if(f->type == TREF)
-		{
-			f = f->car;
-		}
-
-		r = make_tpair(f, r);
+		x->type = TPAIR;
+		x = x->cdr;
 	}
 
-	return r;
+	x->type = TPAIR;
+	x->cdr = cell_nil;
+	return r->cdr;
 }

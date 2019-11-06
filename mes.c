@@ -847,7 +847,7 @@ int main(int argc, char** argv, char** envp)
 		char* mes_boot = env_lookup("MES_BOOT", global_envp);
 		if(NULL == mes_boot)
 		{
-			mes_boot = "boot-0.scm";
+			mes_boot = "mes/module/mes/boot-0.scm";
 		}
 
 		do_it(mes_boot);
