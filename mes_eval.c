@@ -22,15 +22,12 @@
 #include "mes.h"
 #include "mes_constants.h"
 
-/* struct scm* builtin_arity_(struct scm* builtin); */
-/* struct scm* check_formals(struct scm* f, struct scm* formals, struct scm* args); */
 char* itoa(int number);
 int string_len(char* a);
 struct scm* append2_(struct scm* x, struct scm* y);
-struct scm* apply_builtin(struct scm* fn, struct scm* x);
+struct scm* apply_builtin(FUNCTION* fn, struct scm* x);
 struct scm* assert_defined(struct scm* x, struct scm* e);
 struct scm* assq_(struct scm* x, struct scm* a);
-struct scm* builtin_p_(struct scm* x);
 struct scm* call_lambda(struct scm* e, struct scm* x);
 struct scm* check_apply(struct scm* f, struct scm* e);
 struct scm* cstring_to_symbol(char* s);
@@ -51,7 +48,6 @@ struct scm* make_tcontinuation(SCM a, SCM b);
 struct scm* make_tmacro(struct scm* a, struct scm* b);
 struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_vector__(SCM k);
-struct scm* mes_builtins(struct scm* a);
 struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
 struct scm* module_printer_(struct scm* module);
 struct scm* module_ref_(struct scm* module, struct scm* name);
@@ -257,10 +253,10 @@ apply:
 	g_stack_array[g_stack + FRAME_PROCEDURE] = R1->car;
 	t = R1->car->type;
 
-	if(t == TSTRUCT && builtin_p_(R1->car) == cell_t)
+	if(t == TPRIMITIVE)
 	{
 		/* check_formals(R1->car, builtin_arity_(R1->car), R1->cdr); */
-		R1 = apply_builtin(R1->car, R1->cdr);    /* FIXME: move into eval_apply */
+		R1 = apply_builtin(R1->car->func_cdr, R1->cdr);    /* FIXME: move into eval_apply */
 		goto vm_return;
 	}
 	else if(t == TCLOSURE)

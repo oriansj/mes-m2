@@ -377,3 +377,12 @@ struct scm* make_variable_(struct scm* var)  /* ((internal)) */
 	x->cdr = 0;
 	return x;
 }
+
+struct scm* make_primitive_(int arity, FUNCTION n) /* Internal */
+{
+	struct scm* x = calloc(1, sizeof(struct scm));
+	x->type = TPRIMITIVE;
+	x->length = arity;
+	x->func_cdr = n;
+	return x;
+}

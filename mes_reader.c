@@ -238,7 +238,6 @@ struct scm* reader_read_list(int c, struct scm* a)
 		error_(cell_symbol_not_a_pair, make_string_("EOF in list"));
 	}
 
-	/* return cell_nil; */
 	struct scm* s = reader_read_sexp_(c, a);
 
 	if(s == cell_dot)

@@ -46,7 +46,7 @@ struct scm* make_string_(char* s);
 struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
 struct scm* make_tpair(struct scm* a, struct scm* b);
 struct scm* make_variable_(struct scm* var);
-struct scm* mes_builtins(struct scm* a);
+struct scm* mes_builtins();
 struct scm* mes_g_stack(struct scm* a);
 struct scm* mes_symbols();
 struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
@@ -804,7 +804,7 @@ int main(int argc, char** argv, char** envp)
 	gc_init_cells();
 	mes_symbols();
 
-	M0 = make_initial_module(mes_builtins(cell_nil));
+	M0 = make_initial_module(mes_builtins());
 	g_macros = make_hash_table_(0);
 
 	char* testing = env_lookup("MES_CORE", global_envp);

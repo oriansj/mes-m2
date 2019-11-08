@@ -165,6 +165,7 @@ struct scm* hash_set_x_(struct scm* table, struct scm* key, struct scm* value);
 struct scm* make_function_(FUNCTION n);
 struct scm* make_hash_table_(SCM size);
 struct scm* make_number_(SCM n);
+struct scm* make_primitive_(int arity, FUNCTION n);
 struct scm* make_string(char* s, int length);
 struct scm* make_string_(char* s);
 struct scm* make_struct_(struct scm* type, struct scm* fields, struct scm* printer);
@@ -177,7 +178,7 @@ void init_symbol(struct scm* x, SCM type, char* name)
 	struct scm* y = x;
 	y->type = type;
 	int l = string_len(name);
-	struct scm* string = make_string(name, l);
+	struct scm* string = make_string_(name);
 	y->length = l;
 	y->string = string->string;
 	hash_set_x_(g_symbols, string, x);
@@ -334,48 +335,22 @@ struct scm* mes_symbols()  /*((internal)) */
 	return a;
 }
 
-struct scm* make_builtin_(struct scm* builtin_type, struct scm* name, struct scm* arity, struct scm* function)
-{
-	struct scm* v = cell_nil;
-	v = make_tpair(function, v);
-	v = make_tpair(arity, v);
-	v = make_tpair(name, v);
-	v = make_tpair(cell_symbol_builtin, v);
-	return make_struct_(builtin_type, v, cstring_to_symbol("builtin-printer"));
-}
-
-struct scm* make_builtin(struct scm* x)
-{
-	return make_builtin_(x->car, x->cdr->car, x->cdr->cdr->car, x->cdr->cdr->cdr->car);
-}
-
-struct scm* make_builtin_type()  /* (internal) */
-{
-	struct scm* fields = cell_nil;
-	fields = make_tpair(cstring_to_symbol("address"), fields);
-	fields = make_tpair(cstring_to_symbol("arity"), fields);
-	fields = make_tpair(cstring_to_symbol("name"), fields);
-	fields = make_tpair(fields, cell_nil);
-	fields = make_tpair(cell_symbol_builtin, fields);
-	return make_struct_(cell_symbol_record_type, fields, cell_unspecified);
-}
-
-struct scm* init_builtin(struct scm* builtin_type, char* name, int arity, FUNCTION function, struct scm* a)
+struct scm* builtin_symbols;
+struct scm* init_builtin(char* name, int arity, FUNCTION function)
 {
 	struct scm* s = cstring_to_symbol(name);
-	return acons_(s, make_builtin_(builtin_type, symbol_to_string_(s), make_number_(arity), make_function_(function)), a);
+	builtin_symbols = acons_(s, make_primitive_(arity, function), builtin_symbols);
+	return builtin_symbols;
 }
 
 struct scm* builtin_name(struct scm* builtin) /* External */
 {
-	struct scm* x = struct_ref_(builtin->car, 3);
-	return x;
+	return builtin->car->car;
 }
 
 struct scm* builtin_arity_(struct scm* builtin) /* Internal */
 {
-	struct scm* x = struct_ref_(builtin, 4);
-	return make_number_(x->value);
+	return make_number_(builtin->cdr->length);
 }
 
 struct scm* builtin_arity(struct scm* x) /* External */
@@ -383,21 +358,11 @@ struct scm* builtin_arity(struct scm* x) /* External */
 	return builtin_arity_(x->car);
 }
 
-void* builtin_function(struct scm* builtin) /* Internal */
-{
-	struct scm* x = struct_ref_(builtin, 5);
-	return x->cdr;
-}
-
 struct scm* builtin_p_(struct scm* builtin) /* Internal */
 {
 	/* make sure of correct type first */
-	if(TSTRUCT != builtin->type) return cell_f;
-
-	/* Do the actual check*/
-	struct scm* x = struct_ref_(builtin, 2);
-	if(cell_symbol_builtin == x) return cell_t;
-	return cell_f;
+	if(TPRIMITIVE != builtin->type) return cell_f;
+	return cell_t;
 }
 
 struct scm* builtin_p(struct scm* x) /* External */
@@ -438,7 +403,7 @@ struct scm* builtin_printer(struct scm* x) /* External */
 	return cell_unspecified;
 }
 
-struct scm* apply_builtin(struct scm* fn, struct scm* x)  /* ((internal)) */
+struct scm* apply_builtin(FUNCTION* fn, struct scm* x)  /* ((internal)) */
 {
 	if(x != cell_nil && x->car->type == TVALUES)
 	{
@@ -453,157 +418,154 @@ struct scm* apply_builtin(struct scm* fn, struct scm* x)  /* ((internal)) */
 		}
 	}
 
-	FUNCTION* fp = builtin_function(fn);
-	return fp(x);
+	return fn(x);
 }
 
 
-struct scm* mes_builtins(struct scm* a)  /* ((internal)) */
+struct scm* mes_builtins()  /* ((internal)) */
 {
+	builtin_symbols = cell_nil;
 	/* TODO minimal: cons, car, cdr, list, null_p, eq_p minus, plus,  display_, display_error_, getenv */
-	struct scm* builtin_type = make_builtin_type();
 	/* src/gc.mes */
-	a = init_builtin(builtin_type, "gc-check", 0, &gc_check, a);
-	a = init_builtin(builtin_type, "gc", 0, &gc, a);
+	init_builtin("gc-check", 0, &gc_check);
+	init_builtin("gc", 0, &gc);
 	/* src/hash.mes */
-	a = init_builtin(builtin_type, "hashq", 2, &hashq, a);
-	a = init_builtin(builtin_type, "hash", 2, &hash, a);
-	a = init_builtin(builtin_type, "hashq-get-handle", 3, &hashq_get_handle, a);
-	a = init_builtin(builtin_type, "hashq-ref", 3, &hashq_ref, a);
-	a = init_builtin(builtin_type, "hash-ref", 3, &hash_ref, a);
-	a = init_builtin(builtin_type, "hashq-set!", 3, &hashq_set_x, a);
-	a = init_builtin(builtin_type, "hash-set!", 3, &hash_set_x, a);
-	a = init_builtin(builtin_type, "make-hash-table", 1, &make_hash_table, a);
+	init_builtin("hashq", 2, &hashq);
+	init_builtin("hash", 2, &hash);
+	init_builtin("hashq-get-handle", 3, &hashq_get_handle);
+	init_builtin("hashq-ref", 3, &hashq_ref);
+	init_builtin("hash-ref", 3, &hash_ref);
+	init_builtin("hashq-set!", 3, &hashq_set_x);
+	init_builtin("hash-set!", 3, &hash_set_x);
+	init_builtin("make-hash-table", 1, &make_hash_table);
 	/* src/lib.mes */
-	a = init_builtin(builtin_type, "core:display", 1, &display, a);
-	a = init_builtin(builtin_type, "core:display-error", 1, &display_error, a);
-	a = init_builtin(builtin_type, "core:display-port", 2, &display_port, a);
-	a = init_builtin(builtin_type, "core:write", 1, &scm_write, a);
-	a = init_builtin(builtin_type, "core:write-error", 1, &write_error, a);
-	a = init_builtin(builtin_type, "core:write-port", 2, &write_port, a);
-	a = init_builtin(builtin_type, "exit", 1, &scm_exit, a);
-	a = init_builtin(builtin_type, "frame-printer", 1, &frame_printer, a);
-	a = init_builtin(builtin_type, "make-stack", -1, &make_stack, a);
-	a = init_builtin(builtin_type, "stack-length", 1, &stack_length, a);
-	a = init_builtin(builtin_type, "stack-ref", 2, &stack_ref, a);
-	a = init_builtin(builtin_type, "xassq", 2, &xassq, a);
-	a = init_builtin(builtin_type, "memq", 2, &memq, a);
-	a = init_builtin(builtin_type, "equal2?", 2, &equal2_p, a);
-	a = init_builtin(builtin_type, "last-pair", 1, &last_pair, a);
-	a = init_builtin(builtin_type, "pair?", 1, &pair_p, a);
+	init_builtin("core:display", 1, &display);
+	init_builtin("core:display-error", 1, &display_error);
+	init_builtin("core:display-port", 2, &display_port);
+	init_builtin("core:write", 1, &scm_write);
+	init_builtin("core:write-error", 1, &write_error);
+	init_builtin("core:write-port", 2, &write_port);
+	init_builtin("exit", 1, &scm_exit);
+	init_builtin("frame-printer", 1, &frame_printer);
+	init_builtin("make-stack", -1, &make_stack);
+	init_builtin("stack-length", 1, &stack_length);
+	init_builtin("stack-ref", 2, &stack_ref);
+	init_builtin("xassq", 2, &xassq);
+	init_builtin("memq", 2, &memq);
+	init_builtin("equal2?", 2, &equal2_p);
+	init_builtin("last-pair", 1, &last_pair);
+	init_builtin("pair?", 1, &pair_p);
 	/* src/math.mes */
-	a = init_builtin(builtin_type, ">", -1, &greater_p, a);
-	a = init_builtin(builtin_type, "<", -1, &less_p, a);
-	a = init_builtin(builtin_type, "=", -1, &is_p, a);
-	a = init_builtin(builtin_type, "-", -1, &minus, a);
-	a = init_builtin(builtin_type, "+", -1, &plus, a);
-	a = init_builtin(builtin_type, "/", -1, &divide, a);
-	a = init_builtin(builtin_type, "modulo", 2, &modulo, a);
-	a = init_builtin(builtin_type, "*", -1, &multiply, a);
-	a = init_builtin(builtin_type, "logand", -1, &logand, a);
-	a = init_builtin(builtin_type, "logior", -1, &logior, a);
-	a = init_builtin(builtin_type, "lognot", 1, &lognot, a);
-	a = init_builtin(builtin_type, "logxor", -1, &logxor, a);
-	a = init_builtin(builtin_type, "ash", 2, &ash, a);
+	init_builtin(">", -1, &greater_p);
+	init_builtin("<", -1, &less_p);
+	init_builtin("=", -1, &is_p);
+	init_builtin("-", -1, &minus);
+	init_builtin("+", -1, &plus);
+	init_builtin("/", -1, &divide);
+	init_builtin("modulo", 2, &modulo);
+	init_builtin("*", -1, &multiply);
+	init_builtin("logand", -1, &logand);
+	init_builtin("logior", -1, &logior);
+	init_builtin("lognot", 1, &lognot);
+	init_builtin("logxor", -1, &logxor);
+	init_builtin("ash", 2, &ash);
 	/* src/mes.mes */
-	a = init_builtin(builtin_type, "core:make-cell", 3, &make_cell, a);
-	a = init_builtin(builtin_type, "core:type", 1, &type, a);
-	a = init_builtin(builtin_type, "core:car", 1, &car, a);
-	a = init_builtin(builtin_type, "core:cdr", 1, &cdr, a);
-	a = init_builtin(builtin_type, "cons", 2, &cons, a);
-	a = init_builtin(builtin_type, "list", -1, &list, a);
-	a = init_builtin(builtin_type, "null?", 1, &null_p, a);
-	a = init_builtin(builtin_type, "eq?", 2, &eq_p, a);
-	a = init_builtin(builtin_type, "values", -1, &values, a);
-	a = init_builtin(builtin_type, "acons", 3, &acons, a);
-	a = init_builtin(builtin_type, "length", 1, &length, a);
-	a = init_builtin(builtin_type, "error", 2, &error, a);
-	a = init_builtin(builtin_type, "append2", 2, &append2, a);
-	a = init_builtin(builtin_type, "core:reverse!", 2, &reverse_x, a);
-	a = init_builtin(builtin_type, "pairlis", 3, &pairlis, a);
-	a = init_builtin(builtin_type, "assq", 2, &assq, a);
-	a = init_builtin(builtin_type, "assoc", 2, &assoc, a);
-	a = init_builtin(builtin_type, "set-car!", 2, &set_car_x, a);
-	a = init_builtin(builtin_type, "set-cdr!", 2, &set_cdr_x, a);
-	a = init_builtin(builtin_type, "set-env!", 3, &set_env_x, a);
-	a = init_builtin(builtin_type, "macro-get-handle", 1, &macro_get_handle, a);
-	a = init_builtin(builtin_type, "add-formals", 2, &add_formals, a);
-	a = init_builtin(builtin_type, "eval-apply", 0, &eval_apply, a);
-	a = init_builtin(builtin_type, "make-builtin-type", 0, &make_builtin_type, a);
-	a = init_builtin(builtin_type, "make-builtin", 4, &make_builtin, a);
-	a = init_builtin(builtin_type, "builtin-name", 1, &builtin_name, a);
-	a = init_builtin(builtin_type, "builtin-arity", 1, &builtin_arity, a);
-	a = init_builtin(builtin_type, "builtin?", 1, &builtin_p, a);
-	a = init_builtin(builtin_type, "builtin-printer", 1, &builtin_printer, a);
+	init_builtin("core:make-cell", 3, &make_cell);
+	init_builtin("core:type", 1, &type);
+	init_builtin("core:car", 1, &car);
+	init_builtin("core:cdr", 1, &cdr);
+	init_builtin("cons", 2, &cons);
+	init_builtin("list", -1, &list);
+	init_builtin("null?", 1, &null_p);
+	init_builtin("eq?", 2, &eq_p);
+	init_builtin("values", -1, &values);
+	init_builtin("acons", 3, &acons);
+	init_builtin("length", 1, &length);
+	init_builtin("error", 2, &error);
+	init_builtin("append2", 2, &append2);
+	init_builtin("core:reverse!", 2, &reverse_x);
+	init_builtin("pairlis", 3, &pairlis);
+	init_builtin("assq", 2, &assq);
+	init_builtin("assoc", 2, &assoc);
+	init_builtin("set-car!", 2, &set_car_x);
+	init_builtin("set-cdr!", 2, &set_cdr_x);
+	init_builtin("set-env!", 3, &set_env_x);
+	init_builtin("macro-get-handle", 1, &macro_get_handle);
+	init_builtin("add-formals", 2, &add_formals);
+	init_builtin("eval-apply", 0, &eval_apply);
+	init_builtin("builtin-name", 1, &builtin_name);
+	init_builtin("builtin-arity", 1, &builtin_arity);
+	init_builtin("builtin?", 1, &builtin_p);
+	init_builtin("builtin-printer", 1, &builtin_printer);
 	/* src/module.mes */
-	a = init_builtin(builtin_type, "make-module-type", 0, &make_module_type, a);
-	a = init_builtin(builtin_type, "module-printer", 1, &module_printer, a);
-	a = init_builtin(builtin_type, "module-variable", 2, &module_variable, a);
-	a = init_builtin(builtin_type, "module-ref", 2, &module_ref, a);
-	a = init_builtin(builtin_type, "module-define!", 3, &module_define_x, a);
+	init_builtin("make-module-type", 0, &make_module_type);
+	init_builtin("module-printer", 1, &module_printer);
+	init_builtin("module-variable", 2, &module_variable);
+	init_builtin("module-ref", 2, &module_ref);
+	init_builtin("module-define!", 3, &module_define_x);
 	/* src/posix.mes */
-	a = init_builtin(builtin_type, "peek-byte", 0, &peek_byte, a);
-	a = init_builtin(builtin_type, "read-byte", 0, &read_byte, a);
-	a = init_builtin(builtin_type, "unread-byte", 1, &unread_byte, a);
-	a = init_builtin(builtin_type, "peek-char", 0, &peek_char, a);
-	a = init_builtin(builtin_type, "read-char", -1, &read_char, a);
-	a = init_builtin(builtin_type, "unread-char", 1, &unread_char, a);
-	a = init_builtin(builtin_type, "write-char", -1, &write_char, a);
-	a = init_builtin(builtin_type, "write-byte", -1, &write_byte, a);
-	a = init_builtin(builtin_type, "getenv", 1, &get_env, a);
-	a = init_builtin(builtin_type, "setenv", 2, &set_env, a);
-	a = init_builtin(builtin_type, "access?", 2, &access_p, a);
-	a = init_builtin(builtin_type, "current-input-port", 0, &current_input_port, a);
-	a = init_builtin(builtin_type, "open-input-file", 1, &open_input_file, a);
-	a = init_builtin(builtin_type, "open-input-string", 1, &open_input_string, a);
-	a = init_builtin(builtin_type, "set-current-input-port", 1, &set_current_input_port, a);
-	a = init_builtin(builtin_type, "current-output-port", 0, &current_output_port, a);
-	a = init_builtin(builtin_type, "current-error-port", 0, &current_error_port, a);
-	a = init_builtin(builtin_type, "open-output-file", -1, &open_output_file, a);
-	a = init_builtin(builtin_type, "set-current-output-port", 1, &set_current_output_port, a);
-	a = init_builtin(builtin_type, "set-current-error-port", 1, &set_current_error_port, a);
-	a = init_builtin(builtin_type, "chmod", 2, &file_chmod, a);
-	a = init_builtin(builtin_type, "isatty?", 1, &isatty_p, a);
-	a = init_builtin(builtin_type, "primitive-fork", 0, &primitive_fork, a);
-	a = init_builtin(builtin_type, "execl", 2, &exec, a);
-	a = init_builtin(builtin_type, "core:waitpid", 2, &wait_pid, a);
-	a = init_builtin(builtin_type, "getcwd", 0, &get_cwd, a);
-	a = init_builtin(builtin_type, "dup", 1, &file_dup, a);
-	a = init_builtin(builtin_type, "dup2", 2, &file_dup2, a);
-	a = init_builtin(builtin_type, "delete-file", 1, &delete_file, a);
+	init_builtin("peek-byte", 0, &peek_byte);
+	init_builtin("read-byte", 0, &read_byte);
+	init_builtin("unread-byte", 1, &unread_byte);
+	init_builtin("peek-char", 0, &peek_char);
+	init_builtin("read-char", -1, &read_char);
+	init_builtin("unread-char", 1, &unread_char);
+	init_builtin("write-char", -1, &write_char);
+	init_builtin("write-byte", -1, &write_byte);
+	init_builtin("getenv", 1, &get_env);
+	init_builtin("setenv", 2, &set_env);
+	init_builtin("access?", 2, &access_p);
+	init_builtin("current-input-port", 0, &current_input_port);
+	init_builtin("open-input-file", 1, &open_input_file);
+	init_builtin("open-input-string", 1, &open_input_string);
+	init_builtin("set-current-input-port", 1, &set_current_input_port);
+	init_builtin("current-output-port", 0, &current_output_port);
+	init_builtin("current-error-port", 0, &current_error_port);
+	init_builtin("open-output-file", -1, &open_output_file);
+	init_builtin("set-current-output-port", 1, &set_current_output_port);
+	init_builtin("set-current-error-port", 1, &set_current_error_port);
+	init_builtin("chmod", 2, &file_chmod);
+	init_builtin("isatty?", 1, &isatty_p);
+	init_builtin("primitive-fork", 0, &primitive_fork);
+	init_builtin("execl", 2, &exec);
+	init_builtin("core:waitpid", 2, &wait_pid);
+	init_builtin("getcwd", 0, &get_cwd);
+	init_builtin("dup", 1, &file_dup);
+	init_builtin("dup2", 2, &file_dup2);
+	init_builtin("delete-file", 1, &delete_file);
 	/* src/reader.mes */
-	a = init_builtin(builtin_type, "core:read-input-file-env", 2, &read_input_file_env, a);
-	a = init_builtin(builtin_type, "read-env", 1, &read_env, a);
-	a = init_builtin(builtin_type, "reader-read-sexp", 3, &reader_read_sexp, a);
-	a = init_builtin(builtin_type, "reader-read-character", 0, &reader_read_character, a);
-	a = init_builtin(builtin_type, "reader-read-binary", 0, &reader_read_binary, a);
-	a = init_builtin(builtin_type, "reader-read-octal", 0, &reader_read_octal, a);
-	a = init_builtin(builtin_type, "reader-read-hex", 0, &reader_read_hex, a);
-	a = init_builtin(builtin_type, "reader-read-string", 0, &reader_read_string, a);
+	init_builtin("core:read-input-file-env", 2, &read_input_file_env);
+	init_builtin("read-env", 1, &read_env);
+	init_builtin("reader-read-sexp", 3, &reader_read_sexp);
+	init_builtin("reader-read-character", 0, &reader_read_character);
+	init_builtin("reader-read-binary", 0, &reader_read_binary);
+	init_builtin("reader-read-octal", 0, &reader_read_octal);
+	init_builtin("reader-read-hex", 0, &reader_read_hex);
+	init_builtin("reader-read-string", 0, &reader_read_string);
 	/* src/strings.mes */
-	a = init_builtin(builtin_type, "string=?", 2, &string_equal_p, a);
-	a = init_builtin(builtin_type, "symbol->string", 1, &symbol_to_string, a);
-	a = init_builtin(builtin_type, "symbol->keyword", 1, &symbol_to_keyword, a);
-	a = init_builtin(builtin_type, "keyword->string", 1, &keyword_to_string, a);
-	a = init_builtin(builtin_type, "string->symbol", 1, &string_to_symbol, a);
-	a = init_builtin(builtin_type, "make-symbol", 1, &make_symbol, a);
-	a = init_builtin(builtin_type, "string->list", 1, &string_to_list, a);
-	a = init_builtin(builtin_type, "list->string", 1, &list_to_string, a);
-	a = init_builtin(builtin_type, "read-string", -1, &read_string, a);
-	a = init_builtin(builtin_type, "string-append", -1, &string_append, a);
-	a = init_builtin(builtin_type, "string-length", 1, &string_length, a);
-	a = init_builtin(builtin_type, "string-ref", 2, &string_ref, a);
+	init_builtin("string=?", 2, &string_equal_p);
+	init_builtin("symbol->string", 1, &symbol_to_string);
+	init_builtin("symbol->keyword", 1, &symbol_to_keyword);
+	init_builtin("keyword->string", 1, &keyword_to_string);
+	init_builtin("string->symbol", 1, &string_to_symbol);
+	init_builtin("make-symbol", 1, &make_symbol);
+	init_builtin("string->list", 1, &string_to_list);
+	init_builtin("list->string", 1, &list_to_string);
+	init_builtin("read-string", -1, &read_string);
+	init_builtin("string-append", -1, &string_append);
+	init_builtin("string-length", 1, &string_length);
+	init_builtin("string-ref", 2, &string_ref);
 	/* src/struct.mes */
-	a = init_builtin(builtin_type, "make-struct", 3, &make_struct, a);
-	a = init_builtin(builtin_type, "struct-length", 1, &struct_length, a);
-	a = init_builtin(builtin_type, "struct-ref", 2, &struct_ref, a);
-	a = init_builtin(builtin_type, "struct-set!", 3, &struct_set_x, a);
+	init_builtin("make-struct", 3, &make_struct);
+	init_builtin("struct-length", 1, &struct_length);
+	init_builtin("struct-ref", 2, &struct_ref);
+	init_builtin("struct-set!", 3, &struct_set_x);
 	/* src/vector.mes */
-	a = init_builtin(builtin_type, "core:make-vector", 1, &make_vector, a);
-	a = init_builtin(builtin_type, "vector-length", 1, &vector_length, a);
-	a = init_builtin(builtin_type, "vector-ref", 2, &vector_ref, a);
-	a = init_builtin(builtin_type, "vector-set!", -1, &vector_set_x, a);
-	a = init_builtin(builtin_type, "list->vector", 1, &list_to_vector, a);
-	a = init_builtin(builtin_type, "vector->list", 1, &vector_to_list, a);
-	return a;
+	init_builtin("core:make-vector", 1, &make_vector);
+	init_builtin("vector-length", 1, &vector_length);
+	init_builtin("vector-ref", 2, &vector_ref);
+	init_builtin("vector-set!", -1, &vector_set_x);
+	init_builtin("list->vector", 1, &list_to_vector);
+	init_builtin("vector->list", 1, &vector_to_list);
+	return builtin_symbols;
 }
