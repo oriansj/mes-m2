@@ -55,3 +55,5 @@
 #define TVECTOR           16
 // CONSTANT TBROKEN_HEART 17
 #define TBROKEN_HEART     17
+// CONSTANT TPRIMITIVE    18
+#define TPRIMITIVE        18
