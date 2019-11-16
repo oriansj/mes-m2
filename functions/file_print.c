@@ -1,104 +1,124 @@
-/* -*-comment-start: "//";comment-end:""-*-
- * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
- * Copyright © 2018 Jeremiah Orians <jeremiah@pdp10.guru>
+/* Copyright (C) 2016 Jeremiah Orians
+ * This file is part of M2-Planet.
  *
- * This file is part of GNU Mes.
+ * M2-Planet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * GNU Mes is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or (at
- * your option) any later version.
- *
- * GNU Mes is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * M2-Planet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
+ * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include "gcc_req.h"
-
+// void fputc(char s, FILE* f);
 // CONSTANT TRUE 1
 #define TRUE 1
 // CONSTANT FALSE 0
 #define FALSE 0
 
+void file_print(char* s, FILE* f);
 
-void fd_print(char* s, int f)
+char char_lookup(int c)
 {
-	while(0 != s[0])
-	{
-		fdputc(s[0], f);
-		s = s + 1;
-	}
-}
-
-int fdputs(char* s, int fd)
-{
-	fd_print(s, fd);
+	if(c == '\a') return 'a';
+	else if(c == '\b') return 'b';
+	else if(c == '\t') return 't';
+	else if(c == '\v') return 'v';
+	else if(c == '\n') return 'n';
+	else if(c == '\f') return 'f';
+	else if(c == '\r') return 'r';
+	else if(c == '\e') return 'e';
+	else if(c == '\\') return '\\';
+	else if(c == '"') return '"';
 	return 0;
 }
 
 int char2hex(int c);
-char* char_lookup(int c, int type)
+int hexify(int c, int high)
 {
-	char* s;
+	int i = char2hex(c);
 
-	if(type)
+	if(0 > i)
 	{
-		if(c == '\0') return "\\nul";
-		else if(c == '\a') return "\\alarm";
-		else if(c == '\b') return "\\backspace";
-		else if(c == '\t') return "\\tab";
-		else if(c == '\n') return "\\newline";
-		else if(c == '\v') return "\\vtab";
-		else if(c == '\f') return "\\page";
-		else if(c == '\r') return "\\return";
-		else if(c == ' ') return "\\space";
-		else
-		{
-			s = calloc(4, sizeof(char));
-			s[0] = '\\';
-			s[1] = char2hex((c & 0xF0) >> 4);
-			s[2] = char2hex(c & 0xF);
-		}
+		file_print("Tried to print non-hex number\n", stderr);
+		exit(EXIT_FAILURE);
 	}
-	else
+
+	if(high)
 	{
-		s = calloc(4, sizeof(char));
-		s[0] = '\\';
-		s[2] = 0;
-		if(c == '\0') s[1] = '0';
-		else if(c == '\a') s[1] = 'a';
-		else if(c == '\b') s[1] = 'b';
-		else if(c == '\t') s[1] = 't';
-		else if(c == '\v') s[1] = 'v';
-		else if(c == '\n') s[1] = 'n';
-		else if(c == '\f') s[1] = 'f';
-		else if(c == '\r') s[1] = 'r';
-		else if(c == '\e') s[1] = 'e';
-		else if(c == '\\') s[1] = '\\';
-		else if(c == '"') s[1] = '"';
-		else
-		{
-			s[0] = c;
-			s[1] = 0;
-		}
+		i = i << 4;
 	}
-	return s;
+	return i;
 }
 
-void raw_print(char* s, int fd)
+int escape_lookup(char* c)
 {
+	if('\\' != c[0]) return c[0];
+
+	if(c[1] == 'x')
+	{
+		int t1 = hexify(c[2], TRUE);
+		int t2 = hexify(c[3], FALSE);
+		return t1 + t2;
+	}
+	else if(c[1] == '0') return 0;
+	else if(c[1] == 'a') return 7;
+	else if(c[1] == 'b') return 8;
+	else if(c[1] == 't') return 9;
+	else if(c[1] == 'n') return 10;
+	else if(c[1] == 'v') return 11;
+	else if(c[1] == 'f') return 12;
+	else if(c[1] == 'r') return 13;
+	else if(c[1] == 'e') return 27;
+	else if(c[1] == '"') return 34;
+	else if(c[1] == '\'') return 39;
+	else if(c[1] == '\\') return 92;
+
+	file_print("Unknown escape received: ", stderr);
+	file_print(c, stderr);
+	file_print(" Unable to process\n", stderr);
+	exit(EXIT_FAILURE);
+}
+
+void file_print(char* s, FILE* f)
+{
+	char c;
 	while(0 != s[0])
 	{
-		fd_print(char_lookup(s[0], FALSE), fd);
+		c = s[0];
+		if(s[0] == '\\')
+		{
+			c = escape_lookup(s);
+			if(s[1] == 'x') s = s + 2;
+			s = s + 1;
+		}
+		fputc(c, f);
+		s = s + 1;
+	}
+}
+
+
+void raw_print(char* s, FILE* f)
+{
+	char c;
+	while(0 != s[0])
+	{
+		c = char_lookup(s[0]);
+		if(0 == c)
+		{
+			fputc(s[0], f);
+		}
+		else
+		{
+			fputc('\\', f);
+			fputc(c, f);
+		}
 		s = s + 1;
 	}
 }

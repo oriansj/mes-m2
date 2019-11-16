@@ -1,18 +1,21 @@
-## Copyright (C) 2019 Jeremiah Orians
-## This file is part of Gnu Mes
+## GNU Mes --- Maxwell Equations of Software
+## Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+## Copyright © 2019 Jeremiah Orians
 ##
-## Gnu Mes is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
+## This file is part of GNU Mes.
 ##
-## Gnu Mes is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## GNU Mes is free software; you can redistribute it and/or modify it
+## under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 3 of the License, or (at
+## your option) any later version.
+##
+## GNU Mes is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
-## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
+## along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 # Prevent rebuilding
 VPATH = bin:test:test/results
@@ -20,29 +23,25 @@ VPATH = bin:test:test/results
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -D WITH_GLIBC=1
 
-mes-m2: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module.c mes_gc.c mes_lib.c mes_printer.c mes_reader.c mes_posix.c mes_builtins.c mes_eval.c mes.c functions/in_set.c functions/numerate.c functions/file_print.c | bin
-	$(CC) $(CFLAGS) mes_vector.c \
-	mes_hash.c \
-	mes_struct.c \
-	mes_math.c \
-	mes_strings.c \
-	mes_module.c \
-	mes_gc.c \
-	mes_lib.c \
-	mes_printer.c \
-	mes_reader.c \
-	mes_posix.c \
+
+mes-m2: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c | bin
+	$(CC) $(CFLAGS) \
+	mes.h \
+	mes.c \
+	mes_cell.c \
 	mes_builtins.c \
 	mes_eval.c \
-	mes_init.c \
-	mes.c \
-	functions/in_set.c \
-	functions/numerate.c \
-	functions/file_print.c \
+	mes_print.c \
+	mes_read.c \
+	mes_tokenize.c \
+	mes_vector.c \
+	functions/numerate_number.c \
 	functions/match.c \
+	functions/file_print.c \
+	functions/envp.c \
 	-o bin/mes-m2
 
-mes: mes_vector.c mes_hash.c mes_struct.c mes_math.c mes_strings.c mes_module.c mes_gc.c mes_lib.c mes_printer.c mes_reader.c mes_posix.c mes_builtins.c mes_eval.c mes.c functions/in_set.c functions/numerate.c functions/file_print.c | bin
+mes: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c | bin
 	kaem --verbose --strict
 
 # Clean up after ourselves

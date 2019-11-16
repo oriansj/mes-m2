@@ -21,5 +21,5 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-typedef long SCM;
-typedef struct scm* (FUNCTION)(struct scm *);
+
+typedef struct cell* (FUNCTION)(struct cell *);

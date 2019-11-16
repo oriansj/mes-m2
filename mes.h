@@ -20,215 +20,92 @@
  */
 
 #include "gcc_req.h"
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 
-// CONSTANT STDIN 0
-#define STDIN 0
-// CONSTANT STDOUT 1
-#define STDOUT 1
-// CONSTANT STDERR 2
-#define STDERR 2
+//CONSTANT FREE 0
+#define FREE 0
+//CONSTANT MARKED 1
+#define MARKED 1
+//CONSTANT INT 2
+#define INT 2
+//CONSTANT SYM 4
+#define SYM 4
+//CONSTANT CONS 6
+#define CONS 6
+//CONSTANT PROC 8
+#define PROC 8
+//CONSTANT PRIMOP 10
+#define PRIMOP 10
+//CONSTANT CHAR 12
+#define CHAR 12
+//CONSTANT STRING 14
+#define STRING 14
+//CONSTANT VECTOR 16
+#define VECTOR 16
+//CONSTANT FILE_PORT 18
+#define FILE_PORT 18
+//CONSTANT EOF_object 1024
+#define EOF_object 1024
 
 // CONSTANT FALSE 0
 #define FALSE 0
 // CONSTANT TRUE 1
 #define TRUE 1
 
-// CONSTANT RLIMIT_NOFILE 1024
-#define RLIMIT_NOFILE 1024
-// CONSTANT FRAME_PROCEDURE 4
-#define FRAME_PROCEDURE 4
-
-struct scm
+struct cell
 {
-	SCM type;
+	int type;
 	union
 	{
-		struct scm* car;
-		SCM rac;
-		SCM length;
-		struct scm* macro;
-		SCM port;
-		FUNCTION* func_car;
-	};
-	union
-	{
-		struct scm* cdr;
-		char* cbytes;
-		struct scm* closure;
-		struct scm* continuation;
-		SCM value;
-		struct scm* vector;
+		struct cell* car;
+		int value;
 		char* string;
-		struct scm* struc;
-		FUNCTION* func_cdr;
+		FUNCTION* function;
+		FILE* file;
+	};
+	struct cell* cdr;
+	union
+	{
+		struct cell* env;
+		int size;
 	};
 };
 
-// CONSTANT CELL_SIZE sizeof(struct scm)
-#define CELL_SIZE 1
+/* Common functions */
+struct cell* make_cons(struct cell* a, struct cell* b);
+int numerate_string(char *a);
+char* numerate_number(int a);
+int match(char* a, char* b);
+void file_print(char* s, FILE* f);
 
-struct scm* g_cells;
+/* Global objects */
+struct cell* all_symbols;
+struct cell* top_env;
+struct cell* nil;
+struct cell* cell_unspecified;
+struct cell* cell_t;
+struct cell* cell_f;
+struct cell* quote;
+struct cell* s_if;
+struct cell* s_lambda;
+struct cell* s_define;
+struct cell* s_setb;
+struct cell* s_cond;
+struct cell* s_begin;
+struct cell* s_let;
+struct cell* s_while;
 
-char** environ;
-int __stdin;
-int __stdout;
-int __stderr;
-SCM g_continuations;
-struct scm* g_symbols;
-SCM g_stack;
-struct scm** g_stack_array;
-int MAX_STRING;
-char* g_buf;
-char* reader_buf;
-char* itoa_buf;
-char* cwd_buf;
-char** execl_argv;
-SCM g_free;
-int g_debug;
-SCM g_symbol_max;
-int* __ungetc_buf;
+/* IO */
+FILE* __stdin;
+FILE* __stdout;
+FILE* __stderr;
 
-/* Mes core locals */
-struct scm* R0;
-/* param 1 */
-struct scm* R1;
-/* save 2 */
-struct scm* R2;
-/* continuation */
-struct scm* R3;
-/* current-module */
-struct scm* M0;
-/* macro */
-struct scm* g_macros;
-struct scm* G_MACROS;
-struct scm* g_ports;
-struct scm* G_PORTS;
+/* Garbage Collection */
+int left_to_take;
+char* memory_block;
 
-/* Try to fix native */
-int messy_display;
-SCM answer;
-char** global_envp;
-SCM STACK_SIZE;
-
-struct scm* cell_arrow;
-struct scm* cell_begin;
-struct scm* cell_call_with_current_continuation;
-struct scm* cell_circular;
-struct scm* cell_closure;
-struct scm* cell_dot;
-struct scm* cell_f;
-struct scm* cell_nil;
-struct scm* cell_symbol_arch;
-struct scm* cell_symbol_argv;
-struct scm* cell_symbol_begin;
-struct scm* cell_symbol_boot_module;
-struct scm* cell_symbol_buckets;
-struct scm* cell_symbol_builtin;
-struct scm* cell_symbol_call_with_current_continuation;
-struct scm* cell_symbol_call_with_values;
-struct scm* cell_symbol_car;
-struct scm* cell_symbol_cdr;
-struct scm* cell_symbol_compiler;
-struct scm* cell_symbol_current_module;
-struct scm* cell_symbol_define;
-struct scm* cell_symbol_define_macro;
-struct scm* cell_symbol_display;
-struct scm* cell_symbol_dot;
-struct scm* cell_symbol_frame;
-struct scm* cell_symbol_hashq_table;
-struct scm* cell_symbol_if;
-struct scm* cell_symbol_internal_time_units_per_second;
-struct scm* cell_symbol_lambda;
-struct scm* cell_symbol_macro_expand;
-struct scm* cell_symbol_mes_prefix;
-struct scm* cell_symbol_mes_version;
-struct scm* cell_symbol_module;
-struct scm* cell_symbol_not_a_number;
-struct scm* cell_symbol_not_a_pair;
-struct scm* cell_symbol_pmatch_car;
-struct scm* cell_symbol_pmatch_cdr;
-struct scm* cell_symbol_portable_macro_expand;
-struct scm* cell_symbol_primitive_load;
-struct scm* cell_symbol_procedure;
-struct scm* cell_symbol_quasiquote;
-struct scm* cell_symbol_quasisyntax;
-struct scm* cell_symbol_quote;
-struct scm* cell_symbol_read_input_file;
-struct scm* cell_symbol_record_type;
-struct scm* cell_symbol_sc_expand;
-struct scm* cell_symbol_sc_expander_alist;
-struct scm* cell_symbol_set_x;
-struct scm* cell_symbol_size;
-struct scm* cell_symbol_stack;
-struct scm* cell_symbol_syntax;
-struct scm* cell_symbol_system_error;
-struct scm* cell_symbol_test;
-struct scm* cell_symbol_throw;
-struct scm* cell_symbol_unbound_variable;
-struct scm* cell_symbol_unquote;
-struct scm* cell_symbol_unquote_splicing;
-struct scm* cell_symbol_unsyntax;
-struct scm* cell_symbol_unsyntax_splicing;
-struct scm* cell_symbol_write;
-struct scm* cell_symbol_wrong_number_of_args;
-struct scm* cell_symbol_wrong_type_arg;
-struct scm* cell_t;
-struct scm* cell_test;
-struct scm* cell_type_broken_heart;
-struct scm* cell_type_bytes;
-struct scm* cell_type_char;
-struct scm* cell_type_closure;
-struct scm* cell_type_continuation;
-struct scm* cell_type_function;
-struct scm* cell_type_keyword;
-struct scm* cell_type_macro;
-struct scm* cell_type_number;
-struct scm* cell_type_pair;
-struct scm* cell_type_port;
-struct scm* cell_type_ref;
-struct scm* cell_type_special;
-struct scm* cell_type_string;
-struct scm* cell_type_struct;
-struct scm* cell_type_symbol;
-struct scm* cell_type_values;
-struct scm* cell_type_variable;
-struct scm* cell_type_vector;
-struct scm* cell_undefined;
-struct scm* cell_unspecified;
-struct scm* cell_vm_apply2;
-struct scm* cell_vm_apply;
-struct scm* cell_vm_begin;
-struct scm* cell_vm_begin_eval;
-struct scm* cell_vm_begin_expand;
-struct scm* cell_vm_begin_expand_eval;
-struct scm* cell_vm_begin_expand_macro;
-struct scm* cell_vm_begin_expand_primitive_load;
-struct scm* cell_vm_begin_primitive_load;
-struct scm* cell_vm_begin_read_input_file;
-struct scm* cell_vm_call_with_current_continuation2;
-struct scm* cell_vm_call_with_values2;
-struct scm* cell_vm_eval2;
-struct scm* cell_vm_eval;
-struct scm* cell_vm_eval_check_func;
-struct scm* cell_vm_eval_define;
-struct scm* cell_vm_eval_macro_expand_eval;
-struct scm* cell_vm_eval_macro_expand_expand;
-struct scm* cell_vm_eval_pmatch_car;
-struct scm* cell_vm_eval_pmatch_cdr;
-struct scm* cell_vm_eval_set_x;
-struct scm* cell_vm_evlis2;
-struct scm* cell_vm_evlis3;
-struct scm* cell_vm_evlis;
-struct scm* cell_vm_if;
-struct scm* cell_vm_if_expr;
-struct scm* cell_vm_macro_expand;
-struct scm* cell_vm_macro_expand_car;
-struct scm* cell_vm_macro_expand_cdr;
-struct scm* cell_vm_macro_expand_define;
-struct scm* cell_vm_macro_expand_define_macro;
-struct scm* cell_vm_macro_expand_lambda;
-struct scm* cell_vm_macro_expand_set_x;
-struct scm* cell_vm_return;
+/* Lisp Macine */
+struct cell** g_stack;
+struct cell* R0;
+struct cell* R1;
+struct cell* g_env;
+unsigned stack_pointer;

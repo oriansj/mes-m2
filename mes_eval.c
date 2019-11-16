@@ -20,837 +20,271 @@
  */
 
 #include "mes.h"
-#include "mes_constants.h"
+/* Imported functions */
+struct cell* prim_write(struct cell* args, FILE* out);
+struct cell* prim_display(struct cell* args, FILE* out);
+FILE* open_file(char* name, char* mode);
+void garbage_collect();
+struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* env);
+struct cell* make_char(int a);
+struct cell* make_int(int a);
+struct cell* make_file(FILE* a);
+struct cell* make_prim(void* fun);
+struct cell* make_sym(char* name);
+struct cell* make_string(char* a);
+struct cell* make_sym(char* name);
+struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
+struct cell* make_vector(int count);
+struct cell* make_eof();
 
-char* itoa(int number);
-int string_len(char* a);
-struct scm* append2_(struct scm* x, struct scm* y);
-struct scm* apply_builtin(FUNCTION* fn, struct scm* x);
-struct scm* assert_defined(struct scm* x, struct scm* e);
-struct scm* assq_(struct scm* x, struct scm* a);
-struct scm* call_lambda(struct scm* e, struct scm* x);
-struct scm* check_apply(struct scm* f, struct scm* e);
-struct scm* cstring_to_symbol(char* s);
-struct scm* display_(struct scm* x);
-struct scm* error_(struct scm* key, struct scm* x);
-struct scm* expand_variable(struct scm* x, struct scm* formals);
-struct scm* gc();
-struct scm* gc_check_();
-struct scm* gc_pop_frame();
-struct scm* get_macro(struct scm* name);
-struct scm* hashq_get_handle(struct scm* table, struct scm* key, struct scm* dflt);
-struct scm* macro_get_handle_(struct scm* name);
-struct scm* macro_set_x(struct scm* name, struct scm* value);
-struct scm* make_closure_(struct scm* args, struct scm* body, struct scm* a);
-struct scm* make_hash_table_(struct scm* size);
-struct scm* make_string(char* s, int length);
-struct scm* make_tcontinuation(SCM a, SCM b);
-struct scm* make_tmacro(struct scm* a, struct scm* b);
-struct scm* make_tpair(struct scm* a, struct scm* b);
-struct scm* make_vector__(SCM k);
-struct scm* module_define_x_(struct scm* module, struct scm* name, struct scm* value);
-struct scm* module_printer_(struct scm* module);
-struct scm* module_ref_(struct scm* module, struct scm* name);
-struct scm* module_variable_(struct scm* module, struct scm* name);
-struct scm* open_input_file_(struct scm* file_name);
-struct scm* pairlis_(struct scm* x, struct scm* y, struct scm* a);
-struct scm* push_cc(struct scm* p1, struct scm* p2, struct scm* a, struct scm* c);
-struct scm* read_input_file_env__();
-struct scm* reverse_x_(struct scm* x, struct scm* t);
-struct scm* set_current_input_port_(struct scm* port);
-struct scm* set_env_x_(struct scm* x, struct scm* e, struct scm* a);
-struct scm* vector_ref_(struct scm* x, SCM i);
-struct scm* vector_set_x_(struct scm* x, SCM i, struct scm* e);
-struct scm* write_error_(struct scm* x);
-void gc_push_frame();
-void require(int bool, char* error);
-
-struct scm* eval_apply_()
+/* Support functions */
+struct cell* findsym(char *name)
 {
-	struct scm* AA;
-	struct scm* ARGS;
-	struct scm* BODY;
-	struct scm* CL;
-	struct scm* ENTRY;
-	struct scm* EXPANDERS;
-	struct scm* FORMALS;
-	struct scm* INPUT;
-	struct scm* NAME;
-	struct scm* MACRO;
-	struct scm* P;
-	struct scm* PROGRAM;
-	struct scm* SC_EXPAND;
-	struct scm* V;
-	struct scm* X;
-	int global_p;
-	int macro_p;
-	int t;
-	struct scm* C;
-eval_apply__:
-
-	if(R3 == cell_vm_evlis2)
+	struct cell* symlist;
+	for(symlist = all_symbols; nil != symlist; symlist = symlist->cdr)
 	{
-		goto evlis2;
-	}
-	else if(R3 == cell_vm_evlis3)
-	{
-		goto evlis3;
-	}
-	else if(R3 == cell_vm_eval_check_func)
-	{
-		goto eval_check_func;
-	}
-	else if(R3 == cell_vm_eval2)
-	{
-		goto eval2;
-	}
-	else if(R3 == cell_vm_apply2)
-	{
-		goto apply2;
-	}
-	else if(R3 == cell_vm_if_expr)
-	{
-		goto if_expr;
-	}
-	else if(R3 == cell_vm_begin_eval)
-	{
-		goto begin_eval;
-	}
-	else if(R3 == cell_vm_eval_set_x)
-	{
-		goto eval_set_x;
-	}
-	else if(R3 == cell_vm_macro_expand_car)
-	{
-		goto macro_expand_car;
-	}
-	else if(R3 == cell_vm_return)
-	{
-		goto vm_return;
-	}
-	else if(R3 == cell_vm_macro_expand_cdr)
-	{
-		goto macro_expand_cdr;
-	}
-	else if(R3 == cell_vm_eval_define)
-	{
-		goto eval_define;
-	}
-	else if(R3 == cell_vm_macro_expand)
-	{
-		goto macro_expand;
-	}
-	else if(R3 == cell_vm_macro_expand_lambda)
-	{
-		goto macro_expand_lambda;
-	}
-	else if(R3 == cell_vm_eval_pmatch_car)
-	{
-		goto eval_pmatch_car;
-	}
-	else if(R3 == cell_vm_begin_expand_macro)
-	{
-		goto begin_expand_macro;
-	}
-	else if(R3 == cell_vm_macro_expand_define)
-	{
-		goto macro_expand_define;
-	}
-	else if(R3 == cell_vm_begin_expand_eval)
-	{
-		goto begin_expand_eval;
-	}
-	else if(R3 == cell_vm_call_with_current_continuation2)
-	{
-		goto call_with_current_continuation2;
-	}
-	else if(R3 == cell_vm_macro_expand_set_x)
-	{
-		goto macro_expand_set_x;
-	}
-	else if(R3 == cell_vm_eval_pmatch_cdr)
-	{
-		goto eval_pmatch_cdr;
-	}
-	else if(R3 == cell_vm_macro_expand_define_macro)
-	{
-		goto macro_expand_define_macro;
-	}
-	else if(R3 == cell_vm_begin_primitive_load)
-	{
-		goto begin_primitive_load;
-	}
-	else if(R3 == cell_vm_evlis)
-	{
-		goto evlis;
-	}
-	else if(R3 == cell_vm_apply)
-	{
-		goto apply;
-	}
-	else if(R3 == cell_vm_eval)
-	{
-		goto eval;
-	}
-	else if(R3 == cell_vm_eval_macro_expand_eval)
-	{
-		goto eval_macro_expand_eval;
-	}
-	else if(R3 == cell_vm_eval_macro_expand_expand)
-	{
-		goto eval_macro_expand_expand;
-	}
-	else if(R3 == cell_vm_begin)
-	{
-		goto begin;
-	}
-	else if(R3 == cell_vm_begin_expand)
-	{
-		goto begin_expand;
-	}
-	else if(R3 == cell_vm_begin_expand_primitive_load)
-	{
-		goto begin_expand_primitive_load;
-	}
-	else if(R3 == cell_vm_if)
-	{
-		goto vm_if;
-	}
-	else if(R3 == cell_vm_call_with_values2)
-	{
-		goto call_with_values2;
-	}
-	else if(R3 == cell_unspecified)
-	{
-		return R1;
-	}
-	else
-	{
-		error_(cell_symbol_system_error, make_string("eval/apply unknown continuation", string_len("eval/apply unknown continuation")));
-	}
-
-evlis:
-
-	if(R1 == cell_nil)
-	{
-		goto vm_return;
-	}
-
-	if(R1->type != TPAIR)
-	{
-		goto eval;
-	}
-
-	push_cc(R1->car, R1, R0, cell_vm_evlis2);
-	goto eval;
-evlis2:
-	push_cc(R2->cdr, R1, R0, cell_vm_evlis3);
-	goto evlis;
-evlis3:
-	R1 = make_tpair(R2, R1);
-	goto vm_return;
-apply:
-	g_stack_array[g_stack + FRAME_PROCEDURE] = R1->car;
-	t = R1->car->type;
-
-	if(t == TPRIMITIVE)
-	{
-		/* check_formals(R1->car, builtin_arity_(R1->car), R1->cdr); */
-		R1 = apply_builtin(R1->car->func_cdr, R1->cdr);    /* FIXME: move into eval_apply */
-		goto vm_return;
-	}
-	else if(t == TCLOSURE)
-	{
-		CL = R1->car->cdr;
-		BODY = CL->cdr->cdr;
-		FORMALS = CL->cdr->car;
-		ARGS = R1->cdr;
-		AA = CL->car->cdr;
-		AA = AA->cdr;
-		/* check_formals(R1->car, FORMALS, R1->cdr); */
-		P = pairlis_(FORMALS, ARGS, AA);
-		call_lambda(BODY, P);
-		goto begin;
-	}
-	else if(t == TCONTINUATION)
-	{
-		V = R1->car->cdr;
-
-		if(V->length)
+		if(match(name, symlist->car->string))
 		{
-			for(t = 0; t < V->length; t = t + 1)
-			{
-				g_stack_array[STACK_SIZE - V->length + t] = vector_ref_(V, t);
-			}
-
-			g_stack = STACK_SIZE - V->length;
-		}
-
-		X = R1;
-		gc_pop_frame();
-		R1 = X->cdr->car;
-		goto eval_apply__;
-	}
-	else if(t == TSPECIAL)
-	{
-		C = R1->car;
-
-		if(C == cell_vm_apply)
-		{
-			push_cc(make_tpair(R1->cdr->car, R1->cdr->cdr->car), R1, R0, cell_vm_return);
-			goto apply;
-		}
-		else if(C ==  cell_vm_eval)
-		{
-			push_cc(R1->cdr->car, R1, R1->cdr->cdr->car, cell_vm_return);
-			goto eval;
-		}
-		else if(C ==  cell_vm_begin_expand)
-		{
-			push_cc(make_tpair(R1->cdr->car, cell_nil), R1, R1->cdr->cdr->car, cell_vm_return);
-			goto begin_expand;
-		}
-		else if(C ==  cell_call_with_current_continuation)
-		{
-			R1 = R1->cdr;
-			goto call_with_current_continuation;
-		}
-		else
-		{
-			check_apply(cell_f, R1->car);
+			return symlist;
 		}
 	}
-	else if(t == TSYMBOL)
-	{
-		if(R1->car == cell_symbol_call_with_values)
-		{
-			R1 = R1->cdr;
-			goto call_with_values;
-		}
-
-		if(R1->car == cell_symbol_current_module)
-		{
-			R1 = R0;
-			goto vm_return;
-		}
-
-		if(R1->car == cell_symbol_boot_module)
-		{
-			R1 = M0;
-			goto vm_return;
-		}
-	}
-	else if(t == TPAIR)
-	{
-		if(R1->car->car == cell_symbol_lambda)
-		{
-			FORMALS = R1->car->cdr->car;
-			ARGS = R1->cdr;
-			BODY = R1->car->cdr->cdr;
-			P = pairlis_(FORMALS, R1->cdr, R0);
-			/* check_formals(R1, FORMALS, ARGS); */
-			call_lambda(BODY, P);
-			goto begin;
-		}
-	}
-
-	/* write_error_(R1->car); */
-	/* eputs("\n"); */
-	push_cc(R1->car, R1, R0, cell_vm_apply2);
-	goto eval;
-apply2:
-	check_apply(R1, R2->car);
-	R1 = make_tpair(R1, R2->cdr);
-	goto apply;
-eval:
-	t = R1->type;
-
-	if(t == TPAIR)
-	{
-		C = R1->car;
-
-		if(C ==  cell_symbol_pmatch_car)
-		{
-			push_cc(R1->cdr->car, R1, R0, cell_vm_eval_pmatch_car);
-			goto eval;
-eval_pmatch_car:
-			X = R1;
-			gc_pop_frame();
-			R1 = X->car;
-			goto eval_apply__;
-		}
-		else if(C ==  cell_symbol_pmatch_cdr)
-		{
-			push_cc(R1->cdr->car, R1, R0, cell_vm_eval_pmatch_cdr);
-			goto eval;
-eval_pmatch_cdr:
-			X = R1;
-			gc_pop_frame();
-			R1 = X->cdr;
-			goto eval_apply__;
-		}
-		else if(C ==  cell_symbol_quote)
-		{
-			X = R1;
-			gc_pop_frame();
-			R1 = X->cdr->car;
-			goto eval_apply__;
-		}
-		else if(C ==  cell_symbol_begin)
-		{
-			goto begin;
-		}
-		else if(C ==  cell_symbol_lambda)
-		{
-			R1 = make_closure_(R1->cdr->car, R1->cdr->cdr, R0);
-			goto vm_return;
-		}
-		else if(C ==  cell_symbol_if)
-		{
-			R1 = R1->cdr;
-			goto vm_if;
-		}
-		else if(C ==  cell_symbol_set_x)
-		{
-			push_cc(R1->cdr->cdr->car, R1, R0, cell_vm_eval_set_x);
-			goto eval;
-eval_set_x:
-			R1 = set_env_x_(R2->cdr->car, R1, R0);
-			goto vm_return;
-		}
-		else if(C == cell_vm_macro_expand)
-		{
-			push_cc(R1->cdr->car, R1, R0, cell_vm_eval_macro_expand_eval);
-			goto eval;
-eval_macro_expand_eval:
-			push_cc(R1, R2, R0, cell_vm_eval_macro_expand_expand);
-			goto macro_expand;
-eval_macro_expand_expand:
-			goto vm_return;
-		}
-		else
-		{
-			if(R1->type == TPAIR && (R1->car == cell_symbol_define || R1->car == cell_symbol_define_macro))
-			{
-				global_p = R0->car->car != cell_closure;
-				macro_p = R1->car == cell_symbol_define_macro;
-
-				if(global_p)
-				{
-					NAME = R1->cdr->car;
-
-					if(R1->cdr->car->type == TPAIR)
-					{
-						NAME = NAME->car;
-					}
-
-					if(macro_p)
-					{
-						ENTRY = assq_(NAME, g_macros);
-
-						if(ENTRY == cell_f)
-						{
-							macro_set_x(NAME, cell_f);
-						}
-					}
-					else
-					{
-						ENTRY = module_variable_(R0, NAME);
-
-						if(ENTRY == cell_f)
-						{
-							module_define_x_(M0, NAME, cell_f);
-						}
-					}
-				}
-
-				R2 = R1;
-
-				if(R1->cdr->car->type != TPAIR)
-				{
-					push_cc(R1->cdr->cdr->car, R2, make_tpair(make_tpair(R1->cdr->car, R1->cdr->car), R0), cell_vm_eval_define);
-					goto eval;
-				}
-				else
-				{
-					P = pairlis_(R1->cdr->car, R1->cdr->car, R0);
-					FORMALS = R1->cdr->car->cdr;
-					BODY = R1->cdr->cdr;
-
-					if(macro_p || global_p)
-					{
-						expand_variable(BODY, FORMALS);
-					}
-
-					R1 = make_tpair(cell_symbol_lambda, make_tpair(FORMALS, BODY));
-					push_cc(R1, R2, P, cell_vm_eval_define);
-					goto eval;
-				}
-
-eval_define:
-				NAME = R2->cdr->car;
-
-				if(R2->cdr->car->type == TPAIR)
-				{
-					NAME = NAME->car;
-				}
-
-				if(macro_p)
-				{
-					ENTRY = macro_get_handle_(NAME);
-					R1 = make_tmacro(R1, NAME->cdr);
-					ENTRY->cdr = R1;
-				}
-				else if(global_p)
-				{
-					ENTRY = module_variable_(R0, NAME);
-					ENTRY->cdr = R1;
-				}
-				else
-				{
-					ENTRY = make_tpair(NAME, R1);
-					AA = make_tpair(ENTRY, cell_nil);
-					AA->cdr =  R0->cdr;
-					R0->cdr = AA;
-					CL = module_variable_(R0, cell_closure);
-					CL->cdr = AA;
-				}
-
-				R1 = cell_unspecified;
-				goto vm_return;
-			}
-
-			push_cc(R1->car, R1, R0, cell_vm_eval_check_func);
-			gc_check_();
-			goto eval;
-eval_check_func:
-			push_cc(R2->cdr, R2, R0, cell_vm_eval2);
-			goto evlis;
-eval2:
-			R1 = make_tpair(R2->car, R1);
-			goto apply;
-		}
-	}
-	else if(t == TSYMBOL)
-	{
-		if(R1 == cell_symbol_boot_module)
-		{
-			goto vm_return;
-		}
-
-		if(R1 == cell_symbol_current_module)
-		{
-			goto vm_return;
-		}
-
-		if(R1 == cell_symbol_begin)  /* FIXME */
-		{
-			R1 = cell_begin;
-			goto vm_return;
-		}
-
-		R1 = assert_defined(R1, module_ref_(R0, R1));
-		goto vm_return;
-	}
-	else if(t == TVARIABLE)
-	{
-		R1 = R1->car->cdr;
-		goto vm_return;
-	}
-	else if(t == TBROKEN_HEART)
-	{
-		error_(cell_symbol_system_error,  R1);
-	}
-	else
-	{
-		goto vm_return;
-	}
-
-macro_expand:
-	if(R1->type != TPAIR || R1->car == cell_symbol_quote)
-	{
-		goto vm_return;
-	}
-
-	if(R1->car == cell_symbol_lambda)
-	{
-		push_cc(R1->cdr->cdr, R1, R0, cell_vm_macro_expand_lambda);
-		goto macro_expand;
-
-macro_expand_lambda:
-		R2->cdr->cdr = R1;
-		R1 = R2;
-		goto vm_return;
-	}
-
-	if(R1->type == TPAIR && (MACRO = get_macro(R1->car)) != cell_f)
-	{
-		R1 = make_tpair(MACRO, R1->cdr);
-		push_cc(R1, cell_nil, R0, cell_vm_macro_expand);
-		goto apply;
-	}
-
-	if(R1->car == cell_symbol_define || R1->car == cell_symbol_define_macro)
-	{
-		push_cc(R1->cdr->cdr, R1, R0, cell_vm_macro_expand_define);
-		goto macro_expand;
-
-macro_expand_define:
-		R2->cdr->cdr = R1;
-		R1 = R2;
-
-		if(R1->car == cell_symbol_define_macro)
-		{
-			push_cc(R1, R1, R0, cell_vm_macro_expand_define_macro);
-			goto eval;
-
-macro_expand_define_macro:
-			R1 = R2;
-		}
-
-		goto vm_return;
-	}
-
-	if(R1->car == cell_symbol_set_x)
-	{
-		push_cc(R1->cdr->cdr, R1, R0, cell_vm_macro_expand_set_x);
-		goto macro_expand;
-
-macro_expand_set_x:
-		R2->cdr->cdr = R1;
-		R1 = R2;
-		goto vm_return;
-	}
-
-	if(R1->type == TPAIR && R1->car->type == TSYMBOL)
-	{
-		MACRO = macro_get_handle_(cell_symbol_portable_macro_expand);
-		EXPANDERS = module_ref_(R0, cell_symbol_sc_expander_alist);
-		if((R1->car != cell_symbol_begin) && (MACRO != cell_f) && (EXPANDERS != cell_undefined))
-		{
-			MACRO = assq_(R1->car, EXPANDERS);
-			if(MACRO != cell_f)
-			{
-				SC_EXPAND = module_ref_(R0, cell_symbol_macro_expand);
-				R2 = R1;
-
-				if(SC_EXPAND != cell_undefined && SC_EXPAND != cell_f)
-				{
-					R1 = make_tpair(SC_EXPAND, make_tpair(R1, cell_nil));
-					goto apply;
-				}
-			}
-		}
-	}
-
-	push_cc(R1->car, R1, R0, cell_vm_macro_expand_car);
-	goto macro_expand;
-
-macro_expand_car:
-	R2->car = R1;
-	R1 = R2;
-
-	if(R1->cdr == cell_nil)
-	{
-		goto vm_return;
-	}
-
-	push_cc(R1->cdr, R1, R0, cell_vm_macro_expand_cdr);
-	goto macro_expand;
-
-macro_expand_cdr:
-	R2->cdr = R1;
-	R1 = R2;
-	goto vm_return;
-
-begin:
-	X = cell_unspecified;
-
-	while(R1 != cell_nil)
-	{
-		gc_check_();
-
-		if(R1->type == TPAIR)
-		{
-			if(R1->car->car == cell_symbol_primitive_load)
-			{
-				PROGRAM = make_tpair(R1->car, cell_nil);
-				push_cc(PROGRAM, R1, R0, cell_vm_begin_primitive_load);
-				goto begin_expand;
-begin_primitive_load:
-				R2->car = R1;
-				R1 = R2;
-			}
-		}
-
-		if(R1->type == TPAIR && R1->car->type == TPAIR)
-		{
-			if(R1->car->car == cell_symbol_begin)
-			{
-				R1 = append2_(R1->car->cdr, R1->cdr);
-			}
-		}
-
-		if(R1->cdr == cell_nil)
-		{
-			R1 = R1->car;
-			goto eval;
-		}
-
-		push_cc(R1->car, R1, R0, cell_vm_begin_eval);
-		goto eval;
-begin_eval:
-		X = R1;
-		R1 = R2->cdr;
-	}
-
-	R1 = X;
-	goto vm_return;
-begin_expand:
-	X = cell_unspecified;
-
-	while(R1 != cell_nil)
-	{
-		gc_check_();
-
-		if(R1->type == TPAIR)
-		{
-			if(R1->car->type == TPAIR && R1->car->car == cell_symbol_begin)
-			{
-				R1 = append2_(R1->car->cdr, R1->cdr);
-			}
-
-			if(R1->car->car == cell_symbol_primitive_load)
-			{
-				push_cc(R1->car->cdr->car, R1, R0, cell_vm_begin_expand_primitive_load);
-				goto eval; /* FIXME: expand too?! */
-begin_expand_primitive_load:
-
-				if(R1->type == TNUMBER && R1->value == 0)
-				{
-					R1->value = 0; /* Not needed but haven't cleaned this block up yet */
-				}
-				else if(R1->type == TSTRING)
-				{
-					INPUT = set_current_input_port_(open_input_file_(R1));
-				}
-				else if(R1->type == TPORT)
-				{
-					INPUT = set_current_input_port_(R1);
-				}
-				else
-				{
-					require(FALSE, "Error in mes_eval.c: begin_expand_primitive_load");
-				}
-
-				push_cc(INPUT, R2, R0, cell_vm_return);
-				X = read_input_file_env__();
-
-				if(g_debug > 4)
-				{
-					module_printer_(M0);
-				}
-
-				gc_pop_frame();
-				INPUT = R1;
-				R1 = X;
-				set_current_input_port_(INPUT);
-				R1 = make_tpair(cell_symbol_begin, R1);
-				R2->car = R1;
-				R1 = R2;
-				continue;
-			}
-		}
-
-		push_cc(R1->car, R1, R0, cell_vm_begin_expand_macro);
-		goto macro_expand;
-begin_expand_macro:
-
-		if(R1 != R2->car)
-		{
-			R2->car = R1;
-			R1 = R2;
-			continue;
-		}
-
-		R1 = R2;
-		expand_variable(R1->car, cell_nil);
-		push_cc(R1->car, R1, R0, cell_vm_begin_expand_eval);
-		goto eval;
-begin_expand_eval:
-		X = R1;
-		R1 = R2->cdr;
-	}
-
-	R1 = X;
-	goto vm_return;
-vm_if:
-	push_cc(R1->car, R1, R0, cell_vm_if_expr);
-	goto eval;
-if_expr:
-	X = R1;
-	R1 = R2;
-
-	if(X != cell_f)
-	{
-		R1 = R1->cdr->car;
-		goto eval;
-	}
-
-	if(R1->cdr->cdr != cell_nil)
-	{
-		R1 = R1->cdr->cdr->car;
-		goto eval;
-	}
-
-	R1 = cell_unspecified;
-	goto vm_return;
-call_with_current_continuation:
-	gc_push_frame();
-	X = make_tcontinuation(g_continuations, g_stack);
-	g_continuations = g_continuations + 1;
-	V = make_vector__(5);
-
-	for(t = 0; t < 5; t = t + 1)
-	{
-		vector_set_x_(V, t, g_stack_array[g_stack + t]);
-	}
-
-	X->continuation = V;
-	gc_pop_frame();
-	push_cc(make_tpair(R1->car, make_tpair(X, cell_nil)), X, R0, cell_vm_call_with_current_continuation2);
-	goto apply;
-call_with_current_continuation2:
-	V = make_vector__(5);
-
-	for(t = 0; t < 5; t = t + 1)
-	{
-		vector_set_x_(V, t , g_stack_array[g_stack + t]);
-	}
-
-	R2->continuation = V;
-	goto vm_return;
-call_with_values:
-	push_cc(make_tpair(R1->car, cell_nil), R1, R0, cell_vm_call_with_values2);
-	goto apply;
-call_with_values2:
-
-	if(R1->type == TVALUES)
-	{
-		R1 = R1->cdr;
-	}
-
-	R1 = make_tpair(R2->cdr->car, R1);
-	goto apply;
-vm_return:
-	X = R1;
-	gc_pop_frame();
-	R1 = X;
-	goto eval_apply__;
+	return nil;
 }
 
-struct scm* eval_apply(struct scm* x) /* External */
+struct cell* intern(char *name)
 {
-	require(cell_nil == x, "mes_eval.c: mes_eval recieved arguments with eval_apply\n");
-	return eval_apply_();
+	struct cell* op = findsym(name);
+	if(nil != op) return op->car;
+	op = make_sym(name);
+	all_symbols = make_cons(op, all_symbols);
+	return op;
+}
+
+/*** Environment ***/
+struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value)
+{
+	return make_cons(make_cons(symbol, value), env);
+}
+
+struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* vals)
+{
+	if(nil == syms)
+	{
+		return env;
+	}
+	return multiple_extend(extend(env, syms->car, vals->car), syms->cdr, vals->cdr);
+}
+
+struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env)
+{
+	env->cdr = make_cons(env->car, env->cdr);
+	env->car = make_cons(sym, val);
+	return NULL;
+}
+
+struct cell* assoc(struct cell* key, struct cell* alist)
+{
+	if(nil == alist) return nil;
+	for(; nil != alist; alist = alist->cdr)
+	{
+		if(alist->car->car->string == key->string) return alist->car;
+	}
+	return nil;
+}
+
+
+/*** Stack for passing of arguments ***/
+void push_cell(struct cell* a)
+{
+	g_stack[stack_pointer] = a;
+	stack_pointer = stack_pointer + 1;
+}
+
+struct cell* pop_cell()
+{
+	stack_pointer = stack_pointer - 1;
+	struct cell* r = g_stack[stack_pointer];
+	g_stack[stack_pointer] = 0;
+	return r;
+}
+
+/*** Evaluator (Eval/Apply) ***/
+void eval(struct cell* exp, struct cell* env);
+struct cell* evlis(struct cell* exps, struct cell* env)
+{
+	if(exps == nil) return nil;
+
+	eval(exps->car, env);
+	struct cell* i = R0;
+	struct cell* j = evlis(exps->cdr, env);
+	return make_cons(i, j);
+}
+
+struct cell* progn(struct cell* exps, struct cell* env)
+{
+	if(exps == nil) return nil;
+
+	struct cell* result;
+progn_reset:
+	eval(exps->car, env);
+	result = R0;
+	if(exps->cdr == nil) return result;
+	exps = exps->cdr;
+	goto progn_reset;
+}
+
+struct cell* apply(struct cell* proc, struct cell* vals)
+{
+	struct cell* temp = nil;
+	if(proc->type == PRIMOP)
+	{
+		FUNCTION* fp = proc->function;
+		temp = fp(vals);
+	}
+	else if(proc->type == PROC)
+	{
+		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
+		temp = progn(proc->cdr, multiple_extend(env, proc->car, vals));
+	}
+	else
+	{
+		file_print("Bad argument to apply\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+	return temp;
+}
+
+struct cell* evcond(struct cell* exp, struct cell* env)
+{
+	/* Return nil but the result is technically undefined per the standard */
+	if(nil == exp)
+	{
+		return nil;
+	}
+
+	eval(exp->car->car, env);
+	if(cell_t == R0)
+	{
+		eval(exp->car->cdr->car, env);
+		return R0;
+	}
+
+	return evcond(exp->cdr, env);
+}
+
+struct cell* evwhile(struct cell* exp, struct cell* env)
+{
+	if(nil == exp) return nil;
+
+	eval(exp->cdr->car, env);
+
+	while(cell_t == R0)
+	{
+		eval(exp->cdr->cdr->car, env);
+		eval(exp->cdr->car, env);
+		if((cell_t == exp->cdr->car) && (left_to_take < 1000)) garbage_collect();
+	}
+
+	return R0;
+}
+
+struct cell* process_sym(struct cell* exp, struct cell* env);
+struct cell* process_cons(struct cell* exp, struct cell* env);
+
+void eval(struct cell* exp, struct cell* env)
+{
+	if(exp == nil)
+	{
+		R0 = nil;
+		return;
+	}
+	if(SYM == exp->type)
+	{
+		R0 = process_sym(exp, env);
+		return;
+	}
+	if(CONS == exp->type)
+	{
+		R0 = process_cons(exp, env);
+		return;
+	}
+	R0 = exp;
+}
+
+struct cell* process_sym(struct cell* exp, struct cell* env)
+{
+	struct cell* tmp = assoc(exp, env);
+	if(tmp == nil)
+	{
+		file_print("Unbound symbol:", stderr);
+		file_print(exp->string, stderr);
+		fputc('\n', stderr);
+		exit(EXIT_FAILURE);
+	}
+	return tmp->cdr;
+}
+
+struct cell* process_if(struct cell* exp, struct cell* env)
+{
+	eval(exp->cdr->car, env);
+	if(R0 != nil)
+	{
+		eval(exp->cdr->cdr->car, env);
+		return R0;
+	}
+
+	eval(exp->cdr->cdr->cdr->car, env);
+	return R0;
+
+}
+
+struct cell* process_setb(struct cell* exp, struct cell* env)
+{
+	eval(exp->cdr->cdr->car, env);
+	struct cell* newval = R0;
+	struct cell* pair = assoc(exp->cdr->car, env);
+	pair->cdr = newval;
+	return NULL;
+}
+
+struct cell* process_let(struct cell* exp, struct cell* env)
+{
+	struct cell* lets;
+	for(lets = exp->cdr->car; lets != nil; lets = lets->cdr)
+	{
+		eval(lets->car->cdr->car, env);
+		env = make_cons(make_cons(lets->car->car, R0), env);
+	}
+	return progn(exp->cdr->cdr, env);
+}
+
+struct cell* process_cons(struct cell* exp, struct cell* env)
+{
+	if(exp->car == s_if) return process_if(exp, env);
+	if(exp->car == s_cond) return evcond(exp->cdr, env);
+	if(exp->car == s_begin) return progn(exp->cdr, env);
+	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
+	if(exp->car == quote) return exp->cdr->car;
+	if(exp->car == s_define)
+	{
+		if(CONS == exp->cdr->car->type)
+		{
+			struct cell* fun = exp->cdr->cdr;
+			struct cell* arguments = exp->cdr->car->cdr;
+			struct cell* name = exp->cdr->car->car;
+			exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+		}
+
+		eval(exp->cdr->cdr->car, env);
+		return(extend_env(exp->cdr->car, R0, env));
+	}
+	if(exp->car == s_setb) return process_setb(exp, env);
+	if(exp->car == s_let) return process_let(exp, env);
+	if(exp->car == s_while) return evwhile(exp, env);
+
+	eval(exp->car, env);
+	push_cell(R0);
+	R1 = evlis(exp->cdr, env);
+	R0 = pop_cell();
+	return apply(R0, R1);
 }
