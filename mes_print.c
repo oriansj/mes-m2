@@ -71,7 +71,8 @@ void writeobj(FILE *output_file, struct cell* op, int write_p)
 	else if(STRING == op->type)
 	{
 		if(write_p) fputc('"', output_file);
-		file_print(op->string, output_file);
+		if(write_p) raw_print(op->string, output_file);
+		else file_print(op->string, output_file);
 		if(write_p) fputc('"', output_file);
 	}
 	else if(VECTOR == op->type)

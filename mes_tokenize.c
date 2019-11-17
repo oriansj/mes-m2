@@ -149,6 +149,7 @@ char special_lookup(char* s)
 }
 
 struct cell* readlist();
+struct cell* readobj();
 struct cell* list_to_vector(struct cell* args);
 struct cell* reader_read_hash(struct cell* a)
 {
@@ -159,6 +160,13 @@ struct cell* reader_read_hash(struct cell* a)
 	if('(' == a->string[1])
 	{
 		return list_to_vector(readlist());
+	}
+	if('x' == a->string[1])
+	{
+		a->string[0] = '0';
+		a->type = INT;
+		a->value = numerate_string(a->string);
+		return a;
 	}
 
 	file_print("Unknown hash provided: ", stderr);
@@ -176,11 +184,19 @@ struct cell* reader_read_hash(struct cell* a)
  ********************************************************************/
 struct cell* atom(struct cell* a)
 {
-	/* Check for quotes */
-	if('\'' == a->string[0])
+	if(match("'", a->string) || match("quote", a->string))
 	{
-		a->string = a->string + 1;
-		return make_cons(quote, make_cons(a, nil));
+		return make_cons(quote, readobj());
+	}
+
+	if(match("`", a->string) || match("quasiquote", a->string))
+	{
+		return make_cons(quasiquote, readobj());
+	}
+
+	if(match(",", a->string) || match("unquote", a->string))
+	{
+		return make_cons(unquote, readobj());
 	}
 
 	/* Check for strings */
@@ -201,6 +217,12 @@ struct cell* atom(struct cell* a)
 		a->type = INT;
 		a->value = numerate_string(a->string);
 		return a;
+	}
+
+	/* Check for quotes */
+	if(match("quote", a->string))
+	{
+		return make_cons(quote, readobj());
 	}
 
 	/* Check for functions */

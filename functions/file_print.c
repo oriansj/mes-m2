@@ -106,19 +106,9 @@ void file_print(char* s, FILE* f)
 
 void raw_print(char* s, FILE* f)
 {
-	char c;
 	while(0 != s[0])
 	{
-		c = char_lookup(s[0]);
-		if(0 == c)
-		{
-			fputc(s[0], f);
-		}
-		else
-		{
-			fputc('\\', f);
-			fputc(c, f);
-		}
+		fputc(s[0], f);
 		s = s + 1;
 	}
 }

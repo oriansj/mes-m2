@@ -20,39 +20,39 @@
 (set-current-output-port (open-output-file "test/results/test008.answer"))
 
 ;; Demonstrate making a vector
-(core:display "making vector with make-vector\n")
-(define v (core:make-vector 4))
-(core:display v)
+(display "making vector with make-vector\n")
+(define v (make-vector 4))
+(display v)
 
 ;; Test vector-length
-(core:display "\nusing vector-length\n")
-(core:display (vector-length v))
+(display "\nusing vector-length\n")
+(display (vector-length v))
 
 ;; Test vector-set!
-(core:display "\nusing vector-set!\n")
+(display "\nusing vector-set!\n")
 (vector-set! v 0 3)
 (vector-set! v 1 9)
 (vector-set! v 2 7)
 (vector-set! v 3 8)
-(core:display v)
+(display v)
 
 ;; Validate vector->list
-(core:display "\nusing vector->list\n")
-(core:display (vector->list v))
+(display "\nusing vector->list\n")
+(display (vector->list v))
 
 ;; Validate list->vector
-(core:display "\nusing list->vector\n")
+(display "\nusing list->vector\n")
 (set! v (list->vector (list 1 2 3 4)))
-(core:display v)
+(display v)
 
 ;; Validate vector-ref
-(core:display "\nUsing vector-ref\n")
-(core:display (vector-ref v 3))
-(core:display #\newline)
-(core:display (vector-ref v 2))
-(core:display #\newline)
-(core:display (vector-ref v 1))
-(core:display #\newline)
-(core:display (vector-ref v 0))
-(core:display #\newline)
+(display "\nUsing vector-ref\n")
+(display (vector-ref v 3))
+(display #\newline)
+(display (vector-ref v 2))
+(display #\newline)
+(display (vector-ref v 1))
+(display #\newline)
+(display (vector-ref v 0))
+(display #\newline)
 (exit 0)

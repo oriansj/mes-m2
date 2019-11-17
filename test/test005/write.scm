@@ -17,8 +17,8 @@
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
 (set-current-output-port (open-output-file "test/results/test005.answer"))
-(core:display "hello world\n")
-(core:display 42)
-(core:display #\newline)
-(core:display (cons 4 2))
+(display "hello world\n")
+(display 42)
+(display #\newline)
+(display (cons 4 2))
 (exit 0)

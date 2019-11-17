@@ -66,7 +66,9 @@ test: test000.answer \
 	test005.answer \
 	test006.answer \
 	test007.answer \
-	test008.answer
+	test008.answer \
+	test009.answer \
+	test010.answer
 #	test100.answer \
 #	test101.answer \
 #	test102.answer \
@@ -130,6 +132,12 @@ test007.answer: results mes-m2
 
 test008.answer: results mes-m2
 	test/test008/hello.sh
+
+test009.answer: results mes-m2
+	test/test009/hello.sh
+
+test010.answer: results mes-m2
+	test/test010/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh

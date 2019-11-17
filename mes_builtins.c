@@ -121,7 +121,7 @@ struct cell* builtin_mod(struct cell* args)
 	if(nil == args) return nil;
 
 	int mod = args->car->value % args->cdr->car->value;
-	if(0 > args->cdr->car->value)
+	if((0 > args->car->value) ^ (0 > args->cdr->car->value))
 	{
 		mod = mod + args->cdr->car->value;
 	}
@@ -132,6 +132,24 @@ struct cell* builtin_mod(struct cell* args)
 		exit(EXIT_FAILURE);
 	}
 	return make_int(mod);
+}
+
+struct cell* builtin_rem(struct cell* args)
+{
+	if(nil == args) return nil;
+
+	int rem = args->car->value % args->cdr->car->value;
+	if(0 > args->cdr->car->value)
+	{
+		rem = rem + args->cdr->car->value;
+	}
+
+	if(nil != args->cdr->cdr)
+	{
+		file_print("wrong number of arguments to mod\n", stderr);
+		exit(EXIT_FAILURE);
+	}
+	return make_int(rem);
 }
 
 struct cell* builtin_ash(struct cell* args)
@@ -566,7 +584,9 @@ void init_sl3()
 	cell_t = make_sym("#t");
 	cell_f = make_sym("#f");
 	quote = make_sym("quote");
-	cell_unspecified = make_sym("*unspecified*");
+	quasiquote = make_sym("quasiquote");
+	unquote = make_sym("unquote");
+	cell_unspecified = make_sym("#<unspecified>");
 	s_if = make_sym("if");
 	s_cond = make_sym("cond");
 	s_lambda = make_sym("lambda");
@@ -584,6 +604,8 @@ void init_sl3()
 	spinup(cell_t, cell_t);
 	spinup(cell_f, cell_f);
 	spinup(quote, quote);
+	spinup(quasiquote, quasiquote);
+	spinup(unquote, unquote);
 	spinup(cell_unspecified, cell_unspecified);
 	spinup(s_if, s_if);
 	spinup(s_cond, s_cond);
@@ -602,8 +624,9 @@ void init_sl3()
 	spinup(make_sym("+"), make_prim(builtin_sum));
 	spinup(make_sym("-"), make_prim(builtin_sub));
 	spinup(make_sym("*"), make_prim(builtin_prod));
-	spinup(make_sym("/"), make_prim(builtin_div));
+	spinup(make_sym("quotient"), make_prim(builtin_div));
 	spinup(make_sym("modulo"), make_prim(builtin_mod));
+	spinup(make_sym("remainder"), make_prim(builtin_rem));
 	spinup(make_sym("logand"), make_prim(builtin_and));
 	spinup(make_sym("logior"), make_prim(builtin_or));
 	spinup(make_sym("lognot"), make_prim(builtin_not));
@@ -617,6 +640,8 @@ void init_sl3()
 	spinup(make_sym("open-input-file"), make_prim(builtin_open_read));
 	spinup(make_sym("open-output-file"), make_prim(builtin_open_write));
 	spinup(make_sym("set-current-output-port"), make_prim(builtin_set_current_output_port));
+	spinup(make_sym("display"), make_prim(builtin_display));
+	spinup(make_sym("display-error"), make_prim(builtin_display_error));
 	spinup(make_sym("write"), make_prim(builtin_write));
 	spinup(make_sym("get-type"), make_prim(builtin_get_type));
 	spinup(make_sym("set-type!"), make_prim(builtin_set_type));
@@ -631,6 +656,7 @@ void init_sl3()
 	spinup(make_sym("car"), make_prim(builtin_car));
 	spinup(make_sym("cdr"), make_prim(builtin_cdr));
 	spinup(make_sym("read-char"), make_prim(builtin_read_byte));
+	spinup(make_sym("make-vector"), make_prim(builtin_make_vector));
 	spinup(make_sym("vector-length"), make_prim(builtin_vector_length));
 	spinup(make_sym("vector-set!"), make_prim(builtin_vector_set));
 	spinup(make_sym("vector-ref"), make_prim(builtin_vector_ref));
@@ -639,8 +665,5 @@ void init_sl3()
 	spinup(make_sym("exit"), make_prim(builtin_halt));
 
 	/* MES unique */
-	spinup(make_sym("core:display"), make_prim(builtin_display));
-	spinup(make_sym("core:display-error"), make_prim(builtin_display_error));
-	spinup(make_sym("core:make-vector"), make_prim(builtin_make_vector));
 	spinup(make_sym("free_mem"), make_prim(builtin_freecell));
 }

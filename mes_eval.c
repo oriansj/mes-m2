@@ -21,21 +21,22 @@
 
 #include "mes.h"
 /* Imported functions */
-struct cell* prim_write(struct cell* args, FILE* out);
-struct cell* prim_display(struct cell* args, FILE* out);
 FILE* open_file(char* name, char* mode);
-void garbage_collect();
 struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_char(int a);
-struct cell* make_int(int a);
+struct cell* make_eof();
 struct cell* make_file(FILE* a);
+struct cell* make_int(int a);
 struct cell* make_prim(void* fun);
-struct cell* make_sym(char* name);
+struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
-struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
+struct cell* make_sym(char* name);
 struct cell* make_vector(int count);
-struct cell* make_eof();
+struct cell* prim_display(struct cell* args, FILE* out);
+struct cell* prim_write(struct cell* args, FILE* out);
+struct cell* reverse_list(struct cell* head);
+void garbage_collect();
 
 /* Support functions */
 struct cell* findsym(char *name)
@@ -227,7 +228,7 @@ struct cell* process_sym(struct cell* exp, struct cell* env)
 struct cell* process_if(struct cell* exp, struct cell* env)
 {
 	eval(exp->cdr->car, env);
-	if(R0 != nil)
+	if(R0 != cell_f)
 	{
 		eval(exp->cdr->cdr->car, env);
 		return R0;
@@ -258,13 +259,62 @@ struct cell* process_let(struct cell* exp, struct cell* env)
 	return progn(exp->cdr->cdr, env);
 }
 
+struct cell* process_quasiquote(struct cell* exp, struct cell* env)
+{
+	struct cell* i = exp;
+	struct cell* f = NULL;
+	while(nil != i)
+	{
+		if(CONS == i->car->type)
+		{
+			if(unquote == i->car->car)
+			{
+				eval(i->car->cdr, env);
+				f = make_cons(R0, f);
+				i = i->cdr;
+			}
+			else if(CONS == i->car->car->type)
+			{
+				if(unquote == i->car->car->car)
+				{
+					eval(i->car->car->cdr, env);
+					f = make_cons(R0, f);
+					i = i->cdr;
+				}
+				else
+				{
+					f = make_cons(i->car, f);
+					i = i->cdr;
+				}
+			}
+			else
+			{
+				f = make_cons(i->car, f);
+				i = i->cdr;
+			}
+		}
+		else
+		{
+			f = make_cons(i->car, f);
+			i = i->cdr;
+		}
+	}
+	i = f;
+	f = reverse_list(f);
+	i->cdr = nil;
+	return f;
+}
+
 struct cell* process_cons(struct cell* exp, struct cell* env)
 {
 	if(exp->car == s_if) return process_if(exp, env);
 	if(exp->car == s_cond) return evcond(exp->cdr, env);
 	if(exp->car == s_begin) return progn(exp->cdr, env);
 	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
-	if(exp->car == quote) return exp->cdr->car;
+	if(exp->car == quote) return exp->cdr;
+	if((exp->car->type == CONS) && (exp->car->car == quote)) return exp->car->cdr;
+	if(exp->car == quasiquote) return process_quasiquote(exp->cdr, env);
+	if((exp->car->type == CONS) && (exp->car->car == quasiquote)) return process_quasiquote(exp->car->cdr, env);
 	if(exp->car == s_define)
 	{
 		if(CONS == exp->cdr->car->type)

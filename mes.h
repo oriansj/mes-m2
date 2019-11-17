@@ -85,6 +85,8 @@ struct cell* cell_unspecified;
 struct cell* cell_t;
 struct cell* cell_f;
 struct cell* quote;
+struct cell* quasiquote;
+struct cell* unquote;
 struct cell* s_if;
 struct cell* s_lambda;
 struct cell* s_define;

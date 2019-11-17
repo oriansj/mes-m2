@@ -16,5 +16,5 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
-(core:display 42)
+(display 42)
 (exit 0)
