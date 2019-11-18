@@ -263,46 +263,39 @@ struct cell* process_quasiquote(struct cell* exp, struct cell* env)
 {
 	struct cell* i = exp;
 	struct cell* f = NULL;
+	struct cell* h;
 	while(nil != i)
 	{
+		h = i->car;
 		if(CONS == i->car->type)
 		{
 			if(unquote == i->car->car)
 			{
-				eval(i->car->cdr, env);
-				f = make_cons(R0, f);
-				i = i->cdr;
-			}
-			else if(CONS == i->car->car->type)
-			{
-				if(unquote == i->car->car->car)
-				{
-					eval(i->car->car->cdr, env);
-					f = make_cons(R0, f);
-					i = i->cdr;
-				}
-				else
-				{
-					f = make_cons(i->car, f);
-					i = i->cdr;
-				}
-			}
-			else
-			{
-				f = make_cons(i->car, f);
-				i = i->cdr;
+				eval(i->car->cdr->car, env);
+				h = R0;
 			}
 		}
-		else
-		{
-			f = make_cons(i->car, f);
-			i = i->cdr;
-		}
+		f = make_cons(h, f);
+		i = i->cdr;
 	}
 	i = f;
 	f = reverse_list(f);
 	i->cdr = nil;
 	return f;
+}
+
+struct cell* process_define(struct cell* exp, struct cell* env)
+{
+	if(CONS == exp->cdr->car->type)
+	{
+		struct cell* fun = exp->cdr->cdr;
+		struct cell* arguments = exp->cdr->car->cdr;
+		struct cell* name = exp->cdr->car->car;
+		exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+	}
+
+	eval(exp->cdr->cdr->car, env);
+	return(extend_env(exp->cdr->car, R0, env));
 }
 
 struct cell* process_cons(struct cell* exp, struct cell* env)
@@ -311,23 +304,9 @@ struct cell* process_cons(struct cell* exp, struct cell* env)
 	if(exp->car == s_cond) return evcond(exp->cdr, env);
 	if(exp->car == s_begin) return progn(exp->cdr, env);
 	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
-	if(exp->car == quote) return exp->cdr;
-	if((exp->car->type == CONS) && (exp->car->car == quote)) return exp->car->cdr;
-	if(exp->car == quasiquote) return process_quasiquote(exp->cdr, env);
-	if((exp->car->type == CONS) && (exp->car->car == quasiquote)) return process_quasiquote(exp->car->cdr, env);
-	if(exp->car == s_define)
-	{
-		if(CONS == exp->cdr->car->type)
-		{
-			struct cell* fun = exp->cdr->cdr;
-			struct cell* arguments = exp->cdr->car->cdr;
-			struct cell* name = exp->cdr->car->car;
-			exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
-		}
-
-		eval(exp->cdr->cdr->car, env);
-		return(extend_env(exp->cdr->car, R0, env));
-	}
+	if(exp->car == quote) return exp->cdr->car;
+	if(exp->car == quasiquote) return process_quasiquote(exp->cdr->car, env);
+	if(exp->car == s_define) return process_define(exp, env);
 	if(exp->car == s_setb) return process_setb(exp, env);
 	if(exp->car == s_let) return process_let(exp, env);
 	if(exp->car == s_while) return evwhile(exp, env);

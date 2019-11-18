@@ -184,19 +184,22 @@ struct cell* reader_read_hash(struct cell* a)
  ********************************************************************/
 struct cell* atom(struct cell* a)
 {
-	if(match("'", a->string) || match("quote", a->string))
+	/* Check for quote */
+	if(match("'", a->string))
 	{
-		return make_cons(quote, readobj());
+		return make_cons(quote, make_cons(readobj(), nil));
 	}
 
-	if(match("`", a->string) || match("quasiquote", a->string))
+	/* Check for quasiquote */
+	if(match("`", a->string))
 	{
-		return make_cons(quasiquote, readobj());
+		return make_cons(quasiquote, make_cons(readobj(), nil));
 	}
 
-	if(match(",", a->string) || match("unquote", a->string))
+	/* Check for unquote */
+	if(match(",", a->string))
 	{
-		return make_cons(unquote, readobj());
+		return make_cons(unquote, make_cons(readobj(), nil));
 	}
 
 	/* Check for strings */
@@ -217,12 +220,6 @@ struct cell* atom(struct cell* a)
 		a->type = INT;
 		a->value = numerate_string(a->string);
 		return a;
-	}
-
-	/* Check for quotes */
-	if(match("quote", a->string))
-	{
-		return make_cons(quote, readobj());
 	}
 
 	/* Check for functions */
