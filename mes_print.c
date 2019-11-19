@@ -58,11 +58,11 @@ void writeobj(FILE *output_file, struct cell* op, int write_p)
 	}
 	else if(PRIMOP == op->type)
 	{
-		file_print("#<PRIMOP>", output_file);
+		file_print("#<primitive>", output_file);
 	}
 	else if(PROC == op->type)
 	{
-		file_print("#<PROC>", output_file);
+		file_print("#<procedure>", output_file);
 	}
 	else if(CHAR == op->type)
 	{

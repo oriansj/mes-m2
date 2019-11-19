@@ -73,6 +73,12 @@ struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* v
 	{
 		return env;
 	}
+
+	if(cell_dot == syms->car)
+	{
+		return multiple_extend(extend(env, syms->cdr->car, vals), syms->cdr->cdr, vals->cdr);
+	}
+
 	return multiple_extend(extend(env, syms->car, vals->car), syms->cdr, vals->cdr);
 }
 

@@ -28,7 +28,7 @@ void reader_read_block_comment(FILE* source_file, int match)
 {
 	int last = 0;
 	int current = fgetc(source_file);
-	while((match != last) && ('#' != current))
+	while((match != last) || ('#' != current))
 	{
 		last = current;
 		current = fgetc(source_file);
@@ -64,6 +64,12 @@ restart_comment:
 			reader_read_block_comment(source_file, c);
 			hashed = FALSE;
 			goto restart_comment;
+		}
+		else if(('\'' == c) || ('`' == c))
+		{
+			temp[i] = c;
+			temp[i+1] = ' ';
+			i = i + 1;
 		}
 		else if(';' == c)
 		{

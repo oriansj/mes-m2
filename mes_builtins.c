@@ -209,11 +209,19 @@ struct cell* builtin_xor(struct cell* args)
 	return make_int(n);
 }
 
-struct cell* builtin_not(struct cell* args)
+struct cell* builtin_lognot(struct cell* args)
 {
 	if(nil == args) return nil;
 
 	return make_int(~args->car->value);
+}
+
+struct cell* builtin_not(struct cell* args)
+{
+	if(nil == args) return nil;
+
+	if(cell_f == args->car) return cell_t;
+	return cell_f;
 }
 
 struct cell* builtin_numgt(struct cell* args)
@@ -583,6 +591,7 @@ void init_sl3()
 	nil = make_sym("()");
 	cell_t = make_sym("#t");
 	cell_f = make_sym("#f");
+	cell_dot = make_sym(".");
 	quote = make_sym("quote");
 	quasiquote = make_sym("quasiquote");
 	unquote = make_sym("unquote");
@@ -603,6 +612,7 @@ void init_sl3()
 	/* Add Eval Specials */
 	spinup(cell_t, cell_t);
 	spinup(cell_f, cell_f);
+	spinup(cell_dot, cell_dot);
 	spinup(quote, quote);
 	spinup(quasiquote, quasiquote);
 	spinup(unquote, unquote);
@@ -629,8 +639,9 @@ void init_sl3()
 	spinup(make_sym("remainder"), make_prim(builtin_rem));
 	spinup(make_sym("logand"), make_prim(builtin_and));
 	spinup(make_sym("logior"), make_prim(builtin_or));
-	spinup(make_sym("lognot"), make_prim(builtin_not));
+	spinup(make_sym("lognot"), make_prim(builtin_lognot));
 	spinup(make_sym("logxor"), make_prim(builtin_xor));
+	spinup(make_sym("not"), make_prim(builtin_not));
 	spinup(make_sym("ash"), make_prim(builtin_ash));
 	spinup(make_sym(">"), make_prim(builtin_numgt));
 	spinup(make_sym(">="), make_prim(builtin_numge));

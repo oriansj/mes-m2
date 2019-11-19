@@ -17,21 +17,16 @@
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
 ;; Setup output file
-(set-current-output-port (open-output-file "test/results/test009.answer"))
+(set-current-output-port (open-output-file "test/results/test011.answer"))
 
-;; Demonstrate using 'S-expression
-(display "making a quote with ' character\n")
-(write '(display (string-append "Hello " "Guix" "\n")))
+(display (list 1 2 3 4 5 6 7))
 (display #\newline)
-(write '(a b c (d e)))
-
-;; Demonstrate using (quote S-expression)
-(display "\nmake a quote with quote\n")
-(write (quote (display (string-append "Hello " "Guix" "\n"))))
+(display (list "hello" "mes" "how" "are" "you"))
 (display #\newline)
-(write (quote (a b c (d e))))
-
-;; Demonstrate 'block
-(display 'foo)
+(display (list 4 "hello" 2 "you"))
+(display #\newline)
+(display (vector->list #(8 6 7 5 3 0 9)))
+(display #\newline)
+(display (vector->list #((1 2) "hello" 8)))
 (display #\newline)
 (exit 0)

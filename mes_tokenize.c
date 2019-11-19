@@ -168,6 +168,8 @@ struct cell* reader_read_hash(struct cell* a)
 		a->value = numerate_string(a->string);
 		return a;
 	}
+	if(match("#t", a->string)) return cell_t;
+	if(match("#f", a->string)) return cell_f;
 
 	file_print("Unknown hash provided: ", stderr);
 	file_print(a->string, stderr);

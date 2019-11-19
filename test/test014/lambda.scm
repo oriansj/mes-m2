@@ -17,21 +17,18 @@
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
 ;; Setup output file
-(set-current-output-port (open-output-file "test/results/test009.answer"))
+(set-current-output-port (open-output-file "test/results/test014.answer"))
 
-;; Demonstrate using 'S-expression
-(display "making a quote with ' character\n")
-(write '(display (string-append "Hello " "Guix" "\n")))
+(display (lambda (a b) (+ a b)))
 (display #\newline)
-(write '(a b c (d e)))
-
-;; Demonstrate using (quote S-expression)
-(display "\nmake a quote with quote\n")
-(write (quote (display (string-append "Hello " "Guix" "\n"))))
+(display ((lambda (a b) (* a b)) 6 7))
 (display #\newline)
-(write (quote (a b c (d e))))
-
-;; Demonstrate 'block
-(display 'foo)
-(display #\newline)
+(define sums (lambda (a b) (+ (* a a) (* b b))))
+(display (sums 3 4))
+(define spacer (lambda () (display #\newline)))
+(spacer)
+(display (sums 6 7))
+(spacer)
+(define foo (lambda (a b) (begin (display (sums a b)) (spacer))))
+(foo 8 9)
 (exit 0)

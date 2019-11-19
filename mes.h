@@ -84,6 +84,7 @@ struct cell* nil;
 struct cell* cell_unspecified;
 struct cell* cell_t;
 struct cell* cell_f;
+struct cell* cell_dot;
 struct cell* quote;
 struct cell* quasiquote;
 struct cell* unquote;
