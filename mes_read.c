@@ -35,6 +35,35 @@ void reader_read_block_comment(FILE* source_file, int match)
 	}
 }
 
+/****************************************************
+ * Deal with #:foo and #;( foo ..) S-Expressions    *
+ ****************************************************/
+void reader_s_expression_dump(FILE* source_file)
+{
+	int c =fgetc(source_file);
+	unsigned depth = 0;
+	while(TRUE)
+	{
+		if((-1 == c) || (4 == c))
+		{
+			return;
+		}
+		else if((0 == depth) && (('\n'== c) || ('\r' == c) || (' ' == c) || ('\t' == c)))
+		{
+			return;
+		}
+		else if('(' == c)
+		{
+			depth = depth + 1;
+		}
+		else if(')' == c)
+		{
+			depth = depth - 1;
+		}
+		c = fgetc(source_file);
+	}
+}
+
 
 /****************************************************
  * Do the heavy lifting of reading an s-expression  *
@@ -45,6 +74,7 @@ unsigned Readline(FILE* source_file, char* temp, unsigned max_string)
 	unsigned i = 0;
 	unsigned depth = 0;
 	int hashed = FALSE;
+	int escape = FALSE;
 
 	for(i = 0; i < max_string; i = i + 1)
 	{
@@ -71,6 +101,12 @@ restart_comment:
 			temp[i+1] = ' ';
 			i = i + 1;
 		}
+		else if(hashed && (';' == c))
+		{
+			reader_s_expression_dump(source_file);
+			hashed = FALSE;
+			goto restart_comment;
+		}
 		else if(';' == c)
 		{
 			/* drop everything until we hit newline */
@@ -85,12 +121,14 @@ restart_comment:
 			temp[i] = c;
 			i = i + 1;
 			c = fgetc(source_file);
-			while('"' != c)
+			do
 			{
+				if(!escape && '\\' == c ) escape = TRUE;
+				else escape = FALSE;
 				temp[i] = c;
 				i = i + 1;
 				c = fgetc(source_file);
-			}
+			} while('"' != c || escape);
 			temp[i] = c;
 		}
 		else if((0 == depth) && (('\n' == c) || ('\r' == c) || (' ' == c) || ('\t' == c)))

@@ -67,22 +67,28 @@ struct cell* tokenize(struct cell* head, char* fullstring, int size)
 
 	reset_block(memory_block);
 
+	int escape;
+	int c;
 	do
 	{
-		int c = fullstring[string_index];
+		c = fullstring[string_index];
 		if(string_index > size)
 		{
 			done = TRUE;
 		}
 		else if('\"' == c)
 		{
+			escape = FALSE;
 			memory_block[string_index] = c;
 			string_index = string_index + 1;
-			while('\"' != fullstring[string_index])
+			do
 			{
-				memory_block[string_index] = fullstring[string_index];
+				c = fullstring[string_index];
+				if(!escape && '\\' == c ) escape = TRUE;
+				else escape = FALSE;
+				memory_block[string_index] = c;
 				string_index = string_index + 1;
-			}
+			} while(escape || ('\"' != fullstring[string_index]));
 			string_index = string_index + 1;
 			done = TRUE;
 		}
@@ -145,7 +151,7 @@ char special_lookup(char* s)
 	else if (match(s, "\\page")) return '\f';
 	else if (match(s, "\\return")) return '\r';
 	else if (match(s, "\\space")) return ' ';
-	return -1;
+	return s[1];
 }
 
 struct cell* readlist();
@@ -163,6 +169,14 @@ struct cell* reader_read_hash(struct cell* a)
 	}
 	if('x' == a->string[1])
 	{
+		a->string[0] = '0';
+		a->type = INT;
+		a->value = numerate_string(a->string);
+		return a;
+	}
+	if('o' == a->string[1])
+	{
+		a->string = a->string + 1;
 		a->string[0] = '0';
 		a->type = INT;
 		a->value = numerate_string(a->string);

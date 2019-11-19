@@ -81,6 +81,12 @@ int char2dec(int c)
 	else return -1;
 }
 
+int char2oct(int c)
+{
+	if (c >= '0' && c <= '7') return (c - 48);
+	else return -1;
+}
+
 int dec2char(int c)
 {
 	if((c >= 0) && (c <= 9)) return (c + 48);
@@ -116,6 +122,27 @@ int numerate_string(char *a)
 		{
 			if(-1 == char2hex(a[index])) return 0;
 			count = (16 * count) + char2hex(a[index]);
+			index = index + 1;
+		}
+	}
+	/* Deal with octal */
+	else if(a[0] == '0')
+	{
+		if('-' == a[1])
+		{
+			negative = TRUE;
+			index = 2;
+		}
+		else
+		{
+			negative = FALSE;
+			index = 1;
+		}
+
+		while(0 != a[index])
+		{
+			if(-1 == char2oct(a[index])) return 0;
+			count = (8 * count) + char2oct(a[index]);
 			index = index + 1;
 		}
 	}

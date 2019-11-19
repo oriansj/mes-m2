@@ -21,6 +21,7 @@
 
 #include "mes.h"
 void raw_print(char* s, FILE* f);
+char char_lookup(int c);
 
 void writeobj(FILE *output_file, struct cell* op, int write_p)
 {
@@ -66,7 +67,12 @@ void writeobj(FILE *output_file, struct cell* op, int write_p)
 	}
 	else if(CHAR == op->type)
 	{
-		fputc(op->value, output_file);
+		if(write_p)
+		{
+			raw_print("#\\", output_file);
+			fputc(char_lookup(op->value), output_file);
+		}
+		else fputc(op->value, output_file);
 	}
 	else if(STRING == op->type)
 	{

@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 ## Copyright (C) 2017 Jeremiah Orians
 ## This file is part of Gnu Mes.
 ##
@@ -16,5 +16,5 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-MES_CORE=0 ./bin/mes-m2 -f test/test101/read.test
+MES_CORE=0 ./bin/mes-m2 --file test/test017/varargs.scm
 exit 0

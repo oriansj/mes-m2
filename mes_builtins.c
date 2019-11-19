@@ -23,6 +23,9 @@
 
 /* Imported functions */
 FILE* open_file(char* name, char* mode);
+char* list_to_string(struct cell* args);
+int list_length(struct cell* args);
+struct cell* append(struct cell* a, struct cell* b);
 struct cell* apply(struct cell* proc, struct cell* vals);
 struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value);
 struct cell* list_to_vector(struct cell* i);
@@ -39,6 +42,7 @@ struct cell* make_sym(char* name);
 struct cell* make_vector(int count);
 struct cell* prim_display(struct cell* args, FILE* out);
 struct cell* prim_write(struct cell* args, FILE* out);
+struct cell* string_to_list(char* string);
 struct cell* vector_ref(struct cell* a, int i);
 struct cell* vector_set(struct cell* v, int i, struct cell* e);
 struct cell* vector_to_list(struct cell* a);
@@ -314,6 +318,12 @@ struct cell* builtin_listp(struct cell* args)
 	return cell_f;
 }
 
+struct cell* builtin_append(struct cell* args)
+{
+	if(nil == args) return nil;
+	return append(args->car, args->cdr->car);
+}
+
 struct cell* builtin_get_type(struct cell* args)
 {
 	if(nil == args) return nil;
@@ -345,11 +355,13 @@ struct cell* builtin_display(struct cell* args)
 {
 	if(nil == args->cdr)
 	{
-		return prim_display(args, __stdout);
+		prim_display(args, __stdout);
+		return NULL;
 	}
 	else if(FILE_PORT == args->cdr->car->type)
 	{
-		return prim_display(args, args->cdr->car->file);
+		prim_display(args, args->cdr->car->file);
+		return NULL;
 	}
 
 	file_print("You passed something that isn't a file pointer to write in position 2\n", stderr);
@@ -360,11 +372,13 @@ struct cell* builtin_display_error(struct cell* args)
 {
 	if(nil == args->cdr)
 	{
-		return prim_display(args, __stderr);
+		prim_display(args, __stderr);
+		return NULL;
 	}
 	else if(FILE_PORT == args->cdr->car->type)
 	{
-		return prim_display(args, args->cdr->car->file);
+		prim_display(args, args->cdr->car->file);
+		return NULL;
 	}
 
 	file_print("You passed something that isn't a file pointer to write in position 2\n", stderr);
@@ -375,11 +389,13 @@ struct cell* builtin_write(struct cell* args)
 {
 	if(nil == args->cdr)
 	{
-		return prim_write(args, __stdout);
+		prim_write(args, __stdout);
+		return NULL;
 	}
 	else if(FILE_PORT == args->cdr->car->type)
 	{
-		return prim_write(args, args->cdr->car->file);
+		prim_write(args, args->cdr->car->file);
+		return NULL;
 	}
 
 	file_print("You passed something that isn't a file pointer to write in position 2\n", stderr);
@@ -417,15 +433,6 @@ struct cell* builtin_freecell(struct cell* args)
 	return make_int(left_to_take);
 }
 
-struct cell* string_to_list(char* string)
-{
-	if(NULL == string) return nil;
-	if(0 == string[0]) return nil;
-	struct cell* result = make_char(string[0]);
-	struct cell* tail = string_to_list(string + 1);
-	return make_cons(result, tail);
-}
-
 struct cell* builtin_string_to_list(struct cell* args)
 {
 	if(nil == args) return nil;
@@ -435,39 +442,6 @@ struct cell* builtin_string_to_list(struct cell* args)
 		return string_to_list(args->car->string);
 	}
 	return nil;
-}
-
-int list_length(struct cell* args)
-{
-	if(nil == args) return 0;
-	int size = 0;
-	struct cell* i;
-	for(i = args->car; nil != i; i = i->cdr)
-	{
-		size = size + 1;
-	}
-	return size;
-}
-
-char* list_to_string(struct cell* args)
-{
-	char* string = calloc(list_length(args) + 1, sizeof(char));
-	int index = 0;
-	struct cell* i;
-	for(i = args->car; nil != i; i = i->cdr)
-	{
-		if(CHAR == i->car->type)
-		{
-			string[index] = i->car->value;
-			index = index + 1;
-		}
-		else
-		{
-			file_print("Wrong type recieved\n", stdout);
-			exit(EXIT_FAILURE);
-		}
-	}
-	return string;
 }
 
 struct cell* builtin_list_length(struct cell* args)
@@ -658,6 +632,7 @@ void init_sl3()
 	spinup(make_sym("set-type!"), make_prim(builtin_set_type));
 	spinup(make_sym("list?"), make_prim(builtin_listp));
 	spinup(make_sym("list"), make_prim(builtin_list));
+	spinup(make_sym("append"), make_prim(builtin_append));
 	spinup(make_sym("list-length"), make_prim(builtin_list_length));
 	spinup(make_sym("list->string"), make_prim(builtin_list_to_string));
 	spinup(make_sym("string->list"), make_prim(builtin_string_to_list));

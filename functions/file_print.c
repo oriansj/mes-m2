@@ -36,7 +36,7 @@ char char_lookup(int c)
 	else if(c == '\e') return 'e';
 	else if(c == '\\') return '\\';
 	else if(c == '"') return '"';
-	return 0;
+	return c;
 }
 
 int char2hex(int c);

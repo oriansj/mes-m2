@@ -30,6 +30,8 @@ fi
 exec ${MES-mes} --no-auto-compile -s $0
 !#
 
+(set-current-output-port (open-output-file "test/results/test101.answer"))
+(define (newline) (display #\newline))
 0
 cons
 (cons 0 1)
@@ -81,4 +83,5 @@ burp
             )
           ))
 (newline)
+(exit 0)
 ;; TODO: syntax, unsyntax, unsyntax-splicing
