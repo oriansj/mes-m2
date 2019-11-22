@@ -76,6 +76,7 @@ int numerate_string(char *a);
 char* numerate_number(int a);
 int match(char* a, char* b);
 void file_print(char* s, FILE* f);
+void require(int bool, char* error);
 
 /* Global objects */
 struct cell* all_symbols;

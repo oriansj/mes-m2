@@ -26,6 +26,8 @@ struct cell* make_vector(int count);
 
 struct cell* vector_to_list(struct cell* a)
 {
+	require(VECTOR == a->type, "mes_vector.c: vector_to_list received non-vector\n");
+
 	struct cell* i = a->cdr;
 	while(NULL != i->cdr)
 	{
@@ -37,6 +39,9 @@ struct cell* vector_to_list(struct cell* a)
 
 struct cell* vector_ref(struct cell* a, int i)
 {
+	require(VECTOR == a->type, "mes_vector.c: vector_ref received non-vector\n");
+	require(i >= 0, "mes_vector.c: vector_ref received negative index\n");
+	require(i < a->value, "mes_vector.c: vector_ref received index past end of vector\n");
 	struct cell* e = a->cdr;
 
 	while(0 < i)
@@ -50,6 +55,10 @@ struct cell* vector_ref(struct cell* a, int i)
 
 struct cell* vector_set(struct cell* v, int i, struct cell* e)
 {
+	require(VECTOR == v->type, "mes_vector.c: vector_set received non-vector\n");
+	require(i >= 0, "mes_vector.c: vector_set received negative index\n");
+	require(i < v->value, "mes_vector.c: vector_set received index past end of vector\n");
+
 	v = v->cdr;
 	while(i > 0)
 	{
@@ -62,11 +71,14 @@ struct cell* vector_set(struct cell* v, int i, struct cell* e)
 
 struct cell* list_to_vector(struct cell* i)
 {
+	require(CONS == i->type, "mes_vector.c: list_to_vector did not recieve a list\n");
+
 	struct cell* r = make_vector(0);
 	r->cdr = i;
 	int count = 1;
 	while(nil != i->cdr)
 	{
+		require(CONS == i->type, "mes_vector.c: list_to_vector did not recieve a true list\n");
 		i = i->cdr;
 		count = count + 1;
 	}

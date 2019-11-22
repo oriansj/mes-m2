@@ -22,36 +22,13 @@
 #include "mes.h"
 
 struct cell* token_stack;
-struct cell* make_char(int a);
-struct cell* make_sym(char* name);
-struct cell* make_string(char* a);
+
+char* copy_string(char* target, char* source);
 struct cell* findsym(char *name);
-
-/****************************************************************
- *           Functions for reducing wasted memory               *
- ****************************************************************/
-void reset_block(char* a)
-{
-	int c;
-	do
-	{
-		c = a[0];
-		a[0] = 0;
-		a = a + 1;
-	} while(0 != c);
-}
-
-char* copy_string(char* target, char* source)
-{
-	while(0 != source[0])
-	{
-		target[0] = source[0];
-		target = target + 1;
-		source = source + 1;
-	}
-	return target;
-}
-
+struct cell* make_char(int a);
+struct cell* make_string(char* a);
+struct cell* make_sym(char* name);
+void reset_block(char* a);
 
 /****************************************************************
  *      "Convert a string into a list of tokens."               *

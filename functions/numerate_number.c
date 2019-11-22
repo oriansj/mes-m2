@@ -100,6 +100,10 @@ int numerate_string(char *a)
 	int negative;
 
 	/* If NULL string */
+	if(NULL == a)
+	{
+		return 0;
+	}
 	if(0 == a[0])
 	{
 		return 0;

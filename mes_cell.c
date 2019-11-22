@@ -41,7 +41,7 @@ void update_remaining()
 	left_to_take = count;
 }
 
-int string_length(char* a)
+int string_size(char* a)
 {
 	int i = 0;
 	while(0 != a[i]) i = i + 1;
@@ -259,7 +259,7 @@ struct cell* make_string(char* a)
 {
 	struct cell* c = make_cell(STRING, NULL, NULL, NULL);
 	c->string = a;
-	c->size = string_length(c->string);
+	c->size = string_size(c->string);
 	return c;
 }
 

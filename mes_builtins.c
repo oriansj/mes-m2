@@ -42,6 +42,8 @@ struct cell* make_sym(char* name);
 struct cell* make_vector(int count);
 struct cell* prim_display(struct cell* args, FILE* out);
 struct cell* prim_write(struct cell* args, FILE* out);
+struct cell* string_eq(struct cell* a, struct cell* b);
+struct cell* string_length(struct cell* a);
 struct cell* string_to_list(char* string);
 struct cell* vector_ref(struct cell* a, int i);
 struct cell* vector_set(struct cell* v, int i, struct cell* e);
@@ -51,6 +53,9 @@ void garbage_collect();
 /*** Primitives ***/
 struct cell* builtin_apply(struct cell* args)
 {
+	require(nil != args, "mes_builtin.c: apply requires arguments\n");
+	require(nil != args->cdr, "mes_builtin.c: apply recieved insufficient arguments\n");
+	require(CONS == args->cdr->car->type, "mes_builtin.c: apply did not recieve a list\n");
 	return apply(args->car, args->cdr->car);
 }
 
@@ -122,7 +127,10 @@ struct cell* builtin_div(struct cell* args)
 
 struct cell* builtin_mod(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "modulo requires 2 arguments\n");
+	require(INT == args->car->type, "modulo first argument not an integer\n");
+	require(nil != args->cdr, "modulo did not recieve a second argument\n");
+	require(INT == args->cdr->car->type, "modulo second argument not an integer\n");
 
 	int mod = args->car->value % args->cdr->car->value;
 	if((0 > args->car->value) ^ (0 > args->cdr->car->value))
@@ -130,17 +138,17 @@ struct cell* builtin_mod(struct cell* args)
 		mod = mod + args->cdr->car->value;
 	}
 
-	if(nil != args->cdr->cdr)
-	{
-		file_print("wrong number of arguments to mod\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	require(nil == args->cdr->cdr, "wrong number of arguments to modulo\n");
+
 	return make_int(mod);
 }
 
 struct cell* builtin_rem(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "remainder requires 2 arguments\n");
+	require(INT == args->car->type, "remainder first argument not an integer\n");
+	require(nil != args->cdr, "remainder did not recieve a second argument\n");
+	require(INT == args->cdr->car->type, "remainder second argument not an integer\n");
 
 	int rem = args->car->value % args->cdr->car->value;
 	if(0 > args->cdr->car->value)
@@ -148,17 +156,17 @@ struct cell* builtin_rem(struct cell* args)
 		rem = rem + args->cdr->car->value;
 	}
 
-	if(nil != args->cdr->cdr)
-	{
-		file_print("wrong number of arguments to mod\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	require(nil == args->cdr->cdr, "wrong number of arguments to remainder\n");
 	return make_int(rem);
 }
 
 struct cell* builtin_ash(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "ash requires 2 arguments\n");
+	require(INT == args->car->type, "ash first argument not an integer\n");
+	require(nil != args->cdr, "ash did not recieve a second argument\n");
+	require(INT == args->cdr->car->type, "ash second argument not an integer\n");
+	require(nil == args->cdr->cdr, "wrong number of arguments to ash\n");
 
 	long ash = args->car->value;
 	int count = args->cdr->car->value;
@@ -176,7 +184,6 @@ struct cell* builtin_ash(struct cell* args)
 
 struct cell* builtin_and(struct cell* args)
 {
-	if(nil == args) return nil;
 	long n = -1;
 
 	while(nil != args)
@@ -189,7 +196,6 @@ struct cell* builtin_and(struct cell* args)
 
 struct cell* builtin_or(struct cell* args)
 {
-	if(nil == args) return nil;
 	long n = 0;
 
 	while(nil != args)
@@ -202,8 +208,6 @@ struct cell* builtin_or(struct cell* args)
 
 struct cell* builtin_xor(struct cell* args)
 {
-	if(nil == args) return nil;
-
 	long n = 0;
 	while(nil != args)
 	{
@@ -215,14 +219,17 @@ struct cell* builtin_xor(struct cell* args)
 
 struct cell* builtin_lognot(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "lognot requires 1 argument\n");
+	require(INT == args->car->type, "lognot first argument not an integer\n");
+	require(nil == args->cdr, "lognot recieved wrong number of arguments\n");
 
 	return make_int(~args->car->value);
 }
 
 struct cell* builtin_not(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "not requires 1 argument\n");
+	require(nil == args->cdr, "not recieved wrong number of arguments\n");
 
 	if(cell_f == args->car) return cell_t;
 	return cell_f;
@@ -340,10 +347,10 @@ struct cell* builtin_stringeq(struct cell* args)
 {
 	if(nil == args) return nil;
 
-	char* temp = args->car->string;
+	struct cell* temp = args->car;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
-		if(!match(temp, args->car->string))
+		if(cell_t != string_eq(temp, args->car))
 		{
 			return cell_f;
 		}
@@ -488,27 +495,13 @@ struct cell* builtin_list_to_vector(struct cell* args)
 struct cell* builtin_string_size(struct cell* args)
 {
 	if(nil == args) return nil;
-	if(args->car->type != STRING)
-	{
-		file_print("Wrong type recieved\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-	return make_int(args->car->size);
+	return string_length(args->car);
 }
 
 struct cell* builtin_open(struct cell* args, char* mode)
 {
-	if(nil == args)
-	{
-		file_print("Did not recieve a file name\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-
-	if(STRING != args->car->type)
-	{
-		file_print("File name must be a string\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	require(nil != args, "Did not recieve a file name\n");
+	require(STRING == args->car->type, "File name must be a string\n");
 
 	return make_file(open_file(args->car->string, mode));
 }

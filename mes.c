@@ -26,15 +26,26 @@
 char* message;
 
 /* Prototypes */
-void eval(struct cell* exp, struct cell* env);
 char* env_lookup(char* token, char** envp);
-void init_sl3();
+char* string_append(char* a, char* b);
 int Readline(FILE* source_file, char* temp, unsigned max_string);
 struct cell* parse(char* program, int size);
-void writeobj(FILE *ofp, struct cell* op);
-void garbage_init(int number_of_cells);
+void eval(struct cell* exp, struct cell* env);
 void garbage_collect();
+void garbage_init(int number_of_cells);
+void init_sl3();
 void reset_block(char* a);
+void writeobj(FILE *ofp, struct cell* op);
+
+/* Deal with common errors */
+void require(int bool, char* error)
+{
+	if(!bool)
+	{
+		file_print(error, stderr);
+		exit(EXIT_FAILURE);
+	}
+}
 
 /* Read Eval Print Loop*/
 int REPL()
@@ -92,16 +103,23 @@ int main(int argc, char **argv, char** envp)
 	__stderr = stderr;
 	int Reached_EOF;
 
+	int arena = numerate_string(env_lookup("MES_ARENA", envp));
+	if(0 == arena) arena = 1000000;
+
+	int stack = numerate_string(env_lookup("MES_STACK", envp));
+	if(0 == stack) stack = 100000;
+
+	/* Our most important initializations */
+	memory_block = calloc(MAX_STRING, sizeof(char));
+	message = calloc(MAX_STRING + 2, sizeof(char));
+	garbage_init(arena);
+	init_sl3();
+	g_stack = calloc(stack, sizeof(struct cell));
+
 	char* testing = env_lookup("MES_CORE", envp);
 	if(NULL != testing)
 	{
 		char* name;
-		/* Our most important initializations */
-		memory_block = calloc(MAX_STRING, sizeof(char));
-		message = calloc(MAX_STRING + 2, sizeof(char));
-		garbage_init(1000000);
-		init_sl3();
-		g_stack = calloc(100000, sizeof(struct cell*));
 
 		int i = 1;
 		while(i <= argc)
@@ -156,25 +174,28 @@ int main(int argc, char **argv, char** envp)
 	}
 	else
 	{
-		/* Our most important initializations */
-		memory_block = calloc(MAX_STRING, sizeof(char));
-		message = calloc(MAX_STRING + 2, sizeof(char));
-		garbage_init(1000000);
-		init_sl3();
-		g_stack = calloc(100000, sizeof(struct cell));
-
 		char* mes_boot = env_lookup("MES_BOOT", envp);
 		if(NULL == mes_boot)
 		{
 			mes_boot = "boot-0.scm";
 		}
 
+		char* mes_path = env_lookup("MES_PREFIX", envp);
+		if(NULL == mes_path) mes_path = ".";
+		mes_path = string_append(mes_path, "/module/mes/");
+
+		char* boot = string_append(mes_path, mes_boot);
 		Reached_EOF = FALSE;
-		__stdin = fopen(mes_boot, "R");
-		while(!Reached_EOF)
+		__stdin = fopen(boot, "r");
+		while((NULL != __stdin) && (!Reached_EOF))
 		{
 			garbage_collect();
 			Reached_EOF = REPL();
 		}
+
+		file_print("mes: boot failed: no such file: ", stderr);
+		file_print(boot, stderr);
+		file_print("\nTo silence this error run: export MES_CORE=0\n", stderr);
+		exit(EXIT_FAILURE);
 	}
 }

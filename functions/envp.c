@@ -24,7 +24,7 @@ char* prematch(char* search, char* field)
 		search = search + 1;
 		field = field + 1;
 	} while(0 != search[0]);
-	return field;
+	return field+1;
 }
 
 char* env_lookup(char* token, char** envp)
