@@ -32,7 +32,6 @@ struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
 struct cell* make_sym(char* name);
-struct cell* make_vector(int count);
 struct cell* prim_display(struct cell* args, FILE* out);
 struct cell* prim_write(struct cell* args, FILE* out);
 struct cell* reverse_list(struct cell* head);

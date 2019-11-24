@@ -22,7 +22,7 @@
 #include "mes.h"
 
 /* Imported functions */
-struct cell* make_vector(int count);
+struct cell* make_vector(int count, struct cell* init);
 
 struct cell* vector_to_list(struct cell* a)
 {
@@ -73,7 +73,7 @@ struct cell* list_to_vector(struct cell* i)
 {
 	require(CONS == i->type, "mes_vector.c: list_to_vector did not recieve a list\n");
 
-	struct cell* r = make_vector(0);
+	struct cell* r = make_vector(0, cell_unspecified);
 	r->cdr = i;
 	int count = 1;
 	while(nil != i->cdr)

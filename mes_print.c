@@ -85,14 +85,17 @@ void writeobj(FILE *output_file, struct cell* op, int write_p)
 	{
 		file_print("#(", output_file);
 
-		writeobj(output_file, op->cdr->car, write_p);
-		int i;
-		struct cell* z = op->cdr->cdr;
-		for(i = 1; i < op->value; i = i + 1)
+		if(0 != op->value)
 		{
-			file_print(" ", output_file);
-			writeobj(output_file, z->car, write_p);
-			z = z->cdr;
+			writeobj(output_file, op->cdr->car, write_p);
+			int i;
+			struct cell* z = op->cdr->cdr;
+			for(i = 1; i < op->value; i = i + 1)
+			{
+				file_print(" ", output_file);
+				writeobj(output_file, z->car, write_p);
+				z = z->cdr;
+			}
 		}
 
 		fputc(')',output_file);

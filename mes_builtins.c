@@ -39,7 +39,7 @@ struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
 struct cell* make_sym(char* name);
-struct cell* make_vector(int count);
+struct cell* make_vector(int count, struct cell* init);
 struct cell* prim_display(struct cell* args, FILE* out);
 struct cell* prim_write(struct cell* args, FILE* out);
 struct cell* string_eq(struct cell* a, struct cell* b);
@@ -67,8 +67,57 @@ struct cell* builtin_atom(struct cell* args)
 
 struct cell* nullp(struct cell* args)
 {
+	require(nil != args, "mes_builtin.c: null? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: null? recieved too many arguments\n");
 	if(nil == args->car) return cell_t;
-	return nil;
+	return cell_f;
+}
+
+struct cell* pairp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: pair? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: pair? recieved too many arguments\n");
+	if(CONS == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* symbolp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: symbol? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: symbol? recieved too many arguments\n");
+	if(SYM == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_stringp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: string? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: string? recieved too many arguments\n");
+	if(STRING == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_charp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: char? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: char? recieved too many arguments\n");
+	if(CHAR == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_listp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: list? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: list? recieved too many arguments\n");
+
+	struct cell* i = args->car;
+	while(nil != i)
+	{
+		if(CONS != i->type) return cell_f;
+		i = i->cdr;
+	}
+
+	return cell_t;
 }
 
 struct cell* builtin_eofp (struct cell* args)
@@ -267,21 +316,6 @@ struct cell* builtin_numge(struct cell* args)
 	return cell_t;
 }
 
-struct cell* builtin_numeq(struct cell* args)
-{
-	if(nil == args) return nil;
-
-	int temp = args->car->value;
-	for(args = args->cdr; nil != args; args = args->cdr)
-	{
-		if(temp != args->car->value)
-		{
-			return cell_f;
-		}
-	}
-	return cell_t;
-}
-
 struct cell* builtin_numle(struct cell* args)
 {
 	if(nil == args) return nil;
@@ -314,17 +348,6 @@ struct cell* builtin_numlt(struct cell* args)
 	return cell_t;
 }
 
-struct cell* builtin_listp(struct cell* args)
-{
-	if(nil == args) return nil;
-
-	if(CONS == args->car->type)
-	{
-		return cell_t;
-	}
-	return cell_f;
-}
-
 struct cell* builtin_append(struct cell* args)
 {
 	if(nil == args) return nil;
@@ -345,11 +368,13 @@ struct cell* builtin_set_type(struct cell* args)
 
 struct cell* builtin_stringeq(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "string=? requires arguments\n");
 
+	require(STRING == args->car->type, "string=? received non-string\n");
 	struct cell* temp = args->car;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
+		require(STRING == args->car->type, "string=? received non-string\n");
 		if(cell_t != string_eq(temp, args->car))
 		{
 			return cell_f;
@@ -357,6 +382,35 @@ struct cell* builtin_stringeq(struct cell* args)
 	}
 	return cell_t;
 }
+
+struct cell* builtin_chareq(struct cell* args)
+{
+	require(nil != args, "char=? requires arguments\n");
+
+	require(CHAR == args->car->type, "char=? received non-char\n");
+	int temp = args->car->value;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		require(CHAR == args->car->type, "char=? received non-char\n");
+		if(temp != args->car->value) return cell_f;
+	}
+	return cell_t;
+}
+
+struct cell* builtin_numeq(struct cell* args)
+{
+	require(nil != args, "= requires arguments\n");
+
+	require(INT == args->car->type, "= received non-integer\n");
+	int temp = args->car->value;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		require(INT == args->car->type, "= received non-integer\n");
+		if(temp != args->car->value) return cell_f;
+	}
+	return cell_t;
+}
+
 
 struct cell* builtin_display(struct cell* args)
 {
@@ -426,7 +480,13 @@ struct cell* builtin_write_error(struct cell* args)
 
 struct cell* builtin_make_vector(struct cell* args)
 {
-	return make_vector(args->car->value);
+	require(nil != args, "make-vector requires arguments\n");
+	require(INT == args->car->type, "make-vector requires a numerical argument\n");
+	require(0 <= args->car->value, "make-vector requires a number >= 0\n");
+	if(nil == args->cdr) return make_vector(args->car->value, cell_unspecified);
+
+	require(nil == args->cdr->cdr, "make-vector recieved too many arguments\n");
+	return make_vector(args->car->value, args->cdr->car);
 }
 
 struct cell* builtin_freecell(struct cell* args)
@@ -596,6 +656,8 @@ void init_sl3()
 	/* Add Primitive Specials */
 	spinup(make_sym("apply"), make_prim(builtin_apply));
 	spinup(make_sym("null?"), make_prim(nullp));
+	spinup(make_sym("pair?"), make_prim(pairp));
+	spinup(make_sym("symbol?"), make_prim(symbolp));
 	spinup(make_sym("atom?"), make_prim(builtin_atom));
 	spinup(make_sym("eof-object?"), make_prim(builtin_eofp));
 	spinup(make_sym("+"), make_prim(builtin_sum));
@@ -631,6 +693,9 @@ void init_sl3()
 	spinup(make_sym("string->list"), make_prim(builtin_string_to_list));
 	spinup(make_sym("string-length"), make_prim(builtin_string_size));
 	spinup(make_sym("string=?"), make_prim(builtin_stringeq));
+	spinup(make_sym("string?"), make_prim(builtin_stringp));
+	spinup(make_sym("char?"), make_prim(builtin_charp));
+	spinup(make_sym("char=?"), make_prim(builtin_chareq));
 	spinup(make_sym("cons"), make_prim(builtin_cons));
 	spinup(make_sym("car"), make_prim(builtin_car));
 	spinup(make_sym("cdr"), make_prim(builtin_cdr));

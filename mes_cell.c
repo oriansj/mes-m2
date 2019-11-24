@@ -287,7 +287,7 @@ struct cell* make_prim(void* fun)
 	return c;
 }
 
-struct cell* make_vector(int count)
+struct cell* make_vector(int count, struct cell* init)
 {
 	struct cell* r = make_cell(VECTOR, NULL, NULL, NULL);
 	struct cell* c = r;
@@ -296,7 +296,7 @@ struct cell* make_vector(int count)
 	for(count = count - 1; count >= 0; count = count - 1)
 	{
 		i = make_cell(CONS, NULL, NULL, NULL);
-		i->car = cell_unspecified;
+		i->car = init;
 		c->cdr = i;
 		c = i;
 	}
