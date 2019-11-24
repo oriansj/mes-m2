@@ -186,7 +186,7 @@ void unmark_cells(struct cell* list, struct cell* stop, int count)
 void garbage_collect()
 {
 	mark_all_cells();
-	// TODO unmark stack
+	/* TODO unmark stack */
 	unmark_cells(all_symbols, all_symbols, 0);
 	unmark_cells(top_env, top_env, 0);
 	reclaim_marked();
