@@ -62,7 +62,7 @@ cons
 (display 'foo)(newline)
 (display '(foo))(newline)
 (display '('foo))(newline)
-(display (cdr '(car . cdr))) (newline)
+(display (cdr '(car cdr))) (newline)
 (display "foo bar") (newline)
 ;;barf
 #!

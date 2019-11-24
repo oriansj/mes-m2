@@ -59,12 +59,6 @@ struct cell* builtin_apply(struct cell* args)
 	return apply(args->car, args->cdr->car);
 }
 
-struct cell* builtin_atom(struct cell* args)
-{
-	if(CONS == args->car->type) return nil;
-	return cell_t;
-}
-
 struct cell* nullp(struct cell* args)
 {
 	require(nil != args, "mes_builtin.c: null? requires arguments\n");
@@ -78,6 +72,14 @@ struct cell* pairp(struct cell* args)
 	require(nil != args, "mes_builtin.c: pair? requires arguments\n");
 	require(nil == args->cdr, "mes_builtin.c: pair? recieved too many arguments\n");
 	if(CONS == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* portp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: port? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: port? recieved too many arguments\n");
+	if(FILE_PORT == args->car->type) return cell_t;
 	return cell_f;
 }
 
@@ -120,10 +122,37 @@ struct cell* builtin_listp(struct cell* args)
 	return cell_t;
 }
 
+struct cell* builtin_vectorp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: vector? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: vector? recieved too many arguments\n");
+	if(VECTOR == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_primitivep(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: primitive? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: primitive? recieved too many arguments\n");
+	if(PRIMOP == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_procedurep(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: procedure? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: procedure? recieved too many arguments\n");
+	if(PROC == args->car->type) return cell_t;
+	return cell_f;
+}
+
 struct cell* builtin_eofp (struct cell* args)
 {
+	require(nil != args, "mes_builtin.c: eof? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: eof? recieved too many arguments\n");
+
 	if(EOF_object == args->car->type) return cell_t;
-	return nil;
+	return cell_f;
 }
 
 struct cell* builtin_sum(struct cell* args)
@@ -231,7 +260,7 @@ struct cell* builtin_ash(struct cell* args)
 	return make_int(ash);
 }
 
-struct cell* builtin_and(struct cell* args)
+struct cell* builtin_logand(struct cell* args)
 {
 	long n = -1;
 
@@ -243,7 +272,7 @@ struct cell* builtin_and(struct cell* args)
 	return make_int(n);
 }
 
-struct cell* builtin_or(struct cell* args)
+struct cell* builtin_logor(struct cell* args)
 {
 	long n = 0;
 
@@ -281,6 +310,28 @@ struct cell* builtin_not(struct cell* args)
 	require(nil == args->cdr, "not recieved wrong number of arguments\n");
 
 	if(cell_f == args->car) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_and(struct cell* args)
+{
+	require(nil != args, "and requires arguments\n");
+	while(nil != args)
+	{
+		if(cell_t != args->car) return cell_f;
+		args = args->cdr;
+	}
+	return cell_t;
+}
+
+struct cell* builtin_or(struct cell* args)
+{
+	require(nil != args, "or requires arguments\n");
+	while(nil != args)
+	{
+		if(cell_t == args->car) return cell_t;
+		args = args->cdr;
+	}
 	return cell_f;
 }
 
@@ -352,18 +403,6 @@ struct cell* builtin_append(struct cell* args)
 {
 	if(nil == args) return nil;
 	return append(args->car, args->cdr->car);
-}
-
-struct cell* builtin_get_type(struct cell* args)
-{
-	if(nil == args) return nil;
-	return make_int(args->car->type);
-}
-
-struct cell* builtin_set_type(struct cell* args)
-{
-	if(nil == args) return nil;
-	return make_cell(args->cdr->car->value, args->car->car, args->car->cdr, args->car->env);
 }
 
 struct cell* builtin_stringeq(struct cell* args)
@@ -600,10 +639,55 @@ struct cell* builtin_halt(struct cell* args)
 	exit(args->car->value);
 }
 
-struct cell* builtin_list(struct cell* args) {return args;}
-struct cell* builtin_cons(struct cell* args) { return make_cons(args->car, args->cdr->car); }
-struct cell* builtin_car(struct cell* args) { return args->car->car; }
-struct cell* builtin_cdr(struct cell* args) { return args->car->cdr; }
+struct cell* builtin_list(struct cell* args)
+{
+	/* List is stupid, just return */
+	return args;
+}
+
+struct cell* builtin_cons(struct cell* args)
+{
+	require(nil != args, "cons requires arguments\n");
+	require(nil != args->cdr, "cons requires 2 arguments\n");
+	require(nil == args->cdr->cdr, "cons recieved too many arguments\n");
+	return make_cons(args->car, args->cdr->car);
+}
+
+struct cell* builtin_car(struct cell* args)
+{
+	require(nil != args, "car requires arguments\n");
+	require(CONS == args->car->type, "car expects a pair\n");
+	require(nil == args->cdr, "car expects only a single argument\n");
+	return args->car->car;
+}
+
+struct cell* builtin_cdr(struct cell* args)
+{
+	require(nil != args, "cdr requires arguments\n");
+	require(CONS == args->car->type, "cdr expects a pair\n");
+	require(nil == args->cdr, "cdr expects only a single argument\n");
+	return args->car->cdr;
+}
+
+struct cell* builtin_setcar(struct cell* args)
+{
+	require(nil != args, "set-car! requires arguments\n");
+	require(CONS == args->car->type, "set-car! requires a mutable pair\n");
+	require(nil != args->cdr, "set-car! requires something to set car to\n");
+	args->car->car = args->cdr->car;
+	require(nil == args->cdr->cdr, "set-car! received too many arguements\n");
+	return NULL;
+}
+
+struct cell* builtin_setcdr(struct cell* args)
+{
+	require(nil != args, "set-cdr! requires arguments\n");
+	require(CONS == args->car->type, "set-cdr! requires a mutable pair\n");
+	require(nil != args->cdr, "set-cdr! requires something to set cdr to\n");
+	args->car->cdr = args->cdr->car;
+	require(nil == args->cdr->cdr, "set-cdr! received too many arguements\n");
+	return NULL;
+}
 
 void spinup(struct cell* sym, struct cell* prim)
 {
@@ -654,58 +738,80 @@ void init_sl3()
 	spinup(s_while, s_while);
 
 	/* Add Primitive Specials */
-	spinup(make_sym("apply"), make_prim(builtin_apply));
+	/* checking type */
+	spinup(make_sym("char?"), make_prim(builtin_charp));
+	spinup(make_sym("eof-object?"), make_prim(builtin_eofp));
+	spinup(make_sym("list?"), make_prim(builtin_listp));
 	spinup(make_sym("null?"), make_prim(nullp));
 	spinup(make_sym("pair?"), make_prim(pairp));
+	spinup(make_sym("port?"), make_prim(portp));
+	spinup(make_sym("primitive?"), make_prim(builtin_primitivep));
+	spinup(make_sym("procedure?"), make_prim(builtin_procedurep));
+	spinup(make_sym("string?"), make_prim(builtin_stringp));
 	spinup(make_sym("symbol?"), make_prim(symbolp));
-	spinup(make_sym("atom?"), make_prim(builtin_atom));
-	spinup(make_sym("eof-object?"), make_prim(builtin_eofp));
-	spinup(make_sym("+"), make_prim(builtin_sum));
-	spinup(make_sym("-"), make_prim(builtin_sub));
-	spinup(make_sym("*"), make_prim(builtin_prod));
-	spinup(make_sym("quotient"), make_prim(builtin_div));
-	spinup(make_sym("modulo"), make_prim(builtin_mod));
-	spinup(make_sym("remainder"), make_prim(builtin_rem));
-	spinup(make_sym("logand"), make_prim(builtin_and));
-	spinup(make_sym("logior"), make_prim(builtin_or));
-	spinup(make_sym("lognot"), make_prim(builtin_lognot));
-	spinup(make_sym("logxor"), make_prim(builtin_xor));
-	spinup(make_sym("not"), make_prim(builtin_not));
-	spinup(make_sym("ash"), make_prim(builtin_ash));
+	spinup(make_sym("vector?"), make_prim(builtin_vectorp));
+
+	/* Comparisions */
+	spinup(make_sym("<"), make_prim(builtin_numlt));
+	spinup(make_sym("<="), make_prim(builtin_numle));
+	spinup(make_sym("="), make_prim(builtin_numeq));
 	spinup(make_sym(">"), make_prim(builtin_numgt));
 	spinup(make_sym(">="), make_prim(builtin_numge));
-	spinup(make_sym("="), make_prim(builtin_numeq));
-	spinup(make_sym("<="), make_prim(builtin_numle));
-	spinup(make_sym("<"), make_prim(builtin_numlt));
+	spinup(make_sym("char=?"), make_prim(builtin_chareq));
+	spinup(make_sym("string=?"), make_prim(builtin_stringeq));
+
+	/* Math */
+	spinup(make_sym("*"), make_prim(builtin_prod));
+	spinup(make_sym("+"), make_prim(builtin_sum));
+	spinup(make_sym("-"), make_prim(builtin_sub));
+	spinup(make_sym("ash"), make_prim(builtin_ash));
+	spinup(make_sym("logand"), make_prim(builtin_logand));
+	spinup(make_sym("logior"), make_prim(builtin_logor));
+	spinup(make_sym("lognot"), make_prim(builtin_lognot));
+	spinup(make_sym("logxor"), make_prim(builtin_xor));
+	spinup(make_sym("modulo"), make_prim(builtin_mod));
+	spinup(make_sym("quotient"), make_prim(builtin_div));
+	spinup(make_sym("remainder"), make_prim(builtin_rem));
+
+	/* Files */
 	spinup(make_sym("open-input-file"), make_prim(builtin_open_read));
 	spinup(make_sym("open-output-file"), make_prim(builtin_open_write));
 	spinup(make_sym("set-current-output-port"), make_prim(builtin_set_current_output_port));
 	spinup(make_sym("display"), make_prim(builtin_display));
 	spinup(make_sym("display-error"), make_prim(builtin_display_error));
 	spinup(make_sym("write"), make_prim(builtin_write));
-	spinup(make_sym("get-type"), make_prim(builtin_get_type));
-	spinup(make_sym("set-type!"), make_prim(builtin_set_type));
-	spinup(make_sym("list?"), make_prim(builtin_listp));
+	spinup(make_sym("read-char"), make_prim(builtin_read_byte));
+
+	/* Dealing with Lists */
 	spinup(make_sym("list"), make_prim(builtin_list));
 	spinup(make_sym("append"), make_prim(builtin_append));
 	spinup(make_sym("list-length"), make_prim(builtin_list_length));
 	spinup(make_sym("list->string"), make_prim(builtin_list_to_string));
-	spinup(make_sym("string->list"), make_prim(builtin_string_to_list));
-	spinup(make_sym("string-length"), make_prim(builtin_string_size));
-	spinup(make_sym("string=?"), make_prim(builtin_stringeq));
-	spinup(make_sym("string?"), make_prim(builtin_stringp));
-	spinup(make_sym("char?"), make_prim(builtin_charp));
-	spinup(make_sym("char=?"), make_prim(builtin_chareq));
-	spinup(make_sym("cons"), make_prim(builtin_cons));
-	spinup(make_sym("car"), make_prim(builtin_car));
-	spinup(make_sym("cdr"), make_prim(builtin_cdr));
-	spinup(make_sym("read-char"), make_prim(builtin_read_byte));
+	spinup(make_sym("list->vector"), make_prim(builtin_list_to_vector));
+
+	/* Deal with Vectors */
 	spinup(make_sym("make-vector"), make_prim(builtin_make_vector));
 	spinup(make_sym("vector-length"), make_prim(builtin_vector_length));
 	spinup(make_sym("vector-set!"), make_prim(builtin_vector_set));
 	spinup(make_sym("vector-ref"), make_prim(builtin_vector_ref));
 	spinup(make_sym("vector->list"), make_prim(builtin_vector_to_list));
-	spinup(make_sym("list->vector"), make_prim(builtin_list_to_vector));
+
+	/* Deal with Strings */
+	spinup(make_sym("string->list"), make_prim(builtin_string_to_list));
+	spinup(make_sym("string-length"), make_prim(builtin_string_size));
+
+	/* Deal with logicals */
+	spinup(make_sym("not"), make_prim(builtin_not));
+	spinup(make_sym("and"), make_prim(builtin_and));
+	spinup(make_sym("or"), make_prim(builtin_or));
+
+	/* Lisp classics */
+	spinup(make_sym("cons"), make_prim(builtin_cons));
+	spinup(make_sym("car"), make_prim(builtin_car));
+	spinup(make_sym("cdr"), make_prim(builtin_cdr));
+	spinup(make_sym("set-car!"), make_prim(builtin_setcar));
+	spinup(make_sym("set-cdr!"), make_prim(builtin_setcdr));
+	spinup(make_sym("apply"), make_prim(builtin_apply));
 	spinup(make_sym("exit"), make_prim(builtin_halt));
 
 	/* MES unique */

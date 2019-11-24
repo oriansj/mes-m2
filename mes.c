@@ -63,8 +63,11 @@ int REPL()
 	eval(R0, g_env);
 
 	/* Print */
-	writeobj(__stdout, R0);
-	if((stdout == __stdout) && (NULL != R0)) fputc('\n', __stdout);
+	if((stdout == __stdout) && (NULL != R0))
+	{
+		writeobj(__stdout, R0);
+		fputc('\n', __stdout);
+	}
 	return FALSE;
 }
 

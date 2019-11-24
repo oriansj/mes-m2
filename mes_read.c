@@ -59,6 +59,7 @@ void reader_s_expression_dump(FILE* source_file)
 		else if(')' == c)
 		{
 			depth = depth - 1;
+			if(0 == depth) return;
 		}
 		c = fgetc(source_file);
 	}
@@ -80,6 +81,7 @@ unsigned Readline(FILE* source_file, char* temp, unsigned max_string)
 	{
 restart_comment:
 		c = fgetc(source_file);
+restart_paren:
 		if((-1 == c) || (4 == c))
 		{
 			return i;
@@ -105,7 +107,8 @@ restart_comment:
 		{
 			reader_s_expression_dump(source_file);
 			hashed = FALSE;
-			goto restart_comment;
+			c = ' ';
+			goto restart_paren;
 		}
 		else if(';' == c)
 		{
@@ -162,6 +165,9 @@ restart_comment:
 				temp[i+2] = ' ';
 				i = i + 2;
 			}
+
+			c = ' ';
+			goto restart_paren;
 		}
 		else if(hashed)
 		{
