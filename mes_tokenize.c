@@ -56,15 +56,13 @@ struct cell* tokenize(struct cell* head, char* fullstring, int size)
 		else if('\"' == c)
 		{
 			escape = FALSE;
-			memory_block[string_index] = c;
-			string_index = string_index + 1;
 			do
 			{
-				c = fullstring[string_index];
 				if(!escape && '\\' == c ) escape = TRUE;
 				else escape = FALSE;
 				memory_block[string_index] = c;
 				string_index = string_index + 1;
+				c = fullstring[string_index];
 			} while(escape || ('\"' != fullstring[string_index]));
 			string_index = string_index + 1;
 			done = TRUE;
@@ -193,6 +191,12 @@ struct cell* atom(struct cell* a)
 	if(match(",", a->string))
 	{
 		return make_cons(unquote, make_cons(readobj(), nil));
+	}
+
+	/* Check for unquote-splicing */
+	if(match(",@", a->string))
+	{
+		return make_cons(unquote_splicing, make_cons(readobj(), nil));
 	}
 
 	/* Check for strings */

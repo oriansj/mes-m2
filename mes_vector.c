@@ -23,6 +23,7 @@
 
 /* Imported functions */
 struct cell* make_vector(int count, struct cell* init);
+struct cell* equal(struct cell* a, struct cell* b);
 
 struct cell* vector_to_list(struct cell* a)
 {
@@ -71,6 +72,8 @@ struct cell* vector_set(struct cell* v, int i, struct cell* e)
 
 struct cell* list_to_vector(struct cell* i)
 {
+	if(nil == i) return make_vector(0, cell_unspecified);
+
 	require(CONS == i->type, "mes_vector.c: list_to_vector did not recieve a list\n");
 
 	struct cell* r = make_vector(0, cell_unspecified);
@@ -85,4 +88,24 @@ struct cell* list_to_vector(struct cell* i)
 	i->cdr = NULL;
 	r->value = count;
 	return r;
+}
+
+struct cell* vector_equal(struct cell* a, struct cell* b)
+{
+	require(VECTOR == a->type, "mes_vector.c: vector_equal received non-vector\n");
+	require(VECTOR == b->type, "mes_vector.c: vector_equal received non-vector\n");
+	if(a->value != b->value) return cell_f;
+	if(0 == a->value) return cell_t;
+
+	a = a->cdr;
+	b = b->cdr;
+	while(NULL != a)
+	{
+		if(cell_t != equal(a->car, b->car)) return cell_f;
+
+		a = a->cdr;
+		b = b->cdr;
+	}
+
+	return cell_t;
 }

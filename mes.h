@@ -89,6 +89,7 @@ struct cell* cell_dot;
 struct cell* quote;
 struct cell* quasiquote;
 struct cell* unquote;
+struct cell* unquote_splicing;
 struct cell* s_if;
 struct cell* s_lambda;
 struct cell* s_define;

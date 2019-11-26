@@ -103,6 +103,21 @@ restart_paren:
 			temp[i+1] = ' ';
 			i = i + 1;
 		}
+		else if(',' == c)
+		{
+			c = fgetc(source_file);
+			temp[i] = ',';
+			i = i + 1;
+			if('@' == c)
+			{
+				temp[i] = '@';
+				i = i + i;
+				c = ' ';
+			}
+			temp[i] = ' ';
+			i = i + 1;
+			goto restart_paren;
+		}
 		else if(hashed && (';' == c))
 		{
 			reader_s_expression_dump(source_file);
@@ -121,9 +136,6 @@ restart_paren:
 		}
 		else if('"' == c)
 		{ /* Deal with strings */
-			temp[i] = c;
-			i = i + 1;
-			c = fgetc(source_file);
 			do
 			{
 				if(!escape && '\\' == c ) escape = TRUE;

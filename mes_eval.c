@@ -141,7 +141,7 @@ progn_reset:
 
 struct cell* apply(struct cell* proc, struct cell* vals)
 {
-	struct cell* temp = nil;
+	struct cell* temp;
 	if(proc->type == PRIMOP)
 	{
 		FUNCTION* fp = proc->function;
@@ -279,12 +279,30 @@ struct cell* process_quasiquote(struct cell* exp, struct cell* env)
 				eval(i->car->cdr->car, env);
 				h = R0;
 			}
+			if(unquote_splicing == i->car->car)
+			{
+				eval(i->car->cdr->car, env);
+				while((NULL != R0) && (nil != R0))
+				{
+					/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
+					/* Or restrict to just proper lists as the spec (r7rs) requires */
+					/* eg. `(foo bar ,@(+ 4 5)) */
+					require(CONS == R0->type, "unquote-splicing requires argument of type <proper list>\n");
+					f = make_cons(R0->car, f);
+					/* Simply convert require to if and the above */
+					/* else f = make_cons(R0, f); */
+					R0 = R0->cdr;
+				}
+				goto restart_quasiquote;
+			}
 		}
 		f = make_cons(h, f);
+restart_quasiquote:
 		i = i->cdr;
 	}
 	i = f;
 	f = reverse_list(f);
+	require(NULL != i, "Impossible quasiquote processed?\n");
 	i->cdr = nil;
 	return f;
 }

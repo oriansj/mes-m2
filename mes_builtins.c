@@ -28,6 +28,7 @@ int list_length(struct cell* args);
 struct cell* append(struct cell* a, struct cell* b);
 struct cell* apply(struct cell* proc, struct cell* vals);
 struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value);
+struct cell* list_equal(struct cell* a, struct cell* b);
 struct cell* list_to_vector(struct cell* i);
 struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_char(int a);
@@ -45,6 +46,7 @@ struct cell* prim_write(struct cell* args, FILE* out);
 struct cell* string_eq(struct cell* a, struct cell* b);
 struct cell* string_length(struct cell* a);
 struct cell* string_to_list(char* string);
+struct cell* vector_equal(struct cell* a, struct cell* b);
 struct cell* vector_ref(struct cell* a, int i);
 struct cell* vector_set(struct cell* v, int i, struct cell* e);
 struct cell* vector_to_list(struct cell* a);
@@ -422,6 +424,40 @@ struct cell* builtin_stringeq(struct cell* args)
 	return cell_t;
 }
 
+struct cell* builtin_listeq(struct cell* args)
+{
+	require(nil != args, "list=? requires arguments\n");
+
+	require(CONS == args->car->type, "list=? received non-list\n");
+	struct cell* temp = args->car;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		require(CONS == args->car->type, "list=? received non-list\n");
+		if(cell_t != list_equal(temp, args->car))
+		{
+			return cell_f;
+		}
+	}
+	return cell_t;
+}
+
+struct cell* builtin_vectoreq(struct cell* args)
+{
+	require(nil != args, "vector=? requires arguments\n");
+
+	require(VECTOR == args->car->type, "vector=? received non-vector\n");
+	struct cell* temp = args->car;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		require(VECTOR == args->car->type, "vector=? received non-vector\n");
+		if(cell_t != vector_equal(temp, args->car))
+		{
+			return cell_f;
+		}
+	}
+	return cell_t;
+}
+
 struct cell* builtin_chareq(struct cell* args)
 {
 	require(nil != args, "char=? requires arguments\n");
@@ -450,6 +486,77 @@ struct cell* builtin_numeq(struct cell* args)
 	return cell_t;
 }
 
+struct cell* builtin_eq(struct cell* args)
+{
+	if(nil == args) return cell_t;
+	if(nil == args->cdr) return cell_t;
+	struct cell* temp = args->car;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		if(temp == args->car) continue;
+		else if(temp->type != args->car->type) return cell_f;
+		else if((INT == temp->type) || (CHAR == temp->type))
+		{
+			if(temp->value != args->car->value) return cell_f;
+		}
+		else if(STRING == temp->type)
+		{
+			if(temp != args->car) return cell_f;
+		}
+		else if(CONS == temp->type)
+		{
+			if(temp != args->car) return cell_f;
+		}
+		else return cell_f;
+	}
+
+	return cell_t;
+}
+
+struct cell* equal(struct cell* a, struct cell* b)
+{
+	if(a == b) return cell_t;
+	if(NULL == a) return cell_f;
+	if(NULL == b) return cell_f;
+
+	if(a->type != b->type) return cell_f;
+	if((INT == a->type) || (CHAR == a->type))
+	{
+		if(a->value != b->value) return cell_f;
+		return cell_t;
+	}
+	else if(STRING == a->type)
+	{
+		return string_eq(a, b);
+	}
+	else if(VECTOR == a->type)
+	{
+		return vector_equal(a, b);
+	}
+	else if(CONS == a->type)
+	{
+		if(cell_t != equal(a->car, b->car)) return cell_f;
+		if(cell_t != equal(a->cdr, b->cdr)) return cell_f;
+		return cell_t;
+	}
+
+	return cell_f;
+}
+
+struct cell* builtin_equal(struct cell* args)
+{
+	require(nil != args, "equal? requires arguments\n");
+
+	struct cell* temp = args->car;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		if(cell_t != equal(temp, args->car))
+		{
+			return cell_f;
+		}
+	}
+	return cell_t;
+}
 
 struct cell* builtin_display(struct cell* args)
 {
@@ -706,6 +813,7 @@ void init_sl3()
 	quote = make_sym("quote");
 	quasiquote = make_sym("quasiquote");
 	unquote = make_sym("unquote");
+	unquote_splicing = make_sym("unquote-splicing");
 	cell_unspecified = make_sym("#<unspecified>");
 	s_if = make_sym("if");
 	s_cond = make_sym("cond");
@@ -727,6 +835,7 @@ void init_sl3()
 	spinup(quote, quote);
 	spinup(quasiquote, quasiquote);
 	spinup(unquote, unquote);
+	spinup(unquote_splicing, unquote_splicing);
 	spinup(cell_unspecified, cell_unspecified);
 	spinup(s_if, s_if);
 	spinup(s_cond, s_cond);
@@ -759,6 +868,8 @@ void init_sl3()
 	spinup(make_sym(">="), make_prim(builtin_numge));
 	spinup(make_sym("char=?"), make_prim(builtin_chareq));
 	spinup(make_sym("string=?"), make_prim(builtin_stringeq));
+	spinup(make_sym("eq?"), make_prim(builtin_eq));
+	spinup(make_sym("equal?"), make_prim(builtin_equal));
 
 	/* Math */
 	spinup(make_sym("*"), make_prim(builtin_prod));
@@ -816,4 +927,7 @@ void init_sl3()
 
 	/* MES unique */
 	spinup(make_sym("free_mem"), make_prim(builtin_freecell));
+	spinup(make_sym("%version"), make_string("0.19"));
+	spinup(make_sym("vector=?"), make_prim(builtin_vectoreq));
+	spinup(make_sym("list=?"), make_prim(builtin_listeq));
 }

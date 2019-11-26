@@ -21,6 +21,7 @@
 
 #include "mes.h"
 struct cell* make_char(int a);
+struct cell* equal(struct cell* a, struct cell* b);
 
 struct cell* string_to_list(char* string)
 {
@@ -68,4 +69,21 @@ struct cell* append(struct cell* a, struct cell* b)
 {
 	if(nil == a) return b;
 	return make_cons(a->car, append(a->cdr, b));
+}
+
+struct cell* list_equal(struct cell* a, struct cell* b)
+{
+	while((nil != a) && (nil != b))
+	{
+		require(CONS == a->type, "mes_list.c: list_equal received non-list\n");
+		require(CONS == b->type, "mes_list.c: list_equal received non-list\n");
+
+		if(cell_t != equal(a->car, b->car)) return cell_f;
+
+		a = a->cdr;
+		b = b->cdr;
+	}
+
+	if(a != b) return cell_f;
+	return cell_t;
 }

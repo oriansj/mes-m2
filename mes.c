@@ -117,7 +117,7 @@ int main(int argc, char **argv, char** envp)
 	message = calloc(MAX_STRING + 2, sizeof(char));
 	garbage_init(arena);
 	init_sl3();
-	g_stack = calloc(stack, sizeof(struct cell));
+	g_stack = calloc(stack, sizeof(struct cell*));
 
 	char* testing = env_lookup("MES_CORE", envp);
 	if(NULL != testing)
@@ -198,7 +198,7 @@ int main(int argc, char **argv, char** envp)
 
 		file_print("mes: boot failed: no such file: ", stderr);
 		file_print(boot, stderr);
-		file_print("\nTo silence this error run: export MES_CORE=0\n", stderr);
+		file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this cuurently broken code\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
