@@ -259,7 +259,6 @@ struct cell* make_string(char* a)
 {
 	struct cell* c = make_cell(STRING, NULL, NULL, NULL);
 	c->string = a;
-	c->size = string_size(c->string);
 	return c;
 }
 

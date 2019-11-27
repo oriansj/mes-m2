@@ -34,11 +34,13 @@ struct cell* string_to_list(char* string)
 
 int list_length(struct cell* args)
 {
+	require(CONS == args->type, "mes_list.c: list_length recieved wrong type\n");
 	if(nil == args) return 0;
 	int size = 0;
 	struct cell* i;
 	for(i = args->car; nil != i; i = i->cdr)
 	{
+		require(CONS == i->type, "mes_list.c: list_length recieved non-pure list\n");
 		size = size + 1;
 	}
 	return size;
@@ -46,11 +48,13 @@ int list_length(struct cell* args)
 
 char* list_to_string(struct cell* args)
 {
+	require(CONS == args->type, "mes_list.c: list_to_string recieved wrong type\n");
 	char* string = calloc(list_length(args) + 1, sizeof(char));
 	int index = 0;
 	struct cell* i;
 	for(i = args->car; nil != i; i = i->cdr)
 	{
+		require(CONS == args->type, "mes_list.c: list_to_string recieved non-pure list\n");
 		if(CHAR == i->car->type)
 		{
 			string[index] = i->car->value;

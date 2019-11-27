@@ -124,6 +124,14 @@ struct cell* builtin_listp(struct cell* args)
 	return cell_t;
 }
 
+struct cell* builtin_intp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: number? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: number? recieved too many arguments\n");
+	if(INT == args->car->type) return cell_t;
+	return cell_f;
+}
+
 struct cell* builtin_vectorp(struct cell* args)
 {
 	require(nil != args, "mes_builtin.c: vector? requires arguments\n");
@@ -159,11 +167,12 @@ struct cell* builtin_eofp (struct cell* args)
 
 struct cell* builtin_sum(struct cell* args)
 {
-	if(nil == args) return nil;
+	if(nil == args) return make_int(0);
 
 	int sum;
 	for(sum = 0; nil != args; args = args->cdr)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_sum require integers\n");
 		sum = sum + args->car->value;
 	}
 	return make_int(sum);
@@ -171,23 +180,26 @@ struct cell* builtin_sum(struct cell* args)
 
 struct cell* builtin_sub(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtin.c: builtin_sub requires arguments\n");
 
+	require(INT == args->car->type, "mes_builtin.c: builtin_sub require integers\n");
 	int sum = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
-		 sum = sum - args->car->value;
+		require(INT == args->car->type, "mes_builtin.c: builtin_sub require integers\n");
+		sum = sum - args->car->value;
 	}
 	return make_int(sum);
 }
 
 struct cell* builtin_prod(struct cell* args)
 {
-	if(nil == args) return nil;
+	if(nil == args) make_int(1);
 
 	int prod;
 	for(prod = 1; nil != args; args = args->cdr)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_prod require integers\n");
 		prod = prod * args->car->value;
 	}
 	return make_int(prod);
@@ -195,11 +207,13 @@ struct cell* builtin_prod(struct cell* args)
 
 struct cell* builtin_div(struct cell* args)
 {
-	if(nil == args) return make_int(1);
+	require(nil != args, "mes_builtin.c: builtin_div requires arguments\n");
 
+	require(INT == args->car->type, "mes_builtin.c: builtin_div require integers\n");
 	int div = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_div require integers\n");
 		div = div / args->car->value;
 	}
 	return make_int(div);
@@ -268,6 +282,7 @@ struct cell* builtin_logand(struct cell* args)
 
 	while(nil != args)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_logand require integers\n");
 		n = n & args->car->value;
 		args = args->cdr;
 	}
@@ -280,6 +295,7 @@ struct cell* builtin_logor(struct cell* args)
 
 	while(nil != args)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_logior require integers\n");
 		n = n | args->car->value;
 		args = args->cdr;
 	}
@@ -291,6 +307,7 @@ struct cell* builtin_xor(struct cell* args)
 	long n = 0;
 	while(nil != args)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_logxor require integers\n");
 		n = n ^ args->car->value;
 		args = args->cdr;
 	}
@@ -339,11 +356,13 @@ struct cell* builtin_or(struct cell* args)
 
 struct cell* builtin_numgt(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtin.c: builtin_numgt requires arguments\n");
+	require(INT == args->car->type, "mes_builtin.c: builtin_numgt require integers\n");
 
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_numgt require integers\n");
 		if(temp <= args->car->value)
 		{
 			return cell_f;
@@ -355,11 +374,13 @@ struct cell* builtin_numgt(struct cell* args)
 
 struct cell* builtin_numge(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtin.c: builtin_numge requires arguments\n");
+	require(INT == args->car->type, "mes_builtin.c: builtin_numge require integers\n");
 
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_numge require integers\n");
 		if(temp < args->car->value)
 		{
 			return cell_f;
@@ -371,11 +392,13 @@ struct cell* builtin_numge(struct cell* args)
 
 struct cell* builtin_numle(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtin.c: builtin_numle requires arguments\n");
+	require(INT == args->car->type, "mes_builtin.c: builtin_numle require integers\n");
 
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_numle require integers\n");
 		if(temp > args->car->value)
 		{
 			return cell_f;
@@ -387,11 +410,13 @@ struct cell* builtin_numle(struct cell* args)
 
 struct cell* builtin_numlt(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtin.c: builtin_numlt requires arguments\n");
+	require(INT == args->car->type, "mes_builtin.c: builtin_numlt require integers\n");
 
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
+		require(INT == args->car->type, "mes_builtin.c: builtin_numlt require integers\n");
 		if(temp >= args->car->value)
 		{
 			return cell_f;
@@ -404,6 +429,9 @@ struct cell* builtin_numlt(struct cell* args)
 struct cell* builtin_append(struct cell* args)
 {
 	if(nil == args) return nil;
+	require(((nil == args->car) || (CONS == args->car->type)), "mes_builtin.c: builtin_append require list\n");
+	if(nil == args->cdr) return args->car;
+	require(((nil == args->car) || (CONS == args->car->type)), "mes_builtin.c: builtin_append require list\n");
 	return append(args->car, args->cdr->car);
 }
 
@@ -560,68 +588,57 @@ struct cell* builtin_equal(struct cell* args)
 
 struct cell* builtin_display(struct cell* args)
 {
+	require(nil != args, "mes_builtin.c: builtin_display requires arguments\n");
 	if(nil == args->cdr)
 	{
 		prim_display(args, __stdout);
 		return NULL;
 	}
-	else if(FILE_PORT == args->cdr->car->type)
-	{
-		prim_display(args, args->cdr->car->file);
-		return NULL;
-	}
 
-	file_print("You passed something that isn't a file pointer to write in position 2\n", stderr);
-	exit(EXIT_FAILURE);
+	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
+
+	prim_display(args, args->cdr->car->file);
+	return NULL;
 }
 
 struct cell* builtin_display_error(struct cell* args)
 {
+	require(nil != args, "mes_builtin.c: builtin_display_error requires arguments\n");
 	if(nil == args->cdr)
 	{
 		prim_display(args, __stderr);
 		return NULL;
 	}
-	else if(FILE_PORT == args->cdr->car->type)
-	{
-		prim_display(args, args->cdr->car->file);
-		return NULL;
-	}
 
-	file_print("You passed something that isn't a file pointer to write in position 2\n", stderr);
-	exit(EXIT_FAILURE);
+	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
+	prim_display(args, args->cdr->car->file);
+	return NULL;
 }
 
 struct cell* builtin_write(struct cell* args)
 {
+	require(nil != args, "mes_builtin.c: builtin_write requires arguments\n");
 	if(nil == args->cdr)
 	{
 		prim_write(args, __stdout);
 		return NULL;
 	}
-	else if(FILE_PORT == args->cdr->car->type)
-	{
-		prim_write(args, args->cdr->car->file);
-		return NULL;
-	}
+	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
 
-	file_print("You passed something that isn't a file pointer to write in position 2\n", stderr);
-	exit(EXIT_FAILURE);
+	prim_write(args, args->cdr->car->file);
+	return NULL;
 }
 
 struct cell* builtin_write_error(struct cell* args)
 {
+	require(nil != args, "mes_builtin.c: builtin_write_error requires arguments\n");
 	if(nil == args->cdr)
 	{
 		return prim_write(args, __stderr);
 	}
-	else if(FILE_PORT == args->cdr->car->type)
-	{
-		return prim_write(args, args->cdr->car->file);
-	}
 
-	file_print("You passed something that isn't a file pointer to write in position 2\n", stderr);
-	exit(EXIT_FAILURE);
+	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
+	return prim_write(args, args->cdr->car->file);
 }
 
 struct cell* builtin_make_vector(struct cell* args)
@@ -648,60 +665,145 @@ struct cell* builtin_freecell(struct cell* args)
 
 struct cell* builtin_string_to_list(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtin.c: string->list requires arguments\n");
+	require(STRING == args->car->type, "mes-builtin.c: string->list did not receive a string\n");
 
-	if(STRING == args->car->type)
+	struct cell* r = string_to_list(args->car->string);
+	if(nil == args->cdr)
 	{
-		return string_to_list(args->car->string);
+		return r;
 	}
-	return nil;
+
+	require(INT == args->cdr->car->type, "mes_builtin.c: string->list only accepts integers\n");
+	int i = args->cdr->car->value;
+	require(0 <= i, "mes_builtin.c: string->list invalid index\n");
+	while(0 != i)
+	{
+		require(nil != r, "mes_builtin.c: string->list index too large\n");
+		r = r->cdr;
+		i = i - 1;
+	}
+	return r;
 }
 
 struct cell* builtin_list_length(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtins.c: list-length requires arguments\n");
 	return make_int(list_length(args));
 }
 
 struct cell* builtin_list_to_string(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtins.c: list->string requires an argument\n");
+	require(nil == args->cdr, "mes_builtins.c: list->string only allows a single argument\n");
 	return make_string(list_to_string(args));
+}
+
+struct cell* builtin_list_to_symbol(struct cell* args)
+{
+	require(nil != args, "mes_builtins.c: list->symbol requires an argument\n");
+	require(nil == args->cdr, "mes_builtins.c: list->symbol only allows a single argument\n");
+	return make_sym(list_to_string(args));
 }
 
 struct cell* builtin_vector_length(struct cell* args)
 {
+	require(nil != args, "mes_builtins.c: vector-length requires an argument\n");
 	return make_int(args->car->value);
 }
 
 struct cell* builtin_vector_ref(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtins.c: vector-ref requires an argument\n");
+	require(nil != args->cdr, "mes_builtins.c: vector-ref requires an argument\n");
+	require(nil == args->cdr->cdr, "mes_builtins.c: vector-ref received too many arguments\n");
+	require(VECTOR == args->car->type, "mes_builtins.c: vector-ref did not receive vector\n");
+	require(INT == args->cdr->car->type, "mes_builtins.c: vector-ref did not receive index\n");
 	return vector_ref(args->car, args->cdr->car->value);
 }
 
 struct cell* builtin_vector_set(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtins.c: vector-set! requires an argument\n");
+	require(nil != args->cdr, "mes_builtins.c: vector-set! requires a second argument\n");
+	require(nil != args->cdr->cdr, "mes_builtins.c: vector-set! requires a third argument\n");
+	require(nil == args->cdr->cdr->cdr, "mes_builtins.c: vector-set! recieved too many argument\n");
+	require(VECTOR == args->car->type, "mes_builtins.c: vector-set! did not receive a vector\n");
+	require(INT == args->cdr->car->type, "mes_builtins.c: vector-set! did not receive an index\n");
 	return vector_set(args->car, args->cdr->car->value, args->cdr->cdr->car);
 }
 
 struct cell* builtin_vector_to_list(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "mes_builtins.c: vector->list! requires an argument\n");
+	require(VECTOR == args->car->type, "mes_builtins.c: vector->list! ");
+	require(nil == args->cdr, "mes_builtins.c: vector-set! too many arguments\n");
 	return vector_to_list(args->car);
 }
 
 struct cell* builtin_list_to_vector(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "list->vector requires an argument\n");
+	require(nil == args->cdr, "list->vector only allows a single argument\n");
 	return list_to_vector(args->car);
 }
 
 struct cell* builtin_string_size(struct cell* args)
 {
-	if(nil == args) return nil;
+	require(nil != args, "string-length requires an argument\n");
+	require(nil == args->cdr, "string-length only allows a single argument\n");
 	return string_length(args->car);
+}
+
+struct cell* builtin_string_to_number(struct cell* args)
+{
+	require(nil != args, "string->number requires an argument\n");
+	require(nil == args->cdr, "string->number only supports a single argument (currently)\n");
+	require(STRING == args->car->type, "string->number requires a string\n");
+	int i = numerate_string(args->car->string);
+	if(0 != i) return make_int(i);
+	if('0' == args->car->string[0]) return make_int(i);
+	return cell_f;
+}
+
+struct cell* builtin_string_to_symbol(struct cell* args)
+{
+	require(nil != args, "string->symbol requires an argument\n");
+	require(nil == args->cdr, "string->symbol only supports a single argument\n");
+	require(STRING == args->car->type, "string->symbol requires a string\n");
+	return make_sym(args->car->string);
+}
+
+struct cell* builtin_symbol_to_string(struct cell* args)
+{
+	require(nil != args, "symbol->string requires an argument\n");
+	require(nil == args->cdr, "symbol->string only supports a single argument\n");
+	require(SYM == args->car->type, "symbol->string requires a symbol\n");
+	return make_string(args->car->string);
+}
+
+struct cell* builtin_number_to_string(struct cell* args)
+{
+	require(nil != args, "number->string requires an argument\n");
+	require(nil == args->cdr, "number->string only supports a single argument (currently)\n");
+	require(INT == args->car->type, "number->string requires an integer\n");
+	return make_string(numerate_number(args->car->value));
+}
+
+struct cell* builtin_number_to_char(struct cell* args)
+{
+	require(nil != args, "integer->char requires an argument\n");
+	require(nil == args->cdr, "integer->char only supports a single argument\n");
+	require(INT == args->car->type, "integer->char requires an integer\n");
+	return make_char(args->car->value);
+}
+
+struct cell* builtin_char_to_number(struct cell* args)
+{
+	require(nil != args, "char->integer requires an argument\n");
+	require(nil == args->cdr, "char->integer only supports a single argument\n");
+	require(CHAR == args->car->type, "char->integer requires a char\n");
+	return make_int(args->car->value);
 }
 
 struct cell* builtin_open(struct cell* args, char* mode)
@@ -851,6 +953,7 @@ void init_sl3()
 	spinup(make_sym("char?"), make_prim(builtin_charp));
 	spinup(make_sym("eof-object?"), make_prim(builtin_eofp));
 	spinup(make_sym("list?"), make_prim(builtin_listp));
+	spinup(make_sym("number?"), make_prim(builtin_intp));
 	spinup(make_sym("null?"), make_prim(nullp));
 	spinup(make_sym("pair?"), make_prim(pairp));
 	spinup(make_sym("port?"), make_prim(portp));
@@ -899,6 +1002,7 @@ void init_sl3()
 	spinup(make_sym("list-length"), make_prim(builtin_list_length));
 	spinup(make_sym("list->string"), make_prim(builtin_list_to_string));
 	spinup(make_sym("list->vector"), make_prim(builtin_list_to_vector));
+	spinup(make_sym("list->symbol"), make_prim(builtin_list_to_symbol));
 
 	/* Deal with Vectors */
 	spinup(make_sym("make-vector"), make_prim(builtin_make_vector));
@@ -910,6 +1014,18 @@ void init_sl3()
 	/* Deal with Strings */
 	spinup(make_sym("string->list"), make_prim(builtin_string_to_list));
 	spinup(make_sym("string-length"), make_prim(builtin_string_size));
+	spinup(make_sym("string->number"), make_prim(builtin_string_to_number));
+	spinup(make_sym("string->symbol"), make_prim(builtin_string_to_symbol));
+
+	/* Deal with symbols */
+	spinup(make_sym("symbol->string"), make_prim(builtin_symbol_to_string));
+
+	/* Deal with numbers */
+	spinup(make_sym("number->string"), make_prim(builtin_number_to_string));
+	spinup(make_sym("integer->char"), make_prim(builtin_number_to_char));
+
+	/* Deal with Chars */
+	spinup(make_sym("char->integer"), make_prim(builtin_char_to_number));
 
 	/* Deal with logicals */
 	spinup(make_sym("not"), make_prim(builtin_not));

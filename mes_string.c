@@ -28,14 +28,13 @@ int string_size(char* a);
 struct cell* string_length(struct cell* a)
 {
 	require(a->type == STRING, "Wrong type recieved\n");
-	return make_int(a->size);
+	return make_int(string_size(a->string));
 }
 
 struct cell* string_eq(struct cell* a, struct cell* b)
 {
 	require(a->type == STRING, "Wrong type recieved\n");
 	require(b->type == STRING, "Wrong type recieved\n");
-	if(a->size != b->size) return cell_f;
 	if(match(a->string, b->string)) return cell_t;
 	return cell_f;
 }

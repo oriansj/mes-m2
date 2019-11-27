@@ -63,11 +63,7 @@ struct cell
 		FILE* file;
 	};
 	struct cell* cdr;
-	union
-	{
-		struct cell* env;
-		int size;
-	};
+	struct cell* env;
 };
 
 /* Common functions */
