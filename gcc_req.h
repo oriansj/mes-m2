@@ -23,3 +23,4 @@
 #include <stdio.h>
 
 typedef struct cell* (FUNCTION)(struct cell *);
+typedef long SCM;

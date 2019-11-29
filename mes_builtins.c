@@ -210,7 +210,7 @@ struct cell* builtin_div(struct cell* args)
 	require(nil != args, "mes_builtin.c: builtin_div requires arguments\n");
 
 	require(INT == args->car->type, "mes_builtin.c: builtin_div require integers\n");
-	int div = args->car->value;
+	SCM div = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
 		require(INT == args->car->type, "mes_builtin.c: builtin_div require integers\n");
@@ -226,7 +226,8 @@ struct cell* builtin_mod(struct cell* args)
 	require(nil != args->cdr, "modulo did not recieve a second argument\n");
 	require(INT == args->cdr->car->type, "modulo second argument not an integer\n");
 
-	int mod = args->car->value % args->cdr->car->value;
+	SCM mod = args->car->value;
+	mod = mod % args->cdr->car->value;
 	if((0 > args->car->value) ^ (0 > args->cdr->car->value))
 	{
 		mod = mod + args->cdr->car->value;
@@ -244,7 +245,8 @@ struct cell* builtin_rem(struct cell* args)
 	require(nil != args->cdr, "remainder did not recieve a second argument\n");
 	require(INT == args->cdr->car->type, "remainder second argument not an integer\n");
 
-	int rem = args->car->value % args->cdr->car->value;
+	SCM rem = args->car->value;
+	rem = rem % args->cdr->car->value;
 	if(0 > args->cdr->car->value)
 	{
 		rem = rem + args->cdr->car->value;
