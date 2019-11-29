@@ -16,25 +16,26 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 M2-Planet --debug --architecture amd64 \
-    -f mes.h \
-    -f ../M2-Planet/test/common_amd64/functions/file.c \
-    -f ../M2-Planet/test/common_amd64/functions/exit.c \
-    -f ../M2-Planet/test/common_amd64/functions/malloc.c \
-    -f ../M2-Planet/functions/calloc.c \
-    -f mes.c \
-    -f mes_cell.c \
-    -f mes_builtins.c \
-    -f mes_eval.c \
-    -f mes_print.c \
-    -f mes_read.c \
-    -f mes_tokenize.c \
-    -f mes_vector.c \
-    -f mes_list.c \
-    -f mes_string.c \
-    -f functions/numerate_number.c \
-    -f functions/match.c \
-    -f functions/file_print.c \
-    -f functions/envp.c -o bin/mes.M1
+	-f mes.h \
+	-f ../M2-Planet/test/common_amd64/functions/file.c \
+	-f ../M2-Planet/test/common_amd64/functions/exit.c \
+	-f ../M2-Planet/test/common_amd64/functions/malloc.c \
+	-f ../M2-Planet/functions/calloc.c \
+	-f mes.c \
+	-f mes_cell.c \
+	-f mes_builtins.c \
+	-f mes_eval.c \
+	-f mes_print.c \
+	-f mes_read.c \
+	-f mes_tokenize.c \
+	-f mes_vector.c \
+	-f mes_list.c \
+	-f mes_string.c \
+	-f mes_record.c \
+	-f functions/numerate_number.c \
+	-f functions/match.c \
+	-f functions/file_print.c \
+	-f functions/envp.c -o bin/mes.M1
 
 blood-elf --64 -f bin/mes.M1 -o bin/mes-footer.M1
 

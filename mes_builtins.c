@@ -45,6 +45,8 @@ struct cell* make_sym(char* name);
 struct cell* make_vector(int count, struct cell* init);
 struct cell* prim_display(struct cell* args, FILE* out);
 struct cell* prim_write(struct cell* args, FILE* out);
+struct cell* record_ref(struct cell* type, char* name, struct cell* record);
+struct cell* record_set(struct cell* type, char* name, struct cell* record, struct cell* value);
 struct cell* string_eq(struct cell* a, struct cell* b);
 struct cell* string_length(struct cell* a);
 struct cell* string_to_list(char* string);
@@ -119,6 +121,45 @@ struct cell* builtin_record_type_descriptor(struct cell* args)
 	require(nil == args->cdr, "mes_builtin.c: record-type-descriptor received too many arguments\n");
 	require(RECORD == args->car->type, "mes_builtin.c: record-type-descriptor did not receive a record\n");
 	return args->car->car;
+}
+
+struct cell* builtin_record_predicate(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: core:record-predicate requires an argument\n");
+	require(nil != args->cdr, "mes_builtin.c: core:record-predicate received insufficient arguments\n");
+	if(RECORD_TYPE == args->car->type)
+	{
+		if(RECORD == args->cdr->car->type)
+		{
+			if(args->cdr->car->car == args->car) return cell_t;
+		}
+	}
+	return cell_f;
+}
+
+struct cell* builtin_record_accessor(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: core:record-accessor requires arguments\n");
+	require(nil != args->cdr, "mes_builtin.c: core:record-accessor requires more arguments\n");
+	require(nil != args->cdr->cdr, "mes_builtin.c: core:record-accessor requires more arguments\n");
+	require(RECORD_TYPE == args->car->type, "mes_builtin.c: core:record-accessor did not receive RECORD-TYPE\n");
+	require(SYM == args->cdr->car->type, "mes_builtin.c: core:record-accessor did not receive SYMBOL\n");
+	require(RECORD == args->cdr->cdr->car->type, "mes_builtin.c: core:record-accessor did not receive RECORD\n");
+	require(args->cdr->cdr->car->car == args->car, "mes_builtin.c: core:record-accessor got a record of a type different than record-type\n");
+	return record_ref(args->car, args->cdr->car->string, args->cdr->cdr->car);
+}
+
+struct cell* builtin_record_modifier(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: core:record-modifier requires arguments\n");
+	require(nil != args->cdr, "mes_builtin.c: core:record-modifier requires more arguments\n");
+	require(nil != args->cdr->cdr, "mes_builtin.c: core:record-modifier requires more arguments\n");
+	require(nil != args->cdr->cdr->cdr, "mes_builtin.c: core:record-modifier requires more arguments\n");
+	require(RECORD_TYPE == args->car->type, "mes_builtin.c: core:record-modifier did not receive RECORD-TYPE\n");
+	require(SYM == args->cdr->car->type, "mes_builtin.c: core:record-modifier did not receive SYMBOL\n");
+	require(RECORD == args->cdr->cdr->car->type, "mes_builtin.c: core:record-modifier did not receive RECORD\n");
+	require(args->cdr->cdr->car->car == args->car, "mes_builtin.c: core:record-modifier got a record of a type different than record-type\n");
+	return record_set(args->car, args->cdr->car->string, args->cdr->cdr->car, args->cdr->cdr->cdr->car);
 }
 
 struct cell* nullp(struct cell* args)
@@ -1116,5 +1157,8 @@ void init_sl3()
 	spinup(make_sym("%version"), make_string("0.19"));
 	spinup(make_sym("vector=?"), make_prim(builtin_vectoreq));
 	spinup(make_sym("list=?"), make_prim(builtin_listeq));
-	spinup(make_sym("make-record"), make_prim(builtin_make_record));
+	spinup(make_sym("core:make-record"), make_prim(builtin_make_record));
+	spinup(make_sym("core:record-predicate"), make_prim(builtin_record_predicate));
+	spinup(make_sym("core:record-accessor"), make_prim(builtin_record_accessor));
+	spinup(make_sym("core:record-modifier"), make_prim(builtin_record_modifier));
 }
