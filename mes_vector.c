@@ -28,13 +28,6 @@ struct cell* equal(struct cell* a, struct cell* b);
 struct cell* vector_to_list(struct cell* a)
 {
 	require(VECTOR == a->type, "mes_vector.c: vector_to_list received non-vector\n");
-
-	struct cell* i = a->cdr;
-	while(NULL != i->cdr)
-	{
-		i = i->cdr;
-	}
-	i->cdr = nil;
 	return a->cdr;
 }
 
@@ -85,7 +78,6 @@ struct cell* list_to_vector(struct cell* i)
 		i = i->cdr;
 		count = count + 1;
 	}
-	i->cdr = NULL;
 	r->value = count;
 	return r;
 }
@@ -99,7 +91,7 @@ struct cell* vector_equal(struct cell* a, struct cell* b)
 
 	a = a->cdr;
 	b = b->cdr;
-	while(NULL != a)
+	while(nil != a)
 	{
 		if(cell_t != equal(a->car, b->car)) return cell_f;
 

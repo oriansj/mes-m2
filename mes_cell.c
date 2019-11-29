@@ -24,6 +24,7 @@
 /* Deal with the fact GCC converts the 1 to the size of the structs being iterated over */
 #define CELL_SIZE 1
 //CONSTANT CELL_SIZE sizeof(struct cell)
+struct cell* list_to_vector(struct cell* i);
 
 struct cell *free_cells;
 struct cell *gc_block_start;
@@ -294,11 +295,28 @@ struct cell* make_vector(int count, struct cell* init)
 	struct cell* i;
 	for(count = count - 1; count >= 0; count = count - 1)
 	{
-		i = make_cell(CONS, NULL, NULL, NULL);
+		i = make_cell(CONS, NULL, nil, NULL);
 		i->car = init;
 		c->cdr = i;
 		c = i;
 	}
+	return r;
+}
+
+struct cell* make_record(struct cell* type, struct cell* vector)
+{
+	struct cell* r = make_cell(RECORD, NULL, NULL, NULL);
+	r->car = type;
+	require(type->cdr->value == vector->value, "mes_cell.c: make_record received vector of wrong length\n");
+	r->cdr = vector;
+	return r;
+}
+
+struct cell* make_record_type(char* name, struct cell* list)
+{
+	struct cell* r = make_cell(RECORD_TYPE, NULL, NULL, NULL);
+	r->string = name;
+	r->cdr = list_to_vector(list);
 	return r;
 }
 

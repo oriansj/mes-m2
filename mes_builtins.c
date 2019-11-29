@@ -37,6 +37,8 @@ struct cell* make_file(FILE* a);
 struct cell* make_int(int a);
 struct cell* make_prim(void* fun);
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
+struct cell* make_record(struct cell* type, struct cell* vector);
+struct cell* make_record_type(char* name, struct cell* list);
 struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
 struct cell* make_sym(char* name);
@@ -59,6 +61,64 @@ struct cell* builtin_apply(struct cell* args)
 	require(nil != args->cdr, "mes_builtin.c: apply recieved insufficient arguments\n");
 	require(CONS == args->cdr->car->type, "mes_builtin.c: apply did not recieve a list\n");
 	return apply(args->car, args->cdr->car);
+}
+
+struct cell* builtin_make_record_type(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: make-record-type requires arguments\n");
+	require(nil != args->cdr, "mes_builtin.c: make-record-type received insufficient arguments\n");
+	require(STRING == args->car->type, "mes_builtin.c: make-record-type did not receive a string\n");
+	require(CONS == args->cdr->car->type, "mes_builtin.c: make-record-type did not receive a list\n");
+	return make_record_type(args->car->string, args->cdr->car);
+}
+
+struct cell* builtin_make_record(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: make-record requires arguments\n");
+	require(nil != args->cdr, "mes_builtin.c: make-record received insufficient arguments\n");
+	require(RECORD_TYPE == args->car->type, "mes_builtin.c: make-record did not receive a string\n");
+	require(VECTOR == args->cdr->car->type, "mes_builtin.c: make-record did not receive a vector\n");
+	return make_record(args->car, args->cdr->car);
+}
+
+struct cell* builtin_record_type_name(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: record-type-name requires an argument\n");
+	require(nil == args->cdr, "mes_builtin.c: record-type-name received too many arguments\n");
+	require(RECORD_TYPE == args->car->type, "mes_builtin.c: record-type-name did not receive a record-type\n");
+	return make_string(args->car->string);
+}
+
+struct cell* builtin_record_type_fields(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: record-type-fields requires an argument\n");
+	require(nil == args->cdr, "mes_builtin.c: record-type-fields received too many arguments\n");
+	require(RECORD_TYPE == args->car->type, "mes_builtin.c: record-type-fields did not receive a record-type\n");
+	return args->car->cdr->cdr;
+}
+
+struct cell* builtin_record_typep(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: record-type? requires an argument\n");
+	require(nil == args->cdr, "mes_builtin.c: record-type? received too many arguments\n");
+	if(RECORD_TYPE == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_recordp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: record? requires an argument\n");
+	require(nil == args->cdr, "mes_builtin.c: record? received too many arguments\n");
+	if(RECORD == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_record_type_descriptor(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: record-type-descriptor requires an argument\n");
+	require(nil == args->cdr, "mes_builtin.c: record-type-descriptor received too many arguments\n");
+	require(RECORD == args->car->type, "mes_builtin.c: record-type-descriptor did not receive a record\n");
+	return args->car->car;
 }
 
 struct cell* nullp(struct cell* args)
@@ -998,6 +1058,14 @@ void init_sl3()
 	spinup(make_sym("write"), make_prim(builtin_write));
 	spinup(make_sym("read-char"), make_prim(builtin_read_byte));
 
+	/* Deal with Records */
+	spinup(make_sym("make-record-type"), make_prim(builtin_make_record_type));
+	spinup(make_sym("record-type-name"), make_prim(builtin_record_type_name));
+	spinup(make_sym("record-type-fields"), make_prim(builtin_record_type_fields));
+	spinup(make_sym("record-type?"), make_prim(builtin_record_typep));
+	spinup(make_sym("record?"), make_prim(builtin_recordp));
+	spinup(make_sym("record-type-descriptor"), make_prim(builtin_record_type_descriptor));
+
 	/* Dealing with Lists */
 	spinup(make_sym("list"), make_prim(builtin_list));
 	spinup(make_sym("append"), make_prim(builtin_append));
@@ -1048,4 +1116,5 @@ void init_sl3()
 	spinup(make_sym("%version"), make_string("0.19"));
 	spinup(make_sym("vector=?"), make_prim(builtin_vectoreq));
 	spinup(make_sym("list=?"), make_prim(builtin_listeq));
+	spinup(make_sym("make-record"), make_prim(builtin_make_record));
 }

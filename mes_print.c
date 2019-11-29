@@ -104,6 +104,30 @@ void writeobj(FILE *output_file, struct cell* op, int write_p)
 	{
 		file_print("#<input>", output_file);
 	}
+	else if(RECORD == op->type)
+	{
+		file_print("#<", output_file);
+		file_print(op->car->string, output_file);
+		struct cell* title = op->car->cdr->cdr;
+		struct cell* content = op->cdr->cdr;
+
+		while(nil != title)
+		{
+			file_print(" ", output_file);
+			file_print(title->car->string, output_file);
+			file_print(": ", output_file);
+			writeobj(output_file, content->car, write_p);
+			title = title->cdr;
+			content = content->cdr;
+		}
+		file_print(">", output_file);
+	}
+	else if(RECORD_TYPE == op->type)
+	{
+		file_print("#<record-type ", output_file);
+		file_print(op->string, output_file);
+		file_print(">", output_file);
+	}
 	else if(EOF_object == op->type)
 	{
 		file_print("#<eof>", output_file);
