@@ -80,6 +80,7 @@ test: test000.answer \
 	test016.answer \
 	test017.answer \
 	test018.answer \
+	test019.answer \
 	test101.answer
 #	test100.answer \
 #	test102.answer \
@@ -173,6 +174,9 @@ test017.answer: results mes-m2
 
 test018.answer: results mes-m2
 	test/test018/hello.sh
+
+test019.answer: results mes-m2
+	test/test019/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh

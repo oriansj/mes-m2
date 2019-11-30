@@ -45,6 +45,7 @@ struct cell* make_sym(char* name);
 struct cell* make_vector(int count, struct cell* init);
 struct cell* prim_display(struct cell* args, FILE* out);
 struct cell* prim_write(struct cell* args, FILE* out);
+struct cell* record_construct(struct cell* type, struct cell* list_args, struct cell* list_vals);
 struct cell* record_ref(struct cell* type, char* name, struct cell* record);
 struct cell* record_set(struct cell* type, char* name, struct cell* record, struct cell* value);
 struct cell* string_eq(struct cell* a, struct cell* b);
@@ -160,6 +161,17 @@ struct cell* builtin_record_modifier(struct cell* args)
 	require(RECORD == args->cdr->cdr->car->type, "mes_builtin.c: core:record-modifier did not receive RECORD\n");
 	require(args->cdr->cdr->car->car == args->car, "mes_builtin.c: core:record-modifier got a record of a type different than record-type\n");
 	return record_set(args->car, args->cdr->car->string, args->cdr->cdr->car, args->cdr->cdr->cdr->car);
+}
+
+struct cell* builtin_record_constructor(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: core:record-constructor requires arguments\n");
+	require(nil != args->cdr, "mes_builtin.c: core:record-constructor requires more arguments\n");
+	require(nil != args->cdr->cdr, "mes_builtin.c: core:record-constructor requires more arguments\n");
+	require(RECORD_TYPE == args->car->type, "mes_builtin.c: core:record-constructor did not receive RECORD-TYPE\n");
+	require(CONS == args->cdr->car->type, "mes_builtin.c: core:record-constructor did not receive argument list\n");
+	require(CONS == args->cdr->cdr->car->type, "mes_builtin.c: core:record-constructor did not receive argument list\n");
+	return record_construct(args->car, args->cdr->car, args->cdr->cdr->car);
 }
 
 struct cell* nullp(struct cell* args)
@@ -1161,4 +1173,5 @@ void init_sl3()
 	spinup(make_sym("core:record-predicate"), make_prim(builtin_record_predicate));
 	spinup(make_sym("core:record-accessor"), make_prim(builtin_record_accessor));
 	spinup(make_sym("core:record-modifier"), make_prim(builtin_record_modifier));
+	spinup(make_sym("core:record-constructor"), make_prim(builtin_record_constructor));
 }
