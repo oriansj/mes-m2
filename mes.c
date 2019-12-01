@@ -198,7 +198,7 @@ int main(int argc, char **argv, char** envp)
 
 		file_print("mes: boot failed: no such file: ", stderr);
 		file_print(boot, stderr);
-		file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this cuurently broken code\n", stderr);
+		file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this currently broken code\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }
