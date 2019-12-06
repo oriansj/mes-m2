@@ -24,7 +24,7 @@ CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -D WITH_GLIBC=1
 
 
-mes-m2: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c mes_list.c mes_string.c mes_record.c | bin
+mes-m2: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c mes_list.c mes_string.c mes_record.c mes_init.c | bin
 	$(CC) $(CFLAGS) \
 	mes.h \
 	mes.c \
@@ -38,13 +38,14 @@ mes-m2: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c 
 	mes_list.c \
 	mes_string.c \
 	mes_record.c \
+	mes_init.c \
 	functions/numerate_number.c \
 	functions/match.c \
 	functions/file_print.c \
 	functions/envp.c \
 	-o bin/mes-m2
 
-mes: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c mes_list.c mes_string.c | bin
+mes: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c mes_list.c mes_string.c mes_record.c mes_init.c | bin
 	kaem --verbose --strict
 
 # Clean up after ourselves
