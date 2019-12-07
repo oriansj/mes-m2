@@ -80,6 +80,7 @@ struct cell* builtin_record_type_name(struct cell* args);
 struct cell* builtin_record_typep(struct cell* args);
 struct cell* builtin_recordp(struct cell* args);
 struct cell* builtin_rem(struct cell* args);
+struct cell* builtin_reverse(struct cell* args);
 struct cell* builtin_set_current_output_port(struct cell* args);
 struct cell* builtin_setcar(struct cell* args);
 struct cell* builtin_setcdr(struct cell* args);
@@ -262,6 +263,7 @@ void init_sl3()
 	spinup(make_sym("cons"), make_prim(builtin_cons));
 	spinup(make_sym("car"), make_prim(builtin_car));
 	spinup(make_sym("cdr"), make_prim(builtin_cdr));
+	spinup(make_sym("reverse"), make_prim(builtin_reverse));
 	spinup(make_sym("set-car!"), make_prim(builtin_setcar));
 	spinup(make_sym("set-cdr!"), make_prim(builtin_setcdr));
 	spinup(make_sym("apply"), make_prim(builtin_apply));

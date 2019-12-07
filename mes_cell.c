@@ -114,7 +114,7 @@ void relocate_cell(struct cell* current, struct cell* target, struct cell* list)
 			list->env = target;
 		}
 
-		if((list->type == CONS)|| list->type == PROC )
+		if((list->type == CONS)|| list->type == LAMBDA)
 		{
 			relocate_cell(current, target, list->car);
 		}
@@ -137,7 +137,7 @@ void compact(struct cell* list)
 			relocate_cell(list, temp, top_env);
 		}
 
-		if((list->type == CONS)|| list->type == PROC )
+		if((list->type == CONS)|| list->type == LAMBDA)
 		{
 			compact(list->car);
 		}
@@ -168,7 +168,7 @@ void unmark_cells(struct cell* list, struct cell* stop, int count)
 		if(list == stop) count = count + 1;
 		list->type = list->type & ~MARKED;
 
-		if(list->type == PROC)
+		if(list->type == LAMBDA)
 		{
 			unmark_cells(list->car, stop, count);
 			if(NULL != list->env)
@@ -277,7 +277,7 @@ struct cell* make_cons(struct cell* a, struct cell* b)
 
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env)
 {
-	return make_cell(PROC, a, b, env);
+	return make_cell(LAMBDA, a, b, env);
 }
 
 struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env)

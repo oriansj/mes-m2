@@ -22,7 +22,7 @@
 #include "mes.h"
 /* Imported functions */
 FILE* open_file(char* name, char* mode);
-struct cell* macro_apply(struct cell* exp, struct cell* env);
+struct cell* macro_apply(struct cell* exp, struct cell* vals);
 struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_char(int a);
 struct cell* make_eof();
@@ -149,15 +149,14 @@ struct cell* apply(struct cell* proc, struct cell* vals)
 		FUNCTION* fp = proc->function;
 		temp = fp(vals);
 	}
-	else if(proc->type == PROC)
+	else if(proc->type == LAMBDA)
 	{
 		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
 		temp = progn(proc->cdr, multiple_extend(env, proc->car, vals));
 	}
 	else if(proc->type == MACRO)
 	{
-		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
-		temp = macro_apply(proc->cdr, multiple_extend(env, proc->car, vals));
+		temp = macro_apply(proc->cdr, vals);
 	}
 	else
 	{

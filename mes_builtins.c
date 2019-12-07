@@ -262,7 +262,7 @@ struct cell* builtin_procedurep(struct cell* args)
 {
 	require(nil != args, "mes_builtin.c: procedure? requires arguments\n");
 	require(nil == args->cdr, "mes_builtin.c: procedure? recieved too many arguments\n");
-	if(PROC == args->car->type) return cell_t;
+	if(LAMBDA == args->car->type) return cell_t;
 	return cell_f;
 }
 
@@ -964,6 +964,21 @@ struct cell* builtin_list(struct cell* args)
 {
 	/* List is stupid, just return */
 	return args;
+}
+
+struct cell* reverse(struct cell* a, struct cell* b)
+{
+	require(CONS == a->type, "reverse did not receive a list\n");
+	if(nil == a->cdr) return make_cons(a->car, b);
+	require(CONS == a->cdr->type, "reverse did not receive a true list\n");
+	return reverse(a->cdr, make_cons(a->car, b));
+}
+
+struct cell* builtin_reverse(struct cell* args)
+{
+	require(nil != args, "reverse requires arguments\n");
+	require(nil == args->cdr, "reverse recieved too many arguments\n");
+	return reverse(args->car, nil);
 }
 
 struct cell* builtin_cons(struct cell* args)

@@ -61,7 +61,7 @@ void writeobj(FILE *output_file, struct cell* op, int write_p)
 	{
 		file_print("#<primitive>", output_file);
 	}
-	else if(PROC == op->type)
+	else if(LAMBDA == op->type)
 	{
 		file_print("#<procedure>", output_file);
 	}
