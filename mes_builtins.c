@@ -704,13 +704,13 @@ struct cell* builtin_display(struct cell* args)
 	if(nil == args->cdr)
 	{
 		prim_display(args, __stdout);
-		return NULL;
+		return cell_unspecified;
 	}
 
 	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
 
 	prim_display(args, args->cdr->car->file);
-	return NULL;
+	return cell_unspecified;
 }
 
 struct cell* builtin_display_error(struct cell* args)
@@ -719,12 +719,12 @@ struct cell* builtin_display_error(struct cell* args)
 	if(nil == args->cdr)
 	{
 		prim_display(args, __stderr);
-		return NULL;
+		return cell_unspecified;
 	}
 
 	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
 	prim_display(args, args->cdr->car->file);
-	return NULL;
+	return cell_unspecified;
 }
 
 struct cell* builtin_write(struct cell* args)
@@ -733,12 +733,12 @@ struct cell* builtin_write(struct cell* args)
 	if(nil == args->cdr)
 	{
 		prim_write(args, __stdout);
-		return NULL;
+		return cell_unspecified;
 	}
 	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
 
 	prim_write(args, args->cdr->car->file);
-	return NULL;
+	return cell_unspecified;
 }
 
 struct cell* builtin_write_error(struct cell* args)

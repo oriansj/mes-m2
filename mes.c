@@ -29,6 +29,7 @@ char* message;
 char* env_lookup(char* token, char** envp);
 char* string_append(char* a, char* b);
 int Readline(FILE* source_file, char* temp, unsigned max_string);
+struct cell* expand_macros();
 struct cell* parse(char* program, int size);
 void eval(struct cell* exp, struct cell* env);
 void garbage_collect();
@@ -58,12 +59,14 @@ int REPL()
 
 	/* Process S-expression */
 	R0 = parse(message, read);
-	/* TODO add macro processing here */
 	g_env = top_env;
+	/* perform macro processing here */
+	R0 = expand_macros();
+	/* now to eval what results */
 	eval(R0, g_env);
 
 	/* Print */
-	if((stdout == __stdout) && (NULL != R0))
+	if((stdout == __stdout) && (NULL != R0) && (cell_unspecified != R0))
 	{
 		writeobj(__stdout, R0);
 		fputc('\n', __stdout);

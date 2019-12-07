@@ -280,6 +280,12 @@ struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env)
 	return make_cell(PROC, a, b, env);
 }
 
+struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env)
+{
+	return make_cell(MACRO, a, b, env);
+}
+
+
 struct cell* make_prim(void* fun)
 {
 	struct cell* c = make_cell(PRIMOP, NULL, NULL, NULL);

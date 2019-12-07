@@ -22,6 +22,7 @@
 #include "mes.h"
 /* Imported functions */
 FILE* open_file(char* name, char* mode);
+struct cell* macro_apply(struct cell* exp, struct cell* env);
 struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_char(int a);
 struct cell* make_eof();
@@ -29,6 +30,7 @@ struct cell* make_file(FILE* a);
 struct cell* make_int(int a);
 struct cell* make_prim(void* fun);
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
+struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
 struct cell* make_sym(char* name);
@@ -152,6 +154,11 @@ struct cell* apply(struct cell* proc, struct cell* vals)
 		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
 		temp = progn(proc->cdr, multiple_extend(env, proc->car, vals));
 	}
+	else if(proc->type == MACRO)
+	{
+		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
+		temp = macro_apply(proc->cdr, multiple_extend(env, proc->car, vals));
+	}
 	else
 	{
 		file_print("Bad argument to apply\n", stderr);
@@ -199,6 +206,11 @@ struct cell* process_cons(struct cell* exp, struct cell* env);
 
 void eval(struct cell* exp, struct cell* env)
 {
+	if(NULL == exp)
+	{
+		R0 = NULL;
+		return;
+	}
 	if(exp == nil)
 	{
 		R0 = nil;
@@ -327,6 +339,7 @@ struct cell* process_cons(struct cell* exp, struct cell* env)
 	if(exp->car == s_cond) return evcond(exp->cdr, env);
 	if(exp->car == s_begin) return progn(exp->cdr, env);
 	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
+	if(exp->car == s_macro) return make_macro(exp->cdr->car, exp->cdr->cdr, env);
 	if(exp->car == quote) return exp->cdr->car;
 	if(exp->car == quasiquote) return process_quasiquote(exp->cdr->car, env);
 	if(exp->car == s_define) return process_define(exp, env);

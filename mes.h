@@ -47,6 +47,8 @@
 #define RECORD 20
 //CONSTANT RECORD_TYPE 22
 #define RECORD_TYPE 22
+//CONSTANT MACRO 1000
+#define MACRO 1000
 //CONSTANT EOF_object 1024
 #define EOF_object 1024
 
@@ -98,6 +100,8 @@ struct cell* s_cond;
 struct cell* s_begin;
 struct cell* s_let;
 struct cell* s_while;
+struct cell* s_macro;
+struct cell* s_define_macro;
 
 /* IO */
 FILE* __stdin;

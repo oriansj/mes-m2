@@ -134,7 +134,9 @@ void init_sl3()
 	s_if = make_sym("if");
 	s_cond = make_sym("cond");
 	s_lambda = make_sym("lambda");
+	s_macro = make_sym("macro");
 	s_define = make_sym("define");
+	s_define_macro = make_sym("define-macro");
 	s_setb = make_sym("set!");
 	s_begin = make_sym("begin");
 	s_let = make_sym("let");
@@ -156,7 +158,9 @@ void init_sl3()
 	spinup(s_if, s_if);
 	spinup(s_cond, s_cond);
 	spinup(s_lambda, s_lambda);
+	spinup(s_macro, s_macro);
 	spinup(s_define, s_define);
+	spinup(s_define_macro, s_define_macro);
 	spinup(s_setb, s_setb);
 	spinup(s_begin, s_begin);
 	spinup(s_let, s_let);
