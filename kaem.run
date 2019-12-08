@@ -33,6 +33,7 @@ M2-Planet --debug --architecture amd64 \
 	-f mes_string.c \
 	-f mes_record.c \
 	-f mes_init.c \
+	-f mes_macro.c \
 	-f functions/numerate_number.c \
 	-f functions/match.c \
 	-f functions/file_print.c \

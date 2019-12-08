@@ -168,11 +168,7 @@ struct cell* apply(struct cell* proc, struct cell* vals)
 
 struct cell* evcond(struct cell* exp, struct cell* env)
 {
-	/* Return nil but the result is technically undefined per the standard */
-	if(nil == exp)
-	{
-		return nil;
-	}
+	if(nil == exp) return cell_unspecified;
 
 	eval(exp->car->car, env);
 	if(cell_t == R0)
@@ -250,6 +246,7 @@ struct cell* process_if(struct cell* exp, struct cell* env)
 		return R0;
 	}
 
+	if(nil == exp->cdr->cdr->cdr) return cell_unspecified;
 	eval(exp->cdr->cdr->cdr->car, env);
 	return R0;
 

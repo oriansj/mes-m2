@@ -21,13 +21,15 @@
 
 #include "mes.h"
 
-struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env);
-void push_cell(struct cell* a);
-struct cell* pop_cell();
 struct cell* assoc(struct cell* key, struct cell* alist);
-struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* vals);
-struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
+struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env);
+struct cell* macro_progn(struct cell* exps, struct cell* env);
 struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env);
+struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
+struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* vals);
+struct cell* pop_cell();
+struct cell* reverse_list(struct cell* head);
+void push_cell(struct cell* a);
 
 struct cell* define_macro(struct cell* exp, struct cell* env)
 {
@@ -45,6 +47,49 @@ struct cell* define_macro(struct cell* exp, struct cell* env)
 struct cell* macro_apply(struct cell* exps, struct cell* vals);
 struct cell* macro_eval(struct cell* exps, struct cell* env);
 
+struct cell* expand_quasiquote(struct cell* exp, struct cell* env)
+{
+	struct cell* i = exp;
+	struct cell* f = NULL;
+	struct cell* h;
+	while(nil != i)
+	{
+		h = i->car;
+		if(CONS == i->car->type)
+		{
+			if(unquote == i->car->car)
+			{
+				macro_eval(i->car->cdr->car, env);
+				h = R0;
+			}
+			if(unquote_splicing == i->car->car)
+			{
+				macro_eval(i->car->cdr->car, env);
+				while((NULL != R0) && (nil != R0))
+				{
+					/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
+					/* Or restrict to just proper lists as the spec (r7rs) requires */
+					/* eg. `(foo bar ,@(+ 4 5)) */
+					require(CONS == R0->type, "unquote-splicing requires argument of type <proper list>\n");
+					f = make_cons(R0->car, f);
+					/* Simply convert require to if and the above */
+					/* else f = make_cons(R0, f); */
+					R0 = R0->cdr;
+				}
+				goto restart_expand_quasiquote;
+			}
+		}
+		f = make_cons(h, f);
+restart_expand_quasiquote:
+		i = i->cdr;
+	}
+	i = f;
+	f = reverse_list(f);
+	require(NULL != i, "Impossible quasiquote processed?\n");
+	i->cdr = nil;
+	return f;
+}
+
 struct cell* macro_list(struct cell* exps, struct cell* env)
 {
 	if(exps == nil) return nil;
@@ -54,15 +99,69 @@ struct cell* macro_list(struct cell* exps, struct cell* env)
 	return make_cons(i, j);
 }
 
+struct cell* expand_if(struct cell* exp, struct cell* env)
+{
+	R0 = macro_eval(exp->cdr->car, env);
+	if(R0 != cell_f)
+	{
+		R0 = macro_eval(exp->cdr->cdr->car, env);
+		return R0;
+	}
+
+	if(nil == exp->cdr->cdr->cdr) return cell_unspecified;
+	R0 = macro_eval(exp->cdr->cdr->cdr->car, env);
+	return R0;
+}
+
+struct cell* expand_cond(struct cell* exp, struct cell* env)
+{
+	if(nil == exp) return cell_unspecified;
+
+	macro_eval(exp->car->car, env);
+	if(cell_t == R0)
+	{
+		macro_eval(exp->car->cdr->car, env);
+		return R0;
+	}
+
+	return expand_cond(exp->cdr, env);
+}
+
+struct cell* expand_let(struct cell* exp, struct cell* env)
+{
+	struct cell* lets;
+	for(lets = exp->cdr->car; lets != nil; lets = lets->cdr)
+	{
+		macro_eval(lets->car->cdr->car, env);
+		env = make_cons(make_cons(lets->car->car, R0), env);
+	}
+	return macro_progn(exp->cdr->cdr, env);
+}
+
+struct cell* expand_define(struct cell* exp, struct cell* env)
+{
+	if(CONS == exp->cdr->car->type)
+	{
+		struct cell* fun = exp->cdr->cdr;
+		struct cell* arguments = exp->cdr->car->cdr;
+		struct cell* name = exp->cdr->car->car;
+		exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+	}
+
+	macro_eval(exp->cdr->cdr->car, env);
+	return(extend_env(exp->cdr->car, R0, env));
+}
+
 struct cell* expand_cons(struct cell* exp, struct cell* env)
 {
-//	if(exp->car == s_if) return expand_if(exp, env);
-//	if(exp->car == s_cond) return expand_cond(exp->cdr, env);
-//	if(exp->car == s_lambda) return expand_proc(exp->cdr->car, exp->cdr->cdr, env);
+	if(exp->car == s_if) return expand_if(exp, env);
+	if(exp->car == s_cond) return expand_cond(exp->cdr, env);
+	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
 	if(exp->car == quote) return exp->cdr->car;
 	if(exp->car == s_macro) return make_macro(exp->cdr->car, exp->cdr->cdr, env);
-//	if(exp->car == s_define) return expand_define(exp, env);
-//	if(exp->car == s_setb) return expand_setb(exp, env);
+	if(exp->car == s_define) return expand_define(exp, env);
+	if(exp->car == s_let) return expand_let(exp, env);
+	if(exp->car == quasiquote) return expand_quasiquote(exp->cdr->car, env);
 
 	R0 = macro_eval(exp->car, env);
 	push_cell(R0);
@@ -88,11 +187,11 @@ struct cell* macro_progn(struct cell* exps, struct cell* env)
 	if(exps == nil) return nil;
 
 	struct cell* result;
-progn_reset:
+macro_progn_reset:
 	result = macro_eval(exps->car, env);
 	if(exps->cdr == nil) return result;
 	exps = exps->cdr;
-	goto progn_reset;
+	goto macro_progn_reset;
 }
 
 struct cell* macro_apply(struct cell* proc, struct cell* vals)
