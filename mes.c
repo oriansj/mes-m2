@@ -36,7 +36,7 @@ void garbage_collect();
 void garbage_init(int number_of_cells);
 void init_sl3();
 void reset_block(char* a);
-void writeobj(FILE *ofp, struct cell* op);
+void writeobj(FILE *output_file, struct cell* op, int write_p);
 
 /* Deal with common errors */
 void require(int bool, char* error)
@@ -68,7 +68,7 @@ int REPL()
 	/* Print */
 	if((stdout == __stdout) && (NULL != R0) && (cell_unspecified != R0))
 	{
-		writeobj(__stdout, R0);
+		writeobj(__stdout, R0, TRUE);
 		fputc('\n', __stdout);
 	}
 	return FALSE;
