@@ -24,24 +24,25 @@
 /* Imported functions */
 FILE* open_file(char* name, char* mode);
 char* list_to_string(struct cell* args);
+char* ntoab(SCM x, int base, int signed_p);
+int REPL();
 int list_length(struct cell* args);
 struct cell* append(struct cell* a, struct cell* b);
 struct cell* apply(struct cell* proc, struct cell* vals);
+struct cell* assoc(struct cell* key, struct cell* alist);
 struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value);
 struct cell* list_equal(struct cell* a, struct cell* b);
 struct cell* list_to_vector(struct cell* i);
 struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_char(int a);
 struct cell* make_eof();
-struct cell* make_file(FILE* a);
+struct cell* make_file(FILE* a, char* name);
 struct cell* make_int(int a);
 struct cell* make_record(struct cell* type, struct cell* vector);
 struct cell* make_record_type(char* name, struct cell* list);
 struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
 struct cell* make_vector(int count, struct cell* init);
-struct cell* prim_display(struct cell* args, FILE* out);
-struct cell* prim_write(struct cell* args, FILE* out);
 struct cell* record_construct(struct cell* type, struct cell* list_args, struct cell* list_vals);
 struct cell* record_ref(struct cell* type, char* name, struct cell* record);
 struct cell* record_set(struct cell* type, char* name, struct cell* record, struct cell* value);
@@ -199,6 +200,8 @@ struct cell* symbolp(struct cell* args)
 {
 	require(nil != args, "mes_builtin.c: symbol? requires arguments\n");
 	require(nil == args->cdr, "mes_builtin.c: symbol? recieved too many arguments\n");
+
+	if(nil == args->car) return cell_f;
 	if(SYM == args->car->type) return cell_t;
 	return cell_f;
 }
@@ -272,6 +275,17 @@ struct cell* builtin_eofp (struct cell* args)
 	require(nil == args->cdr, "mes_builtin.c: eof? recieved too many arguments\n");
 
 	if(EOF_object == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_definedp(struct cell* args)
+{
+	require(nil != args, "mes_builtin.c: defined? requires arguments\n");
+	require(nil == args->cdr, "mes_builtin.c: defined? recieved too many arguments\n");
+	require(SYM == args->car->type, "mes_builtin.c: defined? did not receive a symbol\n");
+
+	struct cell* hold = assoc(args->car, g_env);
+	if(NULL != hold->cdr) return cell_t;
 	return cell_f;
 }
 
@@ -698,61 +712,6 @@ struct cell* builtin_equal(struct cell* args)
 	return cell_t;
 }
 
-struct cell* builtin_display(struct cell* args)
-{
-	require(nil != args, "mes_builtin.c: builtin_display requires arguments\n");
-	if(nil == args->cdr)
-	{
-		prim_display(args, __stdout);
-		return cell_unspecified;
-	}
-
-	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
-
-	prim_display(args, args->cdr->car->file);
-	return cell_unspecified;
-}
-
-struct cell* builtin_display_error(struct cell* args)
-{
-	require(nil != args, "mes_builtin.c: builtin_display_error requires arguments\n");
-	if(nil == args->cdr)
-	{
-		prim_display(args, __stderr);
-		return cell_unspecified;
-	}
-
-	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
-	prim_display(args, args->cdr->car->file);
-	return cell_unspecified;
-}
-
-struct cell* builtin_write(struct cell* args)
-{
-	require(nil != args, "mes_builtin.c: builtin_write requires arguments\n");
-	if(nil == args->cdr)
-	{
-		prim_write(args, __stdout);
-		return cell_unspecified;
-	}
-	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
-
-	prim_write(args, args->cdr->car->file);
-	return cell_unspecified;
-}
-
-struct cell* builtin_write_error(struct cell* args)
-{
-	require(nil != args, "mes_builtin.c: builtin_write_error requires arguments\n");
-	if(nil == args->cdr)
-	{
-		return prim_write(args, __stderr);
-	}
-
-	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
-	return prim_write(args, args->cdr->car->file);
-}
-
 struct cell* builtin_make_vector(struct cell* args)
 {
 	require(nil != args, "make-vector requires arguments\n");
@@ -897,9 +856,13 @@ struct cell* builtin_symbol_to_string(struct cell* args)
 struct cell* builtin_number_to_string(struct cell* args)
 {
 	require(nil != args, "number->string requires an argument\n");
-	require(nil == args->cdr, "number->string only supports a single argument (currently)\n");
 	require(INT == args->car->type, "number->string requires an integer\n");
-	return make_string(numerate_number(args->car->value));
+	if(nil == args->cdr) return make_string(ntoab(args->car->value, 10, TRUE));
+	require(INT == args->cdr->car->type, "number->string only accepts integer ranges\n");
+	require(2 <= args->cdr->car->value, "number->string Value out of range 2 to 36\n");
+	require(36 >= args->cdr->car->value, "number->string Value out of range 2 to 36\n");
+	require(nil == args->cdr->cdr, "number->string does not support more than 2 arguments\n");
+	return make_string(ntoab(args->car->value, args->cdr->car->value, TRUE));
 }
 
 struct cell* builtin_number_to_char(struct cell* args)
@@ -918,34 +881,35 @@ struct cell* builtin_char_to_number(struct cell* args)
 	return make_int(args->car->value);
 }
 
-struct cell* builtin_open(struct cell* args, char* mode)
+
+
+struct cell* builtin_primitive_load(struct cell* args)
 {
-	require(nil != args, "Did not recieve a file name\n");
-	require(STRING == args->car->type, "File name must be a string\n");
+	require(nil != args, "primitive-load requires an argument\n");
+	require(STRING == args->car->type, "primitive-load requires a string\n");
+	require(nil == args->cdr, "primitive-load only accepts one argument\n");
 
-	return make_file(open_file(args->car->string, mode));
-}
+	int Reached_EOF= FALSE;
+	struct cell* hold =make_file(__stdin->file, __stdin->string);
 
+	__stdin->string = args->car->string;
+	__stdin->file = open_file(args->car->string, "r");
+	require(NULL != __stdin->file, "primitive-load failed to open file\n");
 
-struct cell* builtin_open_read(struct cell* args)
-{
-	return builtin_open(args, "r");
-}
+	while(!Reached_EOF)
+	{
+		garbage_collect();
+		Reached_EOF = REPL();
+	}
 
-struct cell* builtin_open_write(struct cell* args)
-{
-	return builtin_open(args, "w");
-}
-
-struct cell* builtin_set_current_output_port(struct cell* args)
-{
-	__stdout = args->car->file;
-	return NULL;
+	__stdin->file = hold->file;
+	__stdin->string = hold->string;
+	return cell_unspecified;
 }
 
 struct cell* builtin_read_byte(struct cell* args)
 {
-	if(nil == args) return make_char(fgetc(__stdin));
+	if(nil == args) return make_char(fgetc(__stdin->file));
 	else if(FILE_PORT == args->car->type)
 	{
 		int c = fgetc(args->car->file);

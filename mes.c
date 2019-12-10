@@ -26,6 +26,7 @@
 char* message;
 
 /* Prototypes */
+FILE* open_file(char* name, char* mode);
 char* env_lookup(char* token, char** envp);
 char* string_append(char* a, char* b);
 int Readline(FILE* source_file, char* temp, unsigned max_string);
@@ -36,7 +37,7 @@ void garbage_collect();
 void garbage_init(int number_of_cells);
 void init_sl3();
 void reset_block(char* a);
-void writeobj(FILE *output_file, struct cell* op, int write_p);
+void writeobj(struct cell* output_file, struct cell* op, int write_p);
 
 /* Deal with common errors */
 void require(int bool, char* error)
@@ -54,7 +55,7 @@ int REPL()
 	int read;
 	/* Read S-Expression block */
 	reset_block(message);
-	read = Readline(__stdin, message, MAX_STRING);
+	read = Readline(__stdin->file, message, MAX_STRING);
 	if(0 == read) return TRUE;
 
 	/* Process S-expression */
@@ -66,47 +67,32 @@ int REPL()
 	eval(R0, g_env);
 
 	/* Print */
-	if((stdout == __stdout) && (NULL != R0) && (cell_unspecified != R0))
+	if((stdout == __stdout->file) && (NULL != R0) && (cell_unspecified != R0))
 	{
 		writeobj(__stdout, R0, TRUE);
-		fputc('\n', __stdout);
+		fputc('\n', __stdout->file);
 	}
 	return FALSE;
 }
 
-FILE* open_file(char* name, char* mode)
-{
-	FILE* f = fopen(name, mode);
-
-	if(NULL == f)
-	{
-		file_print("Unable to open file ", stderr);
-		file_print(name, stderr);
-		if('r' == mode[0])
-		{
-			file_print(" for reading\n", stderr);
-		}
-		else if('w' == mode[0])
-		{
-			file_print(" for writing\n", stderr);
-		}
-		else
-		{
-			file_print(" with unknown mode\n", stderr);
-		}
-		exit(EXIT_FAILURE);
-	}
-
-	return f;
-}
-
-
 int main(int argc, char **argv, char** envp)
 {
+	__envp = envp;
 	stack_pointer = 0;
-	__stdin = stdin;
-	__stdout = stdout;
-	__stderr = stderr;
+	__stdin = calloc(1, sizeof(struct cell));
+	__stdin->type = FILE_PORT;
+	__stdin->file = stdin;
+	__stdin->string = "/dev/stdin";
+
+	__stdout = calloc(1, sizeof(struct cell));
+	__stdout->type = FILE_PORT;
+	__stdout->file = stdout;
+	__stdout->string = "/dev/stdout";
+
+	__stderr = calloc(1, sizeof(struct cell));
+	__stderr->type = FILE_PORT;
+	__stderr->file = stderr;
+	__stderr->string = "/dev/stderr";
 	int Reached_EOF;
 
 	int arena = numerate_string(env_lookup("MES_ARENA", envp));
@@ -138,7 +124,8 @@ int main(int argc, char **argv, char** envp)
 			{
 				Reached_EOF = FALSE;
 				name = argv[i + 1];
-				__stdin = fopen(name, "r");
+				__stdin->string = name;
+				__stdin->file = fopen(name, "r");
 				while(!Reached_EOF)
 				{
 					garbage_collect();
@@ -150,7 +137,8 @@ int main(int argc, char **argv, char** envp)
 			{
 				Reached_EOF = FALSE;
 				name = argv[i + 1];
-				__stdin = fopen(name, "r");
+				__stdin->string = name;
+				__stdin->file = fopen(name, "r");
 				while(!Reached_EOF)
 				{
 					garbage_collect();
@@ -168,15 +156,17 @@ int main(int argc, char **argv, char** envp)
 		}
 
 		Reached_EOF = FALSE;
-		__stdin = stdin;
-		__stdout = stdout;
+		__stdin->file = stdin;
+		__stdin->string = "STDIN";
+		__stdout->file = stdout;
+		__stdout->string = "STDOUT";
 		while(!Reached_EOF)
 		{
 			garbage_collect();
 			Reached_EOF = REPL();
 		}
-		fclose(__stdout);
-		return 0;
+		fclose(__stdout->file);
+		exit(EXIT_SUCCESS);
 	}
 	else
 	{
@@ -192,16 +182,23 @@ int main(int argc, char **argv, char** envp)
 
 		char* boot = string_append(mes_path, mes_boot);
 		Reached_EOF = FALSE;
-		__stdin = fopen(boot, "r");
-		while((NULL != __stdin) && (!Reached_EOF))
+		__stdin->file = fopen(boot, "r");
+		__stdin->string = boot;
+		if(NULL != __stdin->file)
 		{
-			garbage_collect();
-			Reached_EOF = REPL();
+			while(!Reached_EOF)
+			{
+				garbage_collect();
+				Reached_EOF = REPL();
+			}
 		}
-
-		file_print("mes: boot failed: no such file: ", stderr);
-		file_print(boot, stderr);
-		file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this currently broken code\n", stderr);
-		exit(EXIT_FAILURE);
+		else
+		{
+			file_print("mes: boot failed: no such file: ", stderr);
+			file_print(boot, stderr);
+			file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this currently broken code\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		exit(EXIT_SUCCESS);
 	}
 }

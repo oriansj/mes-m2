@@ -177,7 +177,7 @@ void unmark_cells(struct cell* list, struct cell* stop, int count)
 			}
 		}
 
-		if(list->type == CONS)
+		if((list->type == CONS) || (list->type == RECORD))
 		{
 			unmark_cells(list->car, stop, count);
 		}
@@ -242,10 +242,11 @@ struct cell* make_int(int a)
 	return c;
 }
 
-struct cell* make_file(FILE* a)
+struct cell* make_file(FILE* a, char* name)
 {
 	struct cell* c = make_cell(FILE_PORT, NULL, NULL, NULL);
 	c->file = a;
+	c->string = name;
 	return c;
 }
 

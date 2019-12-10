@@ -32,6 +32,10 @@ struct cell* builtin_char_to_number(struct cell* args);
 struct cell* builtin_chareq(struct cell* args);
 struct cell* builtin_charp(struct cell* args);
 struct cell* builtin_cons(struct cell* args);
+struct cell* builtin_current_error_port(struct cell* args);
+struct cell* builtin_current_input_port(struct cell* args);
+struct cell* builtin_current_output_port(struct cell* args);
+struct cell* builtin_definedp(struct cell* args);
 struct cell* builtin_display(struct cell* args);
 struct cell* builtin_display_error(struct cell* args);
 struct cell* builtin_div(struct cell* args);
@@ -39,6 +43,7 @@ struct cell* builtin_eofp (struct cell* args);
 struct cell* builtin_eq(struct cell* args);
 struct cell* builtin_equal(struct cell* args);
 struct cell* builtin_freecell(struct cell* args);
+struct cell* builtin_get_env(struct cell* args);
 struct cell* builtin_halt(struct cell* args);
 struct cell* builtin_intp(struct cell* args);
 struct cell* builtin_list(struct cell* args);
@@ -66,6 +71,7 @@ struct cell* builtin_numlt(struct cell* args);
 struct cell* builtin_open_read(struct cell* args);
 struct cell* builtin_open_write(struct cell* args);
 struct cell* builtin_or(struct cell* args);
+struct cell* builtin_primitive_load(struct cell* args);
 struct cell* builtin_primitivep(struct cell* args);
 struct cell* builtin_procedurep(struct cell* args);
 struct cell* builtin_prod(struct cell* args);
@@ -81,6 +87,8 @@ struct cell* builtin_record_typep(struct cell* args);
 struct cell* builtin_recordp(struct cell* args);
 struct cell* builtin_rem(struct cell* args);
 struct cell* builtin_reverse(struct cell* args);
+struct cell* builtin_set_current_error_port(struct cell* args);
+struct cell* builtin_set_current_input_port(struct cell* args);
 struct cell* builtin_set_current_output_port(struct cell* args);
 struct cell* builtin_setcar(struct cell* args);
 struct cell* builtin_setcdr(struct cell* args);
@@ -181,6 +189,7 @@ void init_sl3()
 	spinup(make_sym("string?"), make_prim(builtin_stringp));
 	spinup(make_sym("symbol?"), make_prim(symbolp));
 	spinup(make_sym("vector?"), make_prim(builtin_vectorp));
+	spinup(make_sym("defined?"), make_prim(builtin_definedp));
 
 	/* Comparisions */
 	spinup(make_sym("<"), make_prim(builtin_numlt));
@@ -210,10 +219,16 @@ void init_sl3()
 	spinup(make_sym("open-input-file"), make_prim(builtin_open_read));
 	spinup(make_sym("open-output-file"), make_prim(builtin_open_write));
 	spinup(make_sym("set-current-output-port"), make_prim(builtin_set_current_output_port));
+	spinup(make_sym("set-current-input-port"), make_prim(builtin_set_current_input_port));
+	spinup(make_sym("set-current-error-port"), make_prim(builtin_set_current_error_port));
+	spinup(make_sym("current-output-port"), make_prim(builtin_current_output_port));
+	spinup(make_sym("current-input-port"), make_prim(builtin_current_input_port));
+	spinup(make_sym("current-error-port"), make_prim(builtin_current_error_port));
 	spinup(make_sym("display"), make_prim(builtin_display));
 	spinup(make_sym("display-error"), make_prim(builtin_display_error));
 	spinup(make_sym("write"), make_prim(builtin_write));
 	spinup(make_sym("read-char"), make_prim(builtin_read_byte));
+	spinup(make_sym("primitive-load"), make_prim(builtin_primitive_load));
 
 	/* Deal with Records */
 	spinup(make_sym("make-record-type"), make_prim(builtin_make_record_type));
@@ -258,6 +273,9 @@ void init_sl3()
 	spinup(make_sym("not"), make_prim(builtin_not));
 	spinup(make_sym("and"), make_prim(builtin_and));
 	spinup(make_sym("or"), make_prim(builtin_or));
+
+	/* Deal with environment */
+	spinup(make_sym("getenv"), make_prim(builtin_get_env));
 
 	/* Lisp classics */
 	spinup(make_sym("cons"), make_prim(builtin_cons));

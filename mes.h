@@ -66,10 +66,13 @@ struct cell
 		int value;
 		char* string;
 		FUNCTION* function;
-		FILE* file;
 	};
 	struct cell* cdr;
-	struct cell* env;
+	union
+	{
+		struct cell* env;
+		FILE* file;
+	};
 };
 
 /* Common functions */
@@ -104,9 +107,9 @@ struct cell* s_macro;
 struct cell* s_define_macro;
 
 /* IO */
-FILE* __stdin;
-FILE* __stdout;
-FILE* __stderr;
+struct cell* __stdin;
+struct cell* __stdout;
+struct cell* __stderr;
 
 /* Garbage Collection */
 int left_to_take;
@@ -118,3 +121,4 @@ struct cell* R0;
 struct cell* R1;
 struct cell* g_env;
 unsigned stack_pointer;
+char** __envp;
