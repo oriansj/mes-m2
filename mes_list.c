@@ -20,8 +20,13 @@
  */
 
 #include "mes.h"
-struct cell* make_char(int a);
+
+/* Imported functions */
 struct cell* equal(struct cell* a, struct cell* b);
+struct cell* make_char(int a);
+struct cell* make_int(int a);
+struct cell* make_string(char* a);
+struct cell* make_sym(char* name);
 
 struct cell* string_to_list(char* string)
 {
@@ -90,4 +95,111 @@ struct cell* list_equal(struct cell* a, struct cell* b)
 
 	if(a != b) return cell_f;
 	return cell_t;
+}
+
+struct cell* reverse(struct cell* a, struct cell* b)
+{
+	require(CONS == a->type, "reverse did not receive a list\n");
+	if(nil == a->cdr) return make_cons(a->car, b);
+	require(CONS == a->cdr->type, "reverse did not receive a true list\n");
+	return reverse(a->cdr, make_cons(a->car, b));
+}
+
+
+/* Exposed primitives */
+struct cell* builtin_listp(struct cell* args)
+{
+	require(nil != args, "list? requires arguments\n");
+	require(nil == args->cdr, "list? recieved too many arguments\n");
+
+	struct cell* i = args->car;
+	while(nil != i)
+	{
+		if(CONS != i->type) return cell_f;
+		i = i->cdr;
+	}
+
+	return cell_t;
+}
+
+struct cell* builtin_append(struct cell* args)
+{
+	if(nil == args) return nil;
+	require(((nil == args->car) || (CONS == args->car->type)), "append requires a list\n");
+	if(nil == args->cdr) return args->car;
+	require(((nil == args->car) || (CONS == args->car->type)), "append requires a list argument\n");
+	return append(args->car, args->cdr->car);
+}
+
+struct cell* builtin_listeq(struct cell* args)
+{
+	require(nil != args, "list=? requires arguments\n");
+
+	require(CONS == args->car->type, "list=? received non-list\n");
+	struct cell* temp = args->car;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		require(CONS == args->car->type, "list=? received non-list\n");
+		if(cell_t != list_equal(temp, args->car))
+		{
+			return cell_f;
+		}
+	}
+	return cell_t;
+}
+
+struct cell* builtin_string_to_list(struct cell* args)
+{
+	require(nil != args, "string->list requires arguments\n");
+	require(STRING == args->car->type, "mes-builtin.c: string->list did not receive a string\n");
+
+	struct cell* r = string_to_list(args->car->string);
+	if(nil == args->cdr)
+	{
+		return r;
+	}
+
+	require(INT == args->cdr->car->type, "string->list only accepts integers\n");
+	int i = args->cdr->car->value;
+	require(0 <= i, "string->list invalid index\n");
+	while(0 != i)
+	{
+		require(nil != r, "string->list index too large\n");
+		r = r->cdr;
+		i = i - 1;
+	}
+	return r;
+}
+
+struct cell* builtin_list_length(struct cell* args)
+{
+	require(nil != args, "list-length requires arguments\n");
+	return make_int(list_length(args));
+}
+
+struct cell* builtin_list_to_string(struct cell* args)
+{
+	require(nil != args, "list->string requires an argument\n");
+	require(nil == args->cdr, "list->string only allows a single argument\n");
+	return make_string(list_to_string(args));
+}
+
+struct cell* builtin_list_to_symbol(struct cell* args)
+{
+	require(nil != args, "list->symbol requires an argument\n");
+	require(nil == args->cdr, "list->symbol only allows a single argument\n");
+	return make_sym(list_to_string(args));
+}
+
+struct cell* builtin_list(struct cell* args)
+{
+	/* List is stupid, just return */
+	return args;
+}
+
+struct cell* builtin_reverse(struct cell* args)
+{
+	require(nil != args, "reverse requires arguments\n");
+	require(nil == args->cdr, "reverse recieved too many arguments\n");
+	return reverse(args->car, nil);
 }

@@ -22,6 +22,7 @@
 #include "mes.h"
 
 /* Imported functions */
+struct cell* make_int(int a);
 struct cell* make_vector(int count, struct cell* init);
 struct cell* equal(struct cell* a, struct cell* b);
 
@@ -100,4 +101,84 @@ struct cell* vector_equal(struct cell* a, struct cell* b)
 	}
 
 	return cell_t;
+}
+
+
+/* Exposed primitives */
+struct cell* builtin_vectoreq(struct cell* args)
+{
+	require(nil != args, "vector=? requires arguments\n");
+
+	require(VECTOR == args->car->type, "vector=? received non-vector\n");
+	struct cell* temp = args->car;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		require(VECTOR == args->car->type, "vector=? received non-vector\n");
+		if(cell_t != vector_equal(temp, args->car))
+		{
+			return cell_f;
+		}
+	}
+	return cell_t;
+}
+
+struct cell* builtin_make_vector(struct cell* args)
+{
+	require(nil != args, "make-vector requires arguments\n");
+	require(INT == args->car->type, "make-vector requires a numerical argument\n");
+	require(0 <= args->car->value, "make-vector requires a number >= 0\n");
+	if(nil == args->cdr) return make_vector(args->car->value, cell_unspecified);
+
+	require(nil == args->cdr->cdr, "make-vector recieved too many arguments\n");
+	return make_vector(args->car->value, args->cdr->car);
+}
+
+struct cell* builtin_vector_length(struct cell* args)
+{
+	require(nil != args, "vector-length requires an argument\n");
+	return make_int(args->car->value);
+}
+
+struct cell* builtin_vector_ref(struct cell* args)
+{
+	require(nil != args, "vector-ref requires an argument\n");
+	require(nil != args->cdr, "vector-ref requires an argument\n");
+	require(nil == args->cdr->cdr, "vector-ref received too many arguments\n");
+	require(VECTOR == args->car->type, "vector-ref did not receive vector\n");
+	require(INT == args->cdr->car->type, "vector-ref did not receive index\n");
+	return vector_ref(args->car, args->cdr->car->value);
+}
+
+struct cell* builtin_vector_set(struct cell* args)
+{
+	require(nil != args, "vector-set! requires an argument\n");
+	require(nil != args->cdr, "vector-set! requires a second argument\n");
+	require(nil != args->cdr->cdr, "vector-set! requires a third argument\n");
+	require(nil == args->cdr->cdr->cdr, "vector-set! recieved too many argument\n");
+	require(VECTOR == args->car->type, "vector-set! did not receive a vector\n");
+	require(INT == args->cdr->car->type, "vector-set! did not receive an index\n");
+	return vector_set(args->car, args->cdr->car->value, args->cdr->cdr->car);
+}
+
+struct cell* builtin_vector_to_list(struct cell* args)
+{
+	require(nil != args, "vector->list! requires an argument\n");
+	require(VECTOR == args->car->type, "vector->list! ");
+	require(nil == args->cdr, "vector-set! too many arguments\n");
+	return vector_to_list(args->car);
+}
+
+struct cell* builtin_list_to_vector(struct cell* args)
+{
+	require(nil != args, "list->vector requires an argument\n");
+	require(nil == args->cdr, "list->vector only allows a single argument\n");
+	return list_to_vector(args->car);
+}
+
+struct cell* builtin_vectorp(struct cell* args)
+{
+	require(nil != args, "vector? requires arguments\n");
+	require(nil == args->cdr, "vector? recieved too many arguments\n");
+	if(VECTOR == args->car->type) return cell_t;
+	return cell_f;
 }

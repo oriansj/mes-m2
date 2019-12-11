@@ -104,15 +104,29 @@ struct cell* assoc(struct cell* key, struct cell* alist)
 /*** Stack for passing of arguments ***/
 void push_cell(struct cell* a)
 {
-	g_stack[stack_pointer] = a;
+	struct cell* s = g_stack[stack_pointer];
+
+	if(NULL == s)
+	{
+		s = make_cell(0, NULL, NULL, NULL);
+		g_stack[stack_pointer] = s;
+	}
+
 	stack_pointer = stack_pointer + 1;
+
+	/* Copy Over values */
+	s->type = a->type;
+	s->car = a->car;
+	s->cdr = a->cdr;
+	s->env = a->env;
 }
 
 struct cell* pop_cell()
 {
 	stack_pointer = stack_pointer - 1;
 	struct cell* r = g_stack[stack_pointer];
-	g_stack[stack_pointer] = 0;
+	g_stack[stack_pointer] = NULL;
+
 	return r;
 }
 
@@ -348,4 +362,30 @@ struct cell* process_cons(struct cell* exp, struct cell* env)
 	R1 = evlis(exp->cdr, env);
 	R0 = pop_cell();
 	return apply(R0, R1);
+}
+
+
+/* Exposed primitives */
+struct cell* builtin_apply(struct cell* args)
+{
+	require(nil != args, "apply requires arguments\n");
+	require(nil != args->cdr, "apply recieved insufficient arguments\n");
+	require(CONS == args->cdr->car->type, "apply did not recieve a list\n");
+	return apply(args->car, args->cdr->car);
+}
+
+struct cell* builtin_primitive_eval(struct cell* args)
+{
+	require(nil != args, "primitive-eval requires an argument\n");
+	require(nil == args->cdr, "primitive-eval received too many arguments\n");
+
+	push_cell(R0);
+	push_cell(R1);
+	push_cell(g_env);
+	eval(args->car, primitive_env);
+	struct cell* r = R0;
+	g_env = pop_cell();
+	R1 = pop_cell();
+	R0 = pop_cell();
+	return r;
 }

@@ -21,6 +21,7 @@
 
 #include "mes.h"
 
+/* Imported functions */
 struct cell* assoc(struct cell* key, struct cell* alist);
 struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env);
 struct cell* macro_progn(struct cell* exps, struct cell* env);

@@ -31,11 +31,14 @@ char* env_lookup(char* token, char** envp);
 char* string_append(char* a, char* b);
 int Readline(FILE* source_file, char* temp, unsigned max_string);
 struct cell* expand_macros(struct cell* exps);
+struct cell* make_file(FILE* a, char* name);
 struct cell* parse(char* program, int size);
+struct cell* pop_cell();
 void eval(struct cell* exp, struct cell* env);
 void garbage_collect();
 void garbage_init(int number_of_cells);
 void init_sl3();
+void push_cell(struct cell* a);
 void reset_block(char* a);
 void writeobj(struct cell* output_file, struct cell* op, int write_p);
 
@@ -75,25 +78,30 @@ int REPL()
 	return FALSE;
 }
 
+/* The foundational loader */
+struct cell* load_file(char* s)
+{
+	int Reached_EOF = FALSE;
+	push_cell(__stdin);
+
+	/* Punt on bad inputs */
+	FILE* f = fopen(s, "r");
+	if(NULL == f) return cell_unspecified;
+
+	__stdin = make_file(f, s);
+	while(!Reached_EOF)
+	{
+		garbage_collect();
+		Reached_EOF = REPL();
+	}
+	__stdin = pop_cell();
+	return cell_t;
+}
+
 int main(int argc, char **argv, char** envp)
 {
 	__envp = envp;
 	stack_pointer = 0;
-	__stdin = calloc(1, sizeof(struct cell));
-	__stdin->type = FILE_PORT;
-	__stdin->file = stdin;
-	__stdin->string = "/dev/stdin";
-
-	__stdout = calloc(1, sizeof(struct cell));
-	__stdout->type = FILE_PORT;
-	__stdout->file = stdout;
-	__stdout->string = "/dev/stdout";
-
-	__stderr = calloc(1, sizeof(struct cell));
-	__stderr->type = FILE_PORT;
-	__stderr->file = stderr;
-	__stderr->string = "/dev/stderr";
-	int Reached_EOF;
 
 	int arena = numerate_string(env_lookup("MES_ARENA", envp));
 	if(0 == arena) arena = 1000000;
@@ -108,11 +116,14 @@ int main(int argc, char **argv, char** envp)
 	init_sl3();
 	g_stack = calloc(stack, sizeof(struct cell*));
 
+	/* Initialization: stdin, stdout and stderr */
+	__stdin = make_file(stdin, "/dev/stdin");
+	__stdout = make_file(stdout, "/dev/stdout");
+	__stderr = make_file(stderr, "/dev/stderr");
+
 	char* testing = env_lookup("MES_CORE", envp);
 	if(NULL != testing)
 	{
-		char* name;
-
 		int i = 1;
 		while(i <= argc)
 		{
@@ -122,28 +133,12 @@ int main(int argc, char **argv, char** envp)
 			}
 			else if(match(argv[i], "--boot"))
 			{
-				Reached_EOF = FALSE;
-				name = argv[i + 1];
-				__stdin->string = name;
-				__stdin->file = fopen(name, "r");
-				while(!Reached_EOF)
-				{
-					garbage_collect();
-					Reached_EOF = REPL();
-				}
+				load_file(argv[i + 1]);
 				i = i + 2;
 			}
 			else if(match(argv[i], "-f") || match(argv[i], "--file"))
 			{
-				Reached_EOF = FALSE;
-				name = argv[i + 1];
-				__stdin->string = name;
-				__stdin->file = fopen(name, "r");
-				while(!Reached_EOF)
-				{
-					garbage_collect();
-					Reached_EOF = REPL();
-				}
+				load_file(argv[i + 1]);
 				i = i + 2;
 			}
 			else
@@ -155,17 +150,7 @@ int main(int argc, char **argv, char** envp)
 			}
 		}
 
-		Reached_EOF = FALSE;
-		__stdin->file = stdin;
-		__stdin->string = "STDIN";
-		__stdout->file = stdout;
-		__stdout->string = "STDOUT";
-		while(!Reached_EOF)
-		{
-			garbage_collect();
-			Reached_EOF = REPL();
-		}
-		fclose(__stdout->file);
+		load_file("/dev/stdin");
 		exit(EXIT_SUCCESS);
 	}
 	else
@@ -181,24 +166,11 @@ int main(int argc, char **argv, char** envp)
 		mes_path = string_append(mes_path, "/module/mes/");
 
 		char* boot = string_append(mes_path, mes_boot);
-		Reached_EOF = FALSE;
-		__stdin->file = fopen(boot, "r");
-		__stdin->string = boot;
-		if(NULL != __stdin->file)
-		{
-			while(!Reached_EOF)
-			{
-				garbage_collect();
-				Reached_EOF = REPL();
-			}
-		}
-		else
-		{
-			file_print("mes: boot failed: no such file: ", stderr);
-			file_print(boot, stderr);
-			file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this currently broken code\n", stderr);
-			exit(EXIT_FAILURE);
-		}
-		exit(EXIT_SUCCESS);
+		load_file(boot);
+
+		file_print("mes: boot failed: no such file: ", stderr);
+		file_print(boot, stderr);
+		file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this currently broken code\n", stderr);
+		exit(EXIT_FAILURE);
 	}
 }

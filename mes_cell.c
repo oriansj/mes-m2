@@ -184,14 +184,41 @@ void unmark_cells(struct cell* list, struct cell* stop, int count)
 	}
 }
 
+void unmark_stack()
+{
+	int i = 0;
+	struct cell* s;
+	while(NULL != g_stack[i])
+	{
+		s = g_stack[i];
+		s->type = s->type & ~MARKED;
+		i = i + 1;
+	}
+}
+
 void garbage_collect()
 {
+	/* Step one mark all cells */
 	mark_all_cells();
-	/* TODO unmark stack */
+
+	/* Step two unmark cells we want to keep */
+	if(NULL != R0) R0->type = R0->type & ~MARKED;
+	if(NULL != R1) R1->type = R1->type & ~MARKED;
+	if(NULL != __stdin) __stdin->type = __stdin->type & ~MARKED;
+	if(NULL != __stdout) __stdout->type = __stdout->type & ~MARKED;
+	if(NULL != __stderr) __stderr->type = __stderr->type & ~MARKED;
+	if(NULL != g_env) unmark_cells(g_env, g_env, 0);
+	unmark_stack();
 	unmark_cells(all_symbols, all_symbols, 0);
 	unmark_cells(top_env, top_env, 0);
+
+	/* Step three reclaim marked cells */
 	reclaim_marked();
+
+	/* Update count of free cells*/
 	update_remaining();
+
+	/* Optional step four compact cells */
 	compact(all_symbols);
 	compact(top_env);
 	top_allocated = NULL;

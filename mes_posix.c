@@ -67,7 +67,7 @@ char* ntoab(SCM x, int base, int signed_p)
 
 struct cell* builtin_display(struct cell* args)
 {
-	require(nil != args, "mes_builtin.c: builtin_display requires arguments\n");
+	require(nil != args, "display requires arguments\n");
 	if(nil == args->cdr)
 	{
 		prim_display(args, __stdout);
@@ -82,7 +82,7 @@ struct cell* builtin_display(struct cell* args)
 
 struct cell* builtin_display_error(struct cell* args)
 {
-	require(nil != args, "mes_builtin.c: builtin_display_error requires arguments\n");
+	require(nil != args, "display-error requires arguments\n");
 	if(nil == args->cdr)
 	{
 		prim_display(args, __stderr);
@@ -96,7 +96,7 @@ struct cell* builtin_display_error(struct cell* args)
 
 struct cell* builtin_write(struct cell* args)
 {
-	require(nil != args, "mes_builtin.c: builtin_write requires arguments\n");
+	require(nil != args, "write requires arguments\n");
 	if(nil == args->cdr)
 	{
 		prim_write(args, __stdout);
@@ -110,7 +110,7 @@ struct cell* builtin_write(struct cell* args)
 
 struct cell* builtin_write_error(struct cell* args)
 {
-	require(nil != args, "mes_builtin.c: builtin_write_error requires arguments\n");
+	require(nil != args, "write-error requires arguments\n");
 	if(nil == args->cdr)
 	{
 		return prim_write(args, __stderr);

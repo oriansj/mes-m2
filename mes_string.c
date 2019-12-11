@@ -22,8 +22,11 @@
 #include "mes.h"
 
 /* Imported functions */
-struct cell* make_int(int a);
+char* ntoab(SCM x, int base, int signed_p);
 int string_size(char* a);
+struct cell* make_int(int a);
+struct cell* make_string(char* a);
+struct cell* make_sym(char* name);
 
 struct cell* string_length(struct cell* a)
 {
@@ -74,4 +77,77 @@ char* string_append(char* a, char* b)
 	copy_string(buffer, a);
 	copy_string(buffer + a_size, b);
 	return buffer;
+}
+
+
+/* Exposed primitives */
+struct cell* builtin_stringp(struct cell* args)
+{
+	require(nil != args, "string? requires arguments\n");
+	require(nil == args->cdr, "string? recieved too many arguments\n");
+	if(STRING == args->car->type) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_stringeq(struct cell* args)
+{
+	require(nil != args, "string=? requires arguments\n");
+
+	require(STRING == args->car->type, "string=? received non-string\n");
+	struct cell* temp = args->car;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		require(STRING == args->car->type, "string=? received non-string\n");
+		if(cell_t != string_eq(temp, args->car))
+		{
+			return cell_f;
+		}
+	}
+	return cell_t;
+}
+
+struct cell* builtin_string_size(struct cell* args)
+{
+	require(nil != args, "string-length requires an argument\n");
+	require(nil == args->cdr, "string-length only allows a single argument\n");
+	return string_length(args->car);
+}
+
+struct cell* builtin_string_to_number(struct cell* args)
+{
+	require(nil != args, "string->number requires an argument\n");
+	require(nil == args->cdr, "string->number only supports a single argument (currently)\n");
+	require(STRING == args->car->type, "string->number requires a string\n");
+	int i = numerate_string(args->car->string);
+	if(0 != i) return make_int(i);
+	if('0' == args->car->string[0]) return make_int(i);
+	return cell_f;
+}
+
+struct cell* builtin_string_to_symbol(struct cell* args)
+{
+	require(nil != args, "string->symbol requires an argument\n");
+	require(nil == args->cdr, "string->symbol only supports a single argument\n");
+	require(STRING == args->car->type, "string->symbol requires a string\n");
+	return make_sym(args->car->string);
+}
+
+struct cell* builtin_symbol_to_string(struct cell* args)
+{
+	require(nil != args, "symbol->string requires an argument\n");
+	require(nil == args->cdr, "symbol->string only supports a single argument\n");
+	require(SYM == args->car->type, "symbol->string requires a symbol\n");
+	return make_string(args->car->string);
+}
+
+struct cell* builtin_number_to_string(struct cell* args)
+{
+	require(nil != args, "number->string requires an argument\n");
+	require(INT == args->car->type, "number->string requires an integer\n");
+	if(nil == args->cdr) return make_string(ntoab(args->car->value, 10, TRUE));
+	require(INT == args->cdr->car->type, "number->string only accepts integer ranges\n");
+	require(2 <= args->cdr->car->value, "number->string Value out of range 2 to 36\n");
+	require(36 >= args->cdr->car->value, "number->string Value out of range 2 to 36\n");
+	require(nil == args->cdr->cdr, "number->string does not support more than 2 arguments\n");
+	return make_string(ntoab(args->car->value, args->cdr->car->value, TRUE));
 }

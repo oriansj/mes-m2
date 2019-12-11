@@ -71,6 +71,7 @@ struct cell* builtin_numlt(struct cell* args);
 struct cell* builtin_open_read(struct cell* args);
 struct cell* builtin_open_write(struct cell* args);
 struct cell* builtin_or(struct cell* args);
+struct cell* builtin_primitive_eval(struct cell* args);
 struct cell* builtin_primitive_load(struct cell* args);
 struct cell* builtin_primitivep(struct cell* args);
 struct cell* builtin_procedurep(struct cell* args);
@@ -285,6 +286,7 @@ void init_sl3()
 	spinup(make_sym("set-car!"), make_prim(builtin_setcar));
 	spinup(make_sym("set-cdr!"), make_prim(builtin_setcdr));
 	spinup(make_sym("apply"), make_prim(builtin_apply));
+	spinup(make_sym("primitive-eval"), make_prim(builtin_primitive_eval));
 	spinup(make_sym("exit"), make_prim(builtin_halt));
 
 	/* MES unique */
@@ -297,4 +299,5 @@ void init_sl3()
 	spinup(make_sym("core:record-accessor"), make_prim(builtin_record_accessor));
 	spinup(make_sym("core:record-modifier"), make_prim(builtin_record_modifier));
 	spinup(make_sym("core:record-constructor"), make_prim(builtin_record_constructor));
+	primitive_env = top_env;
 }
