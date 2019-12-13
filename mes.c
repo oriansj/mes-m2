@@ -97,7 +97,6 @@ FILE* open_file(char* name, char* mode)
 	return f;
 }
 
-
 int main(int argc, char **argv, char** envp)
 {
 	stack_pointer = 0;
@@ -155,11 +154,21 @@ int main(int argc, char **argv, char** envp)
 				}
 				i = i + 2;
 			}
+			else if(match(argv[i], "-h") || match(argv[i], "--help"))
+			{
+				file_print("Usage: ", stdout);
+				file_print(argv[0], stdout);
+				file_print(" [--boot boot.scm] [-f|--file file.scm] [-h|--help]\n", stdout);
+				i = i + 1;
+				exit(EXIT_SUCCESS);
+			}
 			else
 			{
 				file_print("Received unknown option: ", stderr);
 				file_print(argv[i], stderr);
-				file_print("\nAborting\n", stderr);
+				file_print("\nUsage: ", stderr);
+				file_print(argv[0], stderr);
+				file_print(" [--boot boot.scm] [-f|--file file.scm] [-h|--help]\nAborting\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 		}
