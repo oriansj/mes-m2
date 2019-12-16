@@ -216,6 +216,28 @@ struct cell* builtin_current_error_port(struct cell* args)
 	return __stderr;
 }
 
+struct cell* builtin_ttyname(struct cell* args)
+{
+	require(nil != args, "ttyname requires an argument\n");
+	require(nil == args->cdr, "ttyname only accepts a single argument\n");
+	require(FILE_PORT == args->car->type, "ttyname only accepts ports\n");
+	return make_string(args->car->string);
+}
+
+struct cell* builtin_command_line(struct cell* args)
+{
+	require(nil == args, "command-line does not accept arguments\n");
+	struct cell* r = nil;
+	int i = __argc - 1;
+	while(0 <= i)
+	{
+		r = make_cons(make_string(__argv[i]), r);
+		i = i - 1;
+	}
+
+	return r;
+}
+
 char* prematch(char* search, char* field)
 {
 	do

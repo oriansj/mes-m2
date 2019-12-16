@@ -31,6 +31,7 @@ struct cell* builtin_cdr(struct cell* args);
 struct cell* builtin_char_to_number(struct cell* args);
 struct cell* builtin_chareq(struct cell* args);
 struct cell* builtin_charp(struct cell* args);
+struct cell* builtin_command_line(struct cell* args);
 struct cell* builtin_cons(struct cell* args);
 struct cell* builtin_current_error_port(struct cell* args);
 struct cell* builtin_current_input_port(struct cell* args);
@@ -102,6 +103,7 @@ struct cell* builtin_stringp(struct cell* args);
 struct cell* builtin_sub(struct cell* args);
 struct cell* builtin_sum(struct cell* args);
 struct cell* builtin_symbol_to_string(struct cell* args);
+struct cell* builtin_ttyname(struct cell* args);
 struct cell* builtin_vector_length(struct cell* args);
 struct cell* builtin_vector_ref(struct cell* args);
 struct cell* builtin_vector_set(struct cell* args);
@@ -230,6 +232,7 @@ void init_sl3()
 	spinup(make_sym("write"), make_prim(builtin_write));
 	spinup(make_sym("read-char"), make_prim(builtin_read_byte));
 	spinup(make_sym("primitive-load"), make_prim(builtin_primitive_load));
+	spinup(make_sym("ttyname"), make_prim(builtin_ttyname));
 
 	/* Deal with Records */
 	spinup(make_sym("make-record-type"), make_prim(builtin_make_record_type));
@@ -277,6 +280,7 @@ void init_sl3()
 
 	/* Deal with environment */
 	spinup(make_sym("getenv"), make_prim(builtin_get_env));
+	spinup(make_sym("command-line"), make_prim(builtin_command_line));
 
 	/* Lisp classics */
 	spinup(make_sym("cons"), make_prim(builtin_cons));

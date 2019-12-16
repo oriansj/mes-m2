@@ -146,12 +146,15 @@ struct cell* progn(struct cell* exps, struct cell* env)
 {
 	if(exps == nil) return nil;
 
+	R0 = exps;
 	struct cell* result;
 progn_reset:
-	eval(exps->car, env);
+	push_cell(R0);
+	eval(R0->car, env);
 	result = R0;
-	if(exps->cdr == nil) return result;
-	exps = exps->cdr;
+	R0 = pop_cell();
+	if(R0->cdr == nil) return result;
+	R0 = R0->cdr;
 	goto progn_reset;
 }
 

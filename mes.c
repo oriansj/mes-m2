@@ -70,10 +70,17 @@ int REPL()
 	eval(R0, g_env);
 
 	/* Print */
-	if((stdout == __stdout->file) && (NULL != R0) && (cell_unspecified != R0))
+	if(match("/dev/stdin", __stdin->string) && (NULL != R0) && (cell_unspecified != R0))
 	{
+		file_print("$R0 = ", __stdout->file);
 		writeobj(__stdout, R0, TRUE);
 		fputc('\n', __stdout->file);
+	}
+
+	/* Display user friendly prompt */
+	if(match("/dev/stdin", __stdin->string))
+	{
+		file_print("REPL: ", __stdout->file);
 	}
 	return FALSE;
 }
@@ -101,6 +108,8 @@ struct cell* load_file(char* s)
 int main(int argc, char **argv, char** envp)
 {
 	__envp = envp;
+	__argv = argv;
+	__argc = argc;
 	stack_pointer = 0;
 
 	int arena = numerate_string(env_lookup("MES_ARENA", envp));
@@ -150,7 +159,9 @@ int main(int argc, char **argv, char** envp)
 			}
 		}
 
+		file_print("REPL: ", __stdout->file);
 		load_file("/dev/stdin");
+		file_print("\nexiting, have a nice day!\n", __stdout->file);
 		exit(EXIT_SUCCESS);
 	}
 	else
@@ -170,7 +181,7 @@ int main(int argc, char **argv, char** envp)
 
 		file_print("mes: boot failed: no such file: ", stderr);
 		file_print(boot, stderr);
-		file_print("\nThis is occuring because this branch isn't ready yet\nrun: export MES_CORE=0\nTo disable this currently broken code\n", stderr);
+		file_print("\nIf you prefer not to load a bootfile\nrun: export MES_CORE=0\n", stderr);
 		exit(EXIT_FAILURE);
 	}
 }

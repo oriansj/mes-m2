@@ -123,3 +123,5 @@ struct cell* g_env;
 struct cell* primitive_env;
 unsigned stack_pointer;
 char** __envp;
+char** __argv;
+int __argc;
