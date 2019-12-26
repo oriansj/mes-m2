@@ -98,19 +98,10 @@ struct cell* tokenize(struct cell* head, char* fullstring, int size)
 
 int is_integer(char* a)
 {
-	if(('0' <= a[0]) && ('9' >= a[0]))
-	{
-		return TRUE;
-	}
-
-	if('-' == a[0])
-	{
-		if(('0' <= a[1]) && ('9' >= a[1]))
-		{
-			return TRUE;
-		}
-	}
-
+	int i = numerate_string(a);
+	if(0 != i) return TRUE;
+	if(match("0", a)) return TRUE;
+	if(match("-0", a)) return TRUE;
 	return FALSE;
 }
 

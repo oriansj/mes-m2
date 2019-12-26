@@ -50,6 +50,8 @@
 (define (abs x) (if (negative? x) (- 0 x) x))
 (define (min x y) (if (< x y) x y))
 (define (max x y) (if (> x y) x y))
+(define (1+ x) (+ x 1))
+(define (1- x) (- x 1))
 
 ;; Convience c**rs
 (define (caar x) (car (car x)))
@@ -64,6 +66,24 @@
 (define (cdadr x) (cdr (car (cdr x))))
 (define (cddar x) (cdr (cdr (car x))))
 (define (cdddr x) (cdr (cdr (cdr x))))
+
+;; Add baseline support for record types
+(define (record-predicate type)
+  (lambda (record)
+    (core:record-predicate type record)))
+
+(define (record-accessor type field)
+  (lambda (record)
+    (core:record-accessor type field record)))
+
+(define (record-modifier type field)
+  (lambda (record value)
+    (core:record-modifier type field record value)))
+
+(define (record-constructor type fields)
+  (lambda (. values)
+    (core:record-constructor type fields values)))
+
 
 ;; Common boot primitives
 (define (map f lst)
