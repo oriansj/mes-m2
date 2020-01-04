@@ -25,19 +25,20 @@
 char* ntoab(SCM x, int base, int signed_p);
 int string_size(char* a);
 struct cell* make_int(int a);
-struct cell* make_string(char* a);
+struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
 
 struct cell* string_length(struct cell* a)
 {
 	require(a->type == STRING, "Wrong type recieved\n");
-	return make_int(string_size(a->string));
+	return make_int(a->length);
 }
 
 struct cell* string_eq(struct cell* a, struct cell* b)
 {
 	require(a->type == STRING, "Wrong type recieved\n");
 	require(b->type == STRING, "Wrong type recieved\n");
+	if(a->length != b->length) return cell_f;
 	if(match(a->string, b->string)) return cell_t;
 	return cell_f;
 }
@@ -137,17 +138,23 @@ struct cell* builtin_symbol_to_string(struct cell* args)
 	require(nil != args, "symbol->string requires an argument\n");
 	require(nil == args->cdr, "symbol->string only supports a single argument\n");
 	require(SYM == args->car->type, "symbol->string requires a symbol\n");
-	return make_string(args->car->string);
+	return make_string(args->car->string, args->car->length);
 }
 
 struct cell* builtin_number_to_string(struct cell* args)
 {
 	require(nil != args, "number->string requires an argument\n");
 	require(INT == args->car->type, "number->string requires an integer\n");
-	if(nil == args->cdr) return make_string(ntoab(args->car->value, 10, TRUE));
+	char* r;
+	if(nil == args->cdr)
+	{
+		r = ntoab(args->car->value, 10, TRUE);
+		return make_string(r, string_size(r));
+	}
 	require(INT == args->cdr->car->type, "number->string only accepts integer ranges\n");
 	require(2 <= args->cdr->car->value, "number->string Value out of range 2 to 36\n");
 	require(36 >= args->cdr->car->value, "number->string Value out of range 2 to 36\n");
 	require(nil == args->cdr->cdr, "number->string does not support more than 2 arguments\n");
-	return make_string(ntoab(args->car->value, args->cdr->car->value, TRUE));
+	r = ntoab(args->car->value, args->cdr->car->value, TRUE);
+	return make_string(r, string_size(r));
 }

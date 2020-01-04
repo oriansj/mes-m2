@@ -284,10 +284,11 @@ struct cell* make_char(int a)
 	return c;
 }
 
-struct cell* make_string(char* a)
+struct cell* make_string(char* a, int length)
 {
 	struct cell* c = make_cell(STRING, NULL, NULL, NULL);
 	c->string = a;
+	c->length = length;
 	return c;
 }
 

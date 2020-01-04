@@ -112,3 +112,31 @@ void raw_print(char* s, FILE* f)
 		s = s + 1;
 	}
 }
+
+
+void ugly_print(char* s, FILE* f, int length)
+{
+	int c;
+	int tmp;
+	char* table = "0123456789ABCDEF";
+
+	while(length > 0)
+	{
+		c = s[0];
+		if((c < 32) || (c > 126))
+		{
+			fputc('\\', f);
+			fputc('x', f);
+			tmp = (c >> 4) & 0xF;
+			fputc(table[tmp], f);
+			tmp = c & 0xF;
+			fputc(table[tmp], f);
+		}
+		else
+		{
+			fputc(c, f);
+		}
+		length = length - 1;
+		s = s + 1;
+	}
+}

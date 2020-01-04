@@ -31,7 +31,6 @@ struct cell* make_int(int a);
 struct cell* make_prim(void* fun);
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env);
-struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
 struct cell* make_sym(char* name);
 struct cell* prim_display(struct cell* args, FILE* out);

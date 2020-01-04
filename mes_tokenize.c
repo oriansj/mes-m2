@@ -24,10 +24,11 @@
 struct cell* token_stack;
 
 char* copy_string(char* target, char* source);
+int string_size(char* a);
 struct cell* findsym(char *name);
 struct cell* make_char(int a);
 struct cell* make_keyword(char* name);
-struct cell* make_string(char* a);
+struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
 void reset_block(char* a);
 
@@ -209,7 +210,7 @@ struct cell* atom(struct cell* a)
 	/* Check for strings */
 	if('\"' == a->string[0])
 	{
-		return make_string(a->string + 1);
+		return make_string(a->string + 1, string_size(a->string + 1));
 	}
 
 	/* Check for specials*/

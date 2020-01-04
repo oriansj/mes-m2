@@ -20,8 +20,10 @@
  */
 
 #include "mes.h"
-void raw_print(char* s, FILE* f);
 char char_lookup(int c);
+int string_size(char* a);
+void raw_print(char* s, FILE* f);
+void ugly_print(char* s, FILE* f, int length);
 
 void writeobj(struct cell* output_file, struct cell* op, int write_p)
 {
@@ -81,7 +83,11 @@ void writeobj(struct cell* output_file, struct cell* op, int write_p)
 	else if(STRING == op->type)
 	{
 		if(write_p) fputc('"', output_file->file);
-		if(write_p) raw_print(op->string, output_file->file);
+		if(write_p)
+		{
+			if(op->length != string_size(op->string)) ugly_print(op->string, output_file->file, op->length);
+			else raw_print(op->string, output_file->file);
+		}
 		else file_print(op->string, output_file->file);
 		if(write_p) fputc('"', output_file->file);
 	}

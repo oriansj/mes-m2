@@ -119,7 +119,7 @@ struct cell* builtin_xor(struct cell* args);
 struct cell* equal(struct cell* a, struct cell* b);
 struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value);
 struct cell* make_prim(void* fun);
-struct cell* make_string(char* a);
+struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
 struct cell* nullp(struct cell* args);
 struct cell* pairp(struct cell* args);
@@ -303,7 +303,7 @@ void init_sl3()
 
 	/* MES unique */
 	spinup(make_sym("free_mem"), make_prim(builtin_freecell));
-	spinup(make_sym("%version"), make_string("0.19"));
+	spinup(make_sym("%version"), make_string("0.19", 4));
 	spinup(make_sym("vector=?"), make_prim(builtin_vectoreq));
 	spinup(make_sym("list=?"), make_prim(builtin_listeq));
 	spinup(make_sym("core:make-record"), make_prim(builtin_make_record));

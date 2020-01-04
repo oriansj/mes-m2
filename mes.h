@@ -74,6 +74,7 @@ struct cell
 	{
 		struct cell* env;
 		FILE* file;
+		int length;
 	};
 };
 

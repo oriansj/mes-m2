@@ -22,9 +22,10 @@
 #include "mes.h"
 
 /* Imported functions */
+int string_size(char* a);
 struct cell* make_record(struct cell* type, struct cell* vector);
 struct cell* make_record_type(char* name, struct cell* list);
-struct cell* make_string(char* a);
+struct cell* make_string(char* a, int length);
 struct cell* make_vector(int count, struct cell* init);
 
 int record_field_index(struct cell* record, char* name)
@@ -111,7 +112,7 @@ struct cell* builtin_record_type_name(struct cell* args)
 	require(nil != args, "record-type-name requires an argument\n");
 	require(nil == args->cdr, "record-type-name received too many arguments\n");
 	require(RECORD_TYPE == args->car->type, "record-type-name did not receive a record-type\n");
-	return make_string(args->car->string);
+	return make_string(args->car->string, string_size(args->car->string));
 }
 
 struct cell* builtin_record_type_fields(struct cell* args)

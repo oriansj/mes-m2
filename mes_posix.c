@@ -22,8 +22,9 @@
 #include "mes.h"
 
 /* Imported functions */
+int string_size(char* a);
 struct cell* make_file(FILE* a, char* name);
-struct cell* make_string(char* a);
+struct cell* make_string(char* a, int length);
 struct cell* prim_display(struct cell* args, struct cell* out);
 struct cell* prim_write(struct cell* args, struct cell* out);
 
@@ -221,7 +222,7 @@ struct cell* builtin_ttyname(struct cell* args)
 	require(nil != args, "ttyname requires an argument\n");
 	require(nil == args->cdr, "ttyname only accepts a single argument\n");
 	require(FILE_PORT == args->car->type, "ttyname only accepts ports\n");
-	return make_string(args->car->string);
+	return make_string(args->car->string, string_size(args->car->string));
 }
 
 struct cell* builtin_command_line(struct cell* args)
@@ -231,7 +232,7 @@ struct cell* builtin_command_line(struct cell* args)
 	int i = __argc - 1;
 	while(0 <= i)
 	{
-		r = make_cons(make_string(__argv[i]), r);
+		r = make_cons(make_string(__argv[i], string_size(__argv[i])), r);
 		i = i - 1;
 	}
 
@@ -271,5 +272,5 @@ struct cell* builtin_get_env(struct cell* args)
 
 	char* pass = env_lookup(args->car->string, __envp);
 	if(NULL == pass) return cell_f;
-	return make_string(pass);
+	return make_string(pass, string_size(pass));
 }

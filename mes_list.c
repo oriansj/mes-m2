@@ -25,15 +25,15 @@
 struct cell* equal(struct cell* a, struct cell* b);
 struct cell* make_char(int a);
 struct cell* make_int(int a);
-struct cell* make_string(char* a);
+struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
 
-struct cell* string_to_list(char* string)
+struct cell* string_to_list(char* string, int length)
 {
 	if(NULL == string) return nil;
-	if(0 == string[0]) return nil;
+	if(0 == length) return nil;
 	struct cell* result = make_char(string[0]);
-	struct cell* tail = string_to_list(string + 1);
+	struct cell* tail = string_to_list(string + 1, length - 1);
 	return make_cons(result, tail);
 }
 
@@ -51,7 +51,7 @@ int list_length(struct cell* args)
 	return size;
 }
 
-char* list_to_string(struct cell* args)
+struct cell* list_to_string(struct cell* args)
 {
 	require(CONS == args->type, "mes_list.c: list_to_string recieved wrong type\n");
 	char* string = calloc(list_length(args) + 1, sizeof(char));
@@ -71,7 +71,8 @@ char* list_to_string(struct cell* args)
 			exit(EXIT_FAILURE);
 		}
 	}
-	return string;
+
+	return make_string(string, list_length(args));
 }
 
 struct cell* append(struct cell* a, struct cell* b)
@@ -153,7 +154,7 @@ struct cell* builtin_string_to_list(struct cell* args)
 	require(nil != args, "string->list requires arguments\n");
 	require(STRING == args->car->type, "mes-builtin.c: string->list did not receive a string\n");
 
-	struct cell* r = string_to_list(args->car->string);
+	struct cell* r = string_to_list(args->car->string, args->car->length);
 	if(nil == args->cdr)
 	{
 		return r;
@@ -181,14 +182,16 @@ struct cell* builtin_list_to_string(struct cell* args)
 {
 	require(nil != args, "list->string requires an argument\n");
 	require(nil == args->cdr, "list->string only allows a single argument\n");
-	return make_string(list_to_string(args));
+	return list_to_string(args);
 }
 
 struct cell* builtin_list_to_symbol(struct cell* args)
 {
 	require(nil != args, "list->symbol requires an argument\n");
 	require(nil == args->cdr, "list->symbol only allows a single argument\n");
-	return make_sym(list_to_string(args));
+	struct cell* r = list_to_string(args);
+	r->type = SYM;
+	return r;
 }
 
 struct cell* builtin_list(struct cell* args)
