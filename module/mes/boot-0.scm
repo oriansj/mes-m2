@@ -94,6 +94,11 @@
   (if (null? (cdr rest)) (car rest)
       (cons (car rest) (apply cons* (cdr rest)))))
 
+;; Provide guile primitives
+(define (keyword-like-symbol->keyword sym)
+  (if (symbol? sym) (string->keyword (list->string (cons* #\# #\: (cdr (string->list (symbol->string sym))))))
+      (begin (display "keyword-like-symbol->keyword did not recieve a symbol") (exit 1))))
+
 ;; Implement the standard prompt
 (define __args (cdr (command-line)))
 
