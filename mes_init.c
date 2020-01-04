@@ -47,6 +47,8 @@ struct cell* builtin_freecell(struct cell* args);
 struct cell* builtin_get_env(struct cell* args);
 struct cell* builtin_halt(struct cell* args);
 struct cell* builtin_intp(struct cell* args);
+struct cell* builtin_keyword_to_symbol(struct cell* args);
+struct cell* builtin_keywordp(struct cell* args);
 struct cell* builtin_list(struct cell* args);
 struct cell* builtin_list_length(struct cell* args);
 struct cell* builtin_list_to_string(struct cell* args);
@@ -95,6 +97,7 @@ struct cell* builtin_set_current_output_port(struct cell* args);
 struct cell* builtin_setcar(struct cell* args);
 struct cell* builtin_setcdr(struct cell* args);
 struct cell* builtin_string_size(struct cell* args);
+struct cell* builtin_string_to_keyword(struct cell* args);
 struct cell* builtin_string_to_list(struct cell* args);
 struct cell* builtin_string_to_number(struct cell* args);
 struct cell* builtin_string_to_symbol(struct cell* args);
@@ -265,6 +268,11 @@ void init_sl3()
 
 	/* Deal with symbols */
 	spinup(make_sym("symbol->string"), make_prim(builtin_symbol_to_string));
+
+	/* Deal with keywords */
+	spinup(make_sym("keyword?"), make_prim(builtin_keywordp));
+	spinup(make_sym("keyword->symbol"), make_prim(builtin_keyword_to_symbol));
+	spinup(make_sym("string->keyword"), make_prim(builtin_string_to_keyword));
 
 	/* Deal with numbers */
 	spinup(make_sym("number->string"), make_prim(builtin_number_to_string));

@@ -57,6 +57,10 @@ void writeobj(struct cell* output_file, struct cell* op, int write_p)
 	{
 		file_print(op->string, output_file->file);
 	}
+	else if(KEYWORD == op->type)
+	{
+		file_print(op->string, output_file->file);
+	}
 	else if(PRIMOP == op->type)
 	{
 		file_print("#<primitive>", output_file->file);

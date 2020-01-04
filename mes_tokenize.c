@@ -26,6 +26,7 @@ struct cell* token_stack;
 char* copy_string(char* target, char* source);
 struct cell* findsym(char *name);
 struct cell* make_char(int a);
+struct cell* make_keyword(char* name);
 struct cell* make_string(char* a);
 struct cell* make_sym(char* name);
 void reset_block(char* a);
@@ -125,14 +126,19 @@ struct cell* readobj();
 struct cell* list_to_vector(struct cell* args);
 struct cell* reader_read_hash(struct cell* a)
 {
+	/* Support #\char*/
 	if('\\' == a->string[1])
 	{
 		return make_char(special_lookup(a->string + 1));
 	}
+
+	/* Support #(1 2 3) vectors */
 	if('(' == a->string[1])
 	{
 		return list_to_vector(readlist());
 	}
+
+	/* Support #x0123456789ABCDEF hex*/
 	if('x' == a->string[1])
 	{
 		a->string[0] = '0';
@@ -140,6 +146,8 @@ struct cell* reader_read_hash(struct cell* a)
 		a->value = numerate_string(a->string);
 		return a;
 	}
+
+	/* Support #o01234567 Octals */
 	if('o' == a->string[1])
 	{
 		a->string = a->string + 1;
@@ -148,8 +156,16 @@ struct cell* reader_read_hash(struct cell* a)
 		a->value = numerate_string(a->string);
 		return a;
 	}
+
+	/* Support standard true and false */
 	if(match("#t", a->string)) return cell_t;
 	if(match("#f", a->string)) return cell_f;
+
+	/* Support #:keywords */
+	if(':' == a->string[1])
+	{
+		return make_keyword(a->string);
+	}
 
 	file_print("Unknown hash provided: ", stderr);
 	file_print(a->string, stderr);

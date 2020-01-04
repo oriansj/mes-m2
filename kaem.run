@@ -31,6 +31,7 @@ M2-Planet --debug --architecture amd64 \
 	-f mes_vector.c \
 	-f mes_list.c \
 	-f mes_string.c \
+	-f mes_keyword.c \
 	-f mes_record.c \
 	-f mes_init.c \
 	-f mes_macro.c \

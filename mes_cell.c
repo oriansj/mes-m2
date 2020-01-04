@@ -298,6 +298,14 @@ struct cell* make_sym(char* name)
 	return c;
 }
 
+struct cell* make_keyword(char* name)
+{
+	struct cell* c = make_cell(KEYWORD, NULL, NULL, NULL);
+	c->string = name;
+	return c;
+}
+
+
 struct cell* make_cons(struct cell* a, struct cell* b)
 {
 	return make_cell(CONS, a, b, nil);
