@@ -31,6 +31,7 @@ struct cell* builtin_cdr(struct cell* args);
 struct cell* builtin_char_to_number(struct cell* args);
 struct cell* builtin_chareq(struct cell* args);
 struct cell* builtin_charp(struct cell* args);
+struct cell* builtin_close(struct cell* args);
 struct cell* builtin_command_line(struct cell* args);
 struct cell* builtin_cons(struct cell* args);
 struct cell* builtin_current_error_port(struct cell* args);
@@ -74,6 +75,7 @@ struct cell* builtin_numlt(struct cell* args);
 struct cell* builtin_open_read(struct cell* args);
 struct cell* builtin_open_write(struct cell* args);
 struct cell* builtin_or(struct cell* args);
+struct cell* builtin_port_filename(struct cell* args);
 struct cell* builtin_primitive_eval(struct cell* args);
 struct cell* builtin_primitive_load(struct cell* args);
 struct cell* builtin_primitivep(struct cell* args);
@@ -96,6 +98,8 @@ struct cell* builtin_set_current_input_port(struct cell* args);
 struct cell* builtin_set_current_output_port(struct cell* args);
 struct cell* builtin_setcar(struct cell* args);
 struct cell* builtin_setcdr(struct cell* args);
+struct cell* builtin_string_index(struct cell* args);
+struct cell* builtin_string_ref(struct cell* args);
 struct cell* builtin_string_size(struct cell* args);
 struct cell* builtin_string_to_keyword(struct cell* args);
 struct cell* builtin_string_to_list(struct cell* args);
@@ -224,6 +228,7 @@ void init_sl3()
 	/* Files */
 	spinup(make_sym("open-input-file"), make_prim(builtin_open_read));
 	spinup(make_sym("open-output-file"), make_prim(builtin_open_write));
+	spinup(make_sym("close-port"), make_prim(builtin_close));
 	spinup(make_sym("set-current-output-port"), make_prim(builtin_set_current_output_port));
 	spinup(make_sym("set-current-input-port"), make_prim(builtin_set_current_input_port));
 	spinup(make_sym("set-current-error-port"), make_prim(builtin_set_current_error_port));
@@ -236,6 +241,7 @@ void init_sl3()
 	spinup(make_sym("read-char"), make_prim(builtin_read_byte));
 	spinup(make_sym("primitive-load"), make_prim(builtin_primitive_load));
 	spinup(make_sym("ttyname"), make_prim(builtin_ttyname));
+	spinup(make_sym("port-filename"), make_prim(builtin_port_filename));
 
 	/* Deal with Records */
 	spinup(make_sym("make-record-type"), make_prim(builtin_make_record_type));
@@ -263,6 +269,8 @@ void init_sl3()
 	/* Deal with Strings */
 	spinup(make_sym("string->list"), make_prim(builtin_string_to_list));
 	spinup(make_sym("string-length"), make_prim(builtin_string_size));
+	spinup(make_sym("string-index"), make_prim(builtin_string_index));
+	spinup(make_sym("string-ref"), make_prim(builtin_string_ref));
 	spinup(make_sym("string->number"), make_prim(builtin_string_to_number));
 	spinup(make_sym("string->symbol"), make_prim(builtin_string_to_symbol));
 

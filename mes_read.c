@@ -125,6 +125,22 @@ restart_paren:
 			c = ' ';
 			goto restart_paren;
 		}
+		else if(hashed && ('\\' == c))
+		{
+			temp[i] = '#';
+			temp[i+1] = '\\';
+			c = fgetc(source_file);
+			i = i + 2;
+			hashed = FALSE;
+			if('"' == c)
+			{
+				temp[i] = '"';
+				temp[i+1] = ' ';
+				i = i + 2;
+				goto restart_comment;
+			}
+			goto restart_paren;
+		}
 		else if(';' == c)
 		{
 			/* drop everything until we hit newline */

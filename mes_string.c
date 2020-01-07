@@ -24,6 +24,7 @@
 /* Imported functions */
 char* ntoab(SCM x, int base, int signed_p);
 int string_size(char* a);
+struct cell* make_char(int a);
 struct cell* make_int(int a);
 struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
@@ -112,6 +113,83 @@ struct cell* builtin_string_size(struct cell* args)
 	require(nil != args, "string-length requires an argument\n");
 	require(nil == args->cdr, "string-length only allows a single argument\n");
 	return string_length(args->car);
+}
+
+struct cell* builtin_string_index(struct cell* args)
+{
+	int i = 0;
+	int length;
+	char* s;
+	char find;
+	require(nil != args, "string-index requires arguments\n");
+	require(STRING == args->car->type, "string-index requires a string\n");
+	s = args->car->string;
+	length = args->car->length;
+	require(nil != args->cdr, "string-index requires more argument(s)\n");
+	require(CHAR == args->cdr->car->type, "string-index requires a char\n");
+	find = args->cdr->car->value;
+
+	/* Deal with (string-index "abcde" #\c) case */
+	if(nil == args->cdr->cdr)
+	{
+		while(i <= length)
+		{
+			if(find == s[i]) return make_int(i);
+			i = i + 1;
+		}
+
+		/* Deal with (string-index "abcde" #\z) case */
+		return cell_f;
+	}
+
+	require(INT == args->cdr->cdr->car->type, "string-index requires an INT\n");
+	i = args->cdr->cdr->car->value;
+	require(length >= i, "string-index recieved an int greater than length of string");
+	/* Deal with (string-index "abcde" #\c 0) case */
+	if(nil == args->cdr->cdr->cdr)
+	{
+		while(i <= length)
+		{
+			if(find == s[i]) return make_int(i);
+			i = i + 1;
+		}
+
+		/* Deal with (string-index "abcde" #\c 3) case */
+		return cell_f;
+	}
+
+	require(INT == args->cdr->cdr->cdr->car->type, "string-index requires an INT\n");
+	require(length >= args->cdr->cdr->cdr->car->value, "string-index received and int greater than length of string");
+	length = args->cdr->cdr->cdr->car->value;
+
+	if(nil == args->cdr->cdr->cdr->cdr)
+	{
+		while(i < length)
+		{
+			if(find == s[i]) return make_int(i);
+			i = i + 1;
+		}
+
+		/* Deal with (string-index "abcde" #\c 0 2) case */
+		return cell_f;
+	}
+
+	require(FALSE, "string-index recieved too many arguments\n");
+	exit(EXIT_FAILURE);
+}
+
+struct cell* builtin_string_ref(struct cell* args)
+{
+	require(nil != args, "string-ref requires an argument\n");
+	require(STRING == args->car->type, "string-ref requires a string\n");
+	char* s = args->car->string;
+	require(nil != args->cdr, "string-ref requires another argument\n");
+	require(INT == args->cdr->car->type, "string-ref requires an integer\n");
+	require(nil == args->cdr->cdr, "string-ref recieved too many arguments\n");
+	int index = args->cdr->car->value;
+	require(args->car->length >= index, "string-ref value longer than string\n");
+	require(index >= 0, "string-ref value is negative\n");
+	return make_char(s[index]);
 }
 
 struct cell* builtin_string_to_number(struct cell* args)

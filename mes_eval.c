@@ -136,234 +136,219 @@ struct cell* evlis(struct cell* exps, struct cell* env)
 	if(exps == nil) return nil;
 
 	eval(exps->car, env);
-	struct cell* i = R0;
+	struct cell* i = R1;
 	struct cell* j = evlis(exps->cdr, env);
 	return make_cons(i, j);
 }
 
-struct cell* progn(struct cell* exps, struct cell* env)
-{
-	if(exps == nil) return nil;
-
-	R0 = exps;
-	struct cell* result;
-progn_reset:
-	push_cell(R0);
-	eval(R0->car, env);
-	result = R0;
-	R0 = pop_cell();
-	if(R0->cdr == nil) return result;
-	R0 = R0->cdr;
-	goto progn_reset;
-}
-
-struct cell* apply(struct cell* proc, struct cell* vals)
-{
-	struct cell* temp;
-	if(proc->type == PRIMOP)
-	{
-		FUNCTION* fp = proc->function;
-		temp = fp(vals);
-	}
-	else if(proc->type == LAMBDA)
-	{
-		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
-		temp = progn(proc->cdr, multiple_extend(env, proc->car, vals));
-	}
-	else if(proc->type == MACRO)
-	{
-		temp = macro_apply(proc->cdr, vals);
-	}
-	else
-	{
-		file_print("Bad argument to apply\n", stderr);
-		exit(EXIT_FAILURE);
-	}
-	return temp;
-}
-
-struct cell* evcond(struct cell* exp, struct cell* env)
-{
-	if(nil == exp) return cell_unspecified;
-
-	eval(exp->car->car, env);
-	if(cell_t == R0)
-	{
-		eval(exp->car->cdr->car, env);
-		return R0;
-	}
-
-	return evcond(exp->cdr, env);
-}
-
-struct cell* evwhile(struct cell* exp, struct cell* env)
-{
-	if(nil == exp) return nil;
-
-	eval(exp->cdr->car, env);
-
-	while(cell_t == R0)
-	{
-		eval(exp->cdr->cdr->car, env);
-		eval(exp->cdr->car, env);
-		if((cell_t == exp->cdr->car) && (left_to_take < 1000)) garbage_collect();
-	}
-
-	return R0;
-}
-
-struct cell* process_sym(struct cell* exp, struct cell* env);
-struct cell* process_cons(struct cell* exp, struct cell* env);
-
 void eval(struct cell* exp, struct cell* env)
 {
-	if(NULL == exp)
-	{
-		R0 = NULL;
-		return;
-	}
+	struct cell* tmp;
+	struct cell* proc;
+	struct cell* vals;
+	struct cell* pair;
+	struct cell* fun;
+	struct cell* arguments;
+	struct cell* name;
+	FUNCTION* fp;
+	struct cell* i;
+	struct cell* f;
+	struct cell* h;
+
+eval_start:
 	if(exp == nil)
 	{
-		R0 = nil;
+		R1 = nil;
 		return;
 	}
-	if(SYM == exp->type)
+
+	if(INT == exp->type)
 	{
-		R0 = process_sym(exp, env);
+		R1 = exp;
 		return;
 	}
-	if(CONS == exp->type)
+	else if(SYM == exp->type)
 	{
-		R0 = process_cons(exp, env);
+		tmp = assoc(exp, env);
+		require(tmp != nil, "Unbound symbol");
+		R1 = tmp->cdr;
 		return;
 	}
-	R0 = exp;
-}
-
-struct cell* process_sym(struct cell* exp, struct cell* env)
-{
-	struct cell* tmp = assoc(exp, env);
-	if(tmp == nil)
+	else if(CONS == exp->type)
 	{
-		file_print("Unbound symbol:", stderr);
-		file_print(exp->string, stderr);
-		fputc('\n', stderr);
-		exit(EXIT_FAILURE);
-	}
-	return tmp->cdr;
-}
-
-struct cell* process_if(struct cell* exp, struct cell* env)
-{
-	eval(exp->cdr->car, env);
-	if(R0 != cell_f)
-	{
-		eval(exp->cdr->cdr->car, env);
-		return R0;
-	}
-
-	if(nil == exp->cdr->cdr->cdr) return cell_unspecified;
-	eval(exp->cdr->cdr->cdr->car, env);
-	return R0;
-
-}
-
-struct cell* process_setb(struct cell* exp, struct cell* env)
-{
-	eval(exp->cdr->cdr->car, env);
-	struct cell* newval = R0;
-	struct cell* pair = assoc(exp->cdr->car, env);
-	pair->cdr = newval;
-	return NULL;
-}
-
-struct cell* process_let(struct cell* exp, struct cell* env)
-{
-	struct cell* lets;
-	for(lets = exp->cdr->car; lets != nil; lets = lets->cdr)
-	{
-		eval(lets->car->cdr->car, env);
-		env = make_cons(make_cons(lets->car->car, R0), env);
-	}
-	return progn(exp->cdr->cdr, env);
-}
-
-struct cell* process_quasiquote(struct cell* exp, struct cell* env)
-{
-	struct cell* i = exp;
-	struct cell* f = NULL;
-	struct cell* h;
-	while(nil != i)
-	{
-		h = i->car;
-		if(CONS == i->car->type)
+		if(exp->car == s_if)
 		{
-			if(unquote == i->car->car)
+			eval(exp->cdr->car, env);
+			if(R1 != cell_f)
 			{
-				eval(i->car->cdr->car, env);
-				h = R0;
+				exp = exp->cdr->cdr->car;
+				goto eval_start;
 			}
-			if(unquote_splicing == i->car->car)
+
+			if(nil == exp->cdr->cdr->cdr)
 			{
-				eval(i->car->cdr->car, env);
-				while((NULL != R0) && (nil != R0))
+				R1 = cell_unspecified;
+				return;
+			}
+
+			exp = exp->cdr->cdr->cdr->car;
+			goto eval_start;
+		}
+		else if(exp->car == s_cond)
+		{
+restart_cond:
+			if(nil == exp)
+			{
+				R1 = cell_unspecified;
+				return;
+			}
+			eval(exp->car->car, env);
+			if(cell_t == R1)
+			{
+				exp = exp->car->cdr->car;
+				goto eval_start;
+			}
+			exp = exp->cdr;
+			goto restart_cond;
+		}
+		else if(exp->car == s_lambda)
+		{
+			R1 = make_proc(exp->cdr->car, exp->cdr->cdr, env);
+			return;
+		}
+		else if(exp->car == quote)
+		{
+			R1 = exp->cdr->car;
+			return;
+		}
+		else if(exp->car == quasiquote)
+		{
+			i = exp->cdr->car;
+			f = NULL;
+			while(nil != i)
+			{
+				h = i->car;
+				if(CONS == i->car->type)
 				{
-					/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
-					/* Or restrict to just proper lists as the spec (r7rs) requires */
-					/* eg. `(foo bar ,@(+ 4 5)) */
-					require(CONS == R0->type, "unquote-splicing requires argument of type <proper list>\n");
-					f = make_cons(R0->car, f);
-					/* Simply convert require to if and the above */
-					/* else f = make_cons(R0, f); */
-					R0 = R0->cdr;
+					if(unquote == i->car->car)
+					{
+						eval(i->car->cdr->car, env);
+						h = R1;
+					}
+					if(unquote_splicing == i->car->car)
+					{
+						eval(i->car->cdr->car, env);
+						while((NULL != R1) && (nil != R1))
+						{
+							/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
+							/* Or restrict to just proper lists as the spec (r7rs) requires */
+							/* eg. `(foo bar ,@(+ 4 5)) */
+							require(CONS == R1->type, "unquote-splicing requires argument of type <proper list>\n");
+							f = make_cons(R1->car, f);
+							/* Simply convert require to if and the above */
+							/* else f = make_cons(R1, f); */
+							R1 = R1->cdr;
+						}
+						goto restart_quasiquote;
+					}
 				}
-				goto restart_quasiquote;
+				f = make_cons(h, f);
+restart_quasiquote:
+				i = i->cdr;
+			}
+			i = f;
+			f = reverse_list(f);
+			require(NULL != i, "Impossible quasiquote processed?\n");
+			i->cdr = nil;
+			R1 = f;
+			return;
+		}
+		else if(exp->car == s_define)
+		{
+			if(CONS == exp->cdr->car->type)
+			{
+				fun = exp->cdr->cdr;
+				arguments = exp->cdr->car->cdr;
+				name = exp->cdr->car->car;
+				exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+			}
+			eval(exp->cdr->cdr->car, env);
+			R1 = extend_env(exp->cdr->car, R1, env);
+			return;
+		}
+		else if(exp->car == s_setb)
+		{
+			pair = assoc(exp->cdr->car, env);
+			eval(exp->cdr->cdr->car, env);
+			pair->cdr = R1;
+			return;
+		}
+		else if(exp->car == s_let)
+		{
+			for(tmp = exp->cdr->car; tmp != nil; tmp = tmp->cdr)
+			{
+				push_cell(tmp);
+				eval(tmp->car->cdr->car, env);
+				tmp = pop_cell();
+				env = make_cons(make_cons(tmp->car->car, R1), env);
+			}
+
+			exp = make_cons(s_begin, exp->cdr->cdr);
+			goto eval_start;
+		}
+		else if(exp->car == s_begin)
+		{
+			exp = exp->cdr;
+			if(exp == nil)
+			{
+				R1 = nil;
+				return;
+			}
+			while(TRUE)
+			{
+				if(exp->cdr == nil)
+				{
+					exp = exp->car;
+					goto eval_start;
+				}
+				eval(exp->car, env);
+				exp = exp->cdr;
 			}
 		}
-		f = make_cons(h, f);
-restart_quasiquote:
-		i = i->cdr;
-	}
-	i = f;
-	f = reverse_list(f);
-	require(NULL != i, "Impossible quasiquote processed?\n");
-	i->cdr = nil;
-	return f;
-}
 
-struct cell* process_define(struct cell* exp, struct cell* env)
-{
-	if(CONS == exp->cdr->car->type)
+		eval(exp->car, env);
+		push_cell(R1);
+		vals = evlis(exp->cdr, env);
+		proc = pop_cell();
+
+		if(proc->type == PRIMOP)
+		{
+			fp = proc->function;
+			R1 = fp(vals);
+			return;
+		}
+		else if(proc->type == LAMBDA)
+		{
+			env = make_cons(proc->env->car, proc->env->cdr);
+			env = multiple_extend(env, proc->car, vals);
+			exp = make_cons(s_begin, proc->cdr);
+			goto eval_start;
+		}
+		require(FALSE, "Bad argument to apply\n");
+	}
+	else if(PRIMOP == exp->type)
 	{
-		struct cell* fun = exp->cdr->cdr;
-		struct cell* arguments = exp->cdr->car->cdr;
-		struct cell* name = exp->cdr->car->car;
-		exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+		R1 = exp;
+		return;
+	}
+	else if(LAMBDA == exp->type)
+	{
+		R1 = exp;
+		return;
 	}
 
-	eval(exp->cdr->cdr->car, env);
-	return(extend_env(exp->cdr->car, R0, env));
-}
-
-struct cell* process_cons(struct cell* exp, struct cell* env)
-{
-	if(exp->car == s_if) return process_if(exp, env);
-	if(exp->car == s_cond) return evcond(exp->cdr, env);
-	if(exp->car == s_begin) return progn(exp->cdr, env);
-	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
-	if(exp->car == s_macro) return make_macro(exp->cdr->car, exp->cdr->cdr, env);
-	if(exp->car == quote) return exp->cdr->car;
-	if(exp->car == quasiquote) return process_quasiquote(exp->cdr->car, env);
-	if(exp->car == s_define) return process_define(exp, env);
-	if(exp->car == s_setb) return process_setb(exp, env);
-	if(exp->car == s_let) return process_let(exp, env);
-	if(exp->car == s_while) return evwhile(exp, env);
-
-	eval(exp->car, env);
-	push_cell(R0);
-	R1 = evlis(exp->cdr, env);
-	R0 = pop_cell();
-	return apply(R0, R1);
+	/* Fall through case */
+	R1 = exp;
 }
 
 
@@ -373,7 +358,8 @@ struct cell* builtin_apply(struct cell* args)
 	require(nil != args, "apply requires arguments\n");
 	require(nil != args->cdr, "apply recieved insufficient arguments\n");
 	require(CONS == args->cdr->car->type, "apply did not recieve a list\n");
-	return apply(args->car, args->cdr->car);
+/*	return apply(args->car, args->cdr->car); */
+	return cell_unspecified;
 }
 
 struct cell* builtin_primitive_eval(struct cell* args)
@@ -384,7 +370,7 @@ struct cell* builtin_primitive_eval(struct cell* args)
 	push_cell(R0);
 	push_cell(R1);
 	push_cell(g_env);
-	eval(args->car, primitive_env);
+/*	eval(args->car, primitive_env); */
 	struct cell* r = R0;
 	g_env = pop_cell();
 	R1 = pop_cell();

@@ -55,6 +55,15 @@ struct cell* tokenize(struct cell* head, char* fullstring, int size)
 		{
 			done = TRUE;
 		}
+		else if('\\' == c)
+		{
+			memory_block[string_index] = c;
+			string_index = string_index + 1;
+			c = fullstring[string_index];
+			memory_block[string_index] = c;
+			string_index = string_index + 1;
+			c = fullstring[string_index];
+		}
 		else if('\"' == c)
 		{
 			escape = FALSE;

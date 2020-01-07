@@ -147,6 +147,16 @@ FILE* open_file(char* name, char* mode)
 	return f;
 }
 
+struct cell* builtin_close(struct cell* args)
+{
+	require(nil != args, "close-port requires an argument\n");
+	require(FILE_PORT == args->car->type, "close-port requires a file port\n");
+	require(nil == args->cdr, "close-port recieved too many arguments\n");
+	int error = fclose(args->car->file);
+	if(0 != error) return cell_f;
+	return cell_t;
+}
+
 struct cell* builtin_open(struct cell* args, char* mode)
 {
 	require(nil != args, "Did not recieve a file name\n");
@@ -222,6 +232,14 @@ struct cell* builtin_ttyname(struct cell* args)
 	require(nil != args, "ttyname requires an argument\n");
 	require(nil == args->cdr, "ttyname only accepts a single argument\n");
 	require(FILE_PORT == args->car->type, "ttyname only accepts ports\n");
+	return make_string(args->car->string, string_size(args->car->string));
+}
+
+struct cell* builtin_port_filename(struct cell* args)
+{
+	require(nil != args, "port-filename requires an argument\n");
+	require(nil == args->cdr, "port-filename only accepts a single argument\n");
+	require(FILE_PORT == args->car->type, "port-filename only accepts ports\n");
 	return make_string(args->car->string, string_size(args->car->string));
 }
 

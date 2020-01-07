@@ -22,7 +22,6 @@
 #include "mes.h"
 
 /* Imported functions */
-FILE* open_file(char* name, char* mode);
 struct cell* assoc(struct cell* key, struct cell* alist);
 struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value);
 struct cell* load_file(char* s);
@@ -572,7 +571,7 @@ struct cell* builtin_setcar(struct cell* args)
 	require(nil != args->cdr, "set-car! requires something to set car to\n");
 	args->car->car = args->cdr->car;
 	require(nil == args->cdr->cdr, "set-car! received too many arguements\n");
-	return NULL;
+	return cell_unspecified;
 }
 
 struct cell* builtin_setcdr(struct cell* args)
@@ -582,5 +581,5 @@ struct cell* builtin_setcdr(struct cell* args)
 	require(nil != args->cdr, "set-cdr! requires something to set cdr to\n");
 	args->car->cdr = args->cdr->car;
 	require(nil == args->cdr->cdr, "set-cdr! received too many arguements\n");
-	return NULL;
+	return cell_unspecified;
 }

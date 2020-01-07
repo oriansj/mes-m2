@@ -61,7 +61,7 @@ struct cell* vector_set(struct cell* v, int i, struct cell* e)
 		i = i - 1;
 	}
 	v->car = e;
-	return NULL;
+	return cell_unspecified;
 }
 
 struct cell* list_to_vector(struct cell* i)

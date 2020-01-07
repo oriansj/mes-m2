@@ -41,6 +41,10 @@
 (define (newline . rest)
   (display #\newline))
 
+;; String related
+(define (string . rest)
+  (list->string rest))
+
 ;; NUMBERS
 (define (zero? x) (= x 0))
 (define (even? x) (= 0 (modulo x 2)))
@@ -126,11 +130,14 @@ Report bugs to: bug-mes@gnu.org
 GNU Mes home page: <http://gnu.org/software/mes/>
 General help using GNU software: <http://gnu.org/gethelp/>\n")
 
+(define %main cons*)
+
 (while (not (null? __args))
        (begin
           (cond
            ((or (string=? "--help" (car __args)) (string=? "-h" (car __args))) (begin (display --help) (exit 0)))
-           ((string=? "-s" (car __args)) (begin (primitive-load (cadr __args)) (exit 0)))
+           ((string=? "-s" (car __args)) (begin (primitive-load (cadr __args)) (apply %main __args) (exit 0)))
+           ((string=? "-e" (car __args)) (begin (set! %main (cadr __args)) (set! __args (cdr __args))))
            ((string=? "--" (car __args)) (set! __args (cons '() '())))
            (#t (begin (display "error: unrecognized switch ") (display (car __args)) (newline) (display --help) (exit 1))))
           (set! __args (cdr __args))))

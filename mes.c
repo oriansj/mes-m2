@@ -70,10 +70,10 @@ int REPL()
 	eval(R0, g_env);
 
 	/* Print */
-	if(match("/dev/stdin", __stdin->string) && (NULL != R0) && (cell_unspecified != R0))
+	if(match("/dev/stdin", __stdin->string) && (NULL != R1) && (cell_unspecified != R1))
 	{
 		file_print("$R0 = ", __stdout->file);
-		writeobj(__stdout, R0, TRUE);
+		writeobj(__stdout, R1, TRUE);
 		fputc('\n', __stdout->file);
 	}
 
