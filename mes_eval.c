@@ -103,21 +103,8 @@ struct cell* assoc(struct cell* key, struct cell* alist)
 /*** Stack for passing of arguments ***/
 void push_cell(struct cell* a)
 {
-	struct cell* s = g_stack[stack_pointer];
-
-	if(NULL == s)
-	{
-		s = make_cell(0, NULL, NULL, NULL);
-		g_stack[stack_pointer] = s;
-	}
-
+	g_stack[stack_pointer] = a;
 	stack_pointer = stack_pointer + 1;
-
-	/* Copy Over values */
-	s->type = a->type;
-	s->car = a->car;
-	s->cdr = a->cdr;
-	s->env = a->env;
 }
 
 struct cell* pop_cell()
@@ -130,23 +117,25 @@ struct cell* pop_cell()
 }
 
 /*** Evaluator (Eval/Apply) ***/
-void eval(struct cell* exp, struct cell* env);
-struct cell* evlis(struct cell* exps, struct cell* env)
+void eval(struct cell* env);
+struct cell* evlis(struct cell* env)
 {
-	if(exps == nil) return nil;
+	if(R0 == nil) return nil;
 
-	eval(exps->car, env);
+	push_cell(R0->cdr);
+	R0 = R0->car;
+	eval(env);
+	R0 = pop_cell();
 	struct cell* i = R1;
-	struct cell* j = evlis(exps->cdr, env);
+	struct cell* j = evlis(env);
 	return make_cons(i, j);
 }
 
-void eval(struct cell* exp, struct cell* env)
+void eval(struct cell* env)
 {
 	struct cell* tmp;
 	struct cell* proc;
 	struct cell* vals;
-	struct cell* pair;
 	struct cell* fun;
 	struct cell* arguments;
 	struct cell* name;
@@ -156,74 +145,80 @@ void eval(struct cell* exp, struct cell* env)
 	struct cell* h;
 
 eval_start:
-	if(exp == nil)
+	if(R0 == nil)
 	{
 		R1 = nil;
 		return;
 	}
 
-	if(INT == exp->type)
+	if(INT == R0->type)
 	{
-		R1 = exp;
+		R1 = R0;
 		return;
 	}
-	else if(SYM == exp->type)
+	else if(SYM == R0->type)
 	{
-		tmp = assoc(exp, env);
+		tmp = assoc(R0, env);
 		require(tmp != nil, "Unbound symbol");
 		R1 = tmp->cdr;
 		return;
 	}
-	else if(CONS == exp->type)
+	else if(CONS == R0->type)
 	{
-		if(exp->car == s_if)
+		if(R0->car == s_if)
 		{
-			eval(exp->cdr->car, env);
+			push_cell(R0);
+			R0 = R0->cdr->car;
+			eval(env);
+			R0 = pop_cell();
 			if(R1 != cell_f)
 			{
-				exp = exp->cdr->cdr->car;
+				R0 = R0->cdr->cdr->car;
 				goto eval_start;
 			}
 
-			if(nil == exp->cdr->cdr->cdr)
+			if(nil == R0->cdr->cdr->cdr)
 			{
 				R1 = cell_unspecified;
 				return;
 			}
 
-			exp = exp->cdr->cdr->cdr->car;
+			R0 = R0->cdr->cdr->cdr->car;
 			goto eval_start;
 		}
-		else if(exp->car == s_cond)
+		else if(R0->car == s_cond)
 		{
-restart_cond:
-			if(nil == exp)
+			R0 = R0->cdr;
+			while(nil != R0)
 			{
-				R1 = cell_unspecified;
-				return;
+				push_cell(R0);
+				R0 = R0->car->car;
+				eval(env);
+				R0 = pop_cell();
+				if(cell_t == R1)
+				{
+					R0 = R0->car->cdr->car;
+					eval(env);
+					return;
+				}
+				R0 = R0->cdr;
 			}
-			eval(exp->car->car, env);
-			if(cell_t == R1)
-			{
-				exp = exp->car->cdr->car;
-				goto eval_start;
-			}
-			exp = exp->cdr;
-			goto restart_cond;
-		}
-		else if(exp->car == s_lambda)
-		{
-			R1 = make_proc(exp->cdr->car, exp->cdr->cdr, env);
+			R1 = cell_unspecified;
 			return;
 		}
-		else if(exp->car == quote)
+		else if(R0->car == s_lambda)
 		{
-			R1 = exp->cdr->car;
+			R1 = make_proc(R0->cdr->car, R0->cdr->cdr, env);
 			return;
 		}
-		else if(exp->car == quasiquote)
+		else if(R0->car == quote)
 		{
-			i = exp->cdr->car;
+			R1 = R0->cdr->car;
+			return;
+		}
+		else if(R0->car == quasiquote)
+		{
+			i = R0->cdr->car;
 			f = NULL;
 			while(nil != i)
 			{
@@ -232,12 +227,14 @@ restart_cond:
 				{
 					if(unquote == i->car->car)
 					{
-						eval(i->car->cdr->car, env);
+						R0 = i->car->cdr->car;
+						eval(env);
 						h = R1;
 					}
 					if(unquote_splicing == i->car->car)
 					{
-						eval(i->car->cdr->car, env);
+						R0 = i->car->cdr->car;
+						eval(env);
 						while((NULL != R1) && (nil != R1))
 						{
 							/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
@@ -263,62 +260,74 @@ restart_quasiquote:
 			R1 = f;
 			return;
 		}
-		else if(exp->car == s_define)
+		else if(R0->car == s_define)
 		{
-			if(CONS == exp->cdr->car->type)
+			if(CONS == R0->cdr->car->type)
 			{
-				fun = exp->cdr->cdr;
-				arguments = exp->cdr->car->cdr;
-				name = exp->cdr->car->car;
-				exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+				fun = R0->cdr->cdr;
+				arguments = R0->cdr->car->cdr;
+				name = R0->cdr->car->car;
+				R0->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
 			}
-			eval(exp->cdr->cdr->car, env);
-			R1 = extend_env(exp->cdr->car, R1, env);
+			push_cell(R0->cdr->car);
+			R0 = R0->cdr->cdr->car;
+			eval(env);
+			R0 = pop_cell();
+			R1 = extend_env(R0, R1, env);
 			return;
 		}
-		else if(exp->car == s_setb)
+		else if(R0->car == s_setb)
 		{
-			pair = assoc(exp->cdr->car, env);
-			eval(exp->cdr->cdr->car, env);
-			pair->cdr = R1;
+			R2 = assoc(R0->cdr->car, env);
+			if(nil == R2)
+			{
+				file_print("Assigning value to unbound variable: ", stderr);
+				file_print(R0->cdr->car->string, stderr);
+				file_print("\nAborting to prevent problems\n", stderr);
+				exit(EXIT_FAILURE);
+			}
+			R0 = R0->cdr->cdr->car;
+			eval(env);
+			R2->cdr = R1;
 			return;
 		}
-		else if(exp->car == s_let)
+		else if(R0->car == s_let)
 		{
-			for(tmp = exp->cdr->car; tmp != nil; tmp = tmp->cdr)
+			push_cell(R0);
+			for(tmp = R0->cdr->car; tmp != nil; tmp = tmp->cdr)
 			{
 				push_cell(tmp);
-				eval(tmp->car->cdr->car, env);
+				R0 = tmp->car->cdr->car;
+				eval(env);
 				tmp = pop_cell();
 				env = make_cons(make_cons(tmp->car->car, R1), env);
 			}
 
-			exp = make_cons(s_begin, exp->cdr->cdr);
+			R0 = pop_cell();
+			R0 = make_cons(s_begin, R0->cdr->cdr);
 			goto eval_start;
 		}
-		else if(exp->car == s_begin)
+		else if(R0->car == s_begin)
 		{
-			exp = exp->cdr;
-			if(exp == nil)
+			R0 = R0->cdr;
+			while(R0 != nil)
 			{
-				R1 = nil;
-				return;
+				push_cell(R0->cdr);
+				R0 = R0->car;
+				eval(env);
+				R0 = pop_cell();
 			}
-			while(TRUE)
-			{
-				if(exp->cdr == nil)
-				{
-					exp = exp->car;
-					goto eval_start;
-				}
-				eval(exp->car, env);
-				exp = exp->cdr;
-			}
+			return;
 		}
 
-		eval(exp->car, env);
+		push_cell(R0->cdr);
+		R0 = R0->car;
+		eval(env);
+		R0 = pop_cell();
 		push_cell(R1);
-		vals = evlis(exp->cdr, env);
+		push_cell(R0);
+		vals = evlis(env);
+		R0 = pop_cell();
 		proc = pop_cell();
 
 		if(proc->type == PRIMOP)
@@ -331,24 +340,24 @@ restart_quasiquote:
 		{
 			env = make_cons(proc->env->car, proc->env->cdr);
 			env = multiple_extend(env, proc->car, vals);
-			exp = make_cons(s_begin, proc->cdr);
+			R0 = make_cons(s_begin, proc->cdr);
 			goto eval_start;
 		}
 		require(FALSE, "Bad argument to apply\n");
 	}
-	else if(PRIMOP == exp->type)
+	else if(PRIMOP == R0->type)
 	{
-		R1 = exp;
+		R1 = R0;
 		return;
 	}
-	else if(LAMBDA == exp->type)
+	else if(LAMBDA == R0->type)
 	{
-		R1 = exp;
+		R1 = R0;
 		return;
 	}
 
 	/* Fall through case */
-	R1 = exp;
+	R1 = R0;
 }
 
 

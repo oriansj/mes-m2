@@ -34,7 +34,7 @@ struct cell* expand_macros(struct cell* exps);
 struct cell* make_file(FILE* a, char* name);
 struct cell* parse(char* program, int size);
 struct cell* pop_cell();
-void eval(struct cell* exp, struct cell* env);
+void eval(struct cell* env);
 void garbage_collect();
 void garbage_init(int number_of_cells);
 void init_sl3();
@@ -67,7 +67,7 @@ int REPL()
 	/* perform macro processing here */
 	R0 = expand_macros(R0);
 	/* now to eval what results */
-	eval(R0, g_env);
+	eval(g_env);
 
 	/* Print */
 	if(match("/dev/stdin", __stdin->string) && (NULL != R1) && (cell_unspecified != R1))

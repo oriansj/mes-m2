@@ -166,10 +166,12 @@ void unmark_cells(struct cell* list, struct cell* stop, int count)
 	for(; NULL != list; list = list->cdr)
 	{
 		if(list == stop) count = count + 1;
+		require(NULL != list, "unmark_cells impossible cell\n");
 		list->type = list->type & ~MARKED;
 
 		if(list->type == LAMBDA)
 		{
+			require(NULL != list->car, "unmark_cells impossible car 1 \n");
 			unmark_cells(list->car, stop, count);
 			if(NULL != list->env)
 			{
@@ -179,6 +181,7 @@ void unmark_cells(struct cell* list, struct cell* stop, int count)
 
 		if((list->type == CONS) || (list->type == RECORD))
 		{
+			require(NULL != list->car, "unmark_cells impossible car 2 \n");
 			unmark_cells(list->car, stop, count);
 		}
 	}
@@ -191,7 +194,7 @@ void unmark_stack()
 	while(NULL != g_stack[i])
 	{
 		s = g_stack[i];
-		s->type = s->type & ~MARKED;
+		unmark_cells(s, s, 0);
 		i = i + 1;
 	}
 }
@@ -202,12 +205,12 @@ void garbage_collect()
 	mark_all_cells();
 
 	/* Step two unmark cells we want to keep */
-	if(NULL != R0) R0->type = R0->type & ~MARKED;
-	if(NULL != R1) R1->type = R1->type & ~MARKED;
-	if(NULL != __stdin) __stdin->type = __stdin->type & ~MARKED;
-	if(NULL != __stdout) __stdout->type = __stdout->type & ~MARKED;
-	if(NULL != __stderr) __stderr->type = __stderr->type & ~MARKED;
-	if(NULL != g_env) unmark_cells(g_env, g_env, 0);
+	unmark_cells(R0, R0, 0);
+	unmark_cells(R1, R1, 0);
+	__stdin->type = __stdin->type & ~MARKED;
+	__stdout->type = __stdout->type & ~MARKED;
+	__stderr->type = __stderr->type & ~MARKED;
+	unmark_cells(g_env, g_env, 0);
 	unmark_stack();
 	unmark_cells(all_symbols, all_symbols, 0);
 	unmark_cells(top_env, top_env, 0);

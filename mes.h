@@ -122,6 +122,7 @@ char* memory_block;
 struct cell** g_stack;
 struct cell* R0;
 struct cell* R1;
+struct cell* R2;
 struct cell* g_env;
 struct cell* primitive_env;
 unsigned stack_pointer;
