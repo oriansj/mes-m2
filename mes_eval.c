@@ -52,15 +52,6 @@ struct cell* findsym(char *name)
 	return nil;
 }
 
-struct cell* intern(char *name)
-{
-	struct cell* op = findsym(name);
-	if(nil != op) return op->car;
-	op = make_sym(name);
-	all_symbols = make_cons(op, all_symbols);
-	return op;
-}
-
 /*** Environment ***/
 struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value)
 {
@@ -76,7 +67,7 @@ struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* v
 
 	if(cell_dot == syms->car)
 	{
-		return multiple_extend(extend(env, syms->cdr->car, vals), syms->cdr->cdr, vals->cdr);
+		return extend(env, syms->cdr->car, vals);
 	}
 
 	return multiple_extend(extend(env, syms->car, vals->car), syms->cdr, vals->cdr);
@@ -84,17 +75,25 @@ struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* v
 
 struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env)
 {
-	env->cdr = make_cons(env->car, env->cdr);
-	env->car = make_cons(sym, val);
-	return NULL;
+	struct cell* r = make_cons(make_cons(sym, val), env);
+	return r;
 }
 
 struct cell* assoc(struct cell* key, struct cell* alist)
 {
 	if(nil == alist) return nil;
-	for(; nil != alist; alist = alist->cdr)
+	struct cell* i;
+	for(i = alist; nil != i; i = i->cdr)
 	{
-		if(alist->car->car->string == key->string) return alist->car;
+		if(i->car->car->string == key->string) return i->car;
+	}
+
+	if(SYM != key->type) return nil;
+
+	/* Last ditch effort (REALLY SLOW) */
+	for(i = alist; nil != i; i = i->cdr)
+	{
+		if(match(i->car->car->string, key->string)) return i->car;
 	}
 	return nil;
 }
@@ -117,50 +116,73 @@ struct cell* pop_cell()
 }
 
 /*** Evaluator (Eval/Apply) ***/
-void eval(struct cell* env);
-struct cell* evlis(struct cell* env)
+void eval();
+void evlis()
 {
-	if(R0 == nil) return nil;
-
-	push_cell(R0->cdr);
-	R0 = R0->car;
-	eval(env);
-	R0 = pop_cell();
-	struct cell* i = R1;
-	struct cell* j = evlis(env);
-	return make_cons(i, j);
-}
-
-void eval(struct cell* env)
-{
-	struct cell* tmp;
-	struct cell* proc;
-	struct cell* vals;
-	struct cell* fun;
-	struct cell* arguments;
-	struct cell* name;
-	FUNCTION* fp;
-	struct cell* i;
-	struct cell* f;
-	struct cell* h;
-
-eval_start:
 	if(R0 == nil)
 	{
 		R1 = nil;
 		return;
 	}
 
-	if(INT == R0->type)
+	push_cell(g_env);
+	push_cell(R0->cdr);
+	R0 = R0->car;
+	eval();
+	R0 = pop_cell();
+	struct cell* i = R1;
+	g_env = pop_cell();
+	evlis();
+	struct cell* j = R1;
+	R1 = make_cons(i, j);
+}
+
+void apply(struct cell* proc, struct cell* vals)
+{
+	FUNCTION* fp;
+	if(proc->type == PRIMOP)
 	{
-		R1 = R0;
+		fp = proc->function;
+		R1 = fp(vals);
 		return;
 	}
-	else if(SYM == R0->type)
+	else if(proc->type == LAMBDA)
 	{
-		tmp = assoc(R0, env);
-		require(tmp != nil, "Unbound symbol");
-		R1 = tmp->cdr;
+		push_cell(g_env);
+		g_env = multiple_extend(proc->env, proc->car, vals);
+		proc->env = g_env;
+		R0 = make_cons(s_begin, proc->cdr);
+		eval();
+		g_env = pop_cell();
+		return;
+	}
+	file_print("Bad argument to apply: ", stderr);
+	file_print(proc->string, stderr);
+	file_print("\nAborting to avoid problems\n", stderr);
+	exit(EXIT_FAILURE);
+}
+
+void eval()
+{
+	struct cell* tmp;
+	struct cell* fun;
+	struct cell* arguments;
+	struct cell* name;
+	struct cell* i;
+	struct cell* f;
+	struct cell* h;
+
+	if(SYM == R0->type)
+	{
+		R1 = assoc(R0, g_env);
+		if(R1 == nil)
+		{
+			file_print("Unbound symbol: ", stderr);
+			file_print(R0->string, stderr);
+			file_print("\nAborting before problems can occur\n", stderr);
+			exit(EXIT_FAILURE);
+		}
+		R1 = R1->cdr;
 		return;
 	}
 	else if(CONS == R0->type)
@@ -169,12 +191,13 @@ eval_start:
 		{
 			push_cell(R0);
 			R0 = R0->cdr->car;
-			eval(env);
+			eval();
 			R0 = pop_cell();
 			if(R1 != cell_f)
 			{
 				R0 = R0->cdr->cdr->car;
-				goto eval_start;
+				eval();
+				return;
 			}
 
 			if(nil == R0->cdr->cdr->cdr)
@@ -184,7 +207,8 @@ eval_start:
 			}
 
 			R0 = R0->cdr->cdr->cdr->car;
-			goto eval_start;
+			eval();
+			return;
 		}
 		else if(R0->car == s_cond)
 		{
@@ -192,23 +216,23 @@ eval_start:
 			while(nil != R0)
 			{
 				push_cell(R0);
+				R1 = cell_unspecified;
 				R0 = R0->car->car;
-				eval(env);
+				eval();
 				R0 = pop_cell();
 				if(cell_t == R1)
 				{
 					R0 = R0->car->cdr->car;
-					eval(env);
+					eval();
 					return;
 				}
 				R0 = R0->cdr;
 			}
-			R1 = cell_unspecified;
 			return;
 		}
 		else if(R0->car == s_lambda)
 		{
-			R1 = make_proc(R0->cdr->car, R0->cdr->cdr, env);
+			R1 = make_proc(R0->cdr->car, R0->cdr->cdr, make_cons(g_env->car, g_env->cdr));
 			return;
 		}
 		else if(R0->car == quote)
@@ -228,13 +252,13 @@ eval_start:
 					if(unquote == i->car->car)
 					{
 						R0 = i->car->cdr->car;
-						eval(env);
+						eval();
 						h = R1;
 					}
 					if(unquote_splicing == i->car->car)
 					{
 						R0 = i->car->cdr->car;
-						eval(env);
+						eval();
 						while((NULL != R1) && (nil != R1))
 						{
 							/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
@@ -271,14 +295,19 @@ restart_quasiquote:
 			}
 			push_cell(R0->cdr->car);
 			R0 = R0->cdr->cdr->car;
-			eval(env);
+			eval();
 			R0 = pop_cell();
-			R1 = extend_env(R0, R1, env);
+			if(LAMBDA == R1->type)
+			{
+				R1->env = make_cons(make_cons(R0, R1), R1->env);
+			}
+			g_env = extend_env(R0, R1, g_env);
+			R1 = cell_unspecified;
 			return;
 		}
 		else if(R0->car == s_setb)
 		{
-			R2 = assoc(R0->cdr->car, env);
+			R2 = assoc(R0->cdr->car, g_env);
 			if(nil == R2)
 			{
 				file_print("Assigning value to unbound variable: ", stderr);
@@ -287,7 +316,7 @@ restart_quasiquote:
 				exit(EXIT_FAILURE);
 			}
 			R0 = R0->cdr->cdr->car;
-			eval(env);
+			eval();
 			R2->cdr = R1;
 			return;
 		}
@@ -298,14 +327,15 @@ restart_quasiquote:
 			{
 				push_cell(tmp);
 				R0 = tmp->car->cdr->car;
-				eval(env);
+				eval();
 				tmp = pop_cell();
-				env = make_cons(make_cons(tmp->car->car, R1), env);
+				g_env = make_cons(make_cons(tmp->car->car, R1), g_env);
 			}
 
 			R0 = pop_cell();
 			R0 = make_cons(s_begin, R0->cdr->cdr);
-			goto eval_start;
+			eval();
+			return;
 		}
 		else if(R0->car == s_begin)
 		{
@@ -314,7 +344,7 @@ restart_quasiquote:
 			{
 				push_cell(R0->cdr);
 				R0 = R0->car;
-				eval(env);
+				eval();
 				R0 = pop_cell();
 			}
 			return;
@@ -322,37 +352,12 @@ restart_quasiquote:
 
 		push_cell(R0->cdr);
 		R0 = R0->car;
-		eval(env);
+		eval();
 		R0 = pop_cell();
 		push_cell(R1);
-		push_cell(R0);
-		vals = evlis(env);
+		evlis();
 		R0 = pop_cell();
-		proc = pop_cell();
-
-		if(proc->type == PRIMOP)
-		{
-			fp = proc->function;
-			R1 = fp(vals);
-			return;
-		}
-		else if(proc->type == LAMBDA)
-		{
-			env = make_cons(proc->env->car, proc->env->cdr);
-			env = multiple_extend(env, proc->car, vals);
-			R0 = make_cons(s_begin, proc->cdr);
-			goto eval_start;
-		}
-		require(FALSE, "Bad argument to apply\n");
-	}
-	else if(PRIMOP == R0->type)
-	{
-		R1 = R0;
-		return;
-	}
-	else if(LAMBDA == R0->type)
-	{
-		R1 = R0;
+		apply(R0, R1);
 		return;
 	}
 
@@ -367,8 +372,17 @@ struct cell* builtin_apply(struct cell* args)
 	require(nil != args, "apply requires arguments\n");
 	require(nil != args->cdr, "apply recieved insufficient arguments\n");
 	require(CONS == args->cdr->car->type, "apply did not recieve a list\n");
-/*	return apply(args->car, args->cdr->car); */
-	return cell_unspecified;
+	push_cell(R0);
+	push_cell(R1);
+	push_cell(g_env);
+	R0 = args;
+	struct cell* r;
+	apply(args->car, args->cdr->car);
+	r = R1;
+	g_env = pop_cell();
+	R1 = pop_cell();
+	R0 = pop_cell();
+	return r;
 }
 
 struct cell* builtin_primitive_eval(struct cell* args)
@@ -379,8 +393,10 @@ struct cell* builtin_primitive_eval(struct cell* args)
 	push_cell(R0);
 	push_cell(R1);
 	push_cell(g_env);
-/*	eval(args->car, primitive_env); */
-	struct cell* r = R0;
+	R0 = args->car;
+	g_env = primitive_env;
+	eval();
+	struct cell* r = R1;
 	g_env = pop_cell();
 	R1 = pop_cell();
 	R0 = pop_cell();

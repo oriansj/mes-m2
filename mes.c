@@ -34,9 +34,9 @@ struct cell* expand_macros(struct cell* exps);
 struct cell* make_file(FILE* a, char* name);
 struct cell* parse(char* program, int size);
 struct cell* pop_cell();
-void eval(struct cell* env);
+void eval();
 void garbage_collect();
-void garbage_init(int number_of_cells);
+void garbage_init();
 void init_sl3();
 void push_cell(struct cell* a);
 void reset_block(char* a);
@@ -63,11 +63,11 @@ int REPL()
 
 	/* Process S-expression */
 	R0 = parse(message, read);
-	g_env = top_env;
+
 	/* perform macro processing here */
 	R0 = expand_macros(R0);
 	/* now to eval what results */
-	eval(g_env);
+	eval();
 
 	/* Print */
 	if(match("/dev/stdin", __stdin->string) && (NULL != R1) && (cell_unspecified != R1))
@@ -112,7 +112,7 @@ int main(int argc, char **argv, char** envp)
 	__argc = argc;
 	stack_pointer = 0;
 
-	int arena = numerate_string(env_lookup("MES_ARENA", envp));
+	arena = numerate_string(env_lookup("MES_ARENA", envp));
 	if(0 == arena) arena = 1000000;
 
 	int stack = numerate_string(env_lookup("MES_STACK", envp));
@@ -121,7 +121,7 @@ int main(int argc, char **argv, char** envp)
 	/* Our most important initializations */
 	memory_block = calloc(MAX_STRING, sizeof(char));
 	message = calloc(MAX_STRING + 2, sizeof(char));
-	garbage_init(arena);
+	garbage_init();
 	init_sl3();
 	g_stack = calloc(stack, sizeof(struct cell*));
 

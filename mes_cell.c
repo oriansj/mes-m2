@@ -148,7 +148,7 @@ void compact(struct cell* list)
 void mark_all_cells()
 {
 	struct cell* i;
-	for(i= gc_block_start; i < top_allocated; i = i + CELL_SIZE)
+	for(i = gc_block_start; i <= top_allocated; i = i + CELL_SIZE)
 	{
 		/* if not in the free list */
 		if(i->type != FREE)
@@ -159,42 +159,40 @@ void mark_all_cells()
 	}
 }
 
-void unmark_cells(struct cell* list, struct cell* stop, int count)
+void unmark_cells(struct cell* i)
 {
-	if(count > 1) return;
-
-	for(; NULL != list; list = list->cdr)
+	for(; NULL != i; i = i->cdr)
 	{
-		if(list == stop) count = count + 1;
-		require(NULL != list, "unmark_cells impossible cell\n");
-		list->type = list->type & ~MARKED;
+		require(NULL != i, "unmark_cells impossible cell\n");
+		if(0 == (i->type & MARKED)) return;
+		i->type = i->type & ~MARKED;
 
-		if(list->type == LAMBDA)
+		if(i->type == LAMBDA)
 		{
-			require(NULL != list->car, "unmark_cells impossible car 1 \n");
-			unmark_cells(list->car, stop, count);
-			if(NULL != list->env)
+			require(NULL != i->car, "unmark_cells impossible car 1 \n");
+			unmark_cells(i->car);
+			if(NULL != i->env)
 			{
-				unmark_cells(list->env, stop, count);
+				unmark_cells(i->env);
 			}
 		}
 
-		if((list->type == CONS) || (list->type == RECORD))
+		if((i->type == CONS) || (i->type == RECORD))
 		{
-			require(NULL != list->car, "unmark_cells impossible car 2 \n");
-			unmark_cells(list->car, stop, count);
+			require(NULL != i->car, "unmark_cells impossible car 2 \n");
+			unmark_cells(i->car);
 		}
 	}
 }
 
 void unmark_stack()
 {
-	int i = 0;
+	unsigned i = 0;
 	struct cell* s;
-	while(NULL != g_stack[i])
+	while(i < stack_pointer)
 	{
 		s = g_stack[i];
-		unmark_cells(s, s, 0);
+		unmark_cells(s);
 		i = i + 1;
 	}
 }
@@ -205,15 +203,15 @@ void garbage_collect()
 	mark_all_cells();
 
 	/* Step two unmark cells we want to keep */
-	unmark_cells(R0, R0, 0);
-	unmark_cells(R1, R1, 0);
+	unmark_cells(g_env);
+	unmark_cells(all_symbols);
+	unmark_cells(R0);
+	unmark_cells(R1);
+	unmark_cells(R2);
 	__stdin->type = __stdin->type & ~MARKED;
 	__stdout->type = __stdout->type & ~MARKED;
 	__stderr->type = __stderr->type & ~MARKED;
-	unmark_cells(g_env, g_env, 0);
 	unmark_stack();
-	unmark_cells(all_symbols, all_symbols, 0);
-	unmark_cells(top_env, top_env, 0);
 
 	/* Step three reclaim marked cells */
 	reclaim_marked();
@@ -222,18 +220,18 @@ void garbage_collect()
 	update_remaining();
 
 	/* Optional step four compact cells */
-	compact(all_symbols);
-	compact(top_env);
-	top_allocated = NULL;
+/*	compact(all_symbols); */
+/*	compact(top_env); */
+/*	top_allocated = NULL; */
 }
 
-void garbage_init(int number_of_cells)
+void garbage_init()
 {
-	gc_block_start = calloc(number_of_cells + 1, sizeof(struct cell));
-	top_allocated = gc_block_start + number_of_cells;
+	gc_block_start = calloc(arena + 1, sizeof(struct cell));
+	top_allocated = gc_block_start + arena;
 	free_cells = NULL;
 	reclaim_all();
-	top_allocated = NULL;
+/*	top_allocated = NULL; */
 }
 
 struct cell* pop_cons()
@@ -247,10 +245,10 @@ struct cell* pop_cons()
 	i = free_cells;
 	free_cells = i->cdr;
 	i->cdr = NULL;
-	if(i > top_allocated)
+/*	if(i > top_allocated)
 	{
 		top_allocated = i;
-	}
+	} */
 	left_to_take = left_to_take - 1;
 	return i;
 }
@@ -265,6 +263,13 @@ struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* en
 	return c;
 }
 
+/****************************************
+ * Internally an INT is just a value    *
+ * and a tag saying it is an INT        *
+ *      ---------------------------     *
+ *     | INT | VALUE | NULL | NULL |    *
+ *      ---------------------------     *
+ ****************************************/
 struct cell* make_int(int a)
 {
 	struct cell* c = make_cell(INT, NULL, NULL, NULL);
@@ -272,6 +277,13 @@ struct cell* make_int(int a)
 	return c;
 }
 
+/****************************************
+ * Internally a PORT is a pointer to a  *
+ * filename, a file pointer and type tag*
+ *   ------------------------------     *
+ *  | PORT | POINTER | NULL | FILE |    *
+ *   ------------------------------     *
+ ****************************************/
 struct cell* make_file(FILE* a, char* name)
 {
 	struct cell* c = make_cell(FILE_PORT, NULL, NULL, NULL);
@@ -280,6 +292,13 @@ struct cell* make_file(FILE* a, char* name)
 	return c;
 }
 
+/****************************************
+ * Internally a CHAR is just a value    *
+ * and a type tag                       *
+ *      ---------------------------     *
+ *     | CHAR | VALUE | NULL | NULL |   *
+ *      ---------------------------     *
+ ****************************************/
 struct cell* make_char(int a)
 {
 	struct cell* c = make_cell(CHAR, NULL, NULL, NULL);
@@ -287,6 +306,13 @@ struct cell* make_char(int a)
 	return c;
 }
 
+/****************************************
+ * Internally a STRING is a pointer to  *
+ * a string, its length and a type tag  *
+ *  ----------------------------------  *
+ * | STRING | POINTER | NULL | LENGTH | *
+ *  ----------------------------------  *
+ ****************************************/
 struct cell* make_string(char* a, int length)
 {
 	struct cell* c = make_cell(STRING, NULL, NULL, NULL);
@@ -295,6 +321,13 @@ struct cell* make_string(char* a, int length)
 	return c;
 }
 
+/****************************************
+ * Internally a SYM is just a pointer   *
+ * to a string and a type tag           *
+ *    -----------------------------     *
+ *   | SYM | POINTER | NULL | NULL |    *
+ *    -----------------------------     *
+ ****************************************/
 struct cell* make_sym(char* name)
 {
 	struct cell* c = make_cell(SYM, NULL, NULL, NULL);
@@ -302,6 +335,13 @@ struct cell* make_sym(char* name)
 	return c;
 }
 
+/****************************************
+ * Internally KEYWORD is just a pointer *
+ * to a string and a type tag           *
+ *  ---------------------------------   *
+ * | KEYWORD | POINTER | NULL | NULL |  *
+ *  ---------------------------------   *
+ ****************************************/
 struct cell* make_keyword(char* name)
 {
 	struct cell* c = make_cell(KEYWORD, NULL, NULL, NULL);
@@ -309,31 +349,65 @@ struct cell* make_keyword(char* name)
 	return c;
 }
 
-
+/****************************************
+ * Internally a CONS is just 2 pointers *
+ * to other CELLS and a type tag        *
+ *  ---------------------------------   *
+ * | CONS | POINTER | POINTER | NULL |  *
+ *  ---------------------------------   *
+ ****************************************/
 struct cell* make_cons(struct cell* a, struct cell* b)
 {
-	return make_cell(CONS, a, b, nil);
+	return make_cell(CONS, a, b, NULL);
 }
 
+/********************************************
+ * Internally LAMBDA is just 3 pointers     *
+ * to other CELLS and a type tag            *
+ *  --------------------------------------  *
+ * | LAMBDA | POINTER | POINTER | POINTER | *
+ *  --------------------------------------  *
+ ********************************************/
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env)
 {
 	return make_cell(LAMBDA, a, b, env);
 }
 
-struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env)
+/********************************************
+ * Internally MACRO is just 3 pointers      *
+ * to other CELLS and a type tag            *
+ *   -------------------------------------  *
+ *  | MACRO | POINTER | POINTER | POINTER | *
+ *   -------------------------------------  *
+ ********************************************/
+ struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env)
 {
 	return make_cell(MACRO, a, b, env);
 }
 
-
-struct cell* make_prim(void* fun)
+/****************************************
+ * Internally PRIMOP is just a pointer  *
+ * to a FUNCTION and a type tag         *
+ *   --------------------------------   *
+ *  | PRIMOP | POINTER | NULL | NULL |  *
+ *   --------------------------------   *
+ ****************************************/
+struct cell* make_prim(FUNCTION fun)
 {
 	struct cell* c = make_cell(PRIMOP, NULL, NULL, NULL);
 	c->function = fun;
 	return c;
 }
 
-struct cell* make_vector(int count, struct cell* init)
+/****************************************
+ * Internally VECTOR is just a pointer  *
+ * to a CONS list, its length and a     *
+ * type tag                             *
+ *  ----------------------------------  *
+ * | VECTOR | LENGTH | POINTER | NULL | *
+ *  ----------------------------------  *
+ ****************************************/
+ struct cell* make_vector(int count, struct cell* init)
 {
 	struct cell* r = make_cell(VECTOR, NULL, NULL, NULL);
 	struct cell* c = r;
@@ -349,6 +423,14 @@ struct cell* make_vector(int count, struct cell* init)
 	return r;
 }
 
+/****************************************
+ * Internally RECORD is just a pointer  *
+ * to a VECTOR (CDR), a pointer to a    *
+ * RECORD-TYPE (CAR) and a type tag     *
+ *  ----------------------------------- *
+ * | RECORD | POINTER | POINTER | NULL |*
+ *  ----------------------------------- *
+ ****************************************/
 struct cell* make_record(struct cell* type, struct cell* vector)
 {
 	struct cell* r = make_cell(RECORD, NULL, NULL, NULL);
@@ -358,7 +440,15 @@ struct cell* make_record(struct cell* type, struct cell* vector)
 	return r;
 }
 
-struct cell* make_record_type(char* name, struct cell* list)
+/**********************************************
+ * Internally RECORD_TYPE is just a           *
+ * pointer to a string (CAR), a pointer       *
+ * to a VECTOR (CDR) and a type tag           *
+ *  ----------------------------------------  *
+ * | RECORD_TYPE | POINTER | POINTER | NULL | *
+ *  ----------------------------------------  *
+ **********************************************/
+ struct cell* make_record_type(char* name, struct cell* list)
 {
 	struct cell* r = make_cell(RECORD_TYPE, NULL, NULL, NULL);
 	r->string = name;
@@ -366,7 +456,14 @@ struct cell* make_record_type(char* name, struct cell* list)
 	return r;
 }
 
-struct cell* make_eof()
+/****************************************
+ * Internally EOF_OBJECT is just a type *
+ * tag                                  *
+ *  ---------------------------------   *
+ * | EOF_OBJECT | NULL | NULL | NULL |  *
+ *  ---------------------------------   *
+ ****************************************/
+ struct cell* make_eof()
 {
 	return make_cell(EOF_object, NULL, NULL, NULL);
 }

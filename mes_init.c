@@ -320,4 +320,5 @@ void init_sl3()
 	spinup(make_sym("core:record-modifier"), make_prim(builtin_record_modifier));
 	spinup(make_sym("core:record-constructor"), make_prim(builtin_record_constructor));
 	primitive_env = top_env;
+	g_env = top_env;
 }

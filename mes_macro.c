@@ -22,8 +22,6 @@
 #include "mes.h"
 
 /* Imported functions */
-struct cell* assoc(struct cell* key, struct cell* alist);
-struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env);
 struct cell* macro_progn(struct cell* exps, struct cell* env);
 struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
@@ -31,6 +29,13 @@ struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* v
 struct cell* pop_cell();
 struct cell* reverse_list(struct cell* head);
 void push_cell(struct cell* a);
+
+struct cell* macro_extend_env(struct cell* sym, struct cell* val, struct cell* env)
+{
+	env->cdr = make_cons(env->car, env->cdr);
+	env->car = make_cons(sym, val);
+	return NULL;
+}
 
 struct cell* define_macro(struct cell* exp, struct cell* env)
 {
@@ -42,12 +47,11 @@ struct cell* define_macro(struct cell* exp, struct cell* env)
 		exp->cdr = make_cons(name, make_cons(make_cons(s_macro, make_cons(arguments, fun)), nil));
 	}
 
-	return(extend_env(exp->cdr->car, exp->cdr->cdr->car, env));
+	return(macro_extend_env(exp->cdr->car, exp->cdr->cdr->car, env));
 }
 
 struct cell* macro_apply(struct cell* exps, struct cell* vals);
 struct cell* macro_eval(struct cell* exps, struct cell* env);
-
 struct cell* expand_quasiquote(struct cell* exp, struct cell* env)
 {
 	struct cell* i = exp;
@@ -150,7 +154,7 @@ struct cell* expand_define(struct cell* exp, struct cell* env)
 	}
 
 	macro_eval(exp->cdr->cdr->car, env);
-	return(extend_env(exp->cdr->car, R0, env));
+	return(macro_extend_env(exp->cdr->car, R0, env));
 }
 
 struct cell* expand_cons(struct cell* exp, struct cell* env)
@@ -171,12 +175,24 @@ struct cell* expand_cons(struct cell* exp, struct cell* env)
 	return macro_apply(R0, R1);
 }
 
+struct cell* macro_assoc(struct cell* key, struct cell* alist)
+{
+	if(nil == alist) return nil;
+	struct cell* i;
+	for(i = alist; nil != i; i = i->cdr)
+	{
+		if(i->car->car->string == key->string) return i->car;
+	}
+	return nil;
+}
+
+
 struct cell* macro_eval(struct cell* exps, struct cell* env)
 {
 	if(CONS == exps->type) return expand_cons(exps, env);
 	if(SYM == exps->type)
 	{
-		struct cell* tmp = assoc(exps, env);
+		struct cell* tmp = macro_assoc(exps, env);
 		if(nil == tmp) return exps;
 		return tmp->cdr;
 	}
@@ -235,7 +251,7 @@ expand_reset:
 	hold->car = expand_macros(R0->car);
 	R0 = hold;
 
-	hold = assoc(R0->car, g_env);
+	hold = macro_assoc(R0->car, g_env);
 	if(CONS == hold->type)
 	{
 		if(s_macro == hold->cdr->car)

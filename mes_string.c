@@ -24,6 +24,7 @@
 /* Imported functions */
 char* ntoab(SCM x, int base, int signed_p);
 int string_size(char* a);
+struct cell* findsym(char *name);
 struct cell* make_char(int a);
 struct cell* make_int(int a);
 struct cell* make_string(char* a, int length);
@@ -208,6 +209,8 @@ struct cell* builtin_string_to_symbol(struct cell* args)
 	require(nil != args, "string->symbol requires an argument\n");
 	require(nil == args->cdr, "string->symbol only supports a single argument\n");
 	require(STRING == args->car->type, "string->symbol requires a string\n");
+	struct cell* r = findsym(args->car->string);
+	if(nil != r) return r->car;
 	return make_sym(args->car->string);
 }
 
