@@ -349,6 +349,32 @@ restart_quasiquote:
 			}
 			return;
 		}
+		else if(R0->car == s_while)
+		{
+			if(nil == R0->cdr)
+			{
+				R1 = cell_unspecified;
+				return;
+			}
+
+			push_cell(R0);
+			R0 = R0->cdr->car;
+			eval();
+			R0 = pop_cell();
+			while(cell_t == R1)
+			{
+				push_cell(R0);
+				R0 = R0->cdr->cdr->car;
+				eval();
+				R0 = pop_cell();
+				push_cell(R0);
+				R0 = R0->cdr->car;
+				eval();
+				R0 = pop_cell();
+				if(left_to_take < 1000) garbage_collect();
+			}
+			return;
+		}
 
 		push_cell(R0->cdr);
 		R0 = R0->car;

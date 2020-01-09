@@ -135,9 +135,9 @@ General help using GNU software: <http://gnu.org/gethelp/>\n")
 #;(while (not (null? __args))
        (begin
           (cond
-           ((or (string=? "--help" (car __args)) (string=? "-h" (car __args))) (begin (display --help) (exit 0)))
-           ((string=? "-s" (car __args)) (begin (primitive-load (cadr __args)) (%main __args) (exit 0)))
-           ((string=? "-e" (car __args)) (begin (set! %main (primitive-eval (string->symbol (cadr __args)))) (set! __args (cdr __args))))
+           #;((or (string=? "--help" (car __args)) (string=? "-h" (car __args))) (begin (display --help) (exit 0)))
+           ((string=? "-s" (car __args)) (begin (primitive-load (cadr __args)) ((primitive-eval %main) __args) (exit 0)))
+           ((string=? "-e" (car __args)) (begin (set! %main (string->symbol (cadr __args))) (set! __args (cdr __args))))
            ((string=? "--" (car __args)) (set! __args (cons '() '())))
            (#t (begin (display "error: unrecognized switch ") (display (car __args)) (newline) (display --help) (exit 1))))
           (set! __args (cdr __args))))
