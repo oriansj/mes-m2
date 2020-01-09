@@ -420,7 +420,7 @@ struct cell* builtin_primitive_eval(struct cell* args)
 	push_cell(R1);
 	push_cell(g_env);
 	R0 = args->car;
-	g_env = primitive_env;
+/*	g_env = primitive_env; */
 	eval();
 	struct cell* r = R1;
 	g_env = pop_cell();
