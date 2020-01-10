@@ -23,12 +23,18 @@
 
 /* Imported functions */
 char* ntoab(SCM x, int base, int signed_p);
-int string_size(char* a);
 struct cell* findsym(char *name);
 struct cell* make_char(int a);
 struct cell* make_int(int a);
 struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
+
+int string_size(char* a)
+{
+	int i = 0;
+	while(0 != a[i]) i = i + 1;
+	return i;
+}
 
 struct cell* string_length(struct cell* a)
 {

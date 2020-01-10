@@ -115,6 +115,7 @@ struct cell* __stdout;
 struct cell* __stderr;
 
 /* Garbage Collection */
+void garbage_collect();
 int left_to_take;
 char* memory_block;
 

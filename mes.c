@@ -35,7 +35,6 @@ struct cell* make_file(FILE* a, char* name);
 struct cell* parse(char* program, int size);
 struct cell* pop_cell();
 void eval();
-void garbage_collect();
 void garbage_init();
 void init_sl3();
 void push_cell(struct cell* a);
