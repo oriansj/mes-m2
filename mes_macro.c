@@ -25,7 +25,6 @@
 struct cell* macro_progn(struct cell* exps, struct cell* env);
 struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
-struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* vals);
 struct cell* pop_cell();
 struct cell* reverse_list(struct cell* head);
 void push_cell(struct cell* a);
@@ -211,6 +210,21 @@ macro_progn_reset:
 	goto macro_progn_reset;
 }
 
+struct cell* macro_extend(struct cell* env, struct cell* syms, struct cell* vals)
+{
+	if(nil == syms)
+	{
+		return env;
+	}
+
+	if(cell_dot == syms->car)
+	{
+		return make_cons(make_cons(syms->cdr->car, vals), env);
+	}
+
+	return macro_extend(make_cons(make_cons(syms->car, vals->car), env), syms->cdr, vals->cdr);
+}
+
 struct cell* macro_apply(struct cell* proc, struct cell* vals)
 {
 	struct cell* temp;
@@ -226,7 +240,7 @@ struct cell* macro_apply(struct cell* proc, struct cell* vals)
 	else if(proc->type == MACRO)
 	{
 		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
-		temp = macro_progn(proc->cdr, multiple_extend(env, proc->car, vals));
+		temp = macro_progn(proc->cdr, macro_extend(env, proc->car, vals));
 	}
 	else
 	{

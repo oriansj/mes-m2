@@ -23,7 +23,6 @@
 
 /* Imported functions */
 struct cell* assoc(struct cell* key, struct cell* alist);
-struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value);
 struct cell* load_file(char* s);
 struct cell* make_char(int a);
 struct cell* make_eof();
@@ -32,7 +31,7 @@ struct cell* make_int(int a);
 struct cell* make_sym(char* name);
 struct cell* string_eq(struct cell* a, struct cell* b);
 struct cell* vector_equal(struct cell* a, struct cell* b);
-void garbage_collect();
+
 
 /*** Primitives ***/
 struct cell* nullp(struct cell* args)

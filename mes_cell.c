@@ -202,7 +202,7 @@ void compact(struct cell* list)
 			temp->cdr = list->cdr;
 			temp->env = list->env;
 			relocate_cell(list, temp, all_symbols);
-			relocate_cell(list, temp, top_env);
+			relocate_cell(list, temp, g_env);
 		}
 
 		if((list->type == CONS)|| list->type == LAMBDA)
@@ -358,7 +358,7 @@ void garbage_collect()
 
 	/* Optional step four: compact cells */
 /*	compact(all_symbols); */
-/*	compact(top_env); */
+/*	compact(g_env); */
 }
 
 

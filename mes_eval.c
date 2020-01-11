@@ -21,22 +21,10 @@
 
 #include "mes.h"
 /* Imported functions */
-FILE* open_file(char* name, char* mode);
-struct cell* macro_apply(struct cell* exp, struct cell* vals);
-struct cell* make_cell(int type, struct cell* a, struct cell* b, struct cell* env);
-struct cell* make_char(int a);
-struct cell* make_eof();
-struct cell* make_file(FILE* a);
-struct cell* make_int(int a);
-struct cell* make_prim(void* fun);
 struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env);
-struct cell* make_sym(char* name);
-struct cell* make_sym(char* name);
-struct cell* prim_display(struct cell* args, FILE* out);
-struct cell* prim_write(struct cell* args, FILE* out);
 struct cell* reverse_list(struct cell* head);
-void garbage_collect();
+
 
 /* Support functions */
 struct cell* findsym(char *name)
@@ -50,33 +38,6 @@ struct cell* findsym(char *name)
 		}
 	}
 	return nil;
-}
-
-/*** Environment ***/
-struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value)
-{
-	return make_cons(make_cons(symbol, value), env);
-}
-
-struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* vals)
-{
-	if(nil == syms)
-	{
-		return env;
-	}
-
-	if(cell_dot == syms->car)
-	{
-		return extend(env, syms->cdr->car, vals);
-	}
-
-	return multiple_extend(extend(env, syms->car, vals->car), syms->cdr, vals->cdr);
-}
-
-struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env)
-{
-	struct cell* r = make_cons(make_cons(sym, val), env);
-	return r;
 }
 
 
@@ -189,6 +150,7 @@ void evlis()
 void apply(struct cell* proc, struct cell* vals)
 {
 	FUNCTION* fp;
+	struct cell* syms;
 	if(proc->type == PRIMOP)
 	{
 		/* Deal with the simple case of if we have a primitive */
@@ -213,7 +175,28 @@ void apply(struct cell* proc, struct cell* vals)
 		 * figured out yet.                     *
 		 ****************************************/
 		push_cell(g_env);
-		g_env = multiple_extend(proc->env, proc->car, vals);
+		g_env = proc->env;
+		syms = proc->car;
+
+		/* extend the locals*/
+		while(nil != syms)
+		{
+			/* Support (define (foo a b . rest) ...) sort of s-expressions */
+			if(cell_dot == syms->car)
+			{
+				g_env = make_cons(make_cons(syms->cdr->car, vals), g_env);
+				/* Ignore all symbols after the . rest */
+				syms = nil;
+			}
+			else
+			{
+				/* Support common case of just mapping of a to 4 in (define (foo a b ..)); (foo 4 5 ..)*/
+				g_env = make_cons(make_cons(syms->car, vals->car), g_env);
+				syms = syms->cdr;
+				vals = vals->cdr;
+			}
+		}
+
 		proc->env = g_env;
 		R0 = make_cons(s_begin, proc->cdr);
 		eval();
@@ -414,7 +397,7 @@ restart_quasiquote:
 			}
 
 			/* We now need to extend the environment with our new name */
-			g_env = extend_env(R0, R1, g_env);
+			g_env = make_cons(make_cons(R0, R1), g_env);
 			R1 = cell_unspecified;
 			return;
 		}
@@ -571,8 +554,7 @@ struct cell* builtin_primitive_eval(struct cell* args)
 	push_cell(R1);
 	push_cell(g_env);
 	R0 = args->car;
-	/* Need to figure out correct solution as this might not be correct in regards to modules */
-/*	g_env = primitive_env; */
+	/* Need to figure out correct solution as g_env might not be correct in regards to modules */
 	eval();
 	struct cell* r = R1;
 	g_env = pop_cell();

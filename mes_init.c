@@ -121,7 +121,6 @@ struct cell* builtin_write(struct cell* args);
 struct cell* builtin_write_error(struct cell* args);
 struct cell* builtin_xor(struct cell* args);
 struct cell* equal(struct cell* a, struct cell* b);
-struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value);
 struct cell* make_prim(void* fun);
 struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
@@ -134,7 +133,7 @@ struct cell* symbolp(struct cell* args);
 void spinup(struct cell* sym, struct cell* prim)
 {
 	all_symbols = make_cons(sym, all_symbols);
-	top_env = extend(top_env, sym, prim);
+	g_env = make_cons(make_cons(sym, prim), g_env);
 }
 
 /*** Initialization ***/
@@ -163,9 +162,10 @@ void init_sl3()
 
 	/* Globals of interest */
 	all_symbols = make_cons(nil, nil);
-	top_env = extend(nil, nil, nil);
+	g_env = nil;
 
 	/* Add Eval Specials */
+	spinup(nil, nil);
 	spinup(cell_t, cell_t);
 	spinup(cell_f, cell_f);
 	spinup(cell_dot, cell_dot);
@@ -319,6 +319,4 @@ void init_sl3()
 	spinup(make_sym("core:record-accessor"), make_prim(builtin_record_accessor));
 	spinup(make_sym("core:record-modifier"), make_prim(builtin_record_modifier));
 	spinup(make_sym("core:record-constructor"), make_prim(builtin_record_constructor));
-	primitive_env = top_env;
-	g_env = top_env;
 }

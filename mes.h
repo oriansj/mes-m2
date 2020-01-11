@@ -79,55 +79,53 @@ struct cell
 };
 
 /* Common functions */
-struct cell* make_cons(struct cell* a, struct cell* b);
-int numerate_string(char *a);
 char* numerate_number(int a);
 int match(char* a, char* b);
+int numerate_string(char *a);
+struct cell* make_cons(struct cell* a, struct cell* b);
 void file_print(char* s, FILE* f);
 void require(int bool, char* error);
 
 /* Global objects */
-struct cell* all_symbols;
-struct cell* top_env;
-struct cell* nil;
-struct cell* cell_unspecified;
-struct cell* cell_t;
-struct cell* cell_f;
 struct cell* cell_dot;
-struct cell* quote;
+struct cell* cell_f;
+struct cell* cell_t;
+struct cell* cell_unspecified;
+struct cell* nil;
 struct cell* quasiquote;
-struct cell* unquote;
-struct cell* unquote_splicing;
+struct cell* quote;
+struct cell* s_begin;
+struct cell* s_cond;
+struct cell* s_define;
+struct cell* s_define_macro;
 struct cell* s_if;
 struct cell* s_lambda;
-struct cell* s_define;
-struct cell* s_setb;
-struct cell* s_cond;
-struct cell* s_begin;
 struct cell* s_let;
-struct cell* s_while;
 struct cell* s_macro;
-struct cell* s_define_macro;
+struct cell* s_setb;
+struct cell* s_while;
+struct cell* unquote;
+struct cell* unquote_splicing;
 
 /* IO */
+char** __argv;
+char** __envp;
+int __argc;
+struct cell* __stderr;
 struct cell* __stdin;
 struct cell* __stdout;
-struct cell* __stderr;
 
 /* Garbage Collection */
-void garbage_collect();
-int left_to_take;
 char* memory_block;
+int left_to_take;
+unsigned arena;
+void garbage_collect();
 
 /* Lisp Macine */
-struct cell** g_stack;
 struct cell* R0;
 struct cell* R1;
 struct cell* R2;
+struct cell* all_symbols;
 struct cell* g_env;
-struct cell* primitive_env;
+struct cell** g_stack;
 unsigned stack_pointer;
-unsigned arena;
-char** __envp;
-char** __argv;
-int __argc;
