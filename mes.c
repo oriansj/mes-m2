@@ -88,12 +88,12 @@ int REPL()
 struct cell* load_file(char* s)
 {
 	int Reached_EOF = FALSE;
-	push_cell(__stdin);
+	FILE* f = fopen(s, "r");
 
 	/* Punt on bad inputs */
-	FILE* f = fopen(s, "r");
 	if(NULL == f) return cell_unspecified;
 
+	push_cell(__stdin);
 	__stdin = make_file(f, s);
 	while(!Reached_EOF)
 	{
