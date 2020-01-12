@@ -34,32 +34,6 @@ struct cell *free_cells;
 struct cell *gc_block_start;
 struct cell *top_allocated;
 
-
-/****************************************
- * Efficient tracking of how much free  *
- * Space we have to work with requires  *
- * fixing after garbage collection.     *
- * This is probably the least efficient *
- * way of doing this but it is good     *
- * Enough for now.                      *
- *                                      *
- * Simply walk the list of free cells   *
- * to determine the number of free      *
- * cells we have                        *
- ****************************************/
-void update_remaining()
-{
-	int count = 0;
-	struct cell* i = free_cells;
-	while(NULL != i)
-	{
-		count = count + 1;
-		i = i->cdr;
-	}
-	left_to_take = count;
-}
-
-
 /****************************************
  * If one wishes to allocate from the   *
  * bottom of memory to the top to make  *
@@ -67,23 +41,38 @@ void update_remaining()
  * one needs to allocate memory from    *
  * low to high and a sorted free list   *
  * makes that task much faster.         *
- *                                      *
- * TODO: replace with a loop            *
  ****************************************/
 struct cell* insert_ordered(struct cell* i, struct cell* list)
 {
-	if(NULL == list)
-	{
-		return i;
-	}
+	/* Deal with rare end case */
+	if(NULL == list) return i;
 
+	/* Most common case, insert at head of list */
 	if(i < list)
 	{
 		i->cdr = list;
 		return i;
 	}
 
-	list->cdr = insert_ordered(i, list->cdr);
+	/* Deal with worst case */
+	struct cell* head = list;
+	while(NULL != head)
+	{
+		/* If we went all the way to the end of the list */
+		if(NULL == head->cdr)
+		{
+			head->cdr = i;
+			break;
+		}
+		else if(i < head->cdr)
+		{
+			/* Inserting anywhere in between */
+			i->cdr = head->cdr;
+			head->cdr = i;
+			break;
+		}
+		head = head->cdr;
+	}
 	return list;
 }
 
@@ -113,6 +102,7 @@ void reclaim_marked()
 			i->cdr = NULL;
 			i->env = NULL;
 			free_cells = insert_ordered(i, free_cells);
+			left_to_take = left_to_take + 1;
 		}
 	}
 }
@@ -353,10 +343,7 @@ void garbage_collect()
 	/* Step two: reclaim marked cells */
 	reclaim_marked();
 
-	/* Step three: Update count of free cells*/
-	update_remaining();
-
-	/* Optional step four: compact cells */
+	/* Optional step three: compact cells */
 /*	compact(all_symbols); */
 /*	compact(g_env); */
 }
@@ -377,6 +364,7 @@ void garbage_collect()
 void garbage_init()
 {
 	gc_block_start = calloc(arena + 1, sizeof(struct cell));
+	left_to_take = arena;
 	top_allocated = gc_block_start + (arena * CELL_SIZE);
 	free_cells = NULL;
 	struct cell* i;

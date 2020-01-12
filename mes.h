@@ -117,7 +117,7 @@ struct cell* __stdout;
 
 /* Garbage Collection */
 char* memory_block;
-int left_to_take;
+unsigned left_to_take;
 unsigned arena;
 void garbage_collect();
 
