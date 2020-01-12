@@ -119,6 +119,8 @@ struct cell* __stdout;
 char* memory_block;
 unsigned left_to_take;
 unsigned arena;
+unsigned max_arena;
+unsigned GC_SAFETY;
 void garbage_collect();
 
 /* Lisp Macine */
@@ -129,3 +131,6 @@ struct cell* all_symbols;
 struct cell* g_env;
 struct cell** g_stack;
 unsigned stack_pointer;
+
+/* To control debugging info */
+unsigned mes_debug_level;

@@ -485,14 +485,12 @@ struct cell* builtin_equal(struct cell* args)
 
 struct cell* builtin_freecell(struct cell* args)
 {
-	if(nil == args)
-	{
-		file_print("Remaining Cells: ", stdout);
-		file_print(numerate_number(left_to_take), stdout);
-		file_print("\n", stdout);
-		return nil;
-	}
-	return make_int(left_to_take);
+	if(nil == args) return make_int(left_to_take);
+
+	file_print("Remaining Cells: ", stdout);
+	file_print(numerate_number(left_to_take), stdout);
+	file_print("\n", stdout);
+	return nil;
 }
 
 struct cell* builtin_number_to_char(struct cell* args)

@@ -22,6 +22,7 @@
 #include "mes.h"
 /* Imported functions */
 struct cell* list_to_vector(struct cell* i);
+void expand_pool();
 
 
 /* Deal with the fact GCC converts the 1 to the size of the structs being iterated over */
@@ -123,6 +124,7 @@ struct cell* pop_cons()
 	if(NULL == free_cells)
 	{
 		/* We have to get free cells if possible */
+		expand_pool();
 		garbage_collect();
 		require(NULL != free_cells, "OOOPS we ran out of cells\n");
 	}
@@ -221,13 +223,18 @@ void relocate_cell(struct cell* current, struct cell* target)
  ****************************************/
 void compact()
 {
-	struct cell* i;
 	struct cell* temp;
 
 	/* Do the actual compaction */
-	for(i = top_allocated; gc_block_start >= i; i = i - CELL_SIZE)
+	for(; gc_block_start >= top_allocated; top_allocated = top_allocated - CELL_SIZE)
 	{
-		if((FREE != i->type) && (i > free_cells ))
+		if(top_allocated < free_cells)
+		{
+			/* When we reached the end of compaction possible */
+			break;
+		}
+
+		if(FREE != top_allocated->type)
 		{
 			/****************************************
 			 * Might cause garbage collection       *
@@ -242,22 +249,15 @@ void compact()
 			 * nor crashes.                         *
 			 ****************************************/
 			temp = pop_cons();
-			temp->type = i->type;
-			temp->car = i->car;
-			temp->cdr = i->cdr;
-			temp->env = i->env;
-			relocate_cell(i, temp);
+			temp->type = top_allocated->type;
+			temp->car = top_allocated->car;
+			temp->cdr = top_allocated->cdr;
+			temp->env = top_allocated->env;
+			relocate_cell(top_allocated, temp);
 
 			/* Garbage collect cell */
-			free_cons(i);
+			free_cons(top_allocated);
 		}
-	}
-
-	/* Doubles the run time but required to make top_allocated correct */
-	top_allocated = gc_block_start + (CELL_SIZE * arena);
-	while(FREE == top_allocated->type)
-	{
-		top_allocated = top_allocated - CELL_SIZE;
 	}
 }
 
@@ -385,6 +385,9 @@ void unmark_stack()
  ****************************************/
 void garbage_collect()
 {
+	/* Make garbage collection lazy. aka don't do it until we are full or exceed the safety margin */
+	if(GC_SAFETY < left_to_take) return;
+
 	/* Step zero: mark all cells */
 	mark_all_cells();
 
@@ -439,6 +442,34 @@ void garbage_collect()
 
 
 /****************************************
+ * Increase the size of the pool by     *
+ * doubling until max pool size is      *
+ * reached                              *
+ ****************************************/
+void expand_pool()
+{
+	if(3 <= mes_debug_level)
+	{
+		file_print("EXPANDING POOL: ", stderr);
+		file_print(numerate_number(arena), stderr);
+		file_print(" cells now available\n", stderr);
+	}
+
+	if(arena < max_arena)
+	{
+		arena = arena * 2;
+		if(arena > max_arena) arena = max_arena;
+		struct cell* i = gc_block_start + (arena * CELL_SIZE);
+
+		for(; i > top_allocated ; i = i - CELL_SIZE)
+		{
+			free_cons(i);
+		}
+	}
+}
+
+
+/****************************************
  * We need to create our pool of cells  *
  * to work with in the first place      *
  *                                      *
@@ -453,7 +484,7 @@ void garbage_collect()
 void garbage_init()
 {
 	/* Create our entire pool in one action */
-	gc_block_start = calloc(arena + 1, sizeof(struct cell));
+	gc_block_start = malloc((max_arena + 1) * sizeof(struct cell));
 	left_to_take = 0;
 
 	/* We need to free everything before we can use it */

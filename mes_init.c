@@ -310,7 +310,7 @@ void init_sl3()
 	spinup(make_sym("exit"), make_prim(builtin_halt));
 
 	/* MES unique */
-	spinup(make_sym("free_mem"), make_prim(builtin_freecell));
+	spinup(make_sym("core:free_mem"), make_prim(builtin_freecell));
 	spinup(make_sym("%version"), make_string("0.19", 4));
 	spinup(make_sym("vector=?"), make_prim(builtin_vectoreq));
 	spinup(make_sym("list=?"), make_prim(builtin_listeq));

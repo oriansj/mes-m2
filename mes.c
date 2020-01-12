@@ -20,10 +20,11 @@
  */
 
 #include "mes.h"
-// CONSTANT MAX_STRING 4096
-#define MAX_STRING 4096
 
+/* globals used in REPL */
 char* message;
+unsigned MAX_STRING;
+unsigned MAX_TOKEN;
 
 /* Prototypes */
 FILE* open_file(char* name, char* mode);
@@ -112,13 +113,26 @@ int main(int argc, char **argv, char** envp)
 	stack_pointer = 0;
 
 	arena = numerate_string(env_lookup("MES_ARENA", envp));
-	if(0 == arena) arena = 1000000;
+	if(0 == arena) arena = 1;
+
+	mes_debug_level = numerate_string(env_lookup("MES_DEBUG", envp));
+
+	max_arena = numerate_string(env_lookup("MES_MAX_ARENA", envp));
+	if(0 == max_arena) max_arena = 100000000;
+
+	MAX_STRING = numerate_string(env_lookup("MES_MAX_STRING", envp));
+	if(0 == MAX_STRING) MAX_STRING = 4096;
+
+	MAX_TOKEN = numerate_string(env_lookup("MES_MAX_TOKEN", envp));
+	if(0 == MAX_TOKEN) MAX_TOKEN = 4096;
+
+	GC_SAFETY = numerate_string(env_lookup("MES_SAFETY", envp));
 
 	int stack = numerate_string(env_lookup("MES_STACK", envp));
 	if(0 == stack) stack = 100000;
 
 	/* Our most important initializations */
-	memory_block = calloc(MAX_STRING, sizeof(char));
+	memory_block = calloc(MAX_TOKEN, sizeof(char));
 	message = calloc(MAX_STRING + 2, sizeof(char));
 	garbage_init();
 	init_sl3();
