@@ -108,75 +108,6 @@ struct cell* insert_ordered(struct cell* i, struct cell* list)
 
 
 /****************************************
- * The Sweep part of the Mark and sweep *
- * garbage collection.                  *
- *                                      *
- *  *One of few performance critical*   *
- *                                      *
- * By sweeping from high to low memory  *
- * addresses we reduce the number of    *
- * recursions needed by insert_ordered  *
- * on average as high blocks should be  *
- * freed more frequently than low       *
- * blocks.                              *
- ****************************************/
-void reclaim_marked()
-{
-	struct cell* i;
-	for(i= top_allocated; i >= gc_block_start ; i = i - CELL_SIZE)
-	{
-		if(i->type & MARKED)
-		{
-			i->type = FREE;
-			i->car = NULL;
-			i->cdr = NULL;
-			i->env = NULL;
-			free_cells = insert_ordered(i, free_cells);
-			left_to_take = left_to_take + 1;
-		}
-	}
-}
-
-
-/****************************************
- * Compaction require relocation of     *
- * cells and the correction of all      *
- * references to those cells.           *
- *                                      *
- *     * CORRECTNESS IS ESSENTIAL *     *
- *  *CRITICAL TO COMPACTION PERFORMACE* *
- *                                      *
- * TODO: ensure correctness before      *
- * enabling function.                   *
- ****************************************/
-void relocate_cell(struct cell* current, struct cell* target, struct cell* list)
-{
-	for(; NULL != list; list = list->cdr)
-	{
-		if(list->car == current)
-		{
-			list->car = target;
-		}
-
-		if(list->cdr == current)
-		{
-			list->cdr = target;
-		}
-
-		if(list->env == current)
-		{
-			list->env = target;
-		}
-
-		if((list->type == CONS)|| list->type == LAMBDA)
-		{
-			relocate_cell(current, target, list->car);
-		}
-	}
-}
-
-
-/****************************************
  * A centralized method of allocating   *
  * the free cells to calling functions  *
  *                                      *
@@ -209,30 +140,124 @@ struct cell* pop_cons()
 
 
 /****************************************
+ * A centralized method of freeing      *
+ * cells to calling functions.          *
+ ****************************************/
+void free_cons(struct cell* i)
+{
+	i->type = FREE;
+	i->car = NULL;
+	i->cdr = NULL;
+	i->env = NULL;
+	free_cells = insert_ordered(i, free_cells);
+	left_to_take = left_to_take + 1;
+}
+
+
+/****************************************
+ * The Sweep part of the Mark and sweep *
+ * garbage collection.                  *
+ *                                      *
+ *  *One of few performance critical*   *
+ *                                      *
+ * By sweeping from high to low memory  *
+ * addresses we reduce the number of    *
+ * recursions needed by insert_ordered  *
+ * on average as high blocks should be  *
+ * freed more frequently than low       *
+ * blocks.                              *
+ ****************************************/
+void reclaim_marked()
+{
+	struct cell* i;
+	for(i= top_allocated; i >= gc_block_start ; i = i - CELL_SIZE)
+	{
+		if(i->type & MARKED) free_cons(i);
+	}
+}
+
+
+/****************************************
+ * Compaction require relocation of     *
+ * cells and the correction of all      *
+ * references to those cells.           *
+ *                                      *
+ *     * CORRECTNESS IS ESSENTIAL *     *
+ *  *CRITICAL TO COMPACTION PERFORMACE* *
+ *                                      *
+ * TODO: ensure correctness before      *
+ * enabling function.                   *
+ ****************************************/
+void relocate_cell(struct cell* current, struct cell* target)
+{
+	struct cell* i;
+	for(i = gc_block_start; i <= top_allocated; i = i + CELL_SIZE)
+	{
+		/* Deal with TYPE that set CAR to be other cells */
+		if((i->type == CONS) || (i->type == RECORD) || (i->type == LAMBDA) || (i->type == MACRO))
+		{
+			/* If the cell's CAR is set to point to current, change it to target */
+			if(current == i->car) i->car = target;
+		}
+
+		/* Deal with the TYPES that set ENV to be other cells */
+		if((i->type == LAMBDA) || (i->type == MACRO))
+		{
+			/* If the cell's ENV is set to point to current, change it to target */
+			if(current == i->env) i->env = target;
+		}
+
+		/* Deal with the CDR case */
+		if(current == i->cdr) i->cdr = target;
+	}
+}
+
+
+/****************************************
  * The core of compaction, finding      *
  * cells that in a higher address than  *
  * available free cells, then having    *
  * those relocated.                     *
  ****************************************/
-void compact(struct cell* list)
+void compact()
 {
-	for(; NULL != list; list = list->cdr)
-	{
-		if((FREE != list->type) && (list > free_cells ))
-		{
-			struct cell* temp = pop_cons();
-			temp->type = list->type;
-			temp->car = list->car;
-			temp->cdr = list->cdr;
-			temp->env = list->env;
-			relocate_cell(list, temp, all_symbols);
-			relocate_cell(list, temp, g_env);
-		}
+	struct cell* i;
+	struct cell* temp;
 
-		if((list->type == CONS)|| list->type == LAMBDA)
+	/* Do the actual compaction */
+	for(i = top_allocated; gc_block_start >= i; i = i - CELL_SIZE)
+	{
+		if((FREE != i->type) && (i > free_cells ))
 		{
-			compact(list->car);
+			/****************************************
+			 * Might cause garbage collection       *
+			 * inside of garbage collection but     *
+			 * only we run out of cells between the *
+			 * reclaiming of free cells and the     *
+			 * compaction of utilized cells.        *
+			 *                                      *
+			 * Which will result in alot of         *
+			 * duplicate work and worse performance *
+			 * but should not result in exhustion   *
+			 * nor crashes.                         *
+			 ****************************************/
+			temp = pop_cons();
+			temp->type = i->type;
+			temp->car = i->car;
+			temp->cdr = i->cdr;
+			temp->env = i->env;
+			relocate_cell(i, temp);
+
+			/* Garbage collect cell */
+			free_cons(i);
 		}
+	}
+
+	/* Doubles the run time but required to make top_allocated correct */
+	top_allocated = gc_block_start + (CELL_SIZE * arena);
+	while(FREE == top_allocated->type)
+	{
+		top_allocated = top_allocated - CELL_SIZE;
 	}
 }
 
@@ -377,9 +402,39 @@ void garbage_collect()
 	/* Step two: reclaim marked cells */
 	reclaim_marked();
 
-	/* Optional step three: compact cells */
-/*	compact(all_symbols); */
-/*	compact(g_env); */
+	/****************************************
+	 * Optional step three: compact cells   *
+	 *                                      *
+	 * This is expensive so we only want to *
+	 * do it if we are seriously fragmented *
+	 * such as when top_allocated is more   *
+	 * than 2 times as high as it should be *
+	 * or when it finally hits the top of   *
+	 * the pool                             *
+	 *                                      *
+	 * Numbers higher than 2 don't produce  *
+	 * meaningful improvements in the       *
+	 * tested workloads                     *
+	 * 1 => 20.8s, 2 => 15.3s... 8 => 15.2s *
+	 * But never garbage collecting has a   *
+	 * performance of 16.3s, so a 7% boost  *
+	 * Feel free to strip out if not needed *
+	 * as it only is helpful in worst case  *
+	 * garbage collection patterns where    *
+	 * there is a cell allocated at the top *
+	 * of the pool (or near it) and thus    *
+	 * cycles are wasted marking all the    *
+	 * way up there. Thus really helpful    *
+	 * when the number of cells grows big   *
+	 ****************************************/
+	if(((arena - left_to_take) * 2) < ((top_allocated - gc_block_start) / CELL_SIZE))
+	{
+		compact();
+	}
+	else if(top_allocated == (gc_block_start + (CELL_SIZE * arena)))
+	{
+		compact();
+	}
 }
 
 
@@ -399,9 +454,7 @@ void garbage_init()
 {
 	/* Create our entire pool in one action */
 	gc_block_start = calloc(arena + 1, sizeof(struct cell));
-
-	/* we only have as many cells to allocate as we have cells */
-	left_to_take = arena;
+	left_to_take = 0;
 
 	/* We need to free everything before we can use it */
 	top_allocated = gc_block_start + (arena * CELL_SIZE);
@@ -409,11 +462,7 @@ void garbage_init()
 	struct cell* i;
 	for(i = top_allocated; i >= gc_block_start ; i = i - CELL_SIZE)
 	{
-		i->type = FREE;
-		i->car = NULL;
-		i->cdr = free_cells;
-		i->env = NULL;
-		free_cells = i;
+		free_cons(i);
 	}
 
 	/* We start at the bottom of the pool for garbage collection */
