@@ -29,10 +29,40 @@ struct cell* list_to_vector(struct cell* i);
 #define CELL_SIZE 1
 
 
-/* Globals needed for garbage collection */
-struct cell *free_cells;
-struct cell *gc_block_start;
-struct cell *top_allocated;
+/****************************************
+ * free_cells is a list of all free     *
+ * cells. Which by design is ordered    *
+ * from lowest to highest memory        *
+ * address with all fields of the CELLs *
+ * set to ZERO (NULL) except for CDR    *
+ * which points to the next element in  *
+ * the NULL terminated list.            *
+ ****************************************/
+struct cell* free_cells;
+
+
+/****************************************
+ * gc_block_start is just simply a      *
+ * pointer to the absolute bottom of    *
+ * the pool of cells. It is changed     *
+ * exactly once, when the pool is       *
+ * intially created.                    *
+ ****************************************/
+struct cell* gc_block_start;
+
+
+/****************************************
+ * top_allocated, is just a pointer to  *
+ * absolute highest non-free cell. This *
+ * is to reduce the amount of time      *
+ * iterating over free cells when       *
+ * engaged in garbage collection.       *
+ * Its value can only go up on          *
+ * allocations and only go down with    *
+ * relocations during compaction.       *
+ ****************************************/
+struct cell* top_allocated;
+
 
 /****************************************
  * If one wishes to allocate from the   *
@@ -170,6 +200,10 @@ struct cell* pop_cons()
 	free_cells = i->cdr;
 	i->cdr = NULL;
 	left_to_take = left_to_take - 1;
+
+	/* See if we need to move up */
+	if(i > top_allocated) top_allocated = i;
+
 	return i;
 }
 
@@ -363,8 +397,13 @@ void garbage_collect()
  ****************************************/
 void garbage_init()
 {
+	/* Create our entire pool in one action */
 	gc_block_start = calloc(arena + 1, sizeof(struct cell));
+
+	/* we only have as many cells to allocate as we have cells */
 	left_to_take = arena;
+
+	/* We need to free everything before we can use it */
 	top_allocated = gc_block_start + (arena * CELL_SIZE);
 	free_cells = NULL;
 	struct cell* i;
@@ -376,6 +415,9 @@ void garbage_init()
 		i->env = NULL;
 		free_cells = i;
 	}
+
+	/* We start at the bottom of the pool for garbage collection */
+	top_allocated = NULL;
 }
 
 
