@@ -23,14 +23,12 @@
 
 /* globals used in REPL */
 char* message;
-unsigned MAX_STRING;
-unsigned MAX_TOKEN;
 
 /* Prototypes */
 FILE* open_file(char* name, char* mode);
 char* env_lookup(char* token, char** envp);
 char* string_append(char* a, char* b);
-int Readline(FILE* source_file, char* temp, unsigned max_string);
+int Readline(FILE* source_file, char* temp);
 struct cell* expand_macros(struct cell* exps);
 struct cell* make_file(FILE* a, char* name);
 struct cell* parse(char* program, int size);
@@ -58,7 +56,7 @@ int REPL()
 	int read;
 	/* Read S-Expression block */
 	reset_block(message);
-	read = Readline(__stdin->file, message, MAX_STRING);
+	read = Readline(__stdin->file, message);
 	if(0 == read) return TRUE;
 
 	/* Process S-expression */
@@ -118,13 +116,13 @@ int main(int argc, char **argv, char** envp)
 	mes_debug_level = numerate_string(env_lookup("MES_DEBUG", envp));
 
 	max_arena = numerate_string(env_lookup("MES_MAX_ARENA", envp));
-	if(0 == max_arena) max_arena = 100000000;
+	if(0 == max_arena) max_arena = 50000000;
 
 	MAX_STRING = numerate_string(env_lookup("MES_MAX_STRING", envp));
 	if(0 == MAX_STRING) MAX_STRING = 4096;
 
 	MAX_TOKEN = numerate_string(env_lookup("MES_MAX_TOKEN", envp));
-	if(0 == MAX_TOKEN) MAX_TOKEN = 4096;
+	if(0 == MAX_TOKEN) MAX_TOKEN = 1024;
 
 	GC_SAFETY = numerate_string(env_lookup("MES_SAFETY", envp));
 

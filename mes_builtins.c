@@ -490,7 +490,7 @@ struct cell* builtin_freecell(struct cell* args)
 	file_print("Remaining Cells: ", stdout);
 	file_print(numerate_number(left_to_take), stdout);
 	file_print("\n", stdout);
-	return nil;
+	return cell_unspecified;
 }
 
 struct cell* builtin_number_to_char(struct cell* args)

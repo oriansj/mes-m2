@@ -103,6 +103,14 @@
   (if (symbol? sym) (string->keyword (list->string (cons* #\# #\: (cdr (string->list (symbol->string sym))))))
       (begin (display "keyword-like-symbol->keyword did not recieve a symbol") (exit 1))))
 
+(define (open-file name mode)
+  (cond
+   ((or (string=? "w" mode) (string=? "wb" mode)) (open-output-file name))
+   ((or (string=? "r" mode) (string=? "rb" mode)) (open-input-file name))
+   (#t (begin (display "open-file: unknown mode ") (display mode) (display " recieved\nHalting to prevent harm\n") (exit 1)))))
+
+(define (integer? i) (number? i))
+
 ;; Implement the standard prompt
 (define __args (cdr (command-line)))
 

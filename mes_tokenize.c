@@ -35,9 +35,9 @@ void reset_block(char* a);
 /****************************************************************
  *      "Convert a string into a list of tokens."               *
  ****************************************************************/
-struct cell* tokenize(struct cell* head, char* fullstring, int size)
+struct cell* tokenize(struct cell* head, char* fullstring, unsigned size)
 {
-	int string_index = 0;
+	unsigned string_index = 0;
 	int done = FALSE;
 	if((0 >= size) || (0 == fullstring[0]))
 	{
@@ -74,6 +74,7 @@ struct cell* tokenize(struct cell* head, char* fullstring, int size)
 				memory_block[string_index] = c;
 				string_index = string_index + 1;
 				c = fullstring[string_index];
+				require(string_index < MAX_TOKEN, "String Token exceeds size limit for token\nExpand MES_MAX_TOKEN value to resolve\n");
 			} while(escape || ('\"' != fullstring[string_index]));
 			string_index = string_index + 1;
 			done = TRUE;
@@ -91,6 +92,7 @@ struct cell* tokenize(struct cell* head, char* fullstring, int size)
 				string_index = string_index + 1;
 			}
 		}
+		require(string_index < MAX_TOKEN, "Token exceeds size limit for token\nExpand MES_MAX_TOKEN value to resolve\n");
 	} while(!done);
 
 	if(string_index > 1)

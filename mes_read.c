@@ -69,7 +69,7 @@ void reader_s_expression_dump(FILE* source_file)
 /****************************************************
  * Do the heavy lifting of reading an s-expression  *
  ****************************************************/
-unsigned Readline(FILE* source_file, char* temp, unsigned max_string)
+unsigned Readline(FILE* source_file, char* temp)
 {
 	int c;
 	unsigned i = 0;
@@ -77,11 +77,13 @@ unsigned Readline(FILE* source_file, char* temp, unsigned max_string)
 	int hashed = FALSE;
 	int escape = FALSE;
 
-	for(i = 0; i < max_string; i = i + 1)
+	while(TRUE)
 	{
 restart_comment:
 		c = fgetc(source_file);
 restart_paren:
+
+		require(i < MAX_STRING, "s-expression exceeds max size\nExpand MES_MAX_STRING value to resolve\n");
 		if((-1 == c) || (4 == c))
 		{
 			return i;
@@ -159,6 +161,7 @@ restart_paren:
 				temp[i] = c;
 				i = i + 1;
 				c = fgetc(source_file);
+				require(i < MAX_STRING, "s-expression string exceeded limit of s-expression\nExpand MES_MAX_STRING value to resolve\n");
 			} while('"' != c || escape);
 			temp[i] = c;
 		}
@@ -208,12 +211,14 @@ restart_paren:
 		{
 			temp[i] = c;
 		}
+
+		i = i + 1;
 	}
 
 Line_complete:
 	if(0 == i)
 	{
-		return Readline(source_file, temp, max_string);
+		return Readline(source_file, temp);
 	}
 
 	return i;

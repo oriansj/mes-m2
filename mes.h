@@ -99,6 +99,7 @@ struct cell* s_cond;
 struct cell* s_define;
 struct cell* s_define_macro;
 struct cell* s_if;
+struct cell* s_when;
 struct cell* s_lambda;
 struct cell* s_let;
 struct cell* s_macro;
@@ -131,6 +132,8 @@ struct cell* all_symbols;
 struct cell* g_env;
 struct cell** g_stack;
 unsigned stack_pointer;
+unsigned MAX_STRING;
+unsigned MAX_TOKEN;
 
 /* To control debugging info */
 unsigned mes_debug_level;

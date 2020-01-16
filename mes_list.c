@@ -78,6 +78,7 @@ struct cell* list_to_string(struct cell* args)
 struct cell* append(struct cell* a, struct cell* b)
 {
 	if(nil == a) return b;
+	require(CONS == a->type, "Did not recieve a proper list in append\n");
 	return make_cons(a->car, append(a->cdr, b));
 }
 

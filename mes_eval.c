@@ -190,7 +190,7 @@ void apply(struct cell* proc, struct cell* vals)
 			}
 			else
 			{
-				/* Support common case of just mapping of a to 4 in (define (foo a b ..)); (foo 4 5 ..)*/
+				/* Support common case of just mapping of a to 4 in (define (foo a b ..)); (foo 4 5 ..) */
 				g_env = make_cons(make_cons(syms->car, vals->car), g_env);
 				syms = syms->cdr;
 				vals = vals->cdr;
@@ -245,7 +245,7 @@ void eval()
 			eval();
 			R0 = pop_cell();
 
-			/* Execute if not false because that is what guile does (believe everything not #f is true)*/
+			/* Execute if not false because that is what guile does (believe everything not #f is true) */
 			if(R1 != cell_f)
 			{
 				R0 = R0->cdr->cdr->car;
@@ -260,9 +260,29 @@ void eval()
 				return;
 			}
 
-			/* Just do the ELSE s-expression*/
+			/* Just do the ELSE s-expression */
 			R0 = R0->cdr->cdr->cdr->car;
 			eval();
+			return;
+		}
+		else if(R0->car == s_when)
+		{
+			/* Evaluate the conditional */
+			push_cell(R0);
+			R0 = R0->cdr->car;
+			eval();
+			R0 = pop_cell();
+
+			/* Execute if not false because that is what guile does (believe everything not #f is true) */
+			if(R1 != cell_f)
+			{
+				R0 = R0->cdr->cdr->car;
+				eval();
+				return;
+			}
+
+			/* Just do what guile does */
+			R1 = cell_unspecified;
 			return;
 		}
 		else if(R0->car == s_cond)
@@ -284,7 +304,7 @@ void eval()
 				eval();
 				R0 = pop_cell();
 
-				/* Execute if not false because that is what guile does (believe everything not #f is true)*/
+				/* Execute if not false because that is what guile does (believe everything not #f is true) */
 				if(cell_f != R1)
 				{
 					R0 = R0->car->cdr->car;
@@ -429,7 +449,7 @@ restart_quasiquote:
 			/* Protect the s-expression from garbage collection */
 			push_cell(R0->cdr->cdr);
 
-			/* Deal with the (let ((pieces)) ..)*/
+			/* Deal with the (let ((pieces)) ..) */
 			for(R0 = R0->cdr->car; R0 != nil; R0 = R0->cdr)
 			{
 				push_cell(R0);

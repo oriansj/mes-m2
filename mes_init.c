@@ -150,6 +150,7 @@ void init_sl3()
 	unquote_splicing = make_sym("unquote-splicing");
 	cell_unspecified = make_sym("#<unspecified>");
 	s_if = make_sym("if");
+	s_when = make_sym("when");
 	s_cond = make_sym("cond");
 	s_lambda = make_sym("lambda");
 	s_macro = make_sym("macro");
@@ -175,6 +176,7 @@ void init_sl3()
 	spinup(unquote_splicing, unquote_splicing);
 	spinup(cell_unspecified, cell_unspecified);
 	spinup(s_if, s_if);
+	spinup(s_when, s_when);
 	spinup(s_cond, s_cond);
 	spinup(s_lambda, s_lambda);
 	spinup(s_macro, s_macro);
