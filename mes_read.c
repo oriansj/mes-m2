@@ -127,7 +127,7 @@ restart_paren:
 			if('@' == c)
 			{
 				temp[i] = '@';
-				i = i + i;
+				i = i + 1;
 				c = ' ';
 			}
 			temp[i] = ' ';
