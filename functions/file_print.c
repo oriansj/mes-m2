@@ -57,6 +57,17 @@ int hexify(int c, int high)
 	return i;
 }
 
+
+void raw_print(char* s, FILE* f)
+{
+	while(0 != s[0])
+	{
+		fputc(s[0], f);
+		s = s + 1;
+	}
+}
+
+
 int escape_lookup(char* c)
 {
 	if('\\' != c[0]) return c[0];
@@ -81,10 +92,11 @@ int escape_lookup(char* c)
 	else if(c[1] == '\\') return 92;
 
 	file_print("Unknown escape received: ", stderr);
-	file_print(c, stderr);
+	raw_print(c, stderr);
 	file_print(" Unable to process\n", stderr);
 	exit(EXIT_FAILURE);
 }
+
 
 void file_print(char* s, FILE* f)
 {
@@ -99,16 +111,6 @@ void file_print(char* s, FILE* f)
 			s = s + 1;
 		}
 		fputc(c, f);
-		s = s + 1;
-	}
-}
-
-
-void raw_print(char* s, FILE* f)
-{
-	while(0 != s[0])
-	{
-		fputc(s[0], f);
 		s = s + 1;
 	}
 }

@@ -204,6 +204,7 @@ void apply(struct cell* proc, struct cell* vals)
 		return;
 	}
 	file_print("Bad argument to apply: ", stderr);
+	require(SYM == proc->type, "{ERROR} unable to print string name\n");
 	file_print(proc->string, stderr);
 	file_print("\nAborting to avoid problems\n", stderr);
 	exit(EXIT_FAILURE);
@@ -239,6 +240,7 @@ void eval()
 	{
 		if(R0->car == s_if)
 		{
+			require(nil != R0->cdr, "naked if statement is not a valid s-expression\n");
 			/* Evaluate the conditional */
 			push_cell(R0);
 			R0 = R0->cdr->car;
@@ -267,6 +269,7 @@ void eval()
 		}
 		else if(R0->car == s_when)
 		{
+			require(nil != R0->cdr, "naked when statement is not a valid s-expression\n");
 			/* Evaluate the conditional */
 			push_cell(R0);
 			R0 = R0->cdr->car;
@@ -344,6 +347,8 @@ void eval()
 			f = NULL;
 			while(nil != i)
 			{
+				require(NULL != i, "Null in quasiquote expression reached\n");
+				require(CONS == i->type, "Not a cons list in quasiquote reached\n");
 				h = i->car;
 				if(CONS == i->car->type)
 				{

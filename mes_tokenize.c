@@ -256,6 +256,7 @@ struct cell* atom(struct cell* a)
 struct cell* readobj()
 {
 	struct cell* head = token_stack;
+	require(NULL != head, "missing object in readobj token_stack\n");
 	token_stack = head->cdr;
 	head->cdr = NULL;
 	if (match("(", head->string))
@@ -269,6 +270,7 @@ struct cell* readobj()
 struct cell* readlist()
 {
 	struct cell* head = token_stack;
+	require(NULL != head, "missing object in readlist token_stack\n");
 	if (match(")", head->string))
 	{
 		token_stack = head->cdr;

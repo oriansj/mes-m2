@@ -21,6 +21,17 @@
 
 #include "mes.h"
 
+/****************************************
+ * Deal with terriable inputs           *
+ ****************************************/
+int scrub_byte(FILE* source_file)
+{
+	int c = fgetc(source_file);
+	require(0 != c, "mes-m2 does not support null characters as input\n");
+	require(127 > c, "mes-m2 does not support utf-8 at this time\nplease restrict yourself to 7bit ascii\n");
+	return c;
+}
+
 /****************************************************
  * Clear out everything between #!..!# and #|..|#   *
  ****************************************************/
@@ -30,6 +41,7 @@ void reader_read_block_comment(FILE* source_file, int match)
 	int current = fgetc(source_file);
 	while((match != last) || ('#' != current))
 	{
+		require(EOF != current, "Unterminated block comment found\n");
 		last = current;
 		current = fgetc(source_file);
 	}
@@ -40,10 +52,11 @@ void reader_read_block_comment(FILE* source_file, int match)
  ****************************************************/
 void reader_s_expression_dump(FILE* source_file)
 {
-	int c =fgetc(source_file);
+	int c = scrub_byte(source_file);
 	unsigned depth = 0;
 	while(TRUE)
 	{
+		require(EOF != c, "#; s-expression not bounded\n");
 		if((-1 == c) || (4 == c))
 		{
 			return;
@@ -61,7 +74,7 @@ void reader_s_expression_dump(FILE* source_file)
 			depth = depth - 1;
 			if(0 == depth) return;
 		}
-		c = fgetc(source_file);
+		c = scrub_byte(source_file);
 	}
 }
 
@@ -80,12 +93,13 @@ unsigned Readline(FILE* source_file, char* temp)
 	while(TRUE)
 	{
 restart_comment:
-		c = fgetc(source_file);
+		c = scrub_byte(source_file);
 restart_paren:
 
 		require(i < MAX_STRING, "s-expression exceeds max size\nExpand MES_MAX_STRING value to resolve\n");
-		if((-1 == c) || (4 == c))
+		if((EOF == c) || (4 == c))
 		{
+			require(0 == depth, "Unmatched s-expression\n");
 			return i;
 		}
 		else if('#' == c)
@@ -107,7 +121,7 @@ restart_paren:
 		}
 		else if(',' == c)
 		{
-			c = fgetc(source_file);
+			c = scrub_byte(source_file);
 			temp[i] = ',';
 			i = i + 1;
 			if('@' == c)
@@ -131,7 +145,7 @@ restart_paren:
 		{
 			temp[i] = '#';
 			temp[i+1] = '\\';
-			c = fgetc(source_file);
+			c = scrub_byte(source_file);
 			i = i + 2;
 			hashed = FALSE;
 			if('"' == c)
@@ -149,6 +163,7 @@ restart_paren:
 			while('\n' != c)
 			{
 				c = fgetc(source_file);
+				require(EOF != c, "recieved EOF in line comment, please add newline at end of file\n");
 			}
 			goto restart_comment;
 		}
@@ -160,7 +175,8 @@ restart_paren:
 				else escape = FALSE;
 				temp[i] = c;
 				i = i + 1;
-				c = fgetc(source_file);
+				c = scrub_byte(source_file);
+				require(EOF != c, "s-expression string does not have matching \"\n");
 				require(i < MAX_STRING, "s-expression string exceeded limit of s-expression\nExpand MES_MAX_STRING value to resolve\n");
 			} while('"' != c || escape);
 			temp[i] = c;
