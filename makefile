@@ -45,6 +45,7 @@ mes-m2: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c 
 	functions/numerate_number.c \
 	functions/match.c \
 	functions/file_print.c \
+	functions/in_set.c \
 	-o bin/mes-m2
 
 mes: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c mes_list.c mes_string.c mes_keyword.c mes_record.c mes_init.c mes_macro.c | bin

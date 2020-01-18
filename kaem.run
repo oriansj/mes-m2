@@ -39,6 +39,7 @@ M2-Planet --debug --architecture amd64 \
 	-f functions/numerate_number.c \
 	-f functions/match.c \
 	-f functions/file_print.c \
+	-f functions/in_set.c  \
 	-o bin/mes.M1
 
 blood-elf --64 -f bin/mes.M1 -o bin/mes-footer.M1

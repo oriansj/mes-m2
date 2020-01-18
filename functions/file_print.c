@@ -22,7 +22,9 @@
 // CONSTANT FALSE 0
 #define FALSE 0
 
+int in_set(int c, char* s);
 void file_print(char* s, FILE* f);
+
 
 char char_lookup(int c)
 {
@@ -58,7 +60,7 @@ int hexify(int c, int high)
 }
 
 
-void raw_print(char* s, FILE* f)
+void file_print(char* s, FILE* f)
 {
 	while(0 != s[0])
 	{
@@ -92,23 +94,22 @@ int escape_lookup(char* c)
 	else if(c[1] == '\\') return 92;
 
 	file_print("Unknown escape received: ", stderr);
-	raw_print(c, stderr);
+	file_print(c, stderr);
 	file_print(" Unable to process\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
 
-void file_print(char* s, FILE* f)
+void raw_print(char* s, FILE* f)
 {
 	char c;
 	while(0 != s[0])
 	{
 		c = s[0];
-		if(s[0] == '\\')
+		if(in_set(c, "\a\b\t\b\v\f\n\r\e\"\'\\"))
 		{
-			c = escape_lookup(s);
-			if(s[1] == 'x') s = s + 2;
-			s = s + 1;
+			fputc('\\', f);
+			c = char_lookup(c);
 		}
 		fputc(c, f);
 		s = s + 1;

@@ -20,6 +20,7 @@
  */
 
 #include "mes.h"
+int in_set(int c, char* s);
 
 /****************************************
  * Deal with terriable inputs           *
@@ -48,20 +49,28 @@ void reader_read_block_comment(FILE* source_file, int match)
 }
 
 /****************************************************
- * Deal with #:foo and #;( foo ..) S-Expressions    *
+ * Deal with #;foo and #;( foo ..) S-Expressions    *
  ****************************************************/
 void reader_s_expression_dump(FILE* source_file)
 {
 	int c = scrub_byte(source_file);
 	unsigned depth = 0;
+
+	/* Clear out leading whitespace */
+	while(in_set(c, " \t\n"))
+	{
+		c = scrub_byte(source_file);
+		require(EOF != c, "#; s-expression not bounded\n");
+	}
+
 	while(TRUE)
 	{
 		require(EOF != c, "#; s-expression not bounded\n");
-		if((-1 == c) || (4 == c))
+		if(4 == c)
 		{
 			return;
 		}
-		else if((0 == depth) && (('\n'== c) || ('\r' == c) || (' ' == c) || ('\t' == c)))
+		else if((0 == depth) && (in_set(c, " \t\n\r")))
 		{
 			return;
 		}
@@ -107,13 +116,13 @@ restart_paren:
 			hashed = TRUE;
 			goto restart_comment;
 		}
-		else if (hashed && (('!' == c) || ('|' == c)))
+		else if (hashed && in_set(c, "!|"))
 		{
 			reader_read_block_comment(source_file, c);
 			hashed = FALSE;
 			goto restart_comment;
 		}
-		else if(('\'' == c) || ('`' == c))
+		else if(in_set(c, "\'`"))
 		{
 			temp[i] = c;
 			temp[i+1] = ' ';
@@ -181,11 +190,11 @@ restart_paren:
 			} while('"' != c || escape);
 			temp[i] = c;
 		}
-		else if((0 == depth) && (('\n' == c) || ('\r' == c) || (' ' == c) || ('\t' == c)))
+		else if((0 == depth) && in_set(c, " \t\n\r"))
 		{
 			goto Line_complete;
 		}
-		else if(('(' == c) || (')' == c))
+		else if(in_set(c, "()"))
 		{
 			if('(' == c)
 			{

@@ -23,7 +23,10 @@
 
 struct cell* token_stack;
 
+/* Imported functions */
 char* copy_string(char* target, char* source);
+int escape_lookup(char* c);
+int in_set(int c, char* s);
 int string_size(char* a);
 struct cell* findsym(char *name);
 struct cell* make_char(int a);
@@ -32,21 +35,22 @@ struct cell* make_string(char* a, int length);
 struct cell* make_sym(char* name);
 void reset_block(char* a);
 
+
 /****************************************************************
  *      "Convert a string into a list of tokens."               *
  ****************************************************************/
 struct cell* tokenize(struct cell* head, char* fullstring, unsigned size)
 {
 	unsigned string_index = 0;
+	unsigned out_index = 0;
 	int done = FALSE;
-	if((0 >= size) || (0 == fullstring[0]))
+	if(0 == fullstring[0])
 	{
 		return head;
 	}
 
 	reset_block(memory_block);
 
-	int escape;
 	int c;
 	do
 	{
@@ -57,45 +61,58 @@ struct cell* tokenize(struct cell* head, char* fullstring, unsigned size)
 		}
 		else if('\\' == c)
 		{
-			memory_block[string_index] = c;
+			memory_block[out_index] = c;
 			string_index = string_index + 1;
+			out_index = out_index + 1;
+
 			c = fullstring[string_index];
-			memory_block[string_index] = c;
+			memory_block[out_index] = c;
 			string_index = string_index + 1;
+			out_index = out_index + 1;
+
 			c = fullstring[string_index];
 		}
 		else if('\"' == c)
 		{
-			escape = FALSE;
 			do
 			{
-				if(!escape && '\\' == c ) escape = TRUE;
-				else escape = FALSE;
-				memory_block[string_index] = c;
+				if(c == '\\')
+				{
+					c = escape_lookup(fullstring + string_index);
+					if(fullstring[string_index + 1] == 'x') string_index = string_index + 2;
+					string_index = string_index + 1;
+				}
+
+				memory_block[out_index] = c;
 				string_index = string_index + 1;
+				out_index = out_index + 1;
+
 				c = fullstring[string_index];
 				require(string_index < MAX_TOKEN, "String Token exceeds size limit for token\nExpand MES_MAX_TOKEN value to resolve\n");
-			} while(escape || ('\"' != fullstring[string_index]));
+			} while(('\"' != fullstring[string_index]));
 			string_index = string_index + 1;
+			out_index = out_index + 1;
 			done = TRUE;
 		}
 		else
 		{
-			if((' ' == c) || ('\t' == c) || ('\n' == c) | ('\r' == c))
+			if(in_set(c, " \t\n\r"))
 			{
 				string_index = string_index + 1;
+				out_index = out_index + 1;
 				done = TRUE;
 			}
 			else
 			{
-				memory_block[string_index] = c;
+				memory_block[out_index] = c;
 				string_index = string_index + 1;
+				out_index = out_index + 1;
 			}
 		}
-		require(string_index < MAX_TOKEN, "Token exceeds size limit for token\nExpand MES_MAX_TOKEN value to resolve\n");
+		require(out_index < MAX_TOKEN, "Token exceeds size limit for token\nExpand MES_MAX_TOKEN value to resolve\n");
 	} while(!done);
 
-	if(string_index > 1)
+	if(out_index > 1)
 	{
 		char* store = calloc(string_index + 1, sizeof(char));
 		copy_string(store, memory_block);

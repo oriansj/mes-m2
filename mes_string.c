@@ -89,6 +89,21 @@ char* string_append(char* a, char* b)
 }
 
 
+char* substring(char* s, int start, int end)
+{
+	char* r = calloc((end - start) + 1, sizeof(char));
+	int i = 0;
+	while(start <= end)
+	{
+		r[i] = s[start];
+		start = start + 1;
+		i = i + 1;
+	}
+
+	return r;
+}
+
+
 /* Exposed primitives */
 struct cell* builtin_stringp(struct cell* args)
 {
@@ -244,4 +259,25 @@ struct cell* builtin_number_to_string(struct cell* args)
 	require(nil == args->cdr->cdr, "number->string does not support more than 2 arguments\n");
 	r = ntoab(args->car->value, args->cdr->car->value, TRUE);
 	return make_string(r, string_size(r));
+}
+
+
+struct cell* builtin_substring(struct cell* args)
+{
+	require(nil != args, "substring requires arguments\n");
+	require(STRING == args->car->type, "substring only works on strings\n");
+	require(nil != args->cdr, "substring requires a starting index\n");
+	require(INT == args->cdr->car->type, "substring's starting index must be an integer\n");
+	int start = args->cdr->car->value;
+	require(((start >= 0) && (start <= args->car->length )), "substring's starting index must be between 0 and the length of the string\n");
+
+	if(nil == args->cdr->cdr)
+	{
+		return make_string(substring(args->car->string, start, args->car->length), (args->car->length - start));
+	}
+
+	require(INT == args->cdr->cdr->car->type, "substring's ending index must be an integer\n");
+	int end = args->cdr->cdr->car->value;
+	require(((end >= start) && (end <= args->car->length)), "substring's ending index must be between the starting index and the length of the string\n");
+	return make_string(substring(args->car->string, start, end), (end - start));
 }

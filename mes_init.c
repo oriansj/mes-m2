@@ -108,6 +108,7 @@ struct cell* builtin_string_to_symbol(struct cell* args);
 struct cell* builtin_stringeq(struct cell* args);
 struct cell* builtin_stringp(struct cell* args);
 struct cell* builtin_sub(struct cell* args);
+struct cell* builtin_substring(struct cell* args);
 struct cell* builtin_sum(struct cell* args);
 struct cell* builtin_symbol_to_string(struct cell* args);
 struct cell* builtin_ttyname(struct cell* args);
@@ -275,6 +276,7 @@ void init_sl3()
 	spinup(make_sym("string-ref"), make_prim(builtin_string_ref));
 	spinup(make_sym("string->number"), make_prim(builtin_string_to_number));
 	spinup(make_sym("string->symbol"), make_prim(builtin_string_to_symbol));
+	spinup(make_sym("substring"), make_prim(builtin_substring));
 
 	/* Deal with symbols */
 	spinup(make_sym("symbol->string"), make_prim(builtin_symbol_to_string));
