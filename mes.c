@@ -130,8 +130,8 @@ int main(int argc, char **argv, char** envp)
 	if(0 == stack) stack = 100000;
 
 	/* Our most important initializations */
-	memory_block = calloc(MAX_TOKEN, sizeof(char));
-	message = calloc(MAX_STRING + 2, sizeof(char));
+	memory_block = calloc(MAX_TOKEN + 8, sizeof(char));
+	message = calloc(MAX_STRING + 8, sizeof(char));
 	garbage_init();
 	init_sl3();
 	g_stack = calloc(stack, sizeof(struct cell*));
