@@ -438,6 +438,40 @@ struct cell* builtin_eq(struct cell* args)
 	return cell_t;
 }
 
+struct cell* builtin_eqv(struct cell* args)
+{
+	if(nil == args) return cell_t;
+	if(nil == args->cdr) return cell_t;
+	struct cell* temp = args->car;
+	struct cell* r = cell_t;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		if(temp == args->car) continue;
+		else if(temp->type != args->car->type) return cell_f;
+		else if((INT == temp->type) || (CHAR == temp->type))
+		{
+			if(temp->value != args->car->value) return cell_f;
+		}
+		else if(STRING == temp->type)
+		{
+			r = string_eq(temp, args->car);
+		}
+		else if(VECTOR == temp->type)
+		{
+			r = vector_equal(temp, args->car);
+		}
+		else if(CONS == temp->type)
+		{
+			if(temp != args->car) return cell_f;
+		}
+		else return cell_f;
+
+		if (cell_f == r) return cell_f;
+	}
+
+	return cell_t;
+}
+
 struct cell* equal(struct cell* a, struct cell* b)
 {
 	if(a == b) return cell_t;

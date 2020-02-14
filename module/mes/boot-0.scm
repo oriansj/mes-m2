@@ -98,6 +98,11 @@
   (if (null? (cdr rest)) (car rest)
       (cons (car rest) (apply cons* (cdr rest)))))
 
+;; Some list primitives
+(define (memq i l) (cond ((null? l) #f) ((eq? i (car l)) l) (#t (memq i (cdr l)))))
+(define (memv i l) (cond ((null? l) #f) ((eqv? i (car l)) l) (#t (memq i (cdr l)))))
+(define (member i l) (cond ((null? l) #f) ((equal? i (car l)) l) (#t (memq i (cdr l)))))
+
 ;; Provide guile primitives
 (define (keyword-like-symbol->keyword sym)
   (if (symbol? sym) (string->keyword (list->string (cons* #\# #\: (cdr (string->list (symbol->string sym))))))

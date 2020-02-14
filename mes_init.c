@@ -43,6 +43,7 @@ struct cell* builtin_display_error(struct cell* args);
 struct cell* builtin_div(struct cell* args);
 struct cell* builtin_eofp (struct cell* args);
 struct cell* builtin_eq(struct cell* args);
+struct cell* builtin_eqv(struct cell* args);
 struct cell* builtin_equal(struct cell* args);
 struct cell* builtin_freecell(struct cell* args);
 struct cell* builtin_get_env(struct cell* args);
@@ -213,6 +214,7 @@ void init_sl3()
 	spinup(make_sym("char=?"), make_prim(builtin_chareq));
 	spinup(make_sym("string=?"), make_prim(builtin_stringeq));
 	spinup(make_sym("eq?"), make_prim(builtin_eq));
+	spinup(make_sym("eqv?"), make_prim(builtin_eqv));
 	spinup(make_sym("equal?"), make_prim(builtin_equal));
 
 	/* Math */
