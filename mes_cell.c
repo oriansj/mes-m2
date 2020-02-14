@@ -397,6 +397,8 @@ void garbage_collect()
 	unmark_cells(R0);
 	unmark_cells(R1);
 	unmark_cells(R2);
+	unmark_cells(R3);
+	unmark_cells(R4);
 	__stdin->type = __stdin->type & ~MARKED;
 	__stdout->type = __stdout->type & ~MARKED;
 	__stderr->type = __stderr->type & ~MARKED;

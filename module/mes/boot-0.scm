@@ -24,8 +24,6 @@
 ;;; A work in progress
 
 ;;; Code:
-
-;; boot-00.scm
 (define mes %version)
 
 (define (cond-expand-expander clauses)
@@ -35,9 +33,7 @@
 
 (define-macro (cond-expand . clauses)
   (cons 'begin (cond-expand-expander clauses)))
-;; end boot-00.scm
 
-;; boot-01.scm
 (define (newline . rest)
   (display #\newline))
 
@@ -100,8 +96,8 @@
 
 ;; Some list primitives
 (define (memq i l) (cond ((null? l) #f) ((eq? i (car l)) l) (#t (memq i (cdr l)))))
-(define (memv i l) (cond ((null? l) #f) ((eqv? i (car l)) l) (#t (memq i (cdr l)))))
-(define (member i l) (cond ((null? l) #f) ((equal? i (car l)) l) (#t (memq i (cdr l)))))
+(define (memv i l) (cond ((null? l) #f) ((eqv? i (car l)) l) (#t (memv i (cdr l)))))
+(define (member i l) (cond ((null? l) #f) ((equal? i (car l)) l) (#t (member i (cdr l)))))
 
 ;; Provide guile primitives
 (define (keyword-like-symbol->keyword sym)

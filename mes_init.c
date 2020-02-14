@@ -43,8 +43,8 @@ struct cell* builtin_display_error(struct cell* args);
 struct cell* builtin_div(struct cell* args);
 struct cell* builtin_eofp (struct cell* args);
 struct cell* builtin_eq(struct cell* args);
-struct cell* builtin_eqv(struct cell* args);
 struct cell* builtin_equal(struct cell* args);
+struct cell* builtin_eqv(struct cell* args);
 struct cell* builtin_freecell(struct cell* args);
 struct cell* builtin_get_env(struct cell* args);
 struct cell* builtin_halt(struct cell* args);
@@ -153,6 +153,8 @@ void init_sl3()
 	cell_unspecified = make_sym("#<unspecified>");
 	s_if = make_sym("if");
 	s_when = make_sym("when");
+	s_case = make_sym("case");
+	s_else = make_sym("else");
 	s_cond = make_sym("cond");
 	s_lambda = make_sym("lambda");
 	s_macro = make_sym("macro");
@@ -179,6 +181,8 @@ void init_sl3()
 	spinup(cell_unspecified, cell_unspecified);
 	spinup(s_if, s_if);
 	spinup(s_when, s_when);
+	spinup(s_case, s_case);
+	spinup(s_else, s_else);
 	spinup(s_cond, s_cond);
 	spinup(s_lambda, s_lambda);
 	spinup(s_macro, s_macro);
@@ -259,7 +263,7 @@ void init_sl3()
 	/* Dealing with Lists */
 	spinup(make_sym("list"), make_prim(builtin_list));
 	spinup(make_sym("append"), make_prim(builtin_append));
-	spinup(make_sym("list-length"), make_prim(builtin_list_length));
+	spinup(make_sym("length"), make_prim(builtin_list_length));
 	spinup(make_sym("list->string"), make_prim(builtin_list_to_string));
 	spinup(make_sym("list->vector"), make_prim(builtin_list_to_vector));
 	spinup(make_sym("list->symbol"), make_prim(builtin_list_to_symbol));

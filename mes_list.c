@@ -39,7 +39,7 @@ struct cell* string_to_list(char* string, int length)
 
 int list_length(struct cell* args)
 {
-	require(CONS == args->type, "mes_list.c: list_length recieved wrong type\n");
+	require(CONS == args->type, "mes_list.c: length recieved wrong type\n");
 	if(nil == args) return 0;
 	int size = 0;
 	struct cell* i;

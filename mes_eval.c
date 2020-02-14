@@ -21,9 +21,11 @@
 
 #include "mes.h"
 /* Imported functions */
-struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* make_macro(struct cell* a, struct cell* b, struct cell* env);
+struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* reverse_list(struct cell* head);
+struct cell* string_eq(struct cell* a, struct cell* b);
+struct cell* vector_equal(struct cell* a, struct cell* b);
 
 
 /* Support functions */
@@ -212,13 +214,6 @@ void apply(struct cell* proc, struct cell* vals)
 
 void eval()
 {
-	struct cell* fun;
-	struct cell* arguments;
-	struct cell* name;
-	struct cell* i;
-	struct cell* f;
-	struct cell* h;
-
 	if(SYM == R0->type)
 	{
 		/* Simply lookup the symbol in the environment */
@@ -325,6 +320,80 @@ void eval()
 			require(NULL != R1, "a naked cond is not supported\n");
 			return;
 		}
+		else if(R0->car == s_case)
+		{
+			/* Get past the CASE */
+			R0 = R0->cdr;
+
+			/* Provide a way to flag no fields in case */
+			R1 = NULL;
+
+			/* Protect the value we are casing after */
+			push_cell(R4);
+			push_cell(R0->cdr);
+			R0 = R0->car;
+			eval();
+			R4 = R1;
+			R0 = pop_cell();
+
+			/* Loop until end of list of s-expressions */
+			while(nil != R0)
+			{
+				require(CONS == R0->car->type, "Missing ( in case\n");
+				R1 = cell_f;
+				if(s_else == R0->car->car)
+				{
+					R1 = cell_t;
+				}
+				else
+				{
+					/* now walk the list of values */
+					require(CONS == R0->car->car->type, "only ((..) ..) form accepted in case statements\n");
+					push_cell(R3);
+					R3 = R0->car->car;
+					while(nil != R3)
+					{
+						R1 = R3->car;
+						if(R4 == R1) R1 = cell_t;
+						else if(R4->type == R1->type)
+						{
+							/* Approximate eqv? comparision */
+							if((INT == R4->type) || (CHAR == R4->type))
+							{
+								if(R4->value == R1->value) R1 = cell_t;
+								else R1 = cell_f;
+							}
+							else if(STRING == R4->type)
+							{
+								R1 = string_eq(R4, R1);
+							}
+							else if(VECTOR == R4->type)
+							{
+								R1 = vector_equal(R4, R1);
+							}
+							else R1 = cell_f;
+						}
+
+						if(cell_t == R1) break;
+						R3 = R3->cdr;
+					}
+					R3 = pop_cell();
+				}
+
+				if(cell_f != R1)
+				{
+					R0 = R0->car->cdr->car;
+					eval();
+					R4 = pop_cell();
+					return;
+				}
+				R0 = R0->cdr;
+			}
+
+			require(NULL != R1, "a naked case is not supported\n");
+			R4 = pop_cell();
+			return;
+		}
 		else if(R0->car == s_lambda)
 		{
 			/* (lambda (a b .. N) (s-expression)) */
@@ -341,26 +410,32 @@ void eval()
 		{
 			/* Protect the s-expression during the entire evaluation */
 			push_cell(R0);
+			/* R2 is the s-expression we are quasiquoting */
+			push_cell(R2);
+			/* R3 is the resulting s-expression, built backwards and reversed at the end */
+			push_cell(R3);
+			/* R4 is just a temp holder of each unquote */
+			push_cell(R4);
 
 			/* (quasiquote (...)) */
-			i = R0->cdr->car;
-			f = NULL;
-			while(nil != i)
+			R2 = R0->cdr->car;
+			R3 = NULL;
+			while(nil != R2)
 			{
-				require(NULL != i, "Null in quasiquote expression reached\n");
-				require(CONS == i->type, "Not a cons list in quasiquote reached\n");
-				h = i->car;
-				if(CONS == i->car->type)
+				require(NULL != R2, "Null in quasiquote expression reached\n");
+				require(CONS == R2->type, "Not a cons list in quasiquote reached\n");
+				R4 = R2->car;
+				if(CONS == R2->car->type)
 				{
-					if(unquote == i->car->car)
+					if(unquote == R2->car->car)
 					{
-						R0 = i->car->cdr->car;
+						R0 = R2->car->cdr->car;
 						eval();
-						h = R1;
+						R4 = R1;
 					}
-					if(unquote_splicing == i->car->car)
+					if(unquote_splicing == R2->car->car)
 					{
-						R0 = i->car->cdr->car;
+						R0 = R2->car->cdr->car;
 						eval();
 						while((NULL != R1) && (nil != R1))
 						{
@@ -368,9 +443,9 @@ void eval()
 							/* Or restrict to just proper lists as the spec (r7rs) requires */
 							/* eg. `(foo bar ,@(+ 4 5)) */
 							require(CONS == R1->type, "unquote-splicing requires argument of type <proper list>\n");
-							f = make_cons(R1->car, f);
+							R3 = make_cons(R1->car, R3);
 							/* Simply convert require to if and the above */
-							/* else f = make_cons(R1, f); */
+							/* else R3 = make_cons(R1, R3); */
 							R1 = R1->cdr;
 						}
 
@@ -378,39 +453,53 @@ void eval()
 						goto restart_quasiquote;
 					}
 				}
-				f = make_cons(h, f);
+				R3 = make_cons(R4, R3);
 restart_quasiquote:
 				/* keep walking down the list of s-expressions */
-				i = i->cdr;
+				R2 = R2->cdr;
 			}
 
 			/* We created the list backwards because it was simpler, now we have to put it into correct order */
-			i = f;
-			f = reverse_list(f);
-			require(NULL != i, "Impossible quasiquote processed?\n");
-			i->cdr = nil;
-			R1 = f;
+			R2 = R3;
+			R3 = reverse_list(R3);
+			require(NULL != R2, "Impossible quasiquote processed?\n");
+			R2->cdr = nil;
+			R1 = R3;
 
 			/* We are finally done with the s-expression, we don't need it back */
+			R4 = pop_cell();
+			R3 = pop_cell();
+			R2 = pop_cell();
 			pop_cell();
 			return;
 		}
 		else if(R0->car == s_define)
 		{
+			require(nil != R0->cdr, "naked (define) not supported\n");
 			/* To support (define (foo a b .. N) (s-expression)) form */
 			if(CONS == R0->cdr->car->type)
 			{
-				fun = R0->cdr->cdr;
-				arguments = R0->cdr->car->cdr;
-				name = R0->cdr->car->car;
+				/* R2 is to get the actual function*/
+				push_cell(R2);
+				/* R3 is to get the function arguments */
+				push_cell(R3);
+				/* R4 is to get the function's name */
+				push_cell(R4);
+				R2 = R0->cdr->cdr;
+				R3 = R0->cdr->car->cdr;
+				R4 = R0->cdr->car->car;
 				/* by converting it into (define foo (lambda (a b .. N) (s-expression))) form */
-				R0->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+				R0->cdr = make_cons(R4, make_cons(make_cons(s_lambda, make_cons(R3, R2)), nil));
+				R4 = pop_cell();
+				R3 = pop_cell();
+				R2 = pop_cell();
 			}
 
 			/* Protect the name from garbage collection */
 			push_cell(R0->cdr->car);
 
 			/* Evaluate the s-expression which the name is supposed to equal */
+			require(nil != R0->cdr->cdr, "naked (define foo) not supported\n");
 			R0 = R0->cdr->cdr->car;
 			eval();
 			R0 = pop_cell();
