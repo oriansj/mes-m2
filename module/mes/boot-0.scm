@@ -98,6 +98,9 @@
 (define (memq i l) (cond ((null? l) #f) ((eq? i (car l)) l) (#t (memq i (cdr l)))))
 (define (memv i l) (cond ((null? l) #f) ((eqv? i (car l)) l) (#t (memv i (cdr l)))))
 (define (member i l) (cond ((null? l) #f) ((equal? i (car l)) l) (#t (member i (cdr l)))))
+(define (assq i l) (cond ((null? l) #f) ((eq? i (caar l)) (car l)) (else (assq i (cdr l)))))
+(define (assv i l) (cond ((null? l) #f) ((eqv? i (caar l)) (car l)) (else (assv i (cdr l)))))
+(define (assoc i l) (cond ((null? l) #f) ((equal? i (caar l)) (car l)) (else (assoc i (cdr l)))))
 
 ;; Provide guile primitives
 (define (keyword-like-symbol->keyword sym)

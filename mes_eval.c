@@ -73,10 +73,17 @@ struct cell* assoc(struct cell* key, struct cell* alist)
 		if(i->car->car->string == key->string) return i->car;
 	}
 
+	/* Last ditch effort (REALLY SLOW)*/
 	if(SYM != key->type) return nil;
-
-	/* Last ditch effort (REALLY SLOW) */
 	for(i = alist; nil != i; i = i->cdr)
+	{
+		if(match(i->car->car->string, key->string)) return i->car;
+	}
+
+	/* Pray we are in a lambda */
+	if(NULL == R4) return nil;
+	require(CONS == R4->type, "Looks like R4 isn't a list\nAbort before we damage something\n");
+	for(i = g_env; nil != i; i = i->cdr)
 	{
 		if(match(i->car->car->string, key->string)) return i->car;
 	}
@@ -176,8 +183,8 @@ void apply(struct cell* proc, struct cell* vals)
 		 * forward references, I haven't        *
 		 * figured out yet.                     *
 		 ****************************************/
-		push_cell(g_env);
-		g_env = proc->env;
+		push_cell(R4);
+		R4 = proc->env;
 		syms = proc->car;
 
 		/* extend the locals*/
@@ -186,23 +193,22 @@ void apply(struct cell* proc, struct cell* vals)
 			/* Support (define (foo a b . rest) ...) sort of s-expressions */
 			if(cell_dot == syms->car)
 			{
-				g_env = make_cons(make_cons(syms->cdr->car, vals), g_env);
+				R4 = make_cons(make_cons(syms->cdr->car, vals), R4);
 				/* Ignore all symbols after the . rest */
 				syms = nil;
 			}
 			else
 			{
 				/* Support common case of just mapping of a to 4 in (define (foo a b ..)); (foo 4 5 ..) */
-				g_env = make_cons(make_cons(syms->car, vals->car), g_env);
+				R4 = make_cons(make_cons(syms->car, vals->car), R4);
 				syms = syms->cdr;
 				vals = vals->cdr;
 			}
 		}
 
-		proc->env = g_env;
 		R0 = make_cons(s_begin, proc->cdr);
 		eval();
-		g_env = pop_cell();
+		R4 = pop_cell();
 		return;
 	}
 	file_print("Bad argument to apply: ", stderr);
@@ -217,7 +223,9 @@ void eval()
 	if(SYM == R0->type)
 	{
 		/* Simply lookup the symbol in the environment */
-		R1 = assoc(R0, g_env);
+		if(NULL != R4) R1 = assoc(R0, R4);
+		else R1 = assoc(R0, g_env);
+
 		/* bail hard if it is not found */
 		if(R1 == nil)
 		{
@@ -373,6 +381,7 @@ void eval()
 							}
 							else R1 = cell_f;
 						}
+						else R1 = cell_f;
 
 						if(cell_t == R1) break;
 						R3 = R3->cdr;
@@ -382,9 +391,9 @@ void eval()
 
 				if(cell_f != R1)
 				{
+					R4 = pop_cell();
 					R0 = R0->car->cdr->car;
 					eval();
-					R4 = pop_cell();
 					return;
 				}
 				R0 = R0->cdr;
@@ -396,8 +405,15 @@ void eval()
 		}
 		else if(R0->car == s_lambda)
 		{
-			/* (lambda (a b .. N) (s-expression)) */
-			R1 = make_proc(R0->cdr->car, R0->cdr->cdr, make_cons(g_env->car, g_env->cdr));
+			if(NULL != R4)
+			{
+				R1 = make_proc(R0->cdr->car, R0->cdr->cdr, make_cons(R4->car, R4->cdr));
+			}
+			else
+			{
+				/* (lambda (a b .. N) (s-expression)) */
+				R1 = make_proc(R0->cdr->car, R0->cdr->cdr, make_cons(g_env->car, g_env->cdr));
+			}
 			return;
 		}
 		else if(R0->car == quote)
@@ -430,13 +446,17 @@ void eval()
 					if(unquote == R2->car->car)
 					{
 						R0 = R2->car->cdr->car;
+						R4 = NULL; /* So that assoc doesn't mistake this for a lambda */
 						eval();
 						R4 = R1;
 					}
 					if(unquote_splicing == R2->car->car)
 					{
 						R0 = R2->car->cdr->car;
+						push_cell(R4);
+						R4 = NULL; /* So that assoc doesn't mistake this for a lambda */
 						eval();
+						R4 = pop_cell();
 						while((NULL != R1) && (nil != R1))
 						{
 							/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
