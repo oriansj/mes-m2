@@ -98,6 +98,10 @@ test: test000.answer \
 	test030.answer \
 	test031.answer \
 	test032.answer \
+	test033.answer \
+	test034.answer \
+	test035.answer \
+	test036.answer \
 	test101.answer
 #	test100.answer \
 #	test102.answer \
@@ -233,6 +237,18 @@ test031.answer: results mes-m2
 
 test032.answer: results mes-m2
 	test/test032/hello.sh
+
+test033.answer: results mes-m2
+	test/test033/hello.sh
+
+test034.answer: results mes-m2
+	test/test034/hello.sh
+
+test035.answer: results mes-m2
+	test/test035/hello.sh
+
+test036.answer: results mes-m2
+	test/test036/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh

@@ -26,6 +26,7 @@ struct cell* builtin_and(struct cell* args);
 struct cell* builtin_append(struct cell* args);
 struct cell* builtin_apply(struct cell* args);
 struct cell* builtin_ash(struct cell* args);
+struct cell* builtin_booleanp(struct cell* args);
 struct cell* builtin_car(struct cell* args);
 struct cell* builtin_cdr(struct cell* args);
 struct cell* builtin_char_to_number(struct cell* args);
@@ -201,6 +202,7 @@ void init_sl3()
 	spinup(make_sym("eof-object?"), make_prim(builtin_eofp));
 	spinup(make_sym("list?"), make_prim(builtin_listp));
 	spinup(make_sym("number?"), make_prim(builtin_intp));
+	spinup(make_sym("boolean?"), make_prim(builtin_booleanp));
 	spinup(make_sym("null?"), make_prim(nullp));
 	spinup(make_sym("pair?"), make_prim(pairp));
 	spinup(make_sym("port?"), make_prim(portp));

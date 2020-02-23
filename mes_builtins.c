@@ -42,6 +42,15 @@ struct cell* nullp(struct cell* args)
 	return cell_f;
 }
 
+struct cell* builtin_booleanp(struct cell* args)
+{
+	require(nil != args, "boolean? requires an arguement\n");
+	require(nil == args->cdr, "boolean? only accepts one argument\n");
+	if(cell_t == args->car) return cell_t;
+	if(cell_f == args->car) return cell_t;
+	return cell_f;
+}
+
 struct cell* pairp(struct cell* args)
 {
 	require(nil != args, "pair? requires arguments\n");
@@ -64,6 +73,8 @@ struct cell* symbolp(struct cell* args)
 	require(nil == args->cdr, "symbol? recieved too many arguments\n");
 
 	if(nil == args->car) return cell_f;
+	if(cell_t == args->car) return cell_f;
+	if(cell_f == args->car) return cell_f;
 	if(SYM == args->car->type) return cell_t;
 	return cell_f;
 }
