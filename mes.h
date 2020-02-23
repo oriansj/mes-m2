@@ -138,6 +138,7 @@ struct cell** g_stack;
 unsigned stack_pointer;
 unsigned MAX_STRING;
 unsigned MAX_TOKEN;
+unsigned MAX_STACK;
 
 /* To control debugging info */
 unsigned mes_debug_level;

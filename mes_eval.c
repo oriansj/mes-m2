@@ -108,6 +108,7 @@ struct cell* assoc(struct cell* key, struct cell* alist)
  ***************************************/
 void push_cell(struct cell* a)
 {
+	require(stack_pointer < MAX_STACK, "exceeded max stack\n");
 	g_stack[stack_pointer] = a;
 	stack_pointer = stack_pointer + 1;
 }
@@ -115,6 +116,7 @@ void push_cell(struct cell* a)
 struct cell* pop_cell()
 {
 	stack_pointer = stack_pointer - 1;
+	require(0 <= stack_pointer, "stack underflow\n");
 	struct cell* r = g_stack[stack_pointer];
 	g_stack[stack_pointer] = NULL;
 
@@ -204,6 +206,7 @@ void apply(struct cell* proc, struct cell* vals)
 				syms = syms->cdr;
 				vals = vals->cdr;
 			}
+			require(NULL != syms, "(lambda foo ... expressions are not valid scheme\n");
 		}
 
 		R0 = make_cons(s_begin, proc->cdr);
@@ -538,7 +541,9 @@ restart_quasiquote:
 		else if(R0->car == s_setb)
 		{
 			/* attempt to lookup the variable we are set! to a new value */
-			R2 = assoc(R0->cdr->car, g_env);
+			if(NULL != R4) R2 = assoc(R0->cdr->car, R4);
+			else R2 = assoc(R0->cdr->car, g_env);
+
 			if(nil == R2)
 			{
 				file_print("Assigning value to unbound variable: ", stderr);
@@ -570,7 +575,8 @@ restart_quasiquote:
 				R0 = R0->car->cdr->car;
 				eval();
 				R0 = pop_cell();
-				g_env = make_cons(make_cons(R0->car->car, R1), g_env);
+				if(NULL != R4) R4 = make_cons(make_cons(R0->car->car, R1), R4);
+				else g_env = make_cons(make_cons(R0->car->car, R1), g_env);
 			}
 
 			/* Lets execute the pieces of the of (let ((..)) pieces) */

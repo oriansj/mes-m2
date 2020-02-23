@@ -150,7 +150,7 @@ void init_sl3()
 	quasiquote = make_sym("quasiquote");
 	unquote = make_sym("unquote");
 	unquote_splicing = make_sym("unquote-splicing");
-	cell_unspecified = make_sym("#<unspecified>");
+	cell_unspecified = make_sym("*unspecified*");
 	s_if = make_sym("if");
 	s_when = make_sym("when");
 	s_case = make_sym("case");

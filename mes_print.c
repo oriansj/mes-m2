@@ -57,7 +57,8 @@ void writeobj(struct cell* output_file, struct cell* op, int write_p)
 	}
 	else if(SYM == op->type)
 	{
-		file_print(op->string, output_file->file);
+		if(cell_unspecified == op) file_print("#<unspecified>", output_file->file);
+		else file_print(op->string, output_file->file);
 	}
 	else if(KEYWORD == op->type)
 	{

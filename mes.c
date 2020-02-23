@@ -126,15 +126,15 @@ int main(int argc, char **argv, char** envp)
 
 	GC_SAFETY = numerate_string(env_lookup("MES_SAFETY", envp));
 
-	int stack = numerate_string(env_lookup("MES_STACK", envp));
-	if(0 == stack) stack = 100000;
+	MAX_STACK = numerate_string(env_lookup("MES_STACK", envp));
+	if(0 == MAX_STACK) MAX_STACK = 100000;
 
 	/* Our most important initializations */
 	memory_block = calloc(MAX_TOKEN + 8, sizeof(char));
 	message = calloc(MAX_STRING + 8, sizeof(char));
 	garbage_init();
 	init_sl3();
-	g_stack = calloc(stack, sizeof(struct cell*));
+	g_stack = calloc(MAX_STACK, sizeof(struct cell*));
 
 	/* Initialization: stdin, stdout and stderr */
 	__stdin = make_file(stdin, "/dev/stdin");
