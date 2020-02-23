@@ -87,6 +87,13 @@ test: test000.answer \
 	test019.answer \
 	test020.answer \
 	test021.answer \
+	test022.answer \
+	test023.answer \
+	test024.answer \
+	test025.answer \
+	test026.answer \
+	test027.answer \
+	test028.answer \
 	test101.answer
 #	test100.answer \
 #	test102.answer \
@@ -189,6 +196,27 @@ test020.answer: results mes-m2
 
 test021.answer: results mes-m2
 	test/test021/hello.sh
+
+test022.answer: results mes-m2
+	test/test022/hello.sh
+
+test023.answer: results mes-m2
+	test/test023/hello.sh
+
+test024.answer: results mes-m2
+	test/test024/hello.sh
+
+test025.answer: results mes-m2
+	test/test025/hello.sh
+
+test026.answer: results mes-m2
+	test/test026/hello.sh
+
+test027.answer: results mes-m2
+	test/test027/hello.sh
+
+test028.answer: results mes-m2
+	test/test028/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh

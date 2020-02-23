@@ -281,3 +281,46 @@ struct cell* builtin_substring(struct cell* args)
 	require(((end >= start) && (end <= args->car->length)), "substring's ending index must be between the starting index and the length of the string\n");
 	return make_string(substring(args->car->string, start, end), (end - start));
 }
+
+struct cell* builtin_make_string(struct cell* args)
+{
+	require(nil != args, "make-string requires arguments\n");
+	require(INT == args->car->type, "make-string requires an integer to express the number of bytes the string needs to be\n");
+	char* s = calloc(args->car->value + 1, sizeof(char));
+	struct cell* r = make_string(s, args->car->value);
+
+	if(nil != args->cdr)
+	{
+		require(CHAR == args->cdr->car->type, "make-string second argument can only be a char\n");
+		int c = args->cdr->car->value;
+		int i = args->car->value;
+		while(0 <= i)
+		{
+			s[i] = c;
+			i = i - 1;
+		}
+		require(nil == args->cdr->cdr, "make-string does not support additional arguments\n");
+		return r;
+	}
+
+	return r;
+}
+
+struct cell* builtin_string_set(struct cell* args)
+{
+	require(nil != args, "string-set! requires arguments\n");
+	require(STRING == args->car->type, "string-set! requires a string\n");
+	require(nil != args->cdr, "string-set! requires 2 more arguments\n");
+	require(INT == args->cdr->car->type, "string-set! requires an integer index\n");
+	require(nil != args->cdr->cdr, "string-set! requires 1 more arguments\n");
+	require(CHAR == args->cdr->cdr->car->type, "string-set! requires a char value to set\n");
+	require(nil == args->cdr->cdr->cdr, "string-set! does not accept extra arguments\n");
+
+	char* s = args->car->string;
+	int index = args->cdr->car->value;
+	require(0 <= index, "string-set! index must be greater than 0\n");
+	require(args->car->length >= index, "string-set! index must be less than the length of the string\n");
+	s[index] = args->cdr->cdr->car->value;
+
+	return cell_unspecified;
+}

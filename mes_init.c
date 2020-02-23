@@ -63,6 +63,7 @@ struct cell* builtin_lognot(struct cell* args);
 struct cell* builtin_logor(struct cell* args);
 struct cell* builtin_make_record(struct cell* args);
 struct cell* builtin_make_record_type(struct cell* args);
+struct cell* builtin_make_string(struct cell* args);
 struct cell* builtin_make_vector(struct cell* args);
 struct cell* builtin_mod(struct cell* args);
 struct cell* builtin_not(struct cell* args);
@@ -101,6 +102,7 @@ struct cell* builtin_setcar(struct cell* args);
 struct cell* builtin_setcdr(struct cell* args);
 struct cell* builtin_string_index(struct cell* args);
 struct cell* builtin_string_ref(struct cell* args);
+struct cell* builtin_string_set(struct cell* args);
 struct cell* builtin_string_size(struct cell* args);
 struct cell* builtin_string_to_keyword(struct cell* args);
 struct cell* builtin_string_to_list(struct cell* args);
@@ -276,6 +278,7 @@ void init_sl3()
 	spinup(make_sym("vector->list"), make_prim(builtin_vector_to_list));
 
 	/* Deal with Strings */
+	spinup(make_sym("make-string"), make_prim(builtin_make_string));
 	spinup(make_sym("string->list"), make_prim(builtin_string_to_list));
 	spinup(make_sym("string-length"), make_prim(builtin_string_size));
 	spinup(make_sym("string-index"), make_prim(builtin_string_index));
@@ -283,6 +286,7 @@ void init_sl3()
 	spinup(make_sym("string->number"), make_prim(builtin_string_to_number));
 	spinup(make_sym("string->symbol"), make_prim(builtin_string_to_symbol));
 	spinup(make_sym("substring"), make_prim(builtin_substring));
+	spinup(make_sym("string-set!"), make_prim(builtin_string_set));
 
 	/* Deal with symbols */
 	spinup(make_sym("symbol->string"), make_prim(builtin_symbol_to_string));
