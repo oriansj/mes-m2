@@ -76,8 +76,43 @@ void writeobj(struct cell* output_file, struct cell* op, int write_p)
 	{
 		if(write_p)
 		{
-			raw_print("#\\", output_file->file);
-			fputc(char_lookup(op->value), output_file->file);
+			fputc('#', output_file->file);
+			fputc('\\', output_file->file);
+			if(0 == op->value) file_print("nul", output_file->file);
+			else if(1 == op->value) file_print("soh", output_file->file);
+			else if(2 == op->value) file_print("stx", output_file->file);
+			else if(3 == op->value) file_print("etx", output_file->file);
+			else if(4 == op->value) file_print("eot", output_file->file);
+			else if(5 == op->value) file_print("enq", output_file->file);
+			else if(6 == op->value) file_print("ack", output_file->file);
+			else if(7 == op->value) file_print("alarm", output_file->file);
+			else if(8 == op->value) file_print("backspace", output_file->file);
+			else if(9 == op->value) file_print("tab", output_file->file);
+			else if(10 == op->value) file_print("newline", output_file->file);
+			else if(11 == op->value) file_print("vtab", output_file->file);
+			else if(12 == op->value) file_print("page", output_file->file);
+			else if(13 == op->value) file_print("return", output_file->file);
+			else if(14 == op->value) file_print("so", output_file->file);
+			else if(15 == op->value) file_print("si", output_file->file);
+			else if(16 == op->value) file_print("dle", output_file->file);
+			else if(17 == op->value) file_print("dc1", output_file->file);
+			else if(18 == op->value) file_print("dc2", output_file->file);
+			else if(19 == op->value) file_print("dc3", output_file->file);
+			else if(20 == op->value) file_print("dc4", output_file->file);
+			else if(21 == op->value) file_print("nak", output_file->file);
+			else if(22 == op->value) file_print("syn", output_file->file);
+			else if(23 == op->value) file_print("etb", output_file->file);
+			else if(24 == op->value) file_print("can", output_file->file);
+			else if(25 == op->value) file_print("em", output_file->file);
+			else if(26 == op->value) file_print("sub", output_file->file);
+			else if(27 == op->value) file_print("esc", output_file->file);
+			else if(28 == op->value) file_print("fs", output_file->file);
+			else if(29 == op->value) file_print("gs", output_file->file);
+			else if(30 == op->value) file_print("rs", output_file->file);
+			else if(31 == op->value) file_print("us", output_file->file);
+			else if(32 == op->value) file_print("space", output_file->file);
+			else if(127 == op->value) file_print("delete", output_file->file);
+			else fputc(char_lookup(op->value), output_file->file);
 		}
 		else fputc(op->value, output_file->file);
 	}

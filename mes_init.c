@@ -29,7 +29,9 @@ struct cell* builtin_ash(struct cell* args);
 struct cell* builtin_booleanp(struct cell* args);
 struct cell* builtin_car(struct cell* args);
 struct cell* builtin_cdr(struct cell* args);
+struct cell* builtin_char_alphabetic(struct cell* args);
 struct cell* builtin_char_to_number(struct cell* args);
+struct cell* builtin_char_whitespace(struct cell* args);
 struct cell* builtin_chareq(struct cell* args);
 struct cell* builtin_charp(struct cell* args);
 struct cell* builtin_close(struct cell* args);
@@ -101,6 +103,7 @@ struct cell* builtin_set_current_input_port(struct cell* args);
 struct cell* builtin_set_current_output_port(struct cell* args);
 struct cell* builtin_setcar(struct cell* args);
 struct cell* builtin_setcdr(struct cell* args);
+struct cell* builtin_string_append(struct cell* args);
 struct cell* builtin_string_index(struct cell* args);
 struct cell* builtin_string_ref(struct cell* args);
 struct cell* builtin_string_set(struct cell* args);
@@ -289,6 +292,7 @@ void init_sl3()
 	spinup(make_sym("string->symbol"), make_prim(builtin_string_to_symbol));
 	spinup(make_sym("substring"), make_prim(builtin_substring));
 	spinup(make_sym("string-set!"), make_prim(builtin_string_set));
+	spinup(make_sym("string-append"), make_prim(builtin_string_append));
 
 	/* Deal with symbols */
 	spinup(make_sym("symbol->string"), make_prim(builtin_symbol_to_string));
@@ -304,6 +308,8 @@ void init_sl3()
 
 	/* Deal with Chars */
 	spinup(make_sym("char->integer"), make_prim(builtin_char_to_number));
+	spinup(make_sym("char-whitespace?"), make_prim(builtin_char_whitespace));
+	spinup(make_sym("char-alphabetic?"), make_prim(builtin_char_alphabetic));
 
 	/* Deal with logicals */
 	spinup(make_sym("not"), make_prim(builtin_not));

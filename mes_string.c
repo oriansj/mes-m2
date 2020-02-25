@@ -219,7 +219,15 @@ struct cell* builtin_string_to_number(struct cell* args)
 	require(nil != args, "string->number requires an argument\n");
 	require(nil == args->cdr, "string->number only supports a single argument (currently)\n");
 	require(STRING == args->car->type, "string->number requires a string\n");
-	int i = numerate_string(args->car->string);
+
+	int i;
+	if('+' == args->car->string[0])
+	{
+		if('-' == args->car->string[1]) return cell_f;
+		i = numerate_string(args->car->string + 1);
+	}
+	else i = numerate_string(args->car->string);
+
 	if(0 != i) return make_int(i);
 	if('0' == args->car->string[0]) return make_int(i);
 	return cell_f;
@@ -323,4 +331,33 @@ struct cell* builtin_string_set(struct cell* args)
 	s[index] = args->cdr->cdr->car->value;
 
 	return cell_unspecified;
+}
+
+struct cell* builtin_string_append(struct cell* args)
+{
+	struct cell* n = args;
+	int size = 0;
+	while(nil != n)
+	{
+		require(STRING == n->car->type, "string-append only accepts strings\n");
+		size = size + n->car->length;
+		n = n->cdr;
+	}
+
+	char* d = calloc(size + 1, sizeof(char));
+	int i = 0;
+	int j;
+	n = args;
+	while(nil != n)
+	{
+		j = 0;
+		while(j < n->car->length)
+		{
+			d[i] = n->car->string[j];
+			i = i + 1;
+			j = j + 1;
+		}
+		n = n->cdr;
+	}
+	return make_string(d, size);
 }

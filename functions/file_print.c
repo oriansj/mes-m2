@@ -106,7 +106,7 @@ void raw_print(char* s, FILE* f)
 	while(0 != s[0])
 	{
 		c = s[0];
-		if(in_set(c, "\a\b\t\b\v\f\n\r\e\"\'\\"))
+		if(in_set(c, "\a\b\t\b\v\f\n\r\e\"\\"))
 		{
 			fputc('\\', f);
 			c = char_lookup(c);

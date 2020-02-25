@@ -102,7 +102,38 @@ test: test000.answer \
 	test034.answer \
 	test035.answer \
 	test036.answer \
+	test037.answer \
+	test038.answer \
+	test040.answer \
+	test041.answer \
+	test042.answer \
+	test043.answer \
+	test044.answer \
+	test045.answer \
+	test046.answer \
+	test048.answer \
+	test049.answer \
+	test050.answer \
+	test051.answer \
+	test052.answer \
+	test053.answer \
+	test054.answer \
+	test055.answer \
+	test056.answer \
+	test057.answer \
+	test058.answer \
+	test059.answer \
+	test060.answer \
+	test061.answer \
+	test062.answer \
+	test063.answer \
+	test064.answer \
+	test065.answer \
+	test066.answer \
+	test067.answer \
 	test101.answer
+#	test039.answer \
+#	test047.answer \
 #	test100.answer \
 #	test102.answer \
 #	test103.answer \
@@ -249,6 +280,99 @@ test035.answer: results mes-m2
 
 test036.answer: results mes-m2
 	test/test036/hello.sh
+
+test037.answer: results mes-m2
+	test/test037/hello.sh
+
+test038.answer: results mes-m2
+	test/test038/hello.sh
+
+test039.answer: results mes-m2
+	test/test039/hello.sh
+
+test040.answer: results mes-m2
+	test/test040/hello.sh
+
+test041.answer: results mes-m2
+	test/test041/hello.sh
+
+test042.answer: results mes-m2
+	test/test042/hello.sh
+
+test043.answer: results mes-m2
+	test/test043/hello.sh
+
+test044.answer: results mes-m2
+	test/test044/hello.sh
+
+test045.answer: results mes-m2
+	test/test045/hello.sh
+
+test046.answer: results mes-m2
+	test/test046/hello.sh
+
+test047.answer: results mes-m2
+	test/test047/hello.sh
+
+test048.answer: results mes-m2
+	test/test048/hello.sh
+
+test049.answer: results mes-m2
+	test/test049/hello.sh
+
+test050.answer: results mes-m2
+	test/test050/hello.sh
+
+test051.answer: results mes-m2
+	test/test051/hello.sh
+
+test052.answer: results mes-m2
+	test/test052/hello.sh
+
+test053.answer: results mes-m2
+	test/test053/hello.sh
+
+test054.answer: results mes-m2
+	test/test054/hello.sh
+
+test055.answer: results mes-m2
+	test/test055/hello.sh
+
+test056.answer: results mes-m2
+	test/test056/hello.sh
+
+test057.answer: results mes-m2
+	test/test057/hello.sh
+
+test058.answer: results mes-m2
+	test/test058/hello.sh
+
+test059.answer: results mes-m2
+	test/test059/hello.sh
+
+test060.answer: results mes-m2
+	test/test060/hello.sh
+
+test061.answer: results mes-m2
+	test/test061/hello.sh
+
+test062.answer: results mes-m2
+	test/test062/hello.sh
+
+test063.answer: results mes-m2
+	test/test063/hello.sh
+
+test064.answer: results mes-m2
+	test/test064/hello.sh
+
+test065.answer: results mes-m2
+	test/test065/hello.sh
+
+test066.answer: results mes-m2
+	test/test066/hello.sh
+
+test067.answer: results mes-m2
+	test/test067/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh

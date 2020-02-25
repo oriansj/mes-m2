@@ -408,6 +408,31 @@ struct cell* builtin_chareq(struct cell* args)
 	return cell_t;
 }
 
+struct cell* builtin_char_whitespace(struct cell* args)
+{
+	require(nil != args, "char-whitespace? requires an argument\n");
+	require(CHAR == args->car->type, "char-whitespace? requires a char\n");
+	require(nil == args->cdr, "char-whitespace? only accepts one argument\n");
+
+	if(32 == args->car->value) return cell_t;
+	if(10 == args->car->value) return cell_t;
+	if(9 == args->car->value) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_char_alphabetic(struct cell* args)
+{
+	require(nil != args, "char-alphabetic? requires an argument\n");
+	require(CHAR == args->car->type, "char-alphabetic? requires a char\n");
+	require(nil == args->cdr, "char-alphabetic? only accepts one argument\n");
+
+	int i = args->car->value;
+
+	if((i >= 'A') && (i <= 'Z')) return cell_t;
+	if((i >= 'a') && (i <= 'z')) return cell_t;
+	return cell_f;
+}
+
 struct cell* builtin_numeq(struct cell* args)
 {
 	require(nil != args, "= requires arguments\n");
