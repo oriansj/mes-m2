@@ -157,9 +157,10 @@ restart_paren:
 			c = scrub_byte(source_file);
 			i = i + 2;
 			hashed = FALSE;
-			if('"' == c)
+			/* Deal with the really special cases */
+			if(in_set(c, "#;\"()"))
 			{
-				temp[i] = '"';
+				temp[i] = c;
 				temp[i+1] = ' ';
 				i = i + 2;
 				goto restart_comment;

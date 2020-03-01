@@ -450,15 +450,23 @@ void eval()
 					{
 						R0 = R2->car->cdr->car;
 						R4 = NULL; /* So that assoc doesn't mistake this for a lambda */
+						push_cell(R3);
+						push_cell(R2);
 						eval();
+						R2 = pop_cell();
+						R3 = pop_cell();
 						R4 = R1;
 					}
 					if(unquote_splicing == R2->car->car)
 					{
 						R0 = R2->car->cdr->car;
 						push_cell(R4);
+						push_cell(R3);
+						push_cell(R2);
 						R4 = NULL; /* So that assoc doesn't mistake this for a lambda */
 						eval();
+						R2 = pop_cell();
+						R3 = pop_cell();
 						R4 = pop_cell();
 						while((NULL != R1) && (nil != R1))
 						{
@@ -524,7 +532,13 @@ restart_quasiquote:
 			/* Evaluate the s-expression which the name is supposed to equal */
 			require(nil != R0->cdr->cdr, "naked (define foo) not supported\n");
 			R0 = R0->cdr->cdr->car;
+			push_cell(R4);
+			push_cell(R3);
+			push_cell(R2);
 			eval();
+			R2 = pop_cell();
+			R3 = pop_cell();
+			R4 = pop_cell();
 			R0 = pop_cell();
 
 			/* If we define a LAMBDA/MACRO, we need to extend its environment otherwise it can not call itself recursively */
@@ -552,10 +566,15 @@ restart_quasiquote:
 				exit(EXIT_FAILURE);
 			}
 
+			/* Protect target */
+			push_cell(R2);
+
 			/* Get that new value */
 			R0 = R0->cdr->cdr->car;
 			eval();
 
+			/* Restore target */
+			R2 = pop_cell();
 			/* update that new variable with that value */
 			R2->cdr = R1;
 			return;

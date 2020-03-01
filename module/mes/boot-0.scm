@@ -25,6 +25,8 @@
 
 ;;; Code:
 (define mes %version)
+(define EXIT_FAILURE 1)
+(define EXIT_SUCCESS 0)
 
 (define (cond-expand-expander clauses)
   (if (defined? (car (car clauses)))
