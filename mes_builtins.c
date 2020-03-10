@@ -22,6 +22,7 @@
 #include "mes.h"
 
 /* Imported functions */
+int in_set(int c, char* s);
 struct cell* assoc(struct cell* key, struct cell* alist);
 struct cell* load_file(char* s);
 struct cell* make_char(int a);
@@ -300,28 +301,6 @@ struct cell* builtin_not(struct cell* args)
 	return cell_f;
 }
 
-struct cell* builtin_and(struct cell* args)
-{
-	require(nil != args, "and requires arguments\n");
-	while(nil != args)
-	{
-		if(cell_t != args->car) return cell_f;
-		args = args->cdr;
-	}
-	return cell_t;
-}
-
-struct cell* builtin_or(struct cell* args)
-{
-	require(nil != args, "or requires arguments\n");
-	while(nil != args)
-	{
-		if(cell_t == args->car) return cell_t;
-		args = args->cdr;
-	}
-	return cell_f;
-}
-
 struct cell* builtin_numgt(struct cell* args)
 {
 	require(nil != args, "builtin_numgt requires arguments\n");
@@ -414,9 +393,16 @@ struct cell* builtin_char_whitespace(struct cell* args)
 	require(CHAR == args->car->type, "char-whitespace? requires a char\n");
 	require(nil == args->cdr, "char-whitespace? only accepts one argument\n");
 
-	if(32 == args->car->value) return cell_t;
-	if(10 == args->car->value) return cell_t;
-	if(9 == args->car->value) return cell_t;
+	if(in_set(args->car->value," \t\n")) return cell_t;
+	return cell_f;
+}
+
+struct cell* builtin_char_numeric(struct cell* args)
+{
+	require(nil != args, "char-whitespace? requires an argument\n");
+	require(CHAR == args->car->type, "char-whitespace? requires a char\n");
+	require(nil == args->cdr, "char-whitespace? only accepts one argument\n");
+	if(in_set(args->car->value, "0123456789")) return cell_t;
 	return cell_f;
 }
 

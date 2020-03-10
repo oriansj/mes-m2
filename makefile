@@ -111,6 +111,7 @@ test: test000.answer \
 	test044.answer \
 	test045.answer \
 	test046.answer \
+	test047.answer \
 	test048.answer \
 	test049.answer \
 	test050.answer \
@@ -133,7 +134,6 @@ test: test000.answer \
 	test067.answer \
 	test101.answer
 #	test039.answer \
-#	test047.answer \
 #	test100.answer \
 #	test102.answer \
 #	test103.answer \

@@ -30,6 +30,7 @@ struct cell* builtin_booleanp(struct cell* args);
 struct cell* builtin_car(struct cell* args);
 struct cell* builtin_cdr(struct cell* args);
 struct cell* builtin_char_alphabetic(struct cell* args);
+struct cell* builtin_char_numeric(struct cell* args);
 struct cell* builtin_char_to_number(struct cell* args);
 struct cell* builtin_char_whitespace(struct cell* args);
 struct cell* builtin_chareq(struct cell* args);
@@ -164,6 +165,8 @@ void init_sl3()
 	s_cond = make_sym("cond");
 	s_lambda = make_sym("lambda");
 	s_macro = make_sym("macro");
+	s_and = make_sym("and");
+	s_or = make_sym("or");
 	s_define = make_sym("define");
 	s_define_macro = make_sym("define-macro");
 	s_setb = make_sym("set!");
@@ -192,6 +195,8 @@ void init_sl3()
 	spinup(s_cond, s_cond);
 	spinup(s_lambda, s_lambda);
 	spinup(s_macro, s_macro);
+	spinup(s_or, s_or);
+	spinup(s_and, s_and);
 	spinup(s_define, s_define);
 	spinup(s_define_macro, s_define_macro);
 	spinup(s_setb, s_setb);
@@ -310,11 +315,10 @@ void init_sl3()
 	spinup(make_sym("char->integer"), make_prim(builtin_char_to_number));
 	spinup(make_sym("char-whitespace?"), make_prim(builtin_char_whitespace));
 	spinup(make_sym("char-alphabetic?"), make_prim(builtin_char_alphabetic));
+	spinup(make_sym("char-numeric?"), make_prim(builtin_char_numeric));
 
 	/* Deal with logicals */
 	spinup(make_sym("not"), make_prim(builtin_not));
-	spinup(make_sym("and"), make_prim(builtin_and));
-	spinup(make_sym("or"), make_prim(builtin_or));
 
 	/* Deal with environment */
 	spinup(make_sym("getenv"), make_prim(builtin_get_env));

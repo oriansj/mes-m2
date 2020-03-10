@@ -273,6 +273,41 @@ void eval()
 			eval();
 			return;
 		}
+		else if(R0->car == s_or)
+		{
+			/* Move past or */
+			R0 = R0->cdr;
+
+			while(nil != R0)
+			{
+				push_cell(R0);
+				R0 = R0->car;
+				eval();
+				R0 = pop_cell();
+				if(cell_f != R1) return;
+				R0 = R0->cdr;
+			}
+
+			R1 = cell_f;
+			return;
+		}
+		else if(R0->car == s_and)
+		{
+			/* Move past and */
+			R0 = R0->cdr;
+			/* Assume true by default */
+			R1 = cell_t;
+			while(nil != R0)
+			{
+				push_cell(R0);
+				R0 = R0->car;
+				eval();
+				R0 = pop_cell();
+				if(cell_f == R1) break;
+				R0 = R0->cdr;
+			}
+			return;
+		}
 		else if(R0->car == s_when)
 		{
 			require(nil != R0->cdr, "naked when statement is not a valid s-expression\n");
@@ -316,7 +351,7 @@ void eval()
 				/* Execute if not false because that is what guile does (believe everything not #f is true) */
 				if(cell_f != R1)
 				{
-					R0 = R0->car->cdr->car;
+					R0 = make_cons(s_begin, R0->car->cdr);
 					eval();
 					return;
 				}
@@ -395,7 +430,7 @@ void eval()
 				if(cell_f != R1)
 				{
 					R4 = pop_cell();
-					R0 = R0->car->cdr->car;
+					R0 = make_cons(s_begin, R0->car->cdr);
 					eval();
 					return;
 				}
@@ -634,6 +669,7 @@ restart_quasiquote:
 		}
 		else if(R0->car == s_while)
 		{
+			require(nil != R0->cdr, "while requires a conditional\n");
 			/* Check if we should even run the while */
 			push_cell(R0);
 			R0 = R0->cdr->car;
@@ -646,7 +682,7 @@ restart_quasiquote:
 				if(nil != R0->cdr->cdr)
 				{
 					push_cell(R0);
-					R0 = R0->cdr->cdr->car;
+					R0 = make_cons(s_begin, R0->cdr->cdr);
 					eval();
 					R0 = pop_cell();
 				}

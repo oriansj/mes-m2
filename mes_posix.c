@@ -30,7 +30,7 @@ struct cell* prim_write(struct cell* args, struct cell* out);
 
 char* ntoab(SCM x, int base, int signed_p)
 {
-	char* p = calloc(12, sizeof(char));
+	char* p = calloc(13, sizeof(char));
 	p = p + 11;
 	p[1] = 0;
 	int sign_p = 0;
