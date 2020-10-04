@@ -20,10 +20,10 @@
 #ifndef __MES_SYS_TYPES_H
 #define __MES_SYS_TYPES_H 1
 
-#if WITH_GLIBC
+#if SYSTEM_LIBC
 #undef __MES_SYS_TYPES_H
 #include_next <sys/types.h>
-#else // ! WITH_GLIBC
+#else // ! SYSTEM_LIBC
 
 #include <endian.h>
 
@@ -75,16 +75,19 @@ typedef unsigned long ino_t;
 typedef unsigned long long ino64_t;
 #endif
 
-#ifndef __MES_INTPTR_T
+#if !defined (__MES_INTPTR_T) && !defined (__intptr_t_defined)
 #define __MES_INTPTR_T
+#define __intptr_t_defined
 #undef intptr_t
 typedef long intptr_t;
+#undef uintptr_t
+typedef unsigned long uintptr_t;
 #endif
 
 #ifndef __MES_OFF_T
 #define __MES_OFF_T
 #undef off_t
-typedef unsigned long off_t;
+typedef long off_t;
 #endif
 
 #ifndef __MES_OFF64_T
@@ -144,6 +147,6 @@ typedef int wchar_t;
 #endif
 #endif
 
-#endif // ! WITH_GLIBC
+#endif // ! SYSTEM_LIBC
 
 #endif // __MES_SYS_TYPES_H

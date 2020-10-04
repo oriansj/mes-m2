@@ -1,5 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
+ * Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
  * Copyright © 2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
@@ -17,56 +18,45 @@
  * You should have received a copy of the GNU General Public License
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MES_ERRNO_H
-#define __MES_ERRNO_H 1
+#ifndef __MES_GETOPT_H
+#define __MES_GETOPT_H 1
 
 #if SYSTEM_LIBC
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-#undef __MES_ERRNO_H
-#include_next <errno.h>
+#undef __MES_GETOPT_H
+#include_next <getopt.h>
+
 #else // ! SYSTEM_LIBC
+#include <endian.h>
+int isdigit (int);
+int isxdigit (int);
 
-#ifndef __MES_ERRNO_T
-#define __MES_ERRNO_T 1
-typedef int error_t;
-int errno;
-#endif // !__MES_ERRNO_T
+char *optarg;
+int optind;
+int opterr;
+struct option
+{
+  char const *name;
+  int has_arg;
+  int *flag;
+  int val;
+};
 
-int errno;
-#define ENOENT   2
-#define EINTR    4
-#define EIO      5
-#define ENXIO    6
-#define E2BIG    7
-#define ENOEXEC  8
-#define EBADF    9
-#define	ECHILD  10
-#define EAGAIN  11
-#define ENOMEM  12
-#define EACCES  13
-#define EEXIST  17
-#define EXDEV   18
-#define ENOTDIR 20
-#define EISDIR  21
-#define EINVAL  22
-#define EMFILE  24
-#define ENOSPC  28
-#define ESPIPE  29
-#define EPIPE   32
-#define ERANGE  34
+enum _argtype
+{
+  no_argument,
+  required_argument,
+  optional_argument
+};
 
-#define ENAMETOOLONG 36
-#define ENOSYS 38
-#define ELOOP  40
-
-#if !__MESC__
-//extern char const *const sys_errlist[];
-extern char *sys_errlist[];
-extern int sys_nerr;
-#endif // !__MESC__
+int getopt (int argc, char *const *argv, char const *options);
+int getopt_long (int argc, char *const *argv, char const *options,
+                 struct option const *long_options, int *opt_index);
+int getopt_long_only (int argc, char *const *argv, char const *options,
+                      struct option const *long_options, int *opt_index);
 
 #endif // ! SYSTEM_LIBC
 
-#endif // __MES_ERRNO_H
+#endif // __MES_GETOPT_H

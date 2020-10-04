@@ -18,10 +18,43 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MES_LIBMES_MINI_H
-#define __MES_LIBMES_MINI_H
+#ifndef __MES_LIB_MINI_H
+#define __MES_LIB_MINI_H
 
-#if !WITH_GLIBC
+#if HAVE_CONFIG_H
+#include <mes/config.h>
+#endif
+
+// CONSTANT STDIN 0
+#ifndef STDIN
+#define STDIN 0
+#endif
+
+// CONSTANT STDOUT 1
+#ifndef STDOUT
+#define STDOUT 1
+#endif
+
+// CONSTANT STDERR 2
+#ifndef STDERR
+#define STDERR 2
+#endif
+
+char **environ;
+int __stdin;
+int __stdout;
+int __stderr;
+
+int eputs (char const *s);
+int puts (char const *s);
+int oputs (char const *s);
+
+#if SYSTEM_LIBC
+
+#include <sys/types.h>
+#include <unistd.h>
+
+#else //!SYSTEM_LIBC
 
 #ifndef _SIZE_T
 #define _SIZE_T
@@ -57,35 +90,9 @@ typedef int error_t;
 int errno;
 #endif // !__MES_ERRNO_T
 
-#endif //!WITH_LIBC
-
-// CONSTANT STDIN 0
-#ifndef STDIN
-#define STDIN 0
-#endif
-
-// CONSTANT STDOUT 1
-#ifndef STDOUT
-#define STDOUT 1
-#endif
-
-// CONSTANT STDERR 2
-#ifndef STDERR
-#define STDERR 2
-#endif
-
-char **environ;
-int __stdin;
-int __stdout;
-int __stderr;
-
-int eputs (char const* s);
-int puts (char const* s);
-int oputs (char const* s);
-
-#if !WITH_GLIBC
-size_t strlen (char const* s);
+size_t strlen (char const *s);
+ssize_t _write ();
 ssize_t write (int filedes, void const *buffer, size_t size);
-#endif // !WITH_GLIBC
+#endif // !SYSTEM_LIBC
 
-#endif //__MES_LIBMES_MINI_H
+#endif //__MES_LIB_MINI_H

@@ -17,56 +17,24 @@
  * You should have received a copy of the GNU General Public License
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MES_ERRNO_H
-#define __MES_ERRNO_H 1
+#ifndef __MES_SYS_WAIT_H
+#define __MES_SYS_WAIT_H 1
 
 #if SYSTEM_LIBC
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#undef __MES_ERRNO_H
-#include_next <errno.h>
+#undef __MES_SYS_WAIT_H
+#include_next <sys/wait.h>
 #else // ! SYSTEM_LIBC
 
-#ifndef __MES_ERRNO_T
-#define __MES_ERRNO_T 1
-typedef int error_t;
-int errno;
-#endif // !__MES_ERRNO_T
+#ifndef __MES_PID_T
+#define __MES_PID_T
+typedef int pid_t;
+#endif
 
-int errno;
-#define ENOENT   2
-#define EINTR    4
-#define EIO      5
-#define ENXIO    6
-#define E2BIG    7
-#define ENOEXEC  8
-#define EBADF    9
-#define	ECHILD  10
-#define EAGAIN  11
-#define ENOMEM  12
-#define EACCES  13
-#define EEXIST  17
-#define EXDEV   18
-#define ENOTDIR 20
-#define EISDIR  21
-#define EINVAL  22
-#define EMFILE  24
-#define ENOSPC  28
-#define ESPIPE  29
-#define EPIPE   32
-#define ERANGE  34
+#define	WNOHANG 1
 
-#define ENAMETOOLONG 36
-#define ENOSYS 38
-#define ELOOP  40
-
-#if !__MESC__
-//extern char const *const sys_errlist[];
-extern char *sys_errlist[];
-extern int sys_nerr;
-#endif // !__MESC__
+pid_t waitpid (pid_t pid, int *status_ptr, int options);
+pid_t wait (int *status_ptr);
 
 #endif // ! SYSTEM_LIBC
 
-#endif // __MES_ERRNO_H
+#endif // __MES_SYS_WAIT_H
