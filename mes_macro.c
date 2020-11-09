@@ -51,47 +51,84 @@ struct cell* define_macro(struct cell* exp, struct cell* env)
 
 struct cell* macro_apply(struct cell* exps, struct cell* vals);
 struct cell* macro_eval(struct cell* exps, struct cell* env);
-struct cell* expand_quasiquote(struct cell* exp, struct cell* env)
+struct cell* expand_quasiquote()
 {
-	struct cell* i = exp;
-	struct cell* f = NULL;
-	struct cell* h;
-	while(nil != i)
+	/* Protect the s-expression during the entire evaluation */
+	push_cell(R0);
+	/* R2 is the s-expression we are quasiquoting */
+	push_cell(R2);
+	/* R3 is the resulting s-expression, built backwards and reversed at the end */
+	push_cell(R3);
+	/* R4 is just a temp holder of each unquote */
+	push_cell(R4);
+
+	/* (quasiquote (...)) */
+	R2 = R0->cdr->car;
+	R3 = NULL;
+	while(nil != R2)
 	{
-		h = i->car;
-		if(CONS == i->car->type)
+		require(NULL != R2, "Null in quasiquote expression reached\n");
+		require(CONS == R2->type, "Not a cons list in quasiquote reached\n");
+		R4 = R2->car;
+		if(CONS == R2->car->type)
 		{
-			if(unquote == i->car->car)
+			if(unquote == R2->car->car)
 			{
-				macro_eval(i->car->cdr->car, env);
-				h = R0;
+				R0 = R2->car->cdr->car;
+				R4 = NULL; /* So that assoc doesn't mistake this for a lambda */
+				push_cell(R3);
+				push_cell(R2);
+				macro_eval(R0, R1);
+				R2 = pop_cell();
+				R3 = pop_cell();
+				R4 = R1;
 			}
-			if(unquote_splicing == i->car->car)
+			if(unquote_splicing == R2->car->car)
 			{
-				macro_eval(i->car->cdr->car, env);
-				while((NULL != R0) && (nil != R0))
+				R0 = R2->car->cdr->car;
+				push_cell(R4);
+				push_cell(R3);
+				push_cell(R2);
+				R4 = NULL; /* So that assoc doesn't mistake this for a lambda */
+				macro_eval(R0, R1);
+				R2 = pop_cell();
+				R3 = pop_cell();
+				R4 = pop_cell();
+				while((NULL != R1) && (nil != R1))
 				{
 					/* Unsure if correct behavior is to revert to unquote behavior (what guile does) */
 					/* Or restrict to just proper lists as the spec (r7rs) requires */
 					/* eg. `(foo bar ,@(+ 4 5)) */
-					require(CONS == R0->type, "unquote-splicing requires argument of type <proper list>\n");
-					f = make_cons(R0->car, f);
+					require(CONS == R1->type, "unquote-splicing requires argument of type <proper list>\n");
+					R3 = make_cons(R1->car, R3);
 					/* Simply convert require to if and the above */
-					/* else f = make_cons(R0, f); */
-					R0 = R0->cdr;
+					/* else R3 = make_cons(R1, R3); */
+					R1 = R1->cdr;
 				}
-				goto restart_expand_quasiquote;
+
+				/* we really don't want to add that cons after what we just did */
+				goto macro_restart_quasiquote;
 			}
 		}
-		f = make_cons(h, f);
-restart_expand_quasiquote:
-		i = i->cdr;
+		R3 = make_cons(R4, R3);
+macro_restart_quasiquote:
+		/* keep walking down the list of s-expressions */
+		R2 = R2->cdr;
 	}
-	i = f;
-	f = reverse_list(f);
-	require(NULL != i, "Impossible quasiquote processed?\n");
-	i->cdr = nil;
-	return f;
+
+	/* We created the list backwards because it was simpler, now we have to put it into correct order */
+	R2 = R3;
+	R3 = reverse_list(R3);
+	require(NULL != R2, "Impossible quasiquote processed?\n");
+	R2->cdr = nil;
+	R1 = R3;
+
+	/* We are finally done with the s-expression, we don't need it back */
+	R4 = pop_cell();
+	R3 = pop_cell();
+	R2 = pop_cell();
+	pop_cell();
+	return R0;
 }
 
 struct cell* macro_list(struct cell* exps, struct cell* env)
@@ -117,43 +154,120 @@ struct cell* expand_if(struct cell* exp, struct cell* env)
 	return R0;
 }
 
-struct cell* expand_cond(struct cell* exp, struct cell* env)
+struct cell* expand_cond()
 {
-	if(nil == exp) return cell_unspecified;
+	/* Get past the COND */
+	R0 = R0->cdr;
 
-	macro_eval(exp->car->car, env);
-	if(cell_t == R0)
+	/* Provide a way to flag no fields in cond */
+	R1 = NULL;
+
+	/* Loop until end of list of s-expressions */
+	while(nil != R0)
 	{
-		macro_eval(exp->car->cdr->car, env);
-		return R0;
+		/* Protect remaining list of s-expressions from garbage collection */
+		push_cell(R0);
+
+		/* Evaluate the conditional */
+		R0 = R0->car->car;
+		macro_eval(R0, R1);
+		R0 = pop_cell();
+
+		/* Execute if not false because that is what guile does (believe everything not #f is true) */
+		if(cell_f != R1)
+		{
+			R0 = make_cons(s_begin, R0->car->cdr);
+			macro_eval(R0, R1);
+			return R0;
+		}
+
+		/* Iterate to the next in the list of s-expressions */
+		R0 = R0->cdr;
+
+		/* The default return in guile if it hits nil */
+		R1 = cell_unspecified;
 	}
 
-	return expand_cond(exp->cdr, env);
+	require(NULL != R1, "a naked cond is not supported\n");
+	return R0;
 }
 
-struct cell* expand_let(struct cell* exp, struct cell* env)
+struct cell* expand_let()
 {
-	struct cell* lets;
-	for(lets = exp->cdr->car; lets != nil; lets = lets->cdr)
+	/* Clean up locals after let completes */
+	push_cell(g_env);
+
+	/* Protect the s-expression from garbage collection */
+	push_cell(R0->cdr->cdr);
+
+	/* Deal with the (let ((pieces)) ..) */
+	for(R0 = R0->cdr->car; R0 != nil; R0 = R0->cdr)
 	{
-		macro_eval(lets->car->cdr->car, env);
-		env = make_cons(make_cons(lets->car->car, R0), env);
+		push_cell(R0);
+		R0 = R0->car->cdr->car;
+		macro_eval(R0, R1);
+		R0 = pop_cell();
+		if(NULL != R4) R4 = make_cons(make_cons(R0->car->car, R1), R4);
+		else g_env = make_cons(make_cons(R0->car->car, R1), g_env);
 	}
-	return macro_progn(exp->cdr->cdr, env);
+
+	/* Lets execute the pieces of the of (let ((..)) pieces) */
+	R0 = pop_cell();
+	R0 = make_cons(s_begin, R0);
+	macro_eval(R0, R1);
+
+	/* Actual clean up */
+	g_env = pop_cell();
+	return R0;
 }
 
-struct cell* expand_define(struct cell* exp, struct cell* env)
+struct cell* expand_define()
 {
-	if(CONS == exp->cdr->car->type)
+	require(nil != R0->cdr, "naked (define) not supported\n");
+	/* To support (define (foo a b .. N) (s-expression)) form */
+	if(CONS == R0->cdr->car->type)
 	{
-		struct cell* fun = exp->cdr->cdr;
-		struct cell* arguments = exp->cdr->car->cdr;
-		struct cell* name = exp->cdr->car->car;
-		exp->cdr = make_cons(name, make_cons(make_cons(s_lambda, make_cons(arguments, fun)), nil));
+		/* R2 is to get the actual function*/
+		push_cell(R2);
+		/* R3 is to get the function arguments */
+		push_cell(R3);
+		/* R4 is to get the function's name */
+		push_cell(R4);
+		R2 = R0->cdr->cdr;
+		R3 = R0->cdr->car->cdr;
+		R4 = R0->cdr->car->car;
+		/* by converting it into (define foo (lambda (a b .. N) (s-expression))) form */
+		R0->cdr = make_cons(R4, make_cons(make_cons(s_lambda, make_cons(R3, R2)), nil));
+		R4 = pop_cell();
+		R3 = pop_cell();
+		R2 = pop_cell();
 	}
 
-	macro_eval(exp->cdr->cdr->car, env);
-	return(macro_extend_env(exp->cdr->car, R0, env));
+	/* Protect the name from garbage collection */
+	push_cell(R0->cdr->car);
+
+	/* Evaluate the s-expression which the name is supposed to equal */
+	require(nil != R0->cdr->cdr, "naked (define foo) not supported\n");
+	R0 = R0->cdr->cdr->car;
+	push_cell(R4);
+	push_cell(R3);
+	push_cell(R2);
+	macro_eval(R0, R1);
+	R2 = pop_cell();
+	R3 = pop_cell();
+	R4 = pop_cell();
+	R0 = pop_cell();
+
+	/* If we define a LAMBDA/MACRO, we need to extend its environment otherwise it can not call itself recursively */
+	if((LAMBDA == R1->type) || (MACRO == R1->type))
+	{
+		R1->env = make_cons(make_cons(R0, R1), R1->env);
+	}
+
+	/* We now need to extend the environment with our new name */
+	g_env = make_cons(make_cons(R0, R1), g_env);
+	R1 = cell_unspecified;
+	return R0;
 }
 
 struct cell* expand_cons(struct cell* exp, struct cell* env)

@@ -35,6 +35,7 @@ char* ntoab(SCM x, int base, int signed_p)
 	p[1] = 0;
 	int sign_p = 0;
 	SCM u = x;
+	SCM i;
 
 	if(signed_p && x < 0)
 	{
@@ -44,7 +45,7 @@ char* ntoab(SCM x, int base, int signed_p)
 
 	do
 	{
-		SCM i = u % base;
+		i = u % base;
 		if(i > 9)
 		{
 			p[0] = 'a' + i - 10;

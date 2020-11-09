@@ -304,9 +304,10 @@ struct cell* readlist()
 struct cell* reverse_list(struct cell* head)
 {
 	struct cell* root = NULL;
+	struct cell* next;
 	while(NULL != head)
 	{
-		struct cell* next = head->cdr;
+		next = head->cdr;
 		head->cdr = root;
 		root = head;
 		head = next;

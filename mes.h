@@ -137,10 +137,10 @@ struct cell* R4;
 struct cell* all_symbols;
 struct cell* g_env;
 struct cell** g_stack;
-unsigned stack_pointer;
+int stack_pointer;
 unsigned MAX_STRING;
 unsigned MAX_TOKEN;
-unsigned MAX_STACK;
+int MAX_STACK;
 
 /* To control debugging info */
 unsigned mes_debug_level;

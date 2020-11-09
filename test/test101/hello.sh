@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 ## Copyright (C) 2017 Jeremiah Orians
 ## This file is part of Gnu Mes.
 ##
