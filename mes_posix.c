@@ -72,7 +72,7 @@ struct cell* builtin_display(struct cell* args)
 	require(nil != args, "display requires arguments\n");
 	if(nil == args->cdr)
 	{
-		prim_display(args, __stdout);
+		prim_display(args, __c_stdout);
 		return cell_unspecified;
 	}
 
@@ -87,7 +87,7 @@ struct cell* builtin_display_error(struct cell* args)
 	require(nil != args, "display-error requires arguments\n");
 	if(nil == args->cdr)
 	{
-		prim_display(args, __stderr);
+		prim_display(args, __c_stderr);
 		return cell_unspecified;
 	}
 
@@ -101,7 +101,7 @@ struct cell* builtin_write(struct cell* args)
 	require(nil != args, "write requires arguments\n");
 	if(nil == args->cdr)
 	{
-		prim_write(args, __stdout);
+		prim_write(args, __c_stdout);
 		return cell_unspecified;
 	}
 	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
@@ -115,7 +115,7 @@ struct cell* builtin_write_error(struct cell* args)
 	require(nil != args, "write-error requires arguments\n");
 	if(nil == args->cdr)
 	{
-		return prim_write(args, __stderr);
+		return prim_write(args, __c_stderr);
 	}
 
 	require(FILE_PORT == args->cdr->car->type, "You passed something that isn't a file pointer to write in position 2\n");
@@ -183,8 +183,8 @@ struct cell* builtin_set_current_output_port(struct cell* args)
 	require(FILE_PORT == args->car->type, "set-current-output-port expects a port\n");
 	require(nil == args->cdr, "set-current-output-port expects only a single argument\n");
 
-	__stdout->file = args->car->file;
-	__stdout->string = args->car->string;
+	__c_stdout->file = args->car->file;
+	__c_stdout->string = args->car->string;
 	return cell_unspecified;
 }
 
@@ -194,8 +194,8 @@ struct cell* builtin_set_current_input_port(struct cell* args)
 	require(FILE_PORT == args->car->type, "set-current-input-port expects a port\n");
 	require(nil == args->cdr, "set-current-input-port expects only a single argument\n");
 
-	__stdin->file = args->car->file;
-	__stdin->string = args->car->string;
+	__c_stdin->file = args->car->file;
+	__c_stdin->string = args->car->string;
 	return cell_unspecified;
 }
 
@@ -205,27 +205,27 @@ struct cell* builtin_set_current_error_port(struct cell* args)
 	require(FILE_PORT == args->car->type, "set-current-error-port expects a port\n");
 	require(nil == args->cdr, "set-current-error-port expects only a single argument\n");
 
-	__stderr->file = args->car->file;
-	__stderr->string = args->car->string;
+	__c_stderr->file = args->car->file;
+	__c_stderr->string = args->car->string;
 	return cell_unspecified;
 }
 
 struct cell* builtin_current_input_port(struct cell* args)
 {
 	require(nil == args, "current-input-port does not accept arguments\n");
-	return __stdin;
+	return __c_stdin;
 }
 
 struct cell* builtin_current_output_port(struct cell* args)
 {
 	require(nil == args, "current-output-port does not accept arguments\n");
-	return __stdout;
+	return __c_stdout;
 }
 
 struct cell* builtin_current_error_port(struct cell* args)
 {
 	require(nil == args, "current-error-port does not accept arguments\n");
-	return __stderr;
+	return __c_stderr;
 }
 
 struct cell* builtin_ttyname(struct cell* args)

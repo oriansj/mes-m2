@@ -116,9 +116,9 @@ struct cell* unquote_splicing;
 char** __argv;
 char** __envp;
 int __argc;
-struct cell* __stderr;
-struct cell* __stdin;
-struct cell* __stdout;
+struct cell* __c_stderr;
+struct cell* __c_stdin;
+struct cell* __c_stdout;
 
 /* Garbage Collection */
 char* memory_block;

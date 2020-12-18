@@ -56,7 +56,7 @@ int REPL()
 	int read;
 	/* Read S-Expression block */
 	reset_block(message);
-	read = Readline(__stdin->file, message);
+	read = Readline(__c_stdin->file, message);
 	if(0 == read) return TRUE;
 
 	/* Process S-expression */
@@ -68,17 +68,17 @@ int REPL()
 	eval();
 
 	/* Print */
-	if(match("/dev/stdin", __stdin->string) && (NULL != R1) && (cell_unspecified != R1))
+	if(match("/dev/stdin", __c_stdin->string) && (NULL != R1) && (cell_unspecified != R1))
 	{
-		file_print("$R0 = ", __stdout->file);
-		writeobj(__stdout, R1, TRUE);
-		fputc('\n', __stdout->file);
+		file_print("$R0 = ", __c_stdout->file);
+		writeobj(__c_stdout, R1, TRUE);
+		fputc('\n', __c_stdout->file);
 	}
 
 	/* Display user friendly prompt */
-	if(match("/dev/stdin", __stdin->string))
+	if(match("/dev/stdin", __c_stdin->string))
 	{
-		file_print("REPL: ", __stdout->file);
+		file_print("REPL: ", __c_stdout->file);
 	}
 	return FALSE;
 }
@@ -92,14 +92,14 @@ struct cell* load_file(char* s)
 	/* Punt on bad inputs */
 	if(NULL == f) return cell_unspecified;
 
-	push_cell(__stdin);
-	__stdin = make_file(f, s);
+	push_cell(__c_stdin);
+	__c_stdin = make_file(f, s);
 	while(!Reached_EOF)
 	{
 		garbage_collect();
 		Reached_EOF = REPL();
 	}
-	__stdin = pop_cell();
+	__c_stdin = pop_cell();
 	return cell_t;
 }
 
@@ -137,9 +137,9 @@ int main(int argc, char **argv, char** envp)
 	g_stack = calloc(MAX_STACK, sizeof(struct cell*));
 
 	/* Initialization: stdin, stdout and stderr */
-	__stdin = make_file(stdin, "/dev/stdin");
-	__stdout = make_file(stdout, "/dev/stdout");
-	__stderr = make_file(stderr, "/dev/stderr");
+	__c_stdin = make_file(stdin, "/dev/stdin");
+	__c_stdout = make_file(stdout, "/dev/stdout");
+	__c_stderr = make_file(stderr, "/dev/stderr");
 
 	char* testing = env_lookup("MES_CORE", envp);
 	if(NULL != testing)
@@ -180,9 +180,9 @@ int main(int argc, char **argv, char** envp)
 			}
 		}
 
-		file_print("REPL: ", __stdout->file);
+		file_print("REPL: ", __c_stdout->file);
 		load_file("/dev/stdin");
-		file_print("\nexiting, have a nice day!\n", __stdout->file);
+		file_print("\nexiting, have a nice day!\n", __c_stdout->file);
 		exit(EXIT_SUCCESS);
 	}
 	else

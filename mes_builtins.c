@@ -578,7 +578,7 @@ struct cell* builtin_primitive_load(struct cell* args)
 
 struct cell* builtin_read_byte(struct cell* args)
 {
-	if(nil == args) return make_char(fgetc(__stdin->file));
+	if(nil == args) return make_char(fgetc(__c_stdin->file));
 	else if(FILE_PORT == args->car->type)
 	{
 		int c = fgetc(args->car->file);

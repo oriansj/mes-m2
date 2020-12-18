@@ -399,9 +399,9 @@ void garbage_collect()
 	unmark_cells(R2);
 	unmark_cells(R3);
 	unmark_cells(R4);
-	__stdin->type = __stdin->type & ~MARKED;
-	__stdout->type = __stdout->type & ~MARKED;
-	__stderr->type = __stderr->type & ~MARKED;
+	__c_stdin->type = __c_stdin->type & ~MARKED;
+	__c_stdout->type = __c_stdout->type & ~MARKED;
+	__c_stderr->type = __c_stderr->type & ~MARKED;
 	unmark_stack();
 
 	/* Step two: reclaim marked cells */
