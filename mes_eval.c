@@ -26,6 +26,7 @@ struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* reverse_list(struct cell* head);
 struct cell* string_eq(struct cell* a, struct cell* b);
 struct cell* vector_equal(struct cell* a, struct cell* b);
+struct cell* cell_invoke_function(struct cell* cell, struct cell* vals);
 
 
 /* Support functions */
@@ -165,8 +166,7 @@ void apply(struct cell* proc, struct cell* vals)
 	if(proc->type == PRIMOP)
 	{
 		/* Deal with the simple case of if we have a primitive */
-		fp = proc->function;
-		R1 = fp(vals);
+		R1 = cell_invoke_function(proc, vals);
 		return;
 	}
 	else if(proc->type == LAMBDA)

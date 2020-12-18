@@ -22,5 +22,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#if __MESC__
+typedef void FUNCTION;
+#else
 typedef struct cell* (FUNCTION)(struct cell *);
+#endif
+
 typedef long SCM;

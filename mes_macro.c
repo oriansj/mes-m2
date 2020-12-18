@@ -28,6 +28,7 @@ struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env);
 struct cell* pop_cell();
 struct cell* reverse_list(struct cell* head);
 void push_cell(struct cell* a);
+struct cell* cell_invoke_function(struct cell* cell, struct cell* vals);
 
 struct cell* macro_extend_env(struct cell* sym, struct cell* val, struct cell* env)
 {
@@ -344,8 +345,7 @@ struct cell* macro_apply(struct cell* proc, struct cell* vals)
 	struct cell* temp;
 	if(proc->type == PRIMOP)
 	{
-		FUNCTION* fp = proc->function;
-		temp = fp(vals);
+		temp = cell_invoke_function(proc, vals);
 	}
 	else if(proc->type == LAMBDA)
 	{

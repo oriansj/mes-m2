@@ -663,7 +663,7 @@ struct cell* make_proc(struct cell* a, struct cell* b, struct cell* env)
  *  | PRIMOP | POINTER | NULL | NULL |  *
  *   --------------------------------   *
  ****************************************/
-struct cell* make_prim(FUNCTION fun)
+struct cell* make_prim(FUNCTION* fun)
 {
 	struct cell* c = pop_cons();
 	c->type = PRIMOP;
@@ -755,4 +755,16 @@ struct cell* make_record(struct cell* type, struct cell* vector)
 	struct cell* c = pop_cons();
 	c->type = EOF_object;
 	return c;
+}
+
+struct cell* cell_invoke_function(struct cell* cell, struct cell* vals)
+{
+// /* hide from M2-Planet
+#if __MESC__
+	struct cell* (*fp)(struct cell*) = cell->function;
+#else
+// */
+	FUNCTION* fp = cell->function;
+#endif
+	return fp(vals);
 }
