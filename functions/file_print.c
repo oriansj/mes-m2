@@ -35,7 +35,7 @@ char char_lookup(int c)
 	else if(c == '\n') return 'n';
 	else if(c == '\f') return 'f';
 	else if(c == '\r') return 'r';
-	else if(c == '\e') return 'e';
+	else if(c == '\033') return 'e';
 	else if(c == '\\') return '\\';
 	else if(c == '"') return '"';
 	return c;
@@ -106,7 +106,7 @@ void raw_print(char* s, FILE* f)
 	while(0 != s[0])
 	{
 		c = s[0];
-		if(in_set(c, "\a\b\t\b\v\f\n\r\e\"\\"))
+		if(in_set(c, "\a\b\t\b\v\f\n\r\033\"\\"))
 		{
 			fputc('\\', f);
 			c = char_lookup(c);
