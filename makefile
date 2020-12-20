@@ -132,6 +132,7 @@ test: test000.answer \
 	test065.answer \
 	test066.answer \
 	test067.answer \
+	test068.answer \
 	test101.answer
 #	test039.answer \
 #	test100.answer \
@@ -373,6 +374,9 @@ test066.answer: results mes-m2
 
 test067.answer: results mes-m2
 	test/test067/hello.sh
+
+test068.answer: results mes-m2
+	test/test068/hello.sh
 
 test100.answer: results mes-m2
 	test/test100/hello.sh

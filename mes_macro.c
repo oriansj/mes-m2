@@ -367,8 +367,8 @@ struct cell* expand_macros(struct cell* exp)
 {
 	R0 = exp;
 	struct cell* hold;
-expand_reset:
-	if(NULL == R0) return exp;
+
+ 	if(NULL == R0) return exp;
 	if(CONS != R0->type) return exp;
 	else if(R0->car == s_define_macro)
 	{
@@ -384,10 +384,13 @@ expand_reset:
 	{
 		if(s_macro == hold->cdr->car)
 		{
-			return macro_apply(make_macro(hold->cdr->cdr->car, hold->cdr->cdr->cdr, g_env), R0->cdr);
+			R0 = macro_apply(make_macro(hold->cdr->cdr->car, hold->cdr->cdr->cdr, g_env), R0->cdr);
+			return expand_macros(R0);
 		}
 	}
 
-	R0 = R0->cdr;
-	goto expand_reset;
+	hold = R0;
+	hold->cdr = expand_macros(R0->cdr);
+	R0 = hold;
+	return R0;
 }
