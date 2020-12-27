@@ -29,6 +29,7 @@ struct cell* pop_cell();
 struct cell* reverse_list(struct cell* head);
 void push_cell(struct cell* a);
 struct cell* cell_invoke_function(struct cell* cell, struct cell* vals);
+void apply(struct cell* proc, struct cell* vals);
 
 struct cell* macro_extend_env(struct cell* sym, struct cell* val, struct cell* env)
 {
@@ -349,7 +350,12 @@ struct cell* macro_apply(struct cell* proc, struct cell* vals)
 	}
 	else if(proc->type == LAMBDA)
 	{
-		temp = proc;
+		push_cell(R0);
+		push_cell(R1);
+		apply(proc, vals);
+		temp = R1;
+		R1 = pop_cell();
+		R0 = pop_cell();
 	}
 	else if(proc->type == MACRO)
 	{
