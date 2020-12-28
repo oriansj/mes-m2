@@ -65,6 +65,8 @@ struct cell* expand_quasiquote()
 	push_cell(R4);
 
 	/* (quasiquote (...)) */
+	require (NULL != R0, "quasiquote R0 is NULL\n");
+	require(NULL != R0->cdr, "quasiquote R0->cdr is NULL\n");
 	R2 = R0->cdr->car;
 	R3 = NULL;
 	while(nil != R2)
@@ -199,6 +201,7 @@ struct cell* expand_let()
 	/* Clean up locals after let completes */
 	push_cell(g_env);
 
+	require(NULL != R0->cdr, "expand_let R0->cdr is NULL\n");
 	/* Protect the s-expression from garbage collection */
 	push_cell(R0->cdr->cdr);
 
@@ -206,6 +209,7 @@ struct cell* expand_let()
 	for(R0 = R0->cdr->car; R0 != nil; R0 = R0->cdr)
 	{
 		push_cell(R0);
+		require (NULL != R0->car, "expand_let R0->car is NULL in loop\n");
 		R0 = R0->car->cdr->car;
 		macro_eval(R0, R1);
 		R0 = pop_cell();
