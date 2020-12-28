@@ -49,9 +49,9 @@
 (define (expand-let* bindings body)
   (if (null? bindings)
       `((lambda () ,@body))
-      `((lambda (,(caar bindings))
-          ,(expand-let* (cdr bindings) body))
-        ,@(cdar bindings))))
+      (cons (list 'lambda (list (caar bindings))
+          (expand-let* (cdr bindings) body))
+        (cdar bindings))))
 
 (define-macro (let* bindings . body)
   (expand-let* bindings body))
