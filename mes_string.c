@@ -240,7 +240,9 @@ struct cell* builtin_string_to_symbol(struct cell* args)
 	require(STRING == args->car->type, "string->symbol requires a string\n");
 	struct cell* r = findsym(args->car->string);
 	if(nil != r) return r->car;
-	return make_sym(args->car->string);
+	struct cell* newsym =  make_sym(args->car->string);
+	all_symbols = make_cons(newsym, all_symbols);
+	return newsym;
 }
 
 struct cell* builtin_symbol_to_string(struct cell* args)
@@ -248,7 +250,7 @@ struct cell* builtin_symbol_to_string(struct cell* args)
 	require(nil != args, "symbol->string requires an argument\n");
 	require(nil == args->cdr, "symbol->string only supports a single argument\n");
 	require(SYM == args->car->type, "symbol->string requires a symbol\n");
-	return make_string(args->car->string, args->car->length);
+	return make_string(args->car->string, string_size(args->car->string));
 }
 
 struct cell* builtin_number_to_string(struct cell* args)
