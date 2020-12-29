@@ -53,8 +53,11 @@ struct cell* define_macro(struct cell* exp, struct cell* env)
 
 struct cell* macro_apply(struct cell* exps, struct cell* vals);
 struct cell* macro_eval(struct cell* exps, struct cell* env);
-struct cell* expand_quasiquote()
+struct cell* expand_quasiquote(struct cell* exp, struct cell* env)
 {
+	push_cell(R0);
+	R0 = exp;
+
 	/* Protect the s-expression during the entire evaluation */
 	push_cell(R0);
 	/* R2 is the s-expression we are quasiquoting */
@@ -132,7 +135,10 @@ macro_restart_quasiquote:
 	R3 = pop_cell();
 	R2 = pop_cell();
 	pop_cell();
-	return R0;
+
+	exp = R0;
+	R0 = pop_cell();
+	return exp;
 }
 
 struct cell* macro_list(struct cell* exps, struct cell* env)
@@ -158,10 +164,12 @@ struct cell* expand_if(struct cell* exp, struct cell* env)
 	return R0;
 }
 
-struct cell* expand_cond()
+struct cell* expand_cond(struct cell* exp, struct cell* env)
 {
+	push_cell(R0);
+	push_cell(R1);
 	/* Get past the COND */
-	R0 = R0->cdr;
+	R0 = exp->cdr;
 
 	/* Provide a way to flag no fields in cond */
 	R1 = NULL;
@@ -193,13 +201,18 @@ struct cell* expand_cond()
 	}
 
 	require(NULL != R1, "a naked cond is not supported\n");
-	return R0;
+	exp = R0;
+	R1 = pop_cell();
+	R0 = pop_cell();
+	return exp;
 }
 
-struct cell* expand_let()
+struct cell* expand_let(struct cell* exp, struct cell* env)
 {
 	/* Clean up locals after let completes */
-	push_cell(g_env);
+	push_cell(env);
+	push_cell(R0);
+	R0 = exp;
 
 	require(NULL != R0->cdr, "expand_let R0->cdr is NULL\n");
 	/* Protect the s-expression from garbage collection */
@@ -223,12 +236,17 @@ struct cell* expand_let()
 	macro_eval(R0, R1);
 
 	/* Actual clean up */
+	exp = R0;
+	R0 = pop_cell();
 	g_env = pop_cell();
-	return R0;
+	return exp;
 }
 
-struct cell* expand_define()
+struct cell* expand_define(struct cell* exp, struct cell* env)
 {
+	push_cell(R0);
+	R0 = exp;
+
 	require(nil != R0->cdr, "naked (define) not supported\n");
 	/* To support (define (foo a b .. N) (s-expression)) form */
 	if(CONS == R0->cdr->car->type)
@@ -273,6 +291,8 @@ struct cell* expand_define()
 	/* We now need to extend the environment with our new name */
 	g_env = make_cons(make_cons(R0, R1), g_env);
 	R1 = cell_unspecified;
+	exp = R0;
+	R0 = pop_cell();
 	return R0;
 }
 
