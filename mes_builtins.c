@@ -567,6 +567,9 @@ struct cell* builtin_char_to_number(struct cell* args)
 
 struct cell* builtin_primitive_load(struct cell* args)
 {
+	/* Don't load anything while fuzzing */
+	if(FUZZING) return cell_unspecified;
+
 	require(nil != args, "primitive-load requires an argument\n");
 	require(STRING == args->car->type, "primitive-load requires a string\n");
 	require(nil == args->cdr, "primitive-load only accepts one argument\n");

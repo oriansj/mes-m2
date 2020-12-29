@@ -144,3 +144,6 @@ int MAX_STACK;
 
 /* To control debugging info */
 unsigned mes_debug_level;
+
+/* To prevent damage while fuzzing */
+int FUZZING;

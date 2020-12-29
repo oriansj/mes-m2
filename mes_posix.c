@@ -98,6 +98,9 @@ struct cell* builtin_display_error(struct cell* args)
 
 struct cell* builtin_write(struct cell* args)
 {
+	/* Don't write to files when fuzzing */
+	if(FUZZING) return cell_unspecified;
+
 	require(nil != args, "write requires arguments\n");
 	if(nil == args->cdr)
 	{
@@ -112,6 +115,9 @@ struct cell* builtin_write(struct cell* args)
 
 struct cell* builtin_write_error(struct cell* args)
 {
+	/* Don't write to files when fuzzing */
+	if(FUZZING) return cell_unspecified;
+
 	require(nil != args, "write-error requires arguments\n");
 	if(nil == args->cdr)
 	{
@@ -160,6 +166,9 @@ struct cell* builtin_close(struct cell* args)
 
 struct cell* builtin_open(struct cell* args, char* mode)
 {
+	/* Don't open files when fuzzing */
+	if(FUZZING) return cell_unspecified;
+
 	require(nil != args, "Did not recieve a file name\n");
 	require(STRING == args->car->type, "File name must be a string\n");
 
@@ -179,6 +188,9 @@ struct cell* builtin_open_write(struct cell* args)
 
 struct cell* builtin_set_current_output_port(struct cell* args)
 {
+	/* When fuzzing write to STDOUT */
+	if(FUZZING) return cell_unspecified;
+
 	require(nil != args, "set-current-output-port requires arguments\n");
 	require(FILE_PORT == args->car->type, "set-current-output-port expects a port\n");
 	require(nil == args->cdr, "set-current-output-port expects only a single argument\n");
@@ -190,6 +202,9 @@ struct cell* builtin_set_current_output_port(struct cell* args)
 
 struct cell* builtin_set_current_input_port(struct cell* args)
 {
+	/* When fuzzing don't change input port */
+	if(FUZZING) return cell_unspecified;
+
 	require(nil != args, "set-current-input-port requires arguments\n");
 	require(FILE_PORT == args->car->type, "set-current-input-port expects a port\n");
 	require(nil == args->cdr, "set-current-input-port expects only a single argument\n");
@@ -201,6 +216,9 @@ struct cell* builtin_set_current_input_port(struct cell* args)
 
 struct cell* builtin_set_current_error_port(struct cell* args)
 {
+	/* When fuzzing write to STDERR */
+	if(FUZZING) return cell_unspecified;
+
 	require(nil != args, "set-current-error-port requires arguments\n");
 	require(FILE_PORT == args->car->type, "set-current-error-port expects a port\n");
 	require(nil == args->cdr, "set-current-error-port expects only a single argument\n");

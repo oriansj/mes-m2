@@ -105,6 +105,7 @@ struct cell* load_file(char* s)
 
 int main(int argc, char **argv, char** envp)
 {
+	FUZZING = FALSE;
 	__envp = envp;
 	__argv = argv;
 	__argc = argc;
@@ -168,6 +169,11 @@ int main(int argc, char **argv, char** envp)
 				file_print(" [--boot boot.scm] [-f|--file file.scm] [-h|--help]\n", stdout);
 				i = i + 1;
 				exit(EXIT_SUCCESS);
+			}
+			else if(match(argv[i], "--fuzzing"))
+			{
+				FUZZING = TRUE;
+				i = i + 1;
 			}
 			else
 			{
