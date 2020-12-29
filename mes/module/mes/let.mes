@@ -41,7 +41,7 @@
      (set! ,name (lambda ,(map1 car bindings) ,@rest))
      (,name ,@(map1 cadr bindings))))
 
-(define-macro (let bindings-or-name . rest)
+(define-macro (mes-let bindings-or-name . rest)
   (if (symbol? bindings-or-name)
       `(xnamed-let ,bindings-or-name ,(car rest) ,(cdr rest))
       `(xsimple-let ,bindings-or-name ,rest)))
@@ -49,9 +49,9 @@
 (define (expand-let* bindings body)
   (if (null? bindings)
       `((lambda () ,@body))
-      `((lambda (,(caar bindings))
-          ,(expand-let* (cdr bindings) body))
-        ,@(cdar bindings))))
+      (cons (list 'lambda (list (caar bindings))
+          (expand-let* (cdr bindings) body))
+        (cdar bindings))))
 
 (define-macro (let* bindings . body)
   (expand-let* bindings body))

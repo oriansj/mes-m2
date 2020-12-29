@@ -129,7 +129,7 @@ struct cell* builtin_append(struct cell* args)
 	if(nil == args) return nil;
 	require(((nil == args->car) || (CONS == args->car->type)), "append requires a list\n");
 	if(nil == args->cdr) return args->car;
-	require(((nil == args->car) || (CONS == args->car->type)), "append requires a list argument\n");
+	require(((nil == args->cdr->car) || (CONS == args->cdr->car->type)), "append requires a list argument\n");
 	return append(args->car, args->cdr->car);
 }
 

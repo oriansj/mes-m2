@@ -29,8 +29,12 @@
 ;; boot-00.scm
 (define mes %version)
 
-(define (defined? x)
-  (module-variable (current-module) x))
+(define (core:eval expr) (primitive-eval expr))
+(define (core:apply a b) (apply a b))
+(define (current-module) '())
+(define (eval expr) (primitive-eval expr))
+(define (equal2? x y) (equal? x y))
+(define-macro (call-with-current-continuation . rest) 'die)
 
 (define (cond-expand-expander clauses)
   (if (defined? (car (car clauses)))
@@ -44,16 +48,17 @@
 ;; boot-01.scm
 (define (not x) (if x #f #t))
 
-(define (display x . rest)
-  (if (null? rest) (core:display x)
-      (core:display-port x (car rest))))
+(define (core:display x) (display x))
+(define (core:display-error x) (display-error x))
+(define (core:display-port x p) (display x p))
+
+(define (last-pair lst)
+  (if (or (null? lst) (null? (cdr lst))) lst (last-pair (cdr lst))))
 
 (define (write x . rest)
   (if (null? rest) (core:write x)
       (core:write-port x (car rest))))
 
-(define (integer->char x)
-  (core:make-cell <cell:char> 0 x))
 
 (define (newline . rest)
   (core:display (list->string (list (integer->char 10)))))
@@ -121,6 +126,25 @@
   (if (null? t) (core:apply f h (current-module))
       (apply f (apply cons* (cons h t)))))
 
+
+;; Some list primitives
+(define (memq i l) (cond ((null? l) #f) ((eq? i (car l)) l) (#t (memq i (cdr l)))))
+(define (memv i l) (cond ((null? l) #f) ((eqv? i (car l)) l) (#t (memv i (cdr l)))))
+(define (member i l) (cond ((null? l) #f) ((equal? i (car l)) l) (#t (member i (cdr l)))))
+(define (assq i l) (cond ((null? l) #f) ((eq? i (caar l)) (car l)) (else (assq i (cdr l)))))
+(define (assv i l) (cond ((null? l) #f) ((eqv? i (caar l)) (car l)) (else (assv i (cdr l)))))
+(define (assoc i l) (cond ((null? l) #f) ((equal? i (caar l)) (car l)) (else (assoc i (cdr l)))))
+
+;; environment
+(define *fake-env* '())
+(define getenv0 getenv)
+(define (getenv var)
+  (let ((fv (assoc var *fake-env*)))
+    (if fv (cdr fv) (getenv0 var))))
+(define (setenv var val)
+  (set! *fake-env* (cons (cons var val) *fake-env*))
+  (if #f #f))
+
 (define-macro (load file)
   (list 'begin
         (list 'if (list 'and (list getenv "MES_DEBUG")
@@ -139,14 +163,14 @@
       (if (null? (cdr rest)) (car rest)
           (append2 (car rest) (apply append (cdr rest))))))
 
-;;(define %prefix (getenv "MES_PREFIX")) hmm?
+(define %prefix (getenv "MES_PREFIX"))
 (define %moduledir
   (if (not %prefix) "mes/module/"
       (list->string
        (append (string->list %prefix) (string->list "/module/" )))))
 
-(include (list->string
-          (append2 (string->list %moduledir) (string->list "mes/type-0.mes"))))
+;;(include (list->string
+;;          (append2 (string->list %moduledir) (string->list "mes/type-0.mes"))))
 
 (if (and (getenv "MES_DEBUG")
           (not (equal2? (getenv "MES_DEBUG") "0"))
@@ -185,6 +209,7 @@
 (define (effective-version) %version)
 
 (mes-use-module (srfi srfi-1))
+;; next one will crash...
 (mes-use-module (srfi srfi-13))
 (mes-use-module (mes fluids))
 (mes-use-module (mes catch))

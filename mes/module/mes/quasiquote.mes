@@ -55,5 +55,5 @@
                (quasiquote-expand (car x))
                (quasiquote-expand (cdr x))))))
 
-(define-macro (quasiquote x)
+(define-macro (mes-quasiquote x)
   (quasiquote-expand x))

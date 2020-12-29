@@ -96,7 +96,7 @@ struct cell* tokenize(struct cell* head, char* fullstring, unsigned size)
 		}
 		else
 		{
-			if(in_set(c, " \t\n\r"))
+			if(in_set(c, " \t\n\r\f"))
 			{
 				string_index = string_index + 1;
 				out_index = out_index + 1;

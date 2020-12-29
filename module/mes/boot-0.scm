@@ -127,6 +127,17 @@
 (define (assv i l) (cond ((null? l) #f) ((eqv? i (caar l)) (car l)) (else (assv i (cdr l)))))
 (define (assoc i l) (cond ((null? l) #f) ((equal? i (caar l)) (car l)) (else (assoc i (cdr l)))))
 
+;; environment
+(define *fake-env* '())
+(define getenv0 getenv)
+(define (getenv var)
+  (let ((fv (assoc var *fake-env*)))
+    (if fv (cdr fv) (getenv0 var))))
+(define (setenv var val)
+  (set! *fake-env* (cons (cons var val) *fake-env*))
+  (if #f #f))
+
+
 ;; Provide guile primitives
 (define (keyword-like-symbol->keyword sym)
   (if (symbol? sym) (string->keyword (list->string (cons* #\# #\: (cdr (string->list (symbol->string sym))))))

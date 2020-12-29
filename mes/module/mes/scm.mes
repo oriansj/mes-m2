@@ -63,7 +63,7 @@
       (if (null? xr) (begin (f (car l)) (for-each f (cdr l)))
           (if (null? (cdr xr)) (begin (f (car l) (caar xr)) (for-each f (cdr l) (cdar xr)))))))
 
-(define core:error error)
+(define (core:error . args) (display args (currrent-error-port)))
 
 (define (error who . rest)
   (display "error:" (current-error-port))
@@ -309,7 +309,7 @@
 
 
 ;;; Math
-(define quotient /)
+;;(define quotient /)
 
 (define (<= . rest)
   (or (apply < rest)
