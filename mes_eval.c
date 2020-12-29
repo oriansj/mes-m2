@@ -161,7 +161,6 @@ void evlis()
  ****************************************/
 void apply(struct cell* proc, struct cell* vals)
 {
-	FUNCTION* fp;
 	struct cell* syms;
 	if(proc->type == PRIMOP)
 	{
@@ -368,6 +367,9 @@ void eval()
 		}
 		else if(R0->car == s_case)
 		{
+			/* Protect against (case) statements */
+			require(nil != R0->cdr, "source expression (case) failed to match any pattern in form (case)\n");
+
 			/* Get past the CASE */
 			R0 = R0->cdr;
 
@@ -456,12 +458,18 @@ void eval()
 		}
 		else if(R0->car == quote)
 		{
+			/* Protect against (quote) statements */
+			require(nil != R0->cdr, "quote: bad syntax in form (quote)\n");
+
 			/* (quote (...)) */
 			R1 = R0->cdr->car;
 			return;
 		}
 		else if(R0->car == quasiquote)
 		{
+			/* Protect against (quasiquote) statements */
+			require(nil != R0->cdr, "source expression (quasiquote) failed to match any pattern in form (quasiquote)\n");
+
 			/* Protect the s-expression during the entire evaluation */
 			push_cell(R0);
 			/* R2 is the s-expression we are quasiquoting */
@@ -542,6 +550,7 @@ restart_quasiquote:
 		else if(R0->car == s_define)
 		{
 			require(nil != R0->cdr, "naked (define) not supported\n");
+
 			/* To support (define (foo a b .. N) (s-expression)) form */
 			if(CONS == R0->cdr->car->type)
 			{
@@ -589,6 +598,9 @@ restart_quasiquote:
 		}
 		else if(R0->car == s_setb)
 		{
+			/* Protect against (set!) statements */
+			require(nil != R0->cdr, "bad set! in form (set!)\n");
+
 			/* attempt to lookup the variable we are set! to a new value */
 			if(NULL != R4) R2 = assoc(R0->cdr->car, R4);
 			else R2 = assoc(R0->cdr->car, g_env);
@@ -616,6 +628,9 @@ restart_quasiquote:
 		}
 		else if(R0->car == s_let)
 		{
+			/* Protect against (let) statements */
+			require(nil != R0->cdr, "bad let in form (let)\n");
+
 			/* Clean up locals after let completes */
 			push_cell(g_env);
 
@@ -644,6 +659,10 @@ restart_quasiquote:
 		}
 		else if(R0->car == s_begin)
 		{
+			/* Protect against (begin) statements */
+			require(nil != R0->cdr, "sequence of zero expressions in form (begin)\n");
+
+
 			/* Get past the begin to the list of s-expressions */
 			R0 = R0->cdr;
 
