@@ -35,7 +35,7 @@ struct cell* macro_extend_env(struct cell* sym, struct cell* val, struct cell* e
 {
 	env->cdr = make_cons(env->car, env->cdr);
 	env->car = make_cons(sym, val);
-	return NULL;
+	return nil;
 }
 
 struct cell* define_macro(struct cell* exp, struct cell* env)
@@ -243,10 +243,12 @@ struct cell* expand_let(struct cell* exp, struct cell* env)
 	return exp;
 }
 
-struct cell* expand_define(struct cell* exp)
+struct cell* expand_define(struct cell* exp, struct cell* env)
 {
 	push_cell(R0);
+	push_cell(R1);
 	R0 = exp;
+	R1 = env;
 
 	require(nil != R0->cdr, "naked (define) not supported\n");
 	/* To support (define (foo a b .. N) (s-expression)) form */
@@ -293,6 +295,7 @@ struct cell* expand_define(struct cell* exp)
 	g_env = make_cons(make_cons(R0, R1), g_env);
 	R1 = cell_unspecified;
 	exp = R0;
+	R1 = pop_cell();
 	R0 = pop_cell();
 	return R0;
 }
@@ -304,7 +307,7 @@ struct cell* expand_cons(struct cell* exp, struct cell* env)
 	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
 	if(exp->car == quote) return exp->cdr->car;
 	if(exp->car == s_macro) return make_macro(exp->cdr->car, exp->cdr->cdr, env);
-	if(exp->car == s_define) return expand_define(exp);
+	if(exp->car == s_define) return expand_define(exp, env);
 	if(exp->car == s_let) return expand_let(exp, env);
 	if(exp->car == quasiquote) return expand_quasiquote(exp->cdr->car);
 
@@ -400,7 +403,7 @@ struct cell* expand_macros(struct cell* exp)
 	R0 = exp;
 	struct cell* hold;
 
-	if(NULL == R0) return exp;
+	if(NULL == R0) return nil;
 	if(CONS != R0->type) return exp;
 	else if(R0->car == s_define_macro)
 	{

@@ -78,7 +78,10 @@ struct cell* assoc(struct cell* key, struct cell* alist)
 	if(SYM != key->type) return nil;
 	for(i = alist; nil != i; i = i->cdr)
 	{
-		if(match(i->car->car->string, key->string)) return i->car;
+		if(SYM == i->car->car->type)
+		{
+			if(match(i->car->car->string, key->string)) return i->car;
+		}
 	}
 
 	/* Pray we are in a lambda */
@@ -86,7 +89,10 @@ struct cell* assoc(struct cell* key, struct cell* alist)
 	require(CONS == R4->type, "Looks like R4 isn't a list\nAbort before we damage something\n");
 	for(i = g_env; nil != i; i = i->cdr)
 	{
-		if(match(i->car->car->string, key->string)) return i->car;
+		if(SYM == i->car->car->type)
+		{
+			if(match(i->car->car->string, key->string)) return i->car;
+		}
 	}
 	return nil;
 }
@@ -191,6 +197,7 @@ void apply(struct cell* proc, struct cell* vals)
 		/* extend the locals*/
 		while(nil != syms)
 		{
+			require(NULL != vals, "source expression failed to match any pattern in form even the implied warregin\n");
 			/* Support (define (foo a b . rest) ...) sort of s-expressions */
 			if(cell_dot == syms->car)
 			{
@@ -662,7 +669,6 @@ restart_quasiquote:
 			/* Protect against (begin) statements */
 			require(nil != R0->cdr, "sequence of zero expressions in form (begin)\n");
 
-
 			/* Get past the begin to the list of s-expressions */
 			R0 = R0->cdr;
 
@@ -672,6 +678,9 @@ restart_quasiquote:
 			/* Loop through s-expressions and returning the last return value */
 			while(R0 != nil)
 			{
+				/* make sure it is a proper list */
+				require(NULL != R0->cdr, "you managed to pass begin without a nil terminated list\n");
+
 				/* Protect the rest of the list */
 				push_cell(R0->cdr);
 
