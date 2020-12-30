@@ -40,6 +40,7 @@ struct cell* macro_extend_env(struct cell* sym, struct cell* val, struct cell* e
 
 struct cell* define_macro(struct cell* exp, struct cell* env)
 {
+	require(nil != exp->cdr, "source expression failed to match any pattern in form (define-macro)\n");
 	if(CONS == exp->cdr->car->type)
 	{
 		struct cell* fun = exp->cdr->cdr;
@@ -53,7 +54,7 @@ struct cell* define_macro(struct cell* exp, struct cell* env)
 
 struct cell* macro_apply(struct cell* exps, struct cell* vals);
 struct cell* macro_eval(struct cell* exps, struct cell* env);
-struct cell* expand_quasiquote(struct cell* exp, struct cell* env)
+struct cell* expand_quasiquote(struct cell* exp)
 {
 	push_cell(R0);
 	R0 = exp;
@@ -164,7 +165,7 @@ struct cell* expand_if(struct cell* exp, struct cell* env)
 	return R0;
 }
 
-struct cell* expand_cond(struct cell* exp, struct cell* env)
+struct cell* expand_cond(struct cell* exp)
 {
 	push_cell(R0);
 	push_cell(R1);
@@ -242,7 +243,7 @@ struct cell* expand_let(struct cell* exp, struct cell* env)
 	return exp;
 }
 
-struct cell* expand_define(struct cell* exp, struct cell* env)
+struct cell* expand_define(struct cell* exp)
 {
 	push_cell(R0);
 	R0 = exp;
@@ -299,13 +300,13 @@ struct cell* expand_define(struct cell* exp, struct cell* env)
 struct cell* expand_cons(struct cell* exp, struct cell* env)
 {
 	if(exp->car == s_if) return expand_if(exp, env);
-	if(exp->car == s_cond) return expand_cond(exp->cdr, env);
+	if(exp->car == s_cond) return expand_cond(exp->cdr);
 	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
 	if(exp->car == quote) return exp->cdr->car;
 	if(exp->car == s_macro) return make_macro(exp->cdr->car, exp->cdr->cdr, env);
-	if(exp->car == s_define) return expand_define(exp, env);
+	if(exp->car == s_define) return expand_define(exp);
 	if(exp->car == s_let) return expand_let(exp, env);
-	if(exp->car == quasiquote) return expand_quasiquote(exp->cdr->car, env);
+	if(exp->car == quasiquote) return expand_quasiquote(exp->cdr->car);
 
 	R0 = macro_eval(exp->car, env);
 	push_cell(R0);
@@ -352,6 +353,7 @@ macro_progn_reset:
 
 struct cell* macro_extend(struct cell* env, struct cell* syms, struct cell* vals)
 {
+	require(NULL != vals, "lambda: bad lambda in form\n");
 	if(nil == syms)
 	{
 		return env;
@@ -398,16 +400,18 @@ struct cell* expand_macros(struct cell* exp)
 	R0 = exp;
 	struct cell* hold;
 
- 	if(NULL == R0) return exp;
+	if(NULL == R0) return exp;
 	if(CONS != R0->type) return exp;
 	else if(R0->car == s_define_macro)
 	{
 		define_macro(R0, g_env);
 		return cell_unspecified;
 	}
-	hold = R0;
-	hold->car = expand_macros(R0->car);
-	R0 = hold;
+
+	push_cell(R0);
+	hold = expand_macros(R0->car);
+	R0 = pop_cell(R0);
+	R0->car = hold;
 
 	hold = macro_assoc(R0->car, g_env);
 	if(CONS == hold->type)
@@ -419,8 +423,9 @@ struct cell* expand_macros(struct cell* exp)
 		}
 	}
 
-	hold = R0;
-	hold->cdr = expand_macros(R0->cdr);
-	R0 = hold;
+	push_cell(R0);
+	hold = expand_macros(R0->cdr);
+	R0 = pop_cell(R0);
+	R0->cdr = hold;
 	return R0;
 }
