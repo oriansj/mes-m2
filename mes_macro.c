@@ -54,10 +54,12 @@ struct cell* define_macro(struct cell* exp, struct cell* env)
 
 struct cell* macro_apply(struct cell* exps, struct cell* vals);
 struct cell* macro_eval(struct cell* exps, struct cell* env);
-struct cell* expand_quasiquote(struct cell* exp)
+struct cell* expand_quasiquote(struct cell* exp, struct cell* env)
 {
 	push_cell(R0);
+	push_cell(R1);
 	R0 = exp;
+	R1 = env;
 
 	/* Protect the s-expression during the entire evaluation */
 	push_cell(R0);
@@ -138,6 +140,7 @@ macro_restart_quasiquote:
 	pop_cell();
 
 	exp = R0;
+	R1 = pop_cell();
 	R0 = pop_cell();
 	return exp;
 }
@@ -165,7 +168,7 @@ struct cell* expand_if(struct cell* exp, struct cell* env)
 	return R0;
 }
 
-struct cell* expand_cond(struct cell* exp)
+struct cell* expand_cond(struct cell* exp, struct cell* env)
 {
 	push_cell(R0);
 	push_cell(R1);
@@ -183,14 +186,14 @@ struct cell* expand_cond(struct cell* exp)
 
 		/* Evaluate the conditional */
 		R0 = R0->car->car;
-		macro_eval(R0, R1);
+		macro_eval(R0, env);
 		R0 = pop_cell();
 
 		/* Execute if not false because that is what guile does (believe everything not #f is true) */
 		if(cell_f != R1)
 		{
 			R0 = make_cons(s_begin, R0->car->cdr);
-			macro_eval(R0, R1);
+			macro_eval(R0, env);
 			return R0;
 		}
 
@@ -303,13 +306,13 @@ struct cell* expand_define(struct cell* exp, struct cell* env)
 struct cell* expand_cons(struct cell* exp, struct cell* env)
 {
 	if(exp->car == s_if) return expand_if(exp, env);
-	if(exp->car == s_cond) return expand_cond(exp->cdr);
+	if(exp->car == s_cond) return expand_cond(exp->cdr, env);
 	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
 	if(exp->car == quote) return exp->cdr->car;
 	if(exp->car == s_macro) return make_macro(exp->cdr->car, exp->cdr->cdr, env);
 	if(exp->car == s_define) return expand_define(exp, env);
 	if(exp->car == s_let) return expand_let(exp, env);
-	if(exp->car == quasiquote) return expand_quasiquote(exp->cdr->car);
+	if(exp->car == quasiquote) return expand_quasiquote(exp->cdr->car, env);
 
 	R0 = macro_eval(exp->car, env);
 	push_cell(R0);
@@ -344,13 +347,14 @@ struct cell* macro_eval(struct cell* exps, struct cell* env)
 
 struct cell* macro_progn(struct cell* exps, struct cell* env)
 {
-	if(exps == nil) return nil;
+	if(CONS != exps->type) return exps;
 
-	struct cell* result;
+	R0 = exps;
 macro_progn_reset:
-	result = macro_eval(exps->car, env);
-	if(exps->cdr == nil) return result;
-	exps = exps->cdr;
+	if(R0 == nil) return R1;
+	push_cell(R0->cdr);
+	R1 = macro_eval(R0->car, env);
+	R0 = pop_cell();
 	goto macro_progn_reset;
 }
 

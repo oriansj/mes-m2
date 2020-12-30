@@ -134,9 +134,9 @@ struct cell* pop_cell()
 void eval();
 void evlis()
 {
-	if(R0 == nil)
+	if(CONS != R0->type)
 	{
-		R1 = nil;
+		R1 = R0;
 		return;
 	}
 
@@ -556,7 +556,7 @@ restart_quasiquote:
 		}
 		else if(R0->car == s_define)
 		{
-			require(nil != R0->cdr, "naked (define) not supported\n");
+			require(CONS == R0->cdr->type, "naked (define) not supported\n");
 
 			/* To support (define (foo a b .. N) (s-expression)) form */
 			if(CONS == R0->cdr->car->type)
@@ -673,7 +673,7 @@ restart_quasiquote:
 			R0 = R0->cdr;
 
 			/* Catch a naked begin */
-			R1 = NULL;
+			require(CONS == R0->type, "naked begin is not supported\n");
 
 			/* Loop through s-expressions and returning the last return value */
 			while(R0 != nil)
@@ -692,7 +692,6 @@ restart_quasiquote:
 				R0 = pop_cell();
 			}
 
-			require(NULL != R1, "naked begin is not supported\n");
 			return;
 		}
 		else if(R0->car == s_while)
