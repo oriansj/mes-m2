@@ -126,11 +126,17 @@ struct cell* builtin_listp(struct cell* args)
 
 struct cell* builtin_append(struct cell* args)
 {
-	if(nil == args) return nil;
-	require(((nil == args->car) || (CONS == args->car->type)), "append requires a list\n");
-	if(nil == args->cdr) return args->car;
-	require(((nil == args->cdr->car) || (CONS == args->cdr->car->type)), "append requires a list argument\n");
-	return append(args->car, args->cdr->car);
+	struct cell* i = args;
+	if(nil == i) return nil;
+
+	while (nil != i->cdr)
+	{
+		require(((nil == i->car) || (CONS == i->car->type)), "append requires a list\n");
+		require(((nil == i->cdr->car) || (CONS == i->cdr->car->type)), "append requires a list argument\n");
+		i->car = append(i->car, i->cdr->car);
+		i->cdr = i->cdr->cdr;
+	}
+	return i->car;
 }
 
 struct cell* builtin_listeq(struct cell* args)

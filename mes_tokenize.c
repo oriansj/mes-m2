@@ -24,7 +24,7 @@
 struct cell* token_stack;
 
 /* Imported functions */
-char* copy_string(char* target, char* source);
+char* copy_string(char* target, char* source,int length);
 int escape_lookup(char* c);
 int in_set(int c, char* s);
 int string_size(char* a);
@@ -115,7 +115,7 @@ struct cell* tokenize(struct cell* head, char* fullstring, unsigned size)
 	if(out_index > 1)
 	{
 		char* store = calloc(string_index + 1, sizeof(char));
-		copy_string(store, memory_block);
+		copy_string(store, memory_block, out_index);
 		struct cell* temp = make_sym(store);
 		temp->cdr = head;
 		head = temp;

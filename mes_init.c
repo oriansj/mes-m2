@@ -274,7 +274,7 @@ void init_sl3()
 
 	/* Dealing with Lists */
 	spinup(make_sym("list"), make_prim(builtin_list));
-	spinup(make_sym("append2"), make_prim(builtin_append));
+	spinup(make_sym("append"), make_prim(builtin_append));
 	spinup(make_sym("length"), make_prim(builtin_list_length));
 	spinup(make_sym("list->string"), make_prim(builtin_list_to_string));
 	spinup(make_sym("list->vector"), make_prim(builtin_list_to_vector));

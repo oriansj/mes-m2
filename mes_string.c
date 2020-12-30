@@ -65,13 +65,13 @@ void reset_block(char* a)
 	} while(0 != c);
 }
 
-char* copy_string(char* target, char* source)
+char* copy_string(char* target, char* source, int length)
 {
-	while(0 != source[0])
+	int i = 0;
+	while(i <= length)
 	{
-		target[0] = source[0];
-		target = target + 1;
-		source = source + 1;
+		target[i] = source[i];
+		i = i + 1;
 	}
 	return target;
 }
@@ -83,8 +83,8 @@ char* string_append(char* a, char* b)
 	int a_size = string_size(a);
 	int buffer_size = a_size + string_size(b) + 1;
 	char* buffer = calloc(buffer_size, sizeof(char));
-	copy_string(buffer, a);
-	copy_string(buffer + a_size, b);
+	copy_string(buffer, a, a_size);
+	copy_string(buffer + a_size, b, string_size(b));
 	return buffer;
 }
 
