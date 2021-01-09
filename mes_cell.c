@@ -26,9 +26,8 @@ void expand_pool();
 
 
 /* Deal with the fact GCC converts the 1 to the size of the structs being iterated over */
-//CONSTANT CELL_SIZE sizeof(struct cell)
 #define CELL_SIZE 1
-
+//CONSTANT CELL_SIZE sizeof(struct cell)
 
 /****************************************
  * free_cells is a list of all free     *

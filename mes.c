@@ -23,6 +23,7 @@
 
 /* globals used in REPL */
 char* message;
+int DISABLE_MACRO_EXPANSION;
 
 /* Prototypes */
 FILE* open_file(char* name, char* mode);
@@ -63,7 +64,7 @@ int REPL()
 	R0 = parse(message, read);
 
 	/* perform macro processing here */
-	R0 = expand_macros(R0);
+	if(!DISABLE_MACRO_EXPANSION) R0 = expand_macros(R0);
 	/* now to eval what results */
 	eval();
 
@@ -106,6 +107,7 @@ struct cell* load_file(char* s)
 int main(int argc, char **argv, char** envp)
 {
 	FUZZING = FALSE;
+	DISABLE_MACRO_EXPANSION = FALSE;
 	__envp = envp;
 	__argv = argv;
 	__argc = argc;
@@ -173,6 +175,11 @@ int main(int argc, char **argv, char** envp)
 			else if(match(argv[i], "--fuzzing"))
 			{
 				FUZZING = TRUE;
+				i = i + 1;
+			}
+			else if(match(argv[i], "--disable-macro-expansion-phase"))
+			{
+				DISABLE_MACRO_EXPANSION = TRUE;
 				i = i + 1;
 			}
 			else

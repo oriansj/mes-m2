@@ -16,6 +16,7 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 M2-Planet --debug --architecture amd64 \
+	--bootstrap-mode \
 	-f mes.h \
 	-f ../M2-Planet/test/common_amd64/functions/file.c \
 	-f ../M2-Planet/test/common_amd64/functions/exit.c \
