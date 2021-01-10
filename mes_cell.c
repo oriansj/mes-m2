@@ -758,9 +758,11 @@ struct cell* make_record(struct cell* type, struct cell* vector)
 
 struct cell* cell_invoke_function(struct cell* cell, struct cell* vals)
 {
+// /*
 #if __MESC__
 	struct cell* (*fp)(struct cell*) = cell->function;
 #else
+// */
 	FUNCTION* fp = cell->function;
 #endif
 	return fp(vals);
