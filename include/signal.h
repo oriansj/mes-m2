@@ -126,6 +126,7 @@ typedef long sighandler_t;
 typedef void (*sighandler_t) (int);
 #endif
 
+#if __i386__ || __x86_64__
 struct sigaction
 {
   union
@@ -144,7 +145,19 @@ struct sigaction
   //unsigned long sa_flags; // x86?
   void (*sa_restorer) (void);
 };
-
+#else /* uapi */
+struct sigaction
+{
+  union
+  {
+    sighandler_t sa_handler;
+    void (*sa_sigaction) (int signum, siginfo_t *, void *);
+  };
+  unsigned long sa_flags;
+  void (*sa_restorer) (void);
+  sigset_t sa_mask;
+};
+#endif
 
 #define SIG_DFL ((sighandler_t)0)
 #define SIG_IGN ((sighandler_t)1)
@@ -226,6 +239,7 @@ typedef struct ucontext
 #endif // !__i386__
 
 int kill (pid_t pid, int signum);
+int raise (int);
 int sigaction (int signum, struct sigaction const *act, struct sigaction *oldact);
 int sigaddset (sigset_t * set, int signum);
 #if __MESC__

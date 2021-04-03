@@ -1,4 +1,4 @@
-#! /run/current-system/profile/bin/bash
+#! /usr/bin/env bash
 
 # GNU Mes --- Maxwell Equations of Software
 # Copyright ?? 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
@@ -22,16 +22,13 @@ if [ "$V" = 2 ]; then
     set -x
 fi
 
-MES_ARENA=${MES_ARENA-100000000}
-export MES_ARENA
-
-MES_STACK=${MES_STACK-500000}
-export MES_STACK
-
-MES_PREFIX=${MES_PREFIX-$prefix/share/mes}
-export MES_PREFIX
-
-MES=${MES-src/mes}
+# Variables
+bindir=bin
+MES_ARENA=20000000
+MES_MAX_ARENA=20000000
+MES_STACK=6000000
+MES=${bindir}/mes
+libdir=${prefix}/lib
 
 dir=$(dirname $0)
 ${SCHEME-$MES} \
@@ -39,4 +36,4 @@ ${SCHEME-$MES} \
      -e main\
      -L /usr/local/share/guile/site/2.2\
      -C /usr/local/lib/guile/2.2/site-ccache\
-     $dir/mescc.scm "$@"
+     $dir/mescc.scm -- "$@"

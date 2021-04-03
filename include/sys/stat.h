@@ -35,7 +35,7 @@ typedef int mode_t;
 #endif
 
 // *INDENT-OFF*
-#if __i386__
+#if __i386__ || __arm__
 struct stat
 {
   unsigned long  st_dev;

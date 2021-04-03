@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -118,12 +118,6 @@
               (car (car clauses)))))
 
 (define else #t)
-
-(define (procedure? p)
-  (cond ((builtin? p) #t)
-        ((and (pair? p) (eq? (car p) 'lambda)))
-        ((closure? p) #t)
-        (#t #f)))
 
 (define (map f h . t)
   (if (or (null? h)

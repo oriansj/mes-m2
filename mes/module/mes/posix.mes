@@ -34,21 +34,20 @@
              (string-suffix? ext base)) (string-drop-right base (string-length ext))
              base)))
 
+(define (force-output . port)
+  *unspecified*)
+
 (define (search-path path file-name)
-  (if (access? file-name R_OK) file-name
-      (let loop ((path path))
-        (and (pair? path)
-             (let ((f (string-append (car path) "/" file-name)))
-               (if (access? f R_OK) f
-                   (loop (cdr path))))))))
+  (let loop ((path path))
+    (and (pair? path)
+         (let ((f (string-append (car path) "/" file-name)))
+           (if (access? f R_OK) f
+               (loop (cdr path)))))))
 
 (define (execlp file-name args)
   (let ((executable (if (string-index file-name #\/) file-name
                         (search-path (string-split (getenv "PATH") #\:) file-name))))
     (execl executable args)))
-
-(define (force-output . port)
-  *unspecified*)
 
 (define (system* file-name . args)
   (let ((pid (primitive-fork)))

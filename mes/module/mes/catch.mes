@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2018,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -23,17 +23,14 @@
 
 (define %eh (make-fluid
              (lambda (key . args)
-               (if #f ;;(defined? 'simple-format)
-                   (simple-format (current-error-port) "unhandled exception:~a:~a\n" key args)
-                   (begin
-                     (core:display-error "unhandled exception:")
-                     (core:display-error key)
-                     (core:display-error ":")
-                     (core:write-error args)
-                     (core:display-error "\n")))
+               (core:display-error "unhandled exception: ")
+               (core:display-error key)
+               (core:display-error ": ")
+               (core:write-error args)
+               (core:display-error "\n")
                (core:display-error "Backtrace:\n")
                (display-backtrace (make-stack) (current-error-port))
-               (exit 1))))
+               (abort))))
 
 (define (catch key thunk handler)
   (let ((previous-eh (fluid-ref %eh)))
@@ -58,14 +55,33 @@
 (define with-throw-handler catch) ; FIXME: hack for Nyacc 0.75
 
 (define (frame-procedure frame)
-  (struct-ref frame 3))
+  (let ((f (struct-ref frame 3)))
+    (or (builtin? f)
+        (closure? f))))
+
+(define (display-frame frame port)
+  (core:display-error "  ")
+  (let ((f (struct-ref frame 3)))
+    (cond ((builtin? f)
+           (core:display-error "[b] ")
+           (core:display-error "(")
+           (core:display-error (struct-ref f 3))
+           (for-each (lambda (i) (core:display-error " _")) (iota (struct-ref f 4)))
+           (core:display-error ")"))
+          ((closure? f)
+           (core:display-error "[c] ")
+           (let* ((circ (core:car (core:cdr f)))
+                  (name (core:car (core:car (core:cdr circ))))
+                  (args (core:car (core:cdr (core:cdr f)))))
+             (core:display-error (cons name args))))
+          (else
+           (core:display-error "[u] ")
+           (core:display-error f))))
+  (core:display-error "\n"))
 
 (define (display-backtrace stack port . rest)
   (let* ((frames (map (lambda (i) (stack-ref stack i)) (iota (stack-length stack))))
          (call-frames (filter frame-procedure frames))
-         (display-frames (drop-right call-frames 2)))
-    (for-each (lambda (f)
-                (core:display-error "  ")
-                (core:display-error f)
-                (core:display-error "\n"))
-              display-frames)))
+         (trace-frames (reverse call-frames))
+         (display-frames (cdr trace-frames)))
+    (for-each (lambda (f) (display-frame f port)) display-frames)))

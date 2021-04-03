@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -31,6 +31,7 @@ typedef int pid_t;
 #endif
 
 #define	WNOHANG 1
+#define W_EXITCODE(status, signal) ((status) << 8 | (signal))
 
 pid_t waitpid (pid_t pid, int *status_ptr, int options);
 pid_t wait (int *status_ptr);

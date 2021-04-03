@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -18,14 +18,17 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mes/lib.h>
 #include <errno.h>
-#include <libmes-mini.h>
-
-ssize_t write ();
+#include <stdio.h>
+#include <unistd.h>
 
 ssize_t
 write (int filedes, void const *buffer, size_t size)
 {
+  size_t skip = __buffered_read_clear (filedes);
+  if (skip)
+    lseek (filedes, -skip, SEEK_CUR);
   int r = _write (filedes, buffer, size);
   if (r < 0)
     {

@@ -1,8 +1,8 @@
-#! /gnu/store/d3jd0rrvg9cwlfsrqxf6mqpgqp85fkcf-profile/bin/guile \
+#! /usr/bin/env guile
 --no-auto-compile -e main -L /usr/local/share/guile/site/2.2 -C /usr/local/lib/guile/2.2/site-ccache -s
 !#
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright ?? 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -19,13 +19,47 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
 
-(setenv "%prefix" (or (getenv "MES_PREFIX")
-                      (if (string-prefix? "@prefix" "/usr/local")
-                          ""
-                          "/usr/local/share/mes")))
+(cond-expand
+ (mes)
+ (guile
+  (define %arch (car (string-split %host-type #\-)))
+  (define %kernel (car (filter
+                        (compose not
+                                 (lambda (x) (member x '("pc" "portbld" "unknown"))))
+                        (cdr (string-split %host-type #\-)))))))
 
-(setenv "%version" (if (string-prefix? "@VERSION" "0.19") "git"
-                       "0.19"))
+(define %prefix (or (getenv "MES_PREFIX")
+                      (if (string-prefix? "@prefix" "@prefix@")
+                          ""
+                          "@prefix@")))
+
+(define %includedir (or (getenv "includedir")
+                        (string-append %prefix "/include")))
+
+(define %libdir (or (getenv "libdir")
+                    (string-append %prefix "/lib")))
+
+(define %version (if (string-prefix? "@VERSION" "@VERSION@") "git"
+                     "@VERSION@"))
+
+(define %arch (if (string-prefix? "@mes_cpu" "@mes_cpu@") %arch
+                  "@mes_cpu@"))
+
+(define %kernel (if (string-prefix? "@mes_kernel" "@mes_kernel@") %kernel
+                    "@mes_kernel@"))
+
+(define %numbered-arch? (if (getenv "numbered_arch") (and=> (getenv "numbered_arch")
+                                                            (lambda (x) (equal? x "true")))
+                            (if (string-prefix? "@numbered_arch" "@numbered_arch@") #f
+                                (equal? "@numbered_arch@" "true"))))
+
+(setenv "%prefix" %prefix)
+(setenv "%includedir" %includedir)
+(setenv "%libdir" %libdir)
+(setenv "%version" %version)
+(setenv "%arch" %arch)
+(setenv "%kernel" %kernel)
+(setenv "%numbered_arch" (if %numbered-arch? "true" "false"))
 
 (cond-expand
  (mes

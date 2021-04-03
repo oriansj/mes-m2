@@ -18,10 +18,11 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libmes.h>
+#include <mes/lib-mini.h>
+#include <string.h>
 
 int
-eputs (char const* s)
+eputs (char const *s)
 {
   int i = strlen (s);
   write (__stderr, s, i);

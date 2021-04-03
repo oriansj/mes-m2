@@ -69,11 +69,13 @@ typedef unsigned gid_t;
 typedef unsigned long ino_t;
 #endif
 
+#if __SIZEOF_LONG_LONG__ == 8
 #ifndef __MES_INO64_T
 #define __MES_INO64_T
 #undef ino64_t
 typedef unsigned long long ino64_t;
 #endif
+#endif // __SIZEOF_LONG_LONG__ == 8
 
 #if !defined (__MES_INTPTR_T) && !defined (__intptr_t_defined)
 #define __MES_INTPTR_T
@@ -90,11 +92,13 @@ typedef unsigned long uintptr_t;
 typedef long off_t;
 #endif
 
+#if __SIZEOF_LONG_LONG__ == 8
 #ifndef __MES_OFF64_T
 #define __MES_OFF64_T
 #undef off64_t
 typedef unsigned long long off64_t;
 #endif
+#endif // __SIZEOF_LONG_LONG__ == 8
 
 #ifndef __MES_PID_T
 #define __MES_PID_T

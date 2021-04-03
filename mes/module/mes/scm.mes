@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -63,7 +63,7 @@
       (if (null? xr) (begin (f (car l)) (for-each f (cdr l)))
           (if (null? (cdr xr)) (begin (f (car l) (caar xr)) (for-each f (cdr l) (cdar xr)))))))
 
-(define (core:error . args) (display args (currrent-error-port)))
+(define core:error error)
 
 (define (error who . rest)
   (display "error:" (current-error-port))
@@ -84,6 +84,12 @@
 
 
 (define integer? number?)
+
+(define (read . port)
+  (if (null? port) (read-env (current-module))
+      (let* ((prev (set-current-input-port (car port)))
+             (result (read-env (current-module))))
+        result)))
 
 (if (not (defined? 'peek-char))
     (define (peek-char)
@@ -187,9 +193,6 @@
 
 ;; Vector
 (define (vector . rest) (list->vector rest))
-(define (make-vector n . x)
-  (if (null? x) (core:make-vector n)
-      (list->vector (apply make-list (cons n x)))))
 
 (define (vector-copy x)
   (list->vector (vector->list x)))
@@ -223,34 +226,35 @@
      (equal? (substring string (- length suffix-length)) suffix))))
 
 (define (string->number s . rest)
-  (let ((lst (string->list s)))
-    (and (pair? lst)
-         (let* ((radix (if (null? rest) 10 (car rest)))
-                (sign (if (and (pair? lst) (char=? (car lst) #\-)) -1 1))
-                (lst (if (= sign -1) (cdr lst) lst)))
-           (let loop ((lst lst) (n 0))
-             (if (null? lst) (* sign n)
-                 (let ((i (char->integer (car lst))))
-                   (cond ((and (>= i (char->integer #\0))
-                               (<= i (char->integer #\9)))
-                          (let ((d (char->integer #\0)))
-                            (loop (cdr lst) (+ (* n radix) (- i d)))))
-                         ((and (= radix 16)
-                               (>= i (char->integer #\a))
-                               (<= i (char->integer #\f)))
-                          (let ((d (char->integer #\a)))
-                            (loop (cdr lst) (+ (* n radix) (- i (- d 10))))))
-                         ((and (= radix 16)
-                               (>= i (char->integer #\A))
-                               (<= i (char->integer #\F)))
-                          (let ((d (char->integer #\A)))
-                            (loop (cdr lst) (+ (* n radix) (- i (- d 10))))))
-                         ((= i (char->integer #\.)) ; minimal FLOAT support
-                          (let ((fraction (cdr lst)))
-                            (if (null? fraction) n
-                                (let ((fraction ((compose string->number list->string) fraction)))
-                                  (and fraction n))))) ; FLOAT as integer
-                         (else #f)))))))))
+  (if (string-prefix? "#x" s) (string->number (string-drop s 2) 16)
+      (let ((lst (string->list s)))
+        (and (pair? lst)
+             (let* ((radix (if (null? rest) 10 (car rest)))
+                    (sign (if (and (pair? lst) (char=? (car lst) #\-)) -1 1))
+                    (lst (if (= sign -1) (cdr lst) lst)))
+               (let loop ((lst lst) (n 0))
+                 (if (null? lst) (* sign n)
+                     (let ((i (char->integer (car lst))))
+                       (cond ((and (>= i (char->integer #\0))
+                                   (<= i (char->integer #\9)))
+                              (let ((d (char->integer #\0)))
+                                (loop (cdr lst) (+ (* n radix) (- i d)))))
+                             ((and (= radix 16)
+                                   (>= i (char->integer #\a))
+                                   (<= i (char->integer #\f)))
+                              (let ((d (char->integer #\a)))
+                                (loop (cdr lst) (+ (* n radix) (- i (- d 10))))))
+                             ((and (= radix 16)
+                                   (>= i (char->integer #\A))
+                                   (<= i (char->integer #\F)))
+                              (let ((d (char->integer #\A)))
+                                (loop (cdr lst) (+ (* n radix) (- i (- d 10))))))
+                             ((= i (char->integer #\.)) ; minimal FLOAT support
+                              (let ((fraction (cdr lst)))
+                                (if (null? fraction) n
+                                    (let ((fraction ((compose string->number list->string) fraction)))
+                                      (and fraction n))))) ; FLOAT as integer
+                             (else #f))))))))))
 
 (define inexact->exact identity)
 
@@ -258,7 +262,7 @@
   (let* ((radix (if (null? rest) 10 (car rest)))
          (sign (if (< n 0) '(#\-) '())))
     (let loop ((n (abs n)) (lst '()))
-      (let* ((i (remainder n radix))
+      (let* ((i (abs (remainder n radix)))
              (lst (cons (integer->char (+ i (if (< i 10) (char->integer #\0)
                                                 (- (char->integer #\a) 10)))) lst))
              (n (quotient n radix)))
@@ -309,7 +313,7 @@
 
 
 ;;; Math
-;;(define quotient /)
+(define quotient /)
 
 (define (<= . rest)
   (or (apply < rest)

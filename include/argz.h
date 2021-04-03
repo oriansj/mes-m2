@@ -29,13 +29,11 @@
 
 #else // ! SYSTEM_LIBC
 
-#ifndef libc_hidden_def
-#define libc_hidden_def(x)
-#define weak_alias(x,y)
-#endif
+#include <mes/lib-mini.h>
 
 size_t __argz_count (char const *argz, size_t len);
 void __argz_extract (char const *argz, size_t len, char **argv);
+size_t __argz_extract_count (char const *argz, size_t len, char **argv);
 
 #endif // ! SYSTEM_LIBC
 

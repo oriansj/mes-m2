@@ -25,4 +25,4 @@
 ;;(mes-use-module (mes guile))
 (mes-use-module (mes quasiquote))
 (mes-use-module (mes syntax))
-(include-from-path "mes/pmatch.scm")
+(include-from-path "system/base/pmatch.scm")

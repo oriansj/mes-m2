@@ -18,37 +18,36 @@
 ## along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 # Prevent rebuilding
-VPATH = bin:test:test/results
+VPATH = src:bin:test:test/results
 
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -D WITH_GLIBC=1 -O0
 
 
-mes-m2: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c mes_list.c mes_string.c mes_keyword.c mes_record.c mes_init.c mes_macro.c mes_posix.c | bin
-	$(CC) $(CFLAGS) \
-	mes.h \
-	mes.c \
-	mes_cell.c \
-	mes_builtins.c \
-	mes_eval.c \
-	mes_print.c \
-	mes_read.c \
-	mes_tokenize.c \
-	mes_vector.c \
-	mes_list.c \
-	mes_string.c \
-	mes_keyword.c \
-	mes_record.c \
-	mes_init.c \
-	mes_macro.c \
-	mes_posix.c \
-	functions/numerate_number.c \
-	functions/match.c \
-	functions/file_print.c \
-	functions/in_set.c \
+mes-m2: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c apply.c math.c mes.c module.c posix.c reader.c stack.c string.c struct.c symbol.c vector.c | bin
+	$(CC) $(CFLAGS)     \
+	-DMES_VERSION="0"   \
+	src/builtins.c      \
+	src/cc.c            \
+	src/core.c          \
+	src/display.c       \
+	src/eval-apply.c    \
+	src/gc.c            \
+	src/hash.c          \
+	src/lib.c           \
+	src/apply.c         \
+	src/math.c          \
+	src/mes.c           \
+	src/module.c        \
+	src/reader.c        \
+	src/stack.c         \
+	src/string.c        \
+	src/struct.c        \
+	src/symbol.c        \
+	src/vector.c        \
 	-o bin/mes-m2
 
-mes: mes.h mes.c mes_cell.c mes_builtins.c mes_eval.c mes_print.c mes_read.c mes_tokenize.c mes_vector.c mes_list.c mes_string.c mes_keyword.c mes_record.c mes_init.c mes_macro.c | bin
+mes: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c m2.c math.c mes.c module.c posix.c reader.c stack.c string.c struct.c symbol.c vector.c | bin
 	kaem --verbose --strict
 
 # Clean up after ourselves

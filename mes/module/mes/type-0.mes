@@ -76,6 +76,12 @@
 (define (port? x)
   (eq? (core:type x) <cell:port>))
 
+(define (procedure? p)
+  (and (or (builtin? p)
+           (and (pair? p) (eq? (car p) 'lambda))
+           (closure? p))
+       #t))
+
 (define (special? x)
   (eq? (core:type x) <cell:special>))
 
@@ -119,9 +125,3 @@
 
 (define (symbol->list s)
   (string->list (symbol->string s)))
-
-(define (integer->char x)
-  (core:make-cell <cell:char> 0 x))
-
-(define (char->integer x)
-  (core:make-cell <cell:number> 0 x))

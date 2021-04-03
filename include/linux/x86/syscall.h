@@ -20,34 +20,61 @@
 #ifndef __MES_LINUX_X86_SYSCALL_H
 #define __MES_LINUX_X86_SYSCALL_H 1
 
-// libc-mini
-// #define SYS_exit    0x01
-// #define SYS_write   0x04
+/* libc-mini */
+#ifndef SYS_exit
+// CONSTANT SYS_exit 0x01
+#define SYS_exit    0x01
+#endif
+#ifndef SYS_write
+// CONSTANT SYS_write 0x04
+#define SYS_write   0x04
+#endif
 
-// libc
+/* libc */
+// CONSTANT SYS_fork 0x02
 #define SYS_fork    0x02
+// CONSTANT SYS_read 0x03
 #define SYS_read    0x03
+// CONSTANT SYS_open 0x05
 #define SYS_open    0x05
+// CONSTANT SYS_waitpid 0x07
 #define SYS_waitpid 0x07
+// CONSTANT SYS_wait4 0x72
 #define SYS_wait4   0x72
+// CONSTANT SYS_execve 0x0b
 #define SYS_execve  0x0b
+// CONSTANT SYS_chmod 0x0f
 #define SYS_chmod   0x0f
+// CONSTANT SYS_access 0x21
 #define SYS_access  0x21
+// CONSTANT SYS_brk 0x2d
 #define SYS_brk     0x2d
+// CONSTANT SYS_ioctl 0x36
 #define SYS_ioctl   0x36
+// CONSTANT SYS_fsync 0x76
 #define SYS_fsync   0x76
-
-// libc+tcc
-#define SYS_close  0x06
-#define SYS_time   0x0d
-#define SYS_lseek  0x13
-#define SYS_unlink 0x0a
-#define SYS_rmdir  0x28
-#define SYS_gettimeofday 0x4e
-#define SYS_stat   0x6a
+// CONSTANT SYS_getcwd 0xb7
 #define SYS_getcwd 0xb7
+// CONSTANT SYS_dup 0x29
+#define SYS_dup       0x29
+// CONSTANT SYS_dup2 0x3f
+#define SYS_dup2      0x3f
+// CONSTANT SYS_unlink 0x0a
+#define SYS_unlink 0x0a
+// CONSTANT SYS_gettimeofday 0x4e
+#define SYS_gettimeofday 0x4e
+// CONSTANT SYS_clock_gettime 0x109
+#define SYS_clock_gettime 0x109
+// CONSTANT SYS_time 0x0d
+#define SYS_time   0x0d
 
-// libc+gnu
+/* libc+tcc */
+#define SYS_close  0x06
+#define SYS_lseek  0x13
+#define SYS_rmdir  0x28
+#define SYS_stat   0x6a
+
+/* libc+gnu */
 
 #define SYS_chdir     0x0c
 #define SYS_link      0x09
@@ -56,7 +83,6 @@
 #define SYS_kill      0x25
 #define SYS_rename    0x26
 #define SYS_mkdir     0x27
-#define SYS_dup       0x29
 #define SYS_pipe      0x2a
 #define SYS_getgid    0x2f
 #define SYS_signal    0x30
@@ -64,28 +90,26 @@
 #define SYS_rt_sigaction 0xae
 #define SYS_signal    0x30
 #define SYS_fcntl     0x37
-#define SYS_dup2      0x3f
 #define SYS_getrusage 0x4d
 #define SYS_lstat     0x6b
 #define SYS_setitimer 0x68
 #define SYS_fstat     0x6c
 #define SYS_nanosleep 0xa2
 #define SYS_getdents  0x8d
-#define SYS_clock_gettime 0x109
 
-// bash
+/* bash */
 #define SYS_setuid    0x17
 #define SYS_geteuid   0x31
 #define SYS_getegid   0x32
 #define SYS_setgid    0x3e
 #define SYS_getppid   0x40
 
-// make+POSIX
+/* make+POSIX */
 #define SYS_sigprocmask 0x7e
 
-// tar
+/* tar */
 #define SYS_symlink   0x53
 #define SYS_readlink  0x55
 #define SYS_mknod     0x0e
 
-#endif // __MES_LINUX_X86_SYSCALL_H
+#endif /* __MES_LINUX_X86_SYSCALL_H */

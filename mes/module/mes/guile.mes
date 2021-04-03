@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -30,6 +30,9 @@
 (mes-use-module (mes posix))
 (mes-use-module (srfi srfi-16))
 (mes-use-module (mes display))
+(mes-use-module (mes simple-format))
+
+(define %load-path (or (and=> (getenv "GUILE_LOAD_PATH") (lambda (x) (string-split x #\:))) '()))
 
 (define (drain-input port) (read-string))
 
@@ -116,43 +119,6 @@
           (if (string-prefix? "/" file-name) (string-append "/" dir)
               (if (string-null? dir) "."
                   dir))))))
-
-;; FIXME: c&p from display
-(define (with-output-to-string thunk)
-  (define save-write-byte write-byte)
-  (let ((stdout '()))
-    (set! write-byte
-          (lambda (x . rest)
-            (let ((out? (or (null? rest) (eq? (car rest) (current-output-port)))))
-              (if (not out?) (apply save-write-byte (cons x rest))
-                  (begin
-                    (set! stdout (append stdout (list (integer->char x))))
-                    x)))))
-    (thunk)
-    (let ((r (apply string stdout)))
-      (set! write-byte save-write-byte)
-      r)))
-
-;; FIXME: c&p from display
-(define (simple-format destination format . rest)
-  (let ((port (if (boolean? destination) (current-output-port) destination))
-        (lst (string->list format)))
-    (define (simple-format lst args)
-      (if (pair? lst)
-          (let ((c (car lst)))
-            (if (not (eq? c #\~)) (begin (write-char (car lst) port)
-                                         (simple-format (cdr lst) args))
-                (let ((c (cadr lst)))
-                  (case c
-                    ((#\a) (display (car args) port))
-                    ((#\s) (write (car args) port)))
-                  (simple-format (cddr lst) (cdr args)))))))
-
-    (if destination (simple-format lst rest)
-        (with-output-to-string
-          (lambda () (simple-format lst rest))))))
-
-(define format simple-format)
 
 (define (file-exists? o)
   (access? o R_OK))

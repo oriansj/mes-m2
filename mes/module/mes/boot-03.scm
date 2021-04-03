@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -52,11 +52,8 @@
   (if (null? rest) (core:write x)
       (core:write-port x (car rest))))
 
-(define (integer->char x)
-  (core:make-cell <cell:char> 0 x))
-
 (define (newline . rest)
-  (core:display (list->string (list (integer->char 10)))))
+  (core:display "\n"))
 
 (define (cadr x) (car (cdr x)))
 
@@ -139,14 +136,9 @@
       (if (null? (cdr rest)) (car rest)
           (append2 (car rest) (apply append (cdr rest))))))
 
-(define %prefix (getenv "MES_PREFIX"))
-(define %moduledir
-  (if (not %prefix) "boe /share/mes/module/"
-      (list->string
-       (append (string->list %prefix) (string->list "/module/" )))))
+(define %moduledir (string-append %datadir "/module/"))
 
-(include (list->string
-          (append2 (string->list %moduledir) (string->list "mes/type-0.mes"))))
+(include (string-append %moduledir "mes/type-0.mes"))
 
 (if (and (getenv "MES_DEBUG")
           (not (equal2? (getenv "MES_DEBUG") "0"))

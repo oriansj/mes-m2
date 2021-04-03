@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2017,2018,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -31,10 +31,9 @@
 #ifndef __MES_ERRNO_T
 #define __MES_ERRNO_T 1
 typedef int error_t;
-int errno;
 #endif // !__MES_ERRNO_T
 
-int errno;
+extern int errno;
 #define ENOENT   2
 #define EINTR    4
 #define EIO      5
@@ -58,8 +57,8 @@ int errno;
 #define ERANGE  34
 
 #define ENAMETOOLONG 36
-#define ENOSYS 38
-#define ELOOP  40
+#define ENOSYS  38
+#define ELOOP   40
 
 #if !__MESC__
 //extern char const *const sys_errlist[];

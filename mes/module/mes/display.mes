@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -199,41 +199,3 @@
 
 (define (newline . rest)
   (apply display (cons "\n" rest)))
-
-(define (with-output-to-string thunk)
-  (define save-write-byte write-byte)
-  (let ((stdout '()))
-    (set! write-byte
-          (lambda (x . rest)
-            (let ((out? (or (null? rest) (eq? (car rest) (current-output-port)))))
-              (if (not out?) (apply save-write-byte (cons x rest))
-                  (begin
-                    (set! stdout (append stdout (list (integer->char x))))
-                    x)))))
-    (thunk)
-    (let ((r (apply string stdout)))
-      (set! write-byte save-write-byte)
-      r)))
-
-(define (simple-format destination format . rest)
-  (let ((port (if (boolean? destination) (current-output-port) destination))
-        (lst (string->list format)))
-    (define (simple-format lst args)
-      (if (pair? lst)
-          (let ((c (car lst)))
-            (if (not (eq? c #\~)) (begin (write-char (car lst) port)
-                                         (simple-format (cdr lst) args))
-                (let ((c (cadr lst)))
-                  (case c
-                    ((#\A) (display (car args) port))
-                    ((#\a) (display (car args) port))
-                    ((#\S) (write (car args) port))
-                    ((#\s) (write (car args) port))
-                    (else (display (car args) port)))
-                  (simple-format (cddr lst) (cdr args)))))))
-
-    (if destination (simple-format lst rest)
-        (with-output-to-string
-          (lambda () (simple-format lst rest))))))
-
-(define format simple-format)

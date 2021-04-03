@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2017 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2017,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  * Copyright © 2018 Peter De Wachter <pdewacht@gmail.com>
  *
  * This file is part of GNU Mes.
@@ -55,8 +55,10 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 typedef unsigned uint32_t;
 typedef int int32_t;
+#if __SIZEOF_LONG_LONG__ == 8
 typedef unsigned long long uint64_t;
 typedef long long int64_t;
+#endif // __SIZEOF_LONG_LONG__ == 8
 
 typedef int intmax_t;
 typedef unsigned uintmax_t;
@@ -85,7 +87,7 @@ typedef unsigned uintmax_t;
 
 #define INT_MIN -2147483648
 #define INT_MAX 2147483647
-#if __i386__
+#if __i386__ || __arm__
 #define LONG_MIN INT_MIN
 #define LONG_MAX INT_MAX
 #define UINT_MAX UINT32_MAX

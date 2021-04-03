@@ -85,7 +85,6 @@ DEFINE mov____$i32,0x8(%ebp) c745
 DEFINE mov____$i8,%al b0
 DEFINE mov____$i8,%eax b0
 DEFINE mov____%al,(%ebx) 8803
-DEFINE mov____%al,0x32(%ebp) 8885
 DEFINE mov____%al,0x8(%ebp) 8845
 DEFINE mov____%ax,(%ebx) 668903
 DEFINE mov____%ax,0x8(%ebp) 668945
@@ -108,9 +107,11 @@ DEFINE mov____%ebx,0x32 891d
 DEFINE mov____%ebx,0x32(%ebp) 899d
 DEFINE mov____%ebx,0x8(%ebp) 895d
 DEFINE mov____%ecx,(%ebx) 890b
+DEFINE mov____%edi,%ebp 89fd
 DEFINE mov____%edx,%eax 89d0
 DEFINE mov____%edx,%ebx 89d3
 DEFINE mov____%esp,%ebp 89e5
+DEFINE mov____%esp,%edi 89e7
 DEFINE mov____(%eax),%cl 8a08
 DEFINE mov____(%eax),%cx 668b08
 DEFINE mov____(%eax),%eax 8b00
@@ -162,7 +163,6 @@ DEFINE not____%ebx f7d3
 DEFINE or_____%ebx,%eax 09d8
 DEFINE pop____%eax 58
 DEFINE pop____%ebx 5b
-DEFINE pop____%ebp 5d
 DEFINE pop____%edx 5a
 DEFINE push___$i32 68
 DEFINE push___%eax 50

@@ -30,6 +30,7 @@
 #else // ! SYSTEM_LIBC
 
 // *INDENT-OFF*
+#if __linux__
 #define O_RDONLY          0
 #define O_WRONLY          1
 #define O_RDWR            2
@@ -37,7 +38,24 @@
 #define O_EXCL         0x80
 #define O_TRUNC       0x200
 #define O_APPEND      0x400
+
+#ifdef __arm__
+#define O_DIRECTORY 0x4000
+/*#define O_DIRECT 0x10000*/
+#else
 #define O_DIRECTORY 0x10000
+#endif
+
+#elif __GNU__
+#define	O_RDONLY	  1
+#define	O_WRONLY	  2
+#define	O_RDWR		  3
+#define	O_CREAT	       0x10
+#define	O_APPEND      0x100
+#define	O_TRUNC	    0x10000
+#else
+#error platform not supported
+#endif
 // *INDENT-ON*
 
 #define FD_CLOEXEC 1

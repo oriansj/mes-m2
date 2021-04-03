@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright ?? 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -29,12 +29,8 @@
 ;; boot-00.scm
 (define mes %version)
 
-(define (core:eval expr) (primitive-eval expr))
-(define (core:apply a b) (apply a b))
-(define (current-module) '())
-(define (eval expr) (primitive-eval expr))
-(define (equal2? x y) (equal? x y))
-(define-macro (call-with-current-continuation . rest) 'die)
+(define (defined? x)
+  (module-variable (current-module) x))
 
 (define (cond-expand-expander clauses)
   (if (defined? (car (car clauses)))
@@ -48,20 +44,16 @@
 ;; boot-01.scm
 (define (not x) (if x #f #t))
 
-(define (core:display x) (display x))
-(define (core:display-error x) (display-error x))
-(define (core:display-port x p) (display x p))
-
-(define (last-pair lst)
-  (if (or (null? lst) (null? (cdr lst))) lst (last-pair (cdr lst))))
+(define (display x . rest)
+  (if (null? rest) (core:display x)
+      (core:display-port x (car rest))))
 
 (define (write x . rest)
   (if (null? rest) (core:write x)
       (core:write-port x (car rest))))
 
-
 (define (newline . rest)
-  (core:display (list->string (list (integer->char 10)))))
+  (core:display "\n"))
 
 (define (cadr x) (car (cdr x)))
 
@@ -126,25 +118,6 @@
   (if (null? t) (core:apply f h (current-module))
       (apply f (apply cons* (cons h t)))))
 
-
-;; Some list primitives
-(define (memq i l) (cond ((null? l) #f) ((eq? i (car l)) l) (#t (memq i (cdr l)))))
-(define (memv i l) (cond ((null? l) #f) ((eqv? i (car l)) l) (#t (memv i (cdr l)))))
-(define (member i l) (cond ((null? l) #f) ((equal? i (car l)) l) (#t (member i (cdr l)))))
-(define (assq i l) (cond ((null? l) #f) ((eq? i (caar l)) (car l)) (else (assq i (cdr l)))))
-(define (assv i l) (cond ((null? l) #f) ((eqv? i (caar l)) (car l)) (else (assv i (cdr l)))))
-(define (assoc i l) (cond ((null? l) #f) ((equal? i (caar l)) (car l)) (else (assoc i (cdr l)))))
-
-;; environment
-(define *fake-env* '())
-(define getenv0 getenv)
-(define (getenv var)
-  (let ((fv (assoc var *fake-env*)))
-    (if fv (cdr fv) (getenv0 var))))
-(define (setenv var val)
-  (set! *fake-env* (cons (cons var val) *fake-env*))
-  (if #f #f))
-
 (define-macro (load file)
   (list 'begin
         (list 'if (list 'and (list getenv "MES_DEBUG")
@@ -163,14 +136,12 @@
       (if (null? (cdr rest)) (car rest)
           (append2 (car rest) (apply append (cdr rest))))))
 
-(define %prefix (getenv "MES_PREFIX"))
-(define %moduledir
-  (if (not %prefix) "mes/module/"
-      (list->string
-       (append (string->list %prefix) (string->list "/module/" )))))
+(if (not (defined? '%datadir))
+    (module-define! (current-module) '%datadir "mes"))
 
-;;(include (list->string
-;;          (append2 (string->list %moduledir) (string->list "mes/type-0.mes"))))
+(define %moduledir (string-append %datadir "/module/"))
+
+(include (string-append %moduledir "mes/type-0.mes"))
 
 (if (and (getenv "MES_DEBUG")
           (not (equal2? (getenv "MES_DEBUG") "0"))
@@ -204,19 +175,16 @@
 (define-macro (use-modules . rest) #t)
 ;; end boot-03.scm
 
-(define %version (if (eq? (car (string->list "0.19")) #\@) "git"
-                     "0.19"))
 (define (effective-version) %version)
 
 (mes-use-module (srfi srfi-1))
-;; next one will crash...
 (mes-use-module (srfi srfi-13))
 (mes-use-module (mes fluids))
 (mes-use-module (mes catch))
 (mes-use-module (mes posix))
 
 (define-macro (include-from-path file)
-  (let loop ((path (cons* %moduledir "./module" (string-split (or (getenv "GUILE_LOAD_PATH")) #\:))))
+  (let loop ((path (cons* %moduledir "module" (string-split (or (getenv "GUILE_LOAD_PATH") "") #\:))))
     (cond ((and=> (getenv "MES_DEBUG") (compose (lambda (o) (> o 2)) string->number))
            (core:display-error (string-append "include-from-path: " file " [PATH:" (string-join path ":") "]\n")))
           ((and=> (getenv "MES_DEBUG") (compose (lambda (o) (> o 1)) string->number))
@@ -242,11 +210,13 @@
   (define (parse-opts args)
     (let* ((option-spec
             '((no-auto-compile)
+              (command (single-char #\c) (value #t))
               (compiled-path (single-char #\C) (value #t))
               (help (single-char #\h))
               (load-path (single-char #\L) (value #t))
               (main (single-char #\e) (value #t))
               (source (single-char #\s) (value #t))
+              (version (single-char #\v))
               (version (single-char #\V)))))
       (getopt-long args option-spec #:stop-at-first-non-option #t)))
   (define (source-arg? o)
@@ -254,6 +224,7 @@
   (let* ((s-index (list-index source-arg? %argv))
          (args (if s-index (list-head %argv (+ s-index 2)) %argv))
          (options (parse-opts args))
+         (command (option-ref options 'command #f))
          (main (option-ref options 'main #f))
          (source (option-ref options 'source #f))
          (files (if s-index (list-tail %argv (+ s-index 1))
@@ -267,24 +238,26 @@
           (exit 0))
      (and (or help? usage?)
           (display "Usage: mes [OPTION]... [FILE]...
-Evaluate code with Mes, interactively or from a script.
+Scheme interpreter for bootstrapping the GNU system.
 
-  [-s] FILE           load source code from FILE, and exit
-  --                  stop scanning arguments; run interactively
+Options:
+  [-s] FILE            load source code from FILE, and exit
+  -c EXPR              evaluate expression EXPR, and exit
+  --                   stop scanning arguments; run interactively
 
 The above switches stop argument processing, and pass all
 remaining arguments as the value of (command-line).
 
-  -e,--main=MAIN      after reading script, apply MAIN to command-line arguments
-  -h, --help          display this help and exit
-  -L,--load-path=DIR  add DIR to the front of the module load path
-  -v, --version       display version information and exit
+  -e, --main=MAIN      after reading script, apply MAIN to command-line arguments
+  -h, --help           display this help and exit
+  -L, --load-path=DIR  add DIR to the front of the module load path
+  -v, --version        display version information and exit
 
 Ignored for Guile compatibility:
   --auto-compile
   --fresh-auto-compile
   --no-auto-compile
-  -C,--compiled-path=DIR
+  -C, --compiled-path=DIR
 
 Report bugs to: bug-mes@gnu.org
 GNU Mes home page: <http://gnu.org/software/mes/>
@@ -292,10 +265,16 @@ General help using GNU software: <http://gnu.org/gethelp/>
 " (or (and usage? (current-error-port)) (current-output-port)))
           (exit (or (and usage? 2) 0)))
      options)
-    (if main (set! %main main))
     (and=> (option-ref options 'load-path #f)
            (lambda (dir)
              (setenv "GUILE_LOAD_PATH" (string-append dir ":" (getenv "GUILE_LOAD_PATH")))))
+    (when command
+      (let* ((prev (set-current-input-port (open-input-string command)))
+             (expr (cons 'begin (read-input-file-env (current-module))))
+             (set-current-input-port prev))
+        (primitive-eval expr)
+        (exit 0)))
+    (when main (set! %main main))
     (cond ((pair? files)
            (let* ((file (car files))
                   (port (if (equal? file "-") 0

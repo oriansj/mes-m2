@@ -1,6 +1,7 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
  * Copyright © 2017 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2020 Danny Milosavljevic <dannym@scratchpost.org>
  *
  * This file is part of GNU Mes.
  *
@@ -25,19 +26,32 @@
 #include_next <setjmp.h>
 #else // ! SYSTEM_LIBC
 
+#if __arm__
+#if __GNUC__ || __TINYC__
+#warning "It is not supported to use mes' setjmp implementation together with GCC.  Continuing with best-effort implementation."
+typedef struct
+{
+  long __sp;
+  long __lr;
+  long __registers[8]; /* Note: Keep in sync with lib/arm-mes-gcc/setjmp.c */
+} __jmp_buf;
+#else
+typedef struct
+{
+  long __fp;
+  long __lr;
+  long __sp;
+} __jmp_buf;
+#endif
+#else
 typedef struct
 {
   long __bp;
   long __pc;
   long __sp;
 } __jmp_buf;
-typedef __jmp_buf jmp_buf[1];
-
-#if __MESC__
-__jmp_buf buf[1];
-#else
-jmp_buf buf;
 #endif
+typedef __jmp_buf jmp_buf[1];
 
 void longjmp (jmp_buf env, int val);
 int setjmp (jmp_buf env);
