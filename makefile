@@ -22,7 +22,9 @@ VPATH = src:bin:test:test/results
 
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -D WITH_GLIBC=1 -O0
+KAEM = kaem
 
+default: mes-m2-boot
 
 mes-m2: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c apply.c math.c mes.c module.c posix.c reader.c stack.c string.c struct.c symbol.c vector.c | bin
 	$(CC) $(CFLAGS)     \
@@ -49,6 +51,11 @@ mes-m2: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c apply.c 
 
 mes: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c m2.c math.c mes.c module.c posix.c reader.c stack.c string.c struct.c symbol.c vector.c | bin
 	kaem --verbose --strict
+
+mes-m2-boot:
+	rm -rf m2
+	mkdir -p m2
+	$(KAEM) --strict --verbose
 
 # Clean up after ourselves
 .PHONY: clean
@@ -491,6 +498,6 @@ DESTDIR:=
 PREFIX:=/usr/local
 bindir:=$(DESTDIR)$(PREFIX)/bin
 .PHONY: install
-install: mes-m2
+install: mes-m2-boot
 	mkdir -p $(bindir)
-	cp $^ $(bindir)
+	cp bin/mes $(bindir)
