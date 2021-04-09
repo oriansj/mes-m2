@@ -128,8 +128,8 @@ with introspective steps inbetween.")
       (license gpl3+))))
 
 (define-public mes-m2
-  (let ((commit "8008b3dc828217f83927a48cad6a2e3d1d839c20")
-        (revision "0"))
+  (let ((commit "fd1a1755a1adc65abbada9e8a3273821cb55bcfc")
+        (revision "1"))
     (package
       (name "mes-m2")
       (version (git-version "0" revision commit))
@@ -137,11 +137,11 @@ with introspective steps inbetween.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/oriansj/mes-m2.git")
+               (url "https://gitlab.com/janneke/mes-m2.git")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0i6fd4mlhby56ykdssjrx2vmw698a38z77x7byq29i4pphg0mkyj"))))
+          (base32 "1d70lcw2mdxp0yx3ksswacc80yilwzkrzkjk9z43b9z5gbylwfyr"))))
       (build-system gnu-build-system)
       (propagated-inputs
        `(("mescc-tools" ,mescc-tools)
@@ -153,20 +153,11 @@ with introspective steps inbetween.")
        `(#:strip-binaries? #f ; binutil's strip b0rkes MesCC/M1/hex2 binaries
          #:tests? #f
          #:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out"))
-                            (string-append "CC=" ,(cc-for-target)))
+                            (string-append "CC=" ,(cc-for-target))
+                            "mes-m2-boot")
          #:phases (modify-phases %standard-phases
                     (delete 'bootstrap)
-                    (delete 'configure)
-                    (replace 'build     ;XXX FIXME makefile is broken
-                      (lambda _
-                        (delete-file-recursively "m2")
-                        (invoke "kaem" "--verbose" "--strict")))
-                    (replace 'install
-                      (lambda* (#:key outputs #:allow-other-keys)
-                        (let* ((out (assoc-ref outputs "out"))
-                               (bin (string-append out "/bin")))
-                          (mkdir-p bin)
-                          (copy-recursively "bin" bin)))))))
+                    (delete 'configure))))
       (synopsis "Scheme interpreter and C compiler for full source bootstrapping")
       (description
        "GNU Mes--Maxwell Equations of Software--brings the Reduced Binary Seed
