@@ -1,5 +1,5 @@
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -19,6 +19,7 @@
 (define-module (mescc)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 getopt-long)
+  #:use-module (mes guile)
   #:use-module (mes misc)
   #:use-module (mescc mescc)
   #:export (mescc:main))
@@ -35,10 +36,15 @@
  (guile
   (define-macro (mes-use-module . rest) #t)))
 
-(define %prefix (getenv "%prefix"))
-(define %version (getenv "%version"))
+(define %host-arch (or (getenv "%arch") %arch))
+(define %host-kernel (or (getenv "%kernel") "linux")) ;; FIXME
+(define %prefix (or (getenv "%prefix") "mes"))
+(define %includedir (or (getenv "%includedir") "include"))
+(define %libdir (or (getenv "%libdir") "."))
+(define %version (or (getenv "%version") "0.0"))
+(define %numbered-arch? (and=> (getenv "%numbered_arch") (lambda (x) (equal? x "true"))))
 
-(when (and=> (getenv "V") (lambda (v) (> (string->number v) 1)))
+(when (and=> (getenv "V") (lambda (v) (and (= (string-length v) 1) (> (string->number v) 1))))
   (format (current-error-port) "mescc[~a]...\n" %scheme))
 
 (define (unclump-single o)
@@ -52,13 +58,17 @@
 
 (define (parse-opts args)
   (let* ((option-spec
-          '((align)
+          '((align (value #t))
+            (arch (value #t))
             (assemble (single-char #\c))
             (base-address (value #t))
             (compile (single-char #\S))
             (define (single-char #\D) (value #t))
             (debug-info (single-char #\g))
             (dumpmachine)
+            (print-libgcc-file-name)
+            (fno-builtin)
+            (fno-stack-protector)
             (help (single-char #\h))
             (include (single-char #\I) (value #t))
             (library-dir (single-char #\L) (value #t))
@@ -66,8 +76,11 @@
             (machine (single-char #\m) (value #t))
             (nodefaultlibs)
             (nostartfiles)
+            (nostdinc)
             (nostdlib)
+            (numbered-arch?)
             (preprocess (single-char #\E))
+            (static)
             (std (value #t))
             (output (single-char #\o) (value #t))
             (optimize (single-char #\O) (value #t))
@@ -78,20 +91,25 @@
          (options (getopt-long args option-spec))
          (help? (option-ref options 'help #f))
          (files (option-ref options '() '()))
-         (usage? (and (not help?) (null? files)))
-         (version? (option-ref options 'version #f)))
-    (cond ((option-ref options 'dumpmachine #f)
-           (display "x86-mes")
-           (exit 0))
-          (version? (format #t "mescc (GNU Mes) ~a\n" %version) (exit 0))
+         (dumpmachine? (option-ref options 'dumpmachine #f))
+         (print-libgcc-file-name? (option-ref options 'print-libgcc-file-name #f))
+         (version? (option-ref options 'version #f))
+         (usage? (and (not dumpmachine?) (not print-libgcc-file-name?) (not help?) (not version?) (null? files))))
+    (cond (version? (format #t "mescc (GNU Mes) ~a\n" %version) (exit 0))
           (else
            (and (or help? usage?)
                 (format (or (and usage? (current-error-port)) (current-output-port)) "\
 Usage: mescc [OPTION]... FILE...
-  --align             align globals
-  -dumpmachine        display the compiler's target processor
+C99 compiler in Scheme for bootstrapping the GNU system.
+
+Options:
+  --align=SYMBOL      align SYMBOL {functions,globals,none} [functions]
+  --arch=ARCH         compile for ARCH [~a]
+  --kernel=ARCH       compile for KERNEL [~a]
+  -dumpmachine        display the compiler's target machine
   --base-address=ADRRESS
                       use BaseAddress ADDRESS [0x1000000]
+  --numbered-arch     mescc-tools use numbered arch
   -D DEFINE[=VALUE]   define DEFINE [VALUE=1]
   -E                  preprocess only; do not compile, assemble or link
   -g                  add debug info [GDB, objdump] TODO: hex2 footer
@@ -100,16 +118,23 @@ Usage: mescc [OPTION]... FILE...
   -L DIR              append DIR to library path
   -l LIBNAME          link with LIBNAME
   -m BITS             compile for BITS bits [32]
-  -nodefaultlibs      do not use libc.o when linking
+  -nodefaultlibs      do not use libc.o nor libmescc.a when linking
   -nostartfiles       do not use crt1.o when linking
-  -nostdlib           do not use crt1.o or libc.o when linking
+  -nostdlib           do not use crt1.o or libc.o or libmescc.a when linking
   -o FILE             write output to FILE
   -O LEVEL            use optimizing LEVEL
   -S                  preprocess and compile only; do not assemble or link
   --std=STANDARD      assume that the input sources are for STANDARD
-  -v, --version       display version and exit
+  -V,--version        display version and exit
   -w,--write=TYPE     dump Nyacc AST using TYPE {pretty-print,write}
   -x LANGUAGE         specify LANGUAGE of the following input files
+
+Ignored for GCC compatibility
+  -fno-builtin
+  -fno-stack-protector
+  -no-pie
+  -nostdinc
+  -static
 
 Environment variables:
 
@@ -120,15 +145,20 @@ Environment variables:
 Report bugs to: bug-mes@gnu.org
 GNU Mes home page: <http://gnu.org/software/mes/>
 General help using GNU software: <http://gnu.org/gethelp/>
-")
+" %host-arch %host-kernel)
                 (exit (or (and usage? 2) 0)))
            options))))
 
 (define (mescc:main args)
   (let* ((single-dash-options '("-dumpmachine"
+                                "-fno-builtin"
+                                "-fno-stack-protector"
+                                "-no-pie"
                                 "-nodefaultlibs"
                                 "-nostartfiles"
+                                "-nostdinc"
                                 "-nostdlib"
+                                "-static"
                                 "-std"))
          (args (map (lambda (o)
                       (if (member o single-dash-options) (string-append "-" o)
@@ -137,14 +167,29 @@ General help using GNU software: <http://gnu.org/gethelp/>
          (args (append-map unclump-single args))
          (options (parse-opts args))
          (options (acons 'prefix %prefix options))
+         (options (acons 'includedir %includedir options))
+         (options (acons 'libdir %libdir options))
+         (arch (option-ref options 'arch %host-arch))
+         (options (if arch (acons 'arch arch options) options))
+         (kernel (option-ref options 'kernel %host-kernel))
+         (options (acons 'kernel kernel options))
+         (numbered-arch? (option-ref options 'numbered-arch? %numbered-arch?))
+         (options (acons 'numbered-arch? numbered-arch? options))
+         (dumpmachine? (option-ref options 'dumpmachine #f))
          (preprocess? (option-ref options 'preprocess #f))
+         (print-libgcc-file-name? (option-ref options 'print-libgcc-file-name #f))
          (compile? (option-ref options 'compile #f))
          (assemble? (option-ref options 'assemble #f))
-         (verbose? (option-ref options 'verbose (getenv "MES_DEBUG"))))
+         (verbose? (count-opt options 'verbose)))
     (when verbose?
       (setenv "NYACC_TRACE" "yes")
-      (format (current-error-port) "options=~s\n" options))
-    (cond (preprocess? (mescc:preprocess options))
+      (when (> verbose? 1)
+        (format (current-error-port) "options=~s\n" options)))
+    (cond (dumpmachine? (display (mescc:get-host options)))
+          (print-libgcc-file-name? (display "-lmescc\n"))
+          (preprocess? (mescc:preprocess options))
           (compile? (mescc:compile options))
           (assemble? (mescc:assemble options))
           (else (mescc:link options)))))
+
+(define main mescc:main)

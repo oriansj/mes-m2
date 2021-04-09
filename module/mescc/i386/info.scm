@@ -1,5 +1,5 @@
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2018,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -42,6 +42,7 @@
     ("long long int" . ,(make-type 'signed 4 #f))
 
     ("void" . ,(make-type 'void 1 #f))
+    ("signed char" . ,(make-type 'signed 1 #f))
     ("unsigned char" . ,(make-type 'unsigned 1 #f))
     ("unsigned short" . ,(make-type 'unsigned 2 #f))
     ("unsigned" . ,(make-type 'unsigned 4 #f))

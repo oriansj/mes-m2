@@ -91,6 +91,7 @@
             global:c-array
             global:var
             global:value
+            global:storage
             global:function
             global->string
 
@@ -217,17 +218,18 @@
   (value var:value))
 
 (define-immutable-record-type <global>
-  (make-global- name type var value function)
+  (make-global- name type var value storage function)
   global?
   (name global:name)
   (type global:type)
   (var global:var)                      ; <var>
 
   (value global:value)
+  (storage global:storage)
   (function global:function))
 
-(define (make-global name type value function)
-  (make-global- name type (make-var name type function #f value) value function))
+(define (make-global name type value storage function)
+  (make-global- name type (make-var name type function #f value) value storage function))
 
 (define (global->string o)
   (or (and=> (global:function o) (cut string-append <> "-" (global:name o)))

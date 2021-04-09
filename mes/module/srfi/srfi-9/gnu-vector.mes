@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -20,23 +20,18 @@
 
 ;;; Commentary:
 
-;;; Minimal implementation of srfi-43, for nyacc.
+;;; srfi-9.mes - GNU immutable records.
 
-;;; Code:
+(define-macro (define-immutable-record-type type constructor+params predicate . fields)
+  `(define-record-type ,type ,constructor+params ,predicate ,@(map (lambda (f) (list-head f 2)) fields)))
 
-(define (vector-map f v)
-  (let* ((k (vector-length v))
-         (n (make-vector k)))
-    (let loop ((i 0))
-      (if (= i k) n
-          (begin
-            (vector-set! n i (f i (vector-ref v i)))
-            (loop (+ i 1)))))))
-
-(define (vector-for-each f v)
-  (let ((k (vector-length v)))
-    (let loop ((i 0))
-      (if (< i k)
-          (begin
-            (f i (vector-ref v i))
-            (loop (+ i 1)))))))
+(define-macro (set-field o getters value)
+  `(let ((getter ,(car getters)))
+     (let ((type (record-type ,o))
+           (set (getter ,o #t)))
+       (define (field->value field)
+         (if (eq? set field) ,value
+             ((record-getter type field) ,o)))
+       (let* ((fields (record-fields type))
+              (values (map field->value fields)))
+         (apply (record-constructor type fields) values)))))

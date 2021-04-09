@@ -1,5 +1,5 @@
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -35,9 +35,9 @@
             infos->M1
             M1:merge-infos))
 
-(define* (infos->M1 file-name infos #:key align?)
+(define* (infos->M1 file-name infos #:key align verbose?)
   (let ((info (fold M1:merge-infos (make <info>) infos)))
-    (info->M1 file-name info #:align? align?)))
+    (info->M1 file-name info #:align align #:verbose? verbose?)))
 
 (define (M1:merge-infos o info)
   (clone info
@@ -63,6 +63,13 @@
 (define (hex2:offset1 o)
   (string-append "!" o))
 
+(define (hex2:offset2 o)
+  (string-append "@" o))
+
+(define (hex2:offset3 o)
+  "Note: Uses architecture-specific printer (for branch instructions)"
+  (string-append "^~" o))
+
 (define hex? #t)
 
 (define (hex2:immediate o)
@@ -81,13 +88,16 @@
   (if hex? (string-append "%0x" (dec->hex o))
       (string-append "%" (number->string o))))
 
+(define mesc? (string=? %compiler "mesc"))
+
 (define (hex2:immediate8 o)
-  (if hex? (string-append "%0x" (dec->hex (modulo o #x100000000))
+  ;; FIXME: #x100000000 => 0 divide-by-zero when compiled with 64 bit mesc
+  (if hex? (string-append "%0x" (dec->hex (if mesc? 0 (modulo o #x100000000)))
                           " %0x" (if (< o 0) "-1"
-                                     (dec->hex (quotient o #x100000000))))
-      (string-append "%" (number->string (dec->hex (modulo o #x100000000)))
+                                     (dec->hex (if mesc? o (quotient o #x100000000)))))
+      (string-append "%" (number->string (dec->hex (if mesc? 0 (modulo o #x100000000))))
                      " %" (if (< o 0) "-1"
-                              (number->string (dec->hex (quotient o #x100000000)))))))
+                              (number->string (dec->hex (if mesc? o (quotient o #x100000000))))))))
 
 (define* (display-join o #:optional (sep ""))
   (let loop ((o o))
@@ -97,13 +107,22 @@
           (display sep))
       (loop (cdr o)))))
 
-(define* (info->M1 file-name o #:key align?)
+(define (global-string? o)
+  (and (pair? o) (pair? (car o)) (eq? (caar o) #:string)))
+
+(define (global-extern? o)
+  (and=> (global:storage o) (cut eq? <> 'extern)))
+
+(define* (info->M1 file-name o #:key align verbose?)
   (let* ((functions (.functions o))
          (function-names (map car functions))
          (globals (.globals o))
-         (global-names (map car globals))
-         (strings (filter (lambda (g) (and (pair? g) (eq? (car g) #:string))) global-names))
-         (reg-size (type:size (assoc-ref (.types o) "*"))))
+         (globals (filter (negate (compose global-extern? cdr)) globals))
+         (strings (filter global-string? globals))
+         (strings (map car strings))
+         (reg-size (type:size (assoc-ref (.types o) "*")))
+         (align-functions? (memq 'functions align))
+         (align-globals? (memq 'globals align)))
     (define (string->label o)
       (let ((index (list-index (lambda (s) (equal? s o)) strings)))
         (if index
@@ -161,6 +180,8 @@
 
           ((#:offset ,offset) (hex2:offset offset))
           ((#:offset1 ,offset1) (hex2:offset1 offset1))
+          ((#:offset2 ,offset2) (hex2:offset2 offset2))
+          ((#:offset3 ,offset3) (hex2:offset3 offset3))
           ((#:immediate ,immediate) (hex2:immediate immediate))
           ((#:immediate1 ,immediate1) (hex2:immediate1 immediate1))
           ((#:immediate2 ,immediate2) (hex2:immediate2 immediate2))
@@ -181,10 +202,18 @@
                 ((or (string? (car o)) (symbol? (car o)))
                  (display "\t" )
                  (display-join (map text->M1 o) " "))
+                ((or (string? (car (reverse o))) (symbol? (car (reverse o))))
+                 (display "\t" )
+                 (display-join (map text->M1 o) " "))
                 (else (error "line->M1 invalid line:" o)))
           (newline))
-        (display (string-append "    :" name "\n") (current-error-port))
-        (display (string-append "\n\n:" name "\n"))
+        (when verbose?
+          (display (string-append "    :" name "\n") (current-error-port)))
+        (display "\n\n")
+        (when align-functions?
+          ;; "<" aligns to multiple of 4 Bytes.
+          (display "<\n"))
+        (display (string-append ":" name "\n"))
         (for-each line->M1 (apply append text))))
     (define (write-global o)
       (define (labelize o)
@@ -194,12 +223,12 @@
                    (string-label (string->label label))
                    (string? (not (equal? string-label "_string_#f"))))
               (cond ((and (pair? o) (global? (cdr o))) (string-append "&" (global->string o)))
-                    ((and (not string?) (not function?)) (stderr "warning: unresolved label: ~s\n" label))
+                    ((and (not string?) (not function?)) (format (current-error-port) "warning: unresolved label: ~s\n" label))
                     ((equal? string-label "%0") o) ;; FIXME: 64b
                     (else (string-append "&" label))))))
       (define (display-align size)
         (let ((alignment (- reg-size (modulo size reg-size))))
-          (when (and align? (> reg-size alignment 0))
+          (when (and align-globals? (> reg-size alignment 0))
             (display " ")
             (display-join (map text->M1 (map (const 0) (iota alignment))) " "))
           #t))
@@ -209,8 +238,8 @@
                      ((global? (cdr o)) (global->string (cdr o)))
                      (else (car o))))
              (string? (string-prefix? "_string" label))
-             (foo (if (not (eq? (car (string->list label)) #\_))
-                      (display (string-append "    :" label "\n") (current-error-port))))
+             (foo (when (and verbose? (not (eq? (car (string->list label)) #\_)))
+                    (display (string-append "    :" label "\n") (current-error-port))))
              (data ((compose global:value cdr) o))
              (data (filter-map labelize data))
              (len (length data))
@@ -233,10 +262,13 @@
               (display-join  text " ")
               (display-align (length text))))
         (newline)))
-    (display "M1: functions\n" (current-error-port))
+    (when verbose?
+      (display "M1: functions\n" (current-error-port)))
     (for-each write-function (filter cdr functions))
     (when (assoc-ref functions "main")
       (display "\n\n:ELF_data\n") ;; FIXME
       (display "\n\n:HEX2_data\n"))
-    (display "M1: globals\n" (current-error-port))
-    (for-each write-global globals)))
+    (when verbose?
+      (display "M1: globals\n" (current-error-port)))
+    (for-each write-global (filter global-string? globals))
+    (for-each write-global (filter (negate global-string?) globals))))

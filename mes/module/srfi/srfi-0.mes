@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -20,23 +20,16 @@
 
 ;;; Commentary:
 
-;;; Minimal implementation of srfi-43, for nyacc.
+;;; srfi-0.mes - cond-expand
 
 ;;; Code:
 
-(define (vector-map f v)
-  (let* ((k (vector-length v))
-         (n (make-vector k)))
-    (let loop ((i 0))
-      (if (= i k) n
-          (begin
-            (vector-set! n i (f i (vector-ref v i)))
-            (loop (+ i 1)))))))
+(define mes '(0 1))
 
-(define (vector-for-each f v)
-  (let ((k (vector-length v)))
-    (let loop ((i 0))
-      (if (< i k)
-          (begin
-            (f i (vector-ref v i))
-            (loop (+ i 1)))))))
+(define (cond-expand-expander clauses)
+  (if (defined? (caar clauses))
+      (cdar clauses)
+      (cond-expand-expander (cdr clauses))))
+
+(define-macro (cond-expand . clauses)
+  (cons 'begin (cond-expand-expander clauses)))

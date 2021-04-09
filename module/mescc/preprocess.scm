@@ -1,5 +1,5 @@
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -31,6 +31,8 @@
   #:use-module (mes guile)
   #:export (c99-input->ast))
 
+(define mes-or-reproducible? #t)
+
 (when (getenv "MESC_DEBUG")
   (format (current-error-port) "*nyacc-version*=~a\n" *nyacc-version*))
 
@@ -40,7 +42,7 @@
        '(("0.85.3" (1 2 3))
          ("0.86.0" (1 2 3)))
        *nyacc-version*)
-      '(1 2 3)))
+      '((1 2 3))))
 
 (define (progress o)
   (when (and o (getenv "NYACC_DEBUG"))
@@ -67,37 +69,47 @@
  (mes
   (insert-progress-monitors c99-act-v c99-len-v)))
 
-(define (logf port string . rest)
-  (apply format (cons* port string rest))
-  (force-output port)
-  #t)
-
-(define (stderr string . rest)
-  (apply logf (cons* (current-error-port) string rest)))
-
-(define mes? (pair? (current-module)))
-
-(define* (c99-input->full-ast #:key (prefix "") (defines '()) (includes '()))
-  (let ((sys-include (if (equal? prefix "") "include" (string-append prefix "/share/include"))))
+(define* (c99-input->full-ast #:key (prefix "") (defines '()) (includes '()) (arch "") verbose?)
+  (let* ((sys-include (if (equal? prefix "") "include"
+                          (string-append prefix "/include")))
+         (kernel "linux")
+         (kernel-include (string-append sys-include "/" kernel "/" arch))
+         (includes (append
+                    includes
+                    (cons* kernel-include
+                           sys-include
+                           (append (or (and=> (getenv "CPATH")
+                                              (cut string-split <> #\:)) '())
+                                   (or (and=> (getenv "C_INCLUDE_PATH")
+                                              (cut string-split <> #\:)) '())))))
+         (defines `(
+                    "NULL=0"
+                    "__linux__=1"
+                    "_POSIX_SOURCE=0"
+                    "SYSTEM_LIBC=0"
+                    "__STDC__=1"
+                    "__MESC__=1"
+                    ,(if mes-or-reproducible? "__MESC_MES__=1" "__MESC_MES__=0")
+                    ,@defines)))
+    (when (and verbose? (> verbose? 1))
+      (format (current-error-port) "includes: ~s\n" includes)
+      (format (current-error-port) "defines: ~s\n" defines))
     (parse-c99
-     #:inc-dirs (append includes (cons* sys-include "include" "lib" (or (and=> (getenv "C_INCLUDE_PATH") (cut string-split <> #\:)) '())))
-     #:cpp-defs `(
-                  "NULL=0"
-                  "__linux__=1"
-                  "_POSIX_SOURCE=0"
-                  "WITH_GLIBC=0"
-                  "__STDC__=1"
-                  "__MESC__=1"
-                  ,(if mes? "__MESC_MES__=1" "__MESC_MES__=0")
-                  ,@defines)
+     #:inc-dirs includes
+     #:cpp-defs defines
      #:mode 'code)))
 
-(define* (c99-input->ast #:key (prefix "") (defines '()) (includes '()))
-  (stderr "parsing: input\n")
-  ((compose ast-strip-const ast-strip-comment) (c99-input->full-ast #:prefix prefix #:defines defines #:includes includes)))
+(define* (c99-input->ast #:key (prefix "") (defines '()) (includes '()) (arch "") verbose?)
+  (when verbose?
+    (format (current-error-port) "parsing: input\n"))
+  ((compose ast-strip-attributes
+            ast-strip-const
+            ast-strip-comment)
+   (c99-input->full-ast #:prefix prefix #:defines defines #:includes includes #:arch arch #:verbose? verbose?)))
 
 (define (ast-strip-comment o)
   (pmatch o
+    ((@ (comment . ,comment)) #f) ; Nyacc 0.90.2/0.93.0?
     ((comment . ,comment) #f)
     (((comment . ,comment) . ,t) (filter-map ast-strip-comment t))
     (((comment . ,comment) . ,cdr) cdr)
@@ -122,4 +134,12 @@
          `(decl-spec-list (type-qual-list (type-qual ,qual)) ,@(map ast-strip-const rest))))
     ((,h . ,t) (if (list? o) (filter-map ast-strip-const o)
                    (cons (ast-strip-const h) (ast-strip-const t))))
+    (_  o)))
+
+(define (ast-strip-attributes o)
+  (pmatch o
+    ((decl-spec-list (@ (attributes . ,attributes)) . ,rest)
+      `(decl-spec-list ,@rest))
+    ((,h . ,t) (if (list? o) (filter-map ast-strip-attributes o)
+                   (cons (ast-strip-attributes h) (ast-strip-attributes t))))
     (_  o)))

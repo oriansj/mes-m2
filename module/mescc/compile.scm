@@ -1,5 +1,5 @@
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2018,2019,2020,2021 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -42,6 +42,7 @@
             c99-input->object))
 
 (define mes? (pair? (current-module)))
+(define mes-or-reproducible? #t)
 (define (cc-amd? info) #f)              ; use AMD calling convention?
 ;; (define %reduced-register-count #f)     ; use all registers?
 (define %reduced-register-count 2)      ; use reduced instruction set
@@ -49,12 +50,14 @@
   (if %reduced-register-count %reduced-register-count
    (length (append (.registers info) (.allocated info)))))
 
-(define* (c99-input->info info #:key (prefix "") (defines '()) (includes '()))
-  (let ((ast (c99-input->ast #:prefix prefix #:defines defines #:includes includes)))
-    (c99-ast->info info ast)))
+(define* (c99-input->info info #:key (prefix "") (defines '()) (includes '()) (arch "") verbose?)
+  (let ((ast (c99-input->ast #:prefix prefix #:defines defines #:includes includes #:arch arch #:verbose? verbose?)))
+    (c99-ast->info info ast #:verbose? verbose?)))
 
-(define* (c99-ast->info info o)
-  (stderr "compiling: input\n")
+(define* (c99-ast->info info o #:key verbose?)
+  (when verbose?
+    (format (current-error-port) "compiling: input\n")
+    (set! mescc:trace mescc:trace-verbose))
   (let ((info (ast->info o info)))
     (clean-info info)))
 
@@ -104,7 +107,7 @@
 (define (ast->type o info)
   (define (type-helper o info)
     (if (getenv "MESC_DEBUG")
-        (stderr "type-helper: ~s\n" o))
+        (format (current-error-port) "type-helper: ~s\n" o))
     (pmatch o
       (,t (guard (type? t)) t)
       (,p (guard (pointer? p)) p)
@@ -113,7 +116,14 @@
 
       ((char ,value) (get-type "char" info))
       ((enum-ref . _) (get-type "default" info))
-      ((fixed ,value) (get-type "default" info))
+      ((fixed ,value)
+       (let ((type (cond ((string-suffix? "ULL"value) "unsigned long long")
+                         ((string-suffix? "UL" value) "unsigned long")
+                         ((string-suffix? "U" value) "unsigned")
+                         ((string-suffix? "LL" value) "long long")
+                         ((string-suffix? "L" value) "long")
+                         (else "default"))))
+         (get-type type info)))
       ((float ,float) (get-type "float" info))
       ((void) (get-type "void" info))
 
@@ -133,8 +143,8 @@
       ((type-name ,type) (ast->type type info))
       ((type-spec ,type) (ast->type type info))
 
-      ((sizeof-expr ,expr) (get-type "default" info))
-      ((sizeof-type ,type) (get-type "default" info))
+      ((sizeof-expr ,expr) (get-type "unsigned" info))
+      ((sizeof-type ,type) (get-type "unsigned" info))
 
       ((string ,string) (make-c-array (get-type "char" info) (1+ (string-length string))))
 
@@ -264,7 +274,7 @@
 (define (ast-type->size info o)
   (let ((type (->type (ast->type o info))))
     (cond ((type? type) (type:size type))
-          (else (stderr "error: ast-type->size: ~s => ~s\n" o type)
+          (else (format (current-error-port) "error: ast-type->size: ~s => ~s\n" o type)
                 4))))
 
 (define (field:name o)
@@ -326,11 +336,6 @@
     (field:pointer field)))
 
 (define (field-size info struct field)
-  (if (eq? (type:type struct) 'union) 0
-      (let ((field (field-field info struct field)))
-        (field:size field info))))
-
-(define (field-size info struct field)
   (let ((field (field-field info struct field)))
     (field:size field info)))
 
@@ -349,7 +354,7 @@
     ((bits . ,bits) bits)
     (_ (list o))))
 
-(define (struct->init-fields o)
+(define (struct->init-fields o) ;; FIXME REMOVEME: non-recursive unroll
   (pmatch o
     (_ (guard (and (type? o) (eq? (type:type o) 'struct)))
        (append-map struct->init-fields (type:description o)))
@@ -391,7 +396,7 @@
           ((function? var) (function:type var))
           ((assoc-ref (.constants info) o) (assoc-ref (.types info) "default"))
           ((pair? var) (car var))
-          (else (stderr "error: ident->type ~s => ~s\n" o var)
+          (else (format (current-error-port) "error: ident->type ~s => ~s\n" o var)
                 #f))))
 
 (define (local:pointer o)
@@ -417,18 +422,21 @@
 (define (append-text info text)
   (clone info #:text (append (.text info) text)))
 
-(define (make-global-entry name type value)
-  (cons name (make-global name type value #f)))
+(define (make-global-entry name storage type value)
+  (cons name (make-global name type value storage #f)))
 
 (define (string->global-entry string)
   (let ((value (append (string->list string) (list #\nul))))
-   (make-global-entry `(#:string ,string) "char" value)))
+   (make-global-entry `(#:string ,string) '() "char" value)))
 
 (define (make-local-entry name type id)
   (cons name (make-local name type id)))
 
-(define* (mescc:trace name #:optional (type ""))
+(define* (mescc:trace-verbose name #:optional (type ""))
   (format (current-error-port) "    :~a~a\n" name type))
+
+(define* (mescc:trace name #:optional (type ""))
+  #t)
 
 (define (expr->arg o i info)
   (pmatch o
@@ -503,7 +511,7 @@
                  ((c-array? type) (c-array:type type))
                  ((type? type) type)
                  (else
-                  (stderr "unexpected type: ~s\n" type)
+                  (format (current-error-port) "unexpected type: ~s\n" type)
                   type)))
          (size (->size type* info))
          (reg-size (->size "*" info))
@@ -514,7 +522,7 @@
       ((2) (wrap-as (as info 'word-r->local+n id n)))
       ((4) (wrap-as (as info 'long-r->local+n id n)))
       (else
-       (stderr "unexpected size:~s\n" size)
+       (format (current-error-port) "unexpected size:~s\n" size)
        (wrap-as (as info 'r->local+n id n))))))
 
 (define (r->ident info)
@@ -581,7 +589,7 @@
   (wrap-as `((#:comment ,o))))
 
 (define (ast->comment o)
-  (if mes? '()
+  (if mes-or-reproducible? '()
       (let* ((source (with-output-to-string (lambda () (pretty-print-c99 o))))
              ;; Nyacc fixups
              (source (string-substitute source "\\" "\\\\"))
@@ -937,7 +945,7 @@
 
         (,char (guard (char? char))
                (let ((info (allocate-register info)))
-                 (append-text info (wrap-as (as info 'value->r char)))))
+                 (append-text info (wrap-as (as info 'value->r (char->integer char))))))
 
         ((p-expr (ident ,name))
          (let ((info (allocate-register info)))
@@ -1024,7 +1032,7 @@
                                 (when (and (not (assoc name (.functions info)))
                                            (not (assoc name globals))
                                            (not (equal? name (.function info))))
-                                  (stderr "warning: undeclared function: ~a\n" name))
+                                  (format (current-error-port) "warning: undeclared function: ~a\n" name))
                                 (append-text info (wrap-as (as info 'call-label name n))))
                               (let* ((info (expr->register `(p-expr (ident ,name)) info))
                                      (info (append-text info (wrap-as (as info 'call-r n)))))
@@ -1210,9 +1218,9 @@
         ((rshift ,a ,b) ((binop->r info) a b 'r0>>r1))
         ((div ,a ,b)
          ((binop->r info) a b 'r0/r1
-          (or (signed? (ast->type a info)) (signed? (ast->type b info)))))
+          (signed? (ast->type a info))))
         ((mod ,a ,b) ((binop->r info) a b 'r0%r1
-                      (or (signed? (ast->type a info)) (signed? (ast->type b info)))))
+                      (signed? (ast->type a info))))
         ((mul ,a ,b) ((binop->r info) a b 'r0*r1))
 
         ((not ,expr)
@@ -1314,7 +1322,9 @@
                 (type (ident->type info name))
                 (rank (ident->rank info name))
                 (reg-size (->size "*" info))
-                (size (if (> rank 1) reg-size 1)))
+                (size (cond ((= rank 1) (ast-type->size info `(p-expr (ident ,name))))
+                            ((> rank 1) reg-size)
+                            (else 1))))
            (append-text info ((ident-add info) name size))))
 
         ((assn-expr (de-ref (post-dec (p-expr (ident ,name)))) (op ,op) ,b)
@@ -1322,7 +1332,9 @@
                 (type (ident->type info name))
                 (rank (ident->rank info name))
                 (reg-size (->size "*" info))
-                (size (if (> rank 1) reg-size 1)))
+                (size (cond ((= rank 1) (ast-type->size info `(p-expr (ident ,name))))
+                            ((> rank 1) reg-size)
+                            (else 1))))
            (append-text info ((ident-add info) name (- size)))))
 
         ((assn-expr ,a (op ,op) ,b)
@@ -1349,7 +1361,7 @@
                                              info)))
                                  (info (expr->register a info))
                                  (info (append-text info (wrap-as (as info 'swap-r0-r1))))
-                                 (signed? (or (signed? type) (signed? type-b)))
+                                 (signed? (signed? type))
                                  (info (append-text info (cond ((equal? op "+=") (wrap-as (as info 'r0+r1)))
                                                                ((equal? op "-=") (wrap-as (as info 'r0-r1)))
                                                                ((equal? op "*=") (wrap-as (as info 'r0*r1)))
@@ -1368,7 +1380,7 @@
                                                                                                     (as info 'r0/r1 signed?)))))
                                                            (info (free-register info)))
                                                       info))
-                                  (else (error (format #f "invalid operands to binary ~s (have ~s* and ~s*)" op type (ast->basic-type b info)))))))))
+                                  (else (error (format #f "invalid operands to binary ~s (have ~s* and ~s*) " op type (ast->basic-type b info)))))))))
            (when (and (equal? op "=")
                       (not (= size size-b))
                       (not (and (or (= size 1) (= size 2))
@@ -1379,8 +1391,8 @@
                                 (= size-b reg-size)))
                       (not (and (= size reg-size)
                                 (or (= size-b 1) (= size-b 2) (= size-b 4)))))
-             (stderr "ERROR assign: ~a" (with-output-to-string (lambda () (pretty-print-c99 o))))
-             (stderr "   size[~a]:~a != size[~a]:~a\n"  rank size rank-b size-b))
+             (format (current-error-port) "ERROR assign: ~a" (with-output-to-string (lambda () (pretty-print-c99 o))))
+             (format (current-error-port) "   size[~a]:~a != size[~a]:~a\n"  rank size rank-b size-b))
            (pmatch a
              ((p-expr (ident ,name))
               (if (or (<= size r-size)
@@ -1510,7 +1522,7 @@
          info))
 
       ((or ,a ,b)
-       (let* ((here (number->string (length (if mes? (.text info)
+       (let* ((here (number->string (length (if mes-or-reproducible? (.text info)
                                                 (filter (negate comment?) (.text info))))))
               (skip-b-label (string-append label "_skip_b_" here))
               (b-label (string-append label "_b_" here))
@@ -1702,6 +1714,10 @@
          (clone info #:locals locals)))
 
       ((asm-expr ,gnuc (,null ,arg0 . string))
+       (append-text info (wrap-as (asm->m1 arg0))))
+
+      ;; Nyacc 0.90.2
+      ((asm-expr ,gnuc (string ,arg0))
        (append-text info (wrap-as (asm->m1 arg0))))
 
       ((expr-stmt (fctn-call (p-expr (ident ,name)) (expr-list . ,expr-list)))
@@ -1994,7 +2010,7 @@
     (((decl-spec-list (type-spec ,type)) (init-declr-list . ,inits))
      (let* ((info (type->info type #f info))
             (type (ast->type type info)))
-       (fold (cut init-declr->info type <> <>) info (map cdr inits))))
+       (fold (cut init-declr->info type 'storage <> <>) info (map cdr inits))))
     (((decl-spec-list (type-spec ,type)))
      (type->info type #f info))
     (((decl-spec-list (stor-spec (typedef)) (type-spec ,type)) (init-declr-list (init-declr (ident ,name))))
@@ -2018,9 +2034,9 @@
      (let* ((info (type->info type #f info))
             (type (ast->type type info))
             (function (.function info)))
-       (if (not function) (fold (cut init-declr->info type <> <>) info (map cdr inits))
+       (if (not function) (fold (cut init-declr->info type store <> <>) info (map cdr inits))
            (let* ((tmp (clone info #:function #f #:globals '()))
-                  (tmp (fold (cut init-declr->info type <> <>) tmp (map cdr inits)))
+                  (tmp (fold (cut init-declr->info type store <> <>) tmp (map cdr inits)))
                   (statics (map (global->static function) (.globals tmp)))
                   (strings (filter string-global? (.globals tmp))))
              (clone info #:globals (append (.globals info) strings)
@@ -2028,7 +2044,7 @@
     (((decl-spec-list (stor-spec (,store)) (type-spec ,type)))
      (type->info type #f info))
     (((@ . _))
-     (stderr "decl->info: skip: ~s\n" o)
+     (format (current-error-port) "decl->info: skip: ~s\n" o)
      info)
     (_ (error "decl->info: not supported:" o))))
 
@@ -2198,7 +2214,7 @@
          (local (cdr local)))
     (init-local local init 0 info)))
 
-(define (global->info type name o init info)
+(define (global->info storage type name o init info)
   (let* ((rank (->rank type))
          (size (->size type info))
          (data (cond ((not init) (string->list (make-string size #\nul)))
@@ -2206,8 +2222,8 @@
                       (let* ((string (array-init->string init))
                              (size (or (and string (max size (1+ (string-length string))))
                                        size))
-                             (data  (or (and=> string string->list)
-                                        (array-init->data type size init info))))
+                             (data (or (and=> string string->list)
+                                       (array-init->data type size init info))))
                         (append data (string->list (make-string (max 0 (- size (length data))) #\nul)))))
                      ((structured-type? type)
                       (let ((data (init->data type init info)))
@@ -2215,7 +2231,7 @@
                      (else
                       (let ((data (init->data type init info)))
                         (append data (string->list (make-string (max 0 (- size (length data))) #\nul)))))))
-         (global (make-global-entry name type data)))
+         (global (make-global-entry name storage type data)))
     (clone info #:globals (append (.globals info) (list global)))))
 
 (define (array-init-element->data type o info)
@@ -2230,16 +2246,21 @@
            (int->bv type (expr->number info fixed) info))
          (int->bv type (expr->number info fixed) info)))
     ((initzer (initzer-list . ,inits))
-     (if (structured-type? type)
-         (let* ((fields (map cdr (struct->init-fields type)))
-                (missing (max 0 (- (length fields) (length inits))))
-                (inits (append inits
-                               (map (const '(fixed "0")) (iota missing)))))
-           (map (cut init->data <> <> info) fields inits))
-         (begin
-           (stderr "array-init-element->data: oops:~s\n" o)
-           (stderr "type:~s\n" type)
-           (error "array-init-element->data: unstructured not supported: " o))))
+     (cond ((structured-type? type)
+            (let* ((fields (map cdr (struct->init-fields type)))
+                   (missing (max 0 (- (length fields) (length inits))))
+                   (inits (append inits
+                                  (map (const '(fixed "0")) (iota missing)))))
+              (map (cut array-init-element->data <> <> info) fields inits)))
+           ((c-array? type)
+            (let* ((missing (max 0 (- (c-array:count type) (length inits))))
+                   (inits (append inits
+                                  (map (const '(fixed "0")) (iota missing)))))
+              (map (cut array-init-element->data (c-array:type type) <> info) inits)))
+         (else
+          (format (current-error-port) "array-init-element->data: oops:~s\n" o)
+          (format (current-error-port) "type:~s\n" type)
+          (error "array-init-element->data: not supported: " o))))
     (_ (init->data type o info))
     (_ (error "array-init-element->data: not supported: " o))))
 
@@ -2248,7 +2269,8 @@
     ((initzer (initzer-list . ,inits))
      (let ((type (c-array:type type)))
        (if (structured-type? type)
-           (let* ((fields (length (struct->init-fields type))))
+           (let* ((init-fields (struct->init-fields type)) ;; FIXME
+                  (count (length init-fields)))
              (let loop ((inits inits))
                (if (null? inits) '()
                    (let ((init (car inits)))
@@ -2256,10 +2278,11 @@
                        ((initzer (initzer-list . ,car-inits))
                         (append (array-init-element->data type init info)
                                 (loop (cdr inits))))
-                       (_ (let* ((count (min (length inits) fields))
+                       (_
+                        (let* ((count (min (length inits) (length init-fields)))
                                  (field-inits (list-head inits count)))
-                            (append (array-init-element->data type `(initzer-list ,@field-inits) info)
-                                    (loop (list-tail inits count))))))))))
+                          (append (array-init-element->data type `(initzer-list ,@field-inits) info)
+                           (loop (list-tail inits count))))))))))
            (map (cut array-init-element->data type <> info) inits))))
 
     (((initzer (initzer-list . ,inits)))
@@ -2305,37 +2328,36 @@
                         (cdr o))))
     (_ #f)))
 
-(define (init-declr->info type o info)
+(define (init-declr->info type storage o info)
   (pmatch o
     (((ident ,name))
      (if (.function info) (local->info type name o #f info)
-         (global->info type name o #f info)))
+         (global->info storage type name o #f info)))
     (((ident ,name) (initzer ,init))
      (let* ((strings (init->strings init info))
             (info (if (null? strings) info
                       (clone info #:globals (append (.globals info) strings)))))
        (if (.function info) (local->info type name o init info)
-           (global->info type name o init info))))
+           (global->info storage type name o init info))))
     (((ftn-declr (ident ,name) . ,_))
      (let ((functions (.functions info)))
        (if (member name functions) info
-           (let* ((type (ftn-declr:get-type info `(ftn-declr (ident ,name) ,@_)))
-                  (function (make-function name type  #f)))
+           (let ((function (make-function name type #f)))
              (clone info #:functions (cons (cons name function) functions))))))
     (((ftn-declr (scope (ptr-declr ,pointer (ident ,name))) ,param-list) ,init)
      (let* ((rank (pointer->rank pointer))
             (type (rank+= type rank)))
        (if (.function info) (local->info type name o init info)
-           (global->info type name o init info))))
+           (global->info storage type name o init info))))
     (((ftn-declr (scope (ptr-declr ,pointer (ident ,name))) ,param-list))
      (let* ((rank (pointer->rank pointer))
             (type (rank+= type rank)))
        (if (.function info) (local->info type name o '() info)
-           (global->info type name o '() info))))
+           (global->info storage type name o '() info))))
     (((ptr-declr ,pointer . ,_) . ,init)
      (let* ((rank (pointer->rank pointer))
             (type (rank+= type rank)))
-       (init-declr->info type (append _ init) info)))
+       (init-declr->info type storage (append _ init) info)))
     (((array-of (ident ,name) ,count) . ,init)
      (let* ((strings (init->strings init info))
             (info (if (null? strings) info
@@ -2343,7 +2365,7 @@
             (count (expr->number info count))
             (type (make-c-array type count)))
        (if (.function info) (local->info type name o init info)
-           (global->info type name o init info))))
+           (global->info storage type name o init info))))
     (((array-of (ident ,name)) . ,init)
      (let* ((strings (init->strings init info))
             (info (if (null? strings) info
@@ -2351,7 +2373,7 @@
             (count (length (cadar init)))
             (type (make-c-array type count)))
        (if (.function info) (local->info type name o init info)
-           (global->info type name o init info))))
+           (global->info storage type name o init info))))
     ;; FIXME: recursion
     (((array-of (array-of (ident ,name) ,count1) ,count) . ,init)
      (let* ((strings (init->strings init info))
@@ -2361,7 +2383,7 @@
             (count1 (expr->number info count1))
             (type (make-c-array (make-c-array type count1) count)))
        (if (.function info) (local->info type name o init info)
-           (global->info type name o init info))))
+           (global->info storage type name o init info))))
     (_ (error "init-declr->info: not supported: " o))))
 
 (define (enum-def-list->constants constants fields)
@@ -2395,7 +2417,8 @@
        (if (= reg-size 8) `((#:string ,(string-join strings "")) "%0")
            `((#:string ,(string-join strings ""))))))
     ((ident ,name) (let ((var (ident->variable info name)))
-                     `((#:address ,var))))
+                     (if (number? var) (int->bv type var info)
+                         `((#:address ,var)))))
     ((initzer-list . ,inits)
      (cond ((structured-type? type)
             (map (cut init->data <> <> info) (map cdr (struct->init-fields type)) inits))
@@ -2611,11 +2634,6 @@
      (ast->type type info))
     (_ (error "fctn-defn:get-type: not supported:" o))))
 
-(define (ftn-declr:get-type info o)
-  (pmatch o
-    ((ftn-declr (ident _) . _) #f)
-    (_ (error "fctn-decrl:get-type: not supported:" o))))
-
 (define (fctn-defn:get-statement o)
   (pmatch o
     ((_ (ftn-declr (ident _) _) ,statement) statement)
@@ -2644,7 +2662,7 @@
            (count (and=> local (compose local:id cdr)))
            (reg-size (->size "*" info))
            (stack (and count (* count reg-size))))
-      (if (and stack (getenv "MESC_DEBUG")) (stderr "        stack: ~a\n" stack))
+      (if (and stack (getenv "MESC_DEBUG")) (format (current-error-port) "        stack: ~a\n" stack))
       (clone info
              #:function #f
              #:globals (append (.statics info) (.globals info))

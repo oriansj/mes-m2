@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -20,23 +20,10 @@
 
 ;;; Commentary:
 
-;;; Minimal implementation of srfi-43, for nyacc.
+;;; srfi-8.mes - receive
 
 ;;; Code:
 
-(define (vector-map f v)
-  (let* ((k (vector-length v))
-         (n (make-vector k)))
-    (let loop ((i 0))
-      (if (= i k) n
-          (begin
-            (vector-set! n i (f i (vector-ref v i)))
-            (loop (+ i 1)))))))
-
-(define (vector-for-each f v)
-  (let ((k (vector-length v)))
-    (let loop ((i 0))
-      (if (< i k)
-          (begin
-            (f i (vector-ref v i))
-            (loop (+ i 1)))))))
+(define-macro (receive vars vals . body)
+  `(call-with-values (lambda () ,vals)
+     (lambda ,vars . ,body)))

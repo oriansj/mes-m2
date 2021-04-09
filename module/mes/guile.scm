@@ -32,6 +32,8 @@
             <cell:symbol>
             <cell:vector>
 
+            %arch
+            %compiler
             append2
             core:apply
             core:car
@@ -40,17 +42,24 @@
             core:display-port
             core:exit
             core:macro-expand
-            core:make-cell
             core:write
             core:write-error
             core:write-port
             core:type
+            %compiler
             equal2?
+            keyword->string
             pmatch-car
             pmatch-cdr
             )
   ;;#:re-export (open-input-file open-input-string with-input-from-string)
   )
+
+(cond-expand
+ (guile-2)
+ (guile
+  (define %host-type (string-append (utsname:machine (uname)) "linux-gnu")))
+ (else))
 
 (cond-expand
  (guile
@@ -82,6 +91,11 @@
   (define <cell:string> 10)
   (define <cell:symbol> 11)
   (define <cell:vector> 15)
+  (define %arch (car (string-split %host-type #\-)))
+  (define %compiler "gnuc")
+
+  (define %compiler "gnuc")
+  (define keyword->string (compose symbol->string keyword->symbol))
 
   (define (core:type x)
     (cond ((guile:keyword? x) <cell:keyword>)
@@ -90,9 +104,7 @@
           ((guile:string? x) <cell:string>)
           ((guile:symbol? x) <cell:symbol>)))
   (define (core:car x)
-    (cond ((guile:string? x) (string->list x))))
-  (define (core:make-cell type car cdr)
-    (cond ((eq? type <cell:string>) (list->string car)))))
+    (cond ((guile:string? x) (string->list x)))))
  (mes))
 
 (cond-expand

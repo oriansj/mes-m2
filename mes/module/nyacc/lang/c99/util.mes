@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -20,23 +20,26 @@
 
 ;;; Commentary:
 
-;;; Minimal implementation of srfi-43, for nyacc.
-
 ;;; Code:
 
-(define (vector-map f v)
-  (let* ((k (vector-length v))
-         (n (make-vector k)))
-    (let loop ((i 0))
-      (if (= i k) n
-          (begin
-            (vector-set! n i (f i (vector-ref v i)))
-            (loop (+ i 1)))))))
+(mes-use-module (mes guile))
+(mes-use-module (mes catch))
+(mes-use-module (mes fluids))
+(mes-use-module (mes pretty-print))
+(mes-use-module (mes optargs))
+(mes-use-module (srfi srfi-1))
+(mes-use-module (srfi srfi-9))
+(mes-use-module (sxml xpath))
 
-(define (vector-for-each f v)
-  (let ((k (vector-length v)))
-    (let loop ((i 0))
-      (if (< i k)
-          (begin
-            (f i (vector-ref v i))
-            (loop (+ i 1)))))))
+;; FIXME: Nyacc 0.93.0:
+;; FIXME: (mes-use-module (srfi srfi-2))
+;; FIXME: (mes-use-module (sxml fold))
+;; FIXME: (ice-9 popen)
+;; FIXME: (ice-9 rdelim)
+(define (export . rest) #t)
+(define (close-port port) #t)
+
+(mes-use-module (nyacc lang util))
+(mes-use-module (nyacc lang sx-util))
+
+(include-from-path "nyacc/lang/c99/util.scm")

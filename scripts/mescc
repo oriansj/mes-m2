@@ -24,11 +24,34 @@ fi
 
 # Variables
 bindir=bin
-MES_ARENA=20000000
-MES_MAX_ARENA=20000000
-MES_STACK=6000000
-MES=${bindir}/mes
-libdir=${prefix}/lib
+
+MES=${MES-${bindir}/mes}
+
+prefix=${prefix-.}
+export prefix
+
+includedir=${includedir-${prefix/include}}
+export includedir
+
+libdir=${libdir-${prefix}/lib}
+export libdir
+
+MES_ARENA=${MES_ARENA-20000000}
+export MES_ARENA
+
+MES_MAX_ARENA=${MES_MAX_ARENA-${MES_ARENA}}
+export MES_MAX_ARENA
+
+MES_STACK=${MES_STACK-6000000}
+export MES_STACK
+
+mes_cpu=${mes_cpu-x86}
+export mes_cpu
+
+sep=
+if [ "$(basename ${SCHEME-$MES})" = "mes" ]; then
+    sep=--
+fi
 
 dir=$(dirname $0)
 ${SCHEME-$MES} \
@@ -36,4 +59,4 @@ ${SCHEME-$MES} \
      -e main\
      -L /usr/local/share/guile/site/2.2\
      -C /usr/local/lib/guile/2.2/site-ccache\
-     $dir/mescc.scm -- "$@"
+     $dir/mescc.scm $sep "$@"

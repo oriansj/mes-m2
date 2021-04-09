@@ -1,7 +1,7 @@
 ;;; -*-scheme-*-
 
 ;;; GNU Mes --- Maxwell Equations of Software
-;;; Copyright © 2016,2017 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016,2017,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -35,5 +35,6 @@
 (mes-use-module (nyacc lang sx-util))
 (mes-use-module (nyacc lang util))
 (mes-use-module (nyacc lang c99 cpp))
+(mes-use-module (nyacc lang c99 util))
 
 (include-from-path "nyacc/lang/c99/parser.scm")

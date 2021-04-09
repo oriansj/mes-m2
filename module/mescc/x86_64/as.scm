@@ -435,8 +435,7 @@
     `((,(string-append "and____%" r1 ",%" r0)))))
 
 (define (x86_64:r0/r1 info signed?)
-  (let ((signed? #f)              ; nobody knows, -- all advice are belong to us?
-        (allocated (.allocated info))
+  (let ((allocated (.allocated info))
         (r0 (get-r0 info))
         (r1 (get-r1 info)))
     (if (not (member "rdx" allocated))
@@ -461,8 +460,7 @@
           ("pop____%rax")))))
 
 (define (x86_64:r0%r1 info signed?)
-  (let ((signed? #f)              ; nobody knows, -- all advice are belong to us?
-        (allocated (.allocated info))
+  (let ((allocated (.allocated info))
         (r0 (get-r0 info))
         (r1 (get-r1 info)))
     (if (not (member "rdx" allocated))

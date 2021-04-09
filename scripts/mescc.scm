@@ -30,7 +30,7 @@
 
 (define %prefix (or (getenv "MES_PREFIX")
                       (if (string-prefix? "@prefix" "@prefix@")
-                          ""
+                          "."
                           "@prefix@")))
 
 (define %includedir (or (getenv "includedir")
@@ -42,11 +42,11 @@
 (define %version (if (string-prefix? "@VERSION" "@VERSION@") "git"
                      "@VERSION@"))
 
-(define %arch (if (string-prefix? "@mes_cpu" "@mes_cpu@") %arch
-                  "@mes_cpu@"))
+(define %arch (if (string-prefix? "@mes_cpu" "x86") %arch
+                  "x86"))
 
-(define %kernel (if (string-prefix? "@mes_kernel" "@mes_kernel@") %kernel
-                    "@mes_kernel@"))
+(define %kernel (if (string-prefix? "@mes_kernel" "linux") %kernel
+                    "linux"))
 
 (define %numbered-arch? (if (getenv "numbered_arch") (and=> (getenv "numbered_arch")
                                                             (lambda (x) (equal? x "true")))

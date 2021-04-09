@@ -1,5 +1,6 @@
 ;;; GNU Mes --- Maxwell Equations of Software
 ;;; Copyright © 2018,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2019 Danny Milosavljevic <dannym@scratchpost.org>
 ;;;
 ;;; This file is part of GNU Mes.
 ;;;
@@ -18,29 +19,28 @@
 
 ;;; Commentary:
 
-;;; Initialize MesCC as i386/x86 compiler
+;;; Initialize MesCC as arm compiler
 
 ;;; Code:
 
-(define-module (mescc x86_64 info)
+(define-module (mescc armv4 info)
   #:use-module (mescc info)
-  #:use-module (mescc x86_64 as)
-  #:export (x86_64-info
-            x86_64:registers))
+  #:use-module (mescc armv4 as)
+  #:export (armv4-info))
 
-(define (x86_64-info)
-  (make <info> #:types x86_64:type-alist #:registers x86_64:registers #:instructions x86_64:instructions))
+(define (armv4-info)
+  (make <info> #:types armv4:type-alist #:registers armv4:registers #:instructions armv4:instructions))
 
-(define x86_64:registers '("rax" "rdi" "rsi" "rdx" "rcx" "r8" "r9" "r10" "r11" "r12" "r13" "r14" "r15"))
-(define x86_64:type-alist
+(define armv4:registers '("r0" "r1" "r2" "r3" "r4" "r5"))
+(define armv4:type-alist
   `(("char" . ,(make-type 'signed 1 #f))
     ("short" . ,(make-type 'signed 2 #f))
     ("int" . ,(make-type 'signed 4 #f))
-    ("long" . ,(make-type 'signed 8 #f))
+    ("long" . ,(make-type 'signed 4 #f))
     ("default" . ,(make-type 'signed 4 #f))
-    ("*" . ,(make-type 'unsigned 8 #f))
-    ("long long" . ,(make-type 'signed 8 #f))
-    ("long long int" . ,(make-type 'signed 8 #f))
+    ("*" . ,(make-type 'unsigned 4 #f))
+    ("long long" . ,(make-type 'signed 4 #f))
+    ("long long int" . ,(make-type 'signed 4 #f))
 
     ("void" . ,(make-type 'void 1 #f))
     ("signed char" . ,(make-type 'signed 1 #f))
@@ -48,15 +48,16 @@
     ("unsigned short" . ,(make-type 'unsigned 2 #f))
     ("unsigned" . ,(make-type 'unsigned 4 #f))
     ("unsigned int" . ,(make-type 'unsigned 4 #f))
-    ("unsigned long" . ,(make-type 'unsigned 8 #f))
-    ("unsigned long long" . ,(make-type 'unsigned 8 #f))
-    ("unsigned long long int" . ,(make-type 'unsigned 8 #f))
+    ("unsigned long" . ,(make-type 'unsigned 4 #f))
+
+    ("unsigned long long" . ,(make-type 'unsigned 4 #f))
+    ("unsigned long long int" . ,(make-type 'unsigned 4 #f))
 
     ("float" . ,(make-type 'float 4 #f))
-    ("double" . ,(make-type 'float 8 #f))
-    ("long double" . ,(make-type 'float 8 #f))
+    ("double" . ,(make-type 'float 4 #f)) ; FIXME
+    ("long double" . ,(make-type 'float 4 #f)) ; FIXME
 
     ("short int" . ,(make-type 'signed 2 #f))
     ("unsigned short int" . ,(make-type 'unsigned 2 #f))
-    ("long int" . ,(make-type 'signed 8 #f))
-    ("unsigned long int" . ,(make-type 'unsigned 8 #f))))
+    ("long int" . ,(make-type 'signed 4 #f))
+    ("unsigned long int" . ,(make-type 'unsigned 4 #f))))

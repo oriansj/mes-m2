@@ -25,6 +25,7 @@
 (mes-use-module (mes getopt-long))
 (mes-use-module (mes guile))
 
+(mes-use-module (mescc armv4 info))
 (mes-use-module (mescc i386 info))
 (mes-use-module (mescc x86_64 info))
 (mes-use-module (mescc preprocess))
