@@ -1,5 +1,5 @@
 ## GNU Mes --- Maxwell Equations of Software
-## Copyright © 2016,2017,2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+## Copyright © 2016,2017,2018,2021 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ## Copyright © 2019 Jeremiah Orians
 ##
 ## This file is part of GNU Mes.
@@ -23,6 +23,7 @@ VPATH = src:bin:test:test/results
 CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -D WITH_GLIBC=1 -O0
 KAEM = kaem
+GUILD = guild
 
 default: mes-m2-boot
 
@@ -69,6 +70,19 @@ bin:
 
 results:
 	mkdir -p test/results
+
+# For development using Guile
+MODULE_SCM_FILES = $(shell find module -name '*.scm')
+GO_FILES = $(MODULE_SCM_FILES:%.scm=%.go)
+GUILD_OPTIMIZE = -O1
+%.go: %.scm
+	GUILE_LOAD_PATH=module:$(GUILE_LOAD_PATH)			\
+	GUILE_LOAD_COMPILED_PATH=module:$(GUILE_LOAD_COMPILED_PATH)	\
+		$(GUILD) compile $(GUILD_OPTIMIZE) -o $@ $^
+
+all-go: $(GO_FILES)
+clean-go:
+	rm -f $(GO_FILES)
 
 # tests
 test: test000.answer \
