@@ -26,10 +26,7 @@
   #:use-module (nyacc lang util)
   #:use-module (rnrs arithmetic bitwise)
   #:use-module ((srfi srfi-43) #:select (vector-map vector-for-each))
-  #:use-module (system foreign)
-  )
-(use-modules (ice-9 pretty-print))
-(define pp pretty-print)
+  #:use-module (system foreign))
 
 (define c99cx-spec
   (lalr-spec
@@ -126,8 +123,7 @@
      ($chlit/U ($$ `(char (@ (type "char32_t")) ,$1))))
     (string-literal
      ($string ($$ (make-tl 'string $1))) ; string-constant
-     (string-literal $string ($$ (tl-append $1 $2))))
-    )))
+     (string-literal $string ($$ (tl-append $1 $2)))))))
 
 (define c99cx-mach
   (compact-machine
@@ -141,10 +137,10 @@
 ;; If there are no changes to existing files, no update occurs.
 (define* (gen-c99cx-files #:optional (path "."))
   (define (mdir file) (mach-dir path file))
-  (write-lalr-actions c99cx-mach (mdir "c99cxact.scm.new") #:prefix "c99cx-")
-  (write-lalr-tables c99cx-mach (mdir "c99cxtab.scm.new") #:prefix "c99cx-")
-  (let ((a (move-if-changed (mdir "c99cxact.scm.new") (mdir "c99cxact.scm")))
-	(b (move-if-changed (mdir "c99cxtab.scm.new") (mdir "c99cxtab.scm"))))
+  (write-lalr-actions c99cx-mach (mdir "c99cx-act.scm.new") #:prefix "c99cx-")
+  (write-lalr-tables c99cx-mach (mdir "c99cx-tab.scm.new") #:prefix "c99cx-")
+  (let ((a (move-if-changed (mdir "c99cx-act.scm.new") (mdir "c99cx-act.scm")))
+	(b (move-if-changed (mdir "c99cx-tab.scm.new") (mdir "c99cx-tab.scm"))))
     (or a b)))
 
 ;; --- last line ---

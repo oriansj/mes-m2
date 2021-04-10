@@ -1,6 +1,6 @@
 ;;; lang/c99/body.scm - parser body, inserted in parser.scm
 
-;; Copyright (C) 2015-2018 Matthew R. Wette
+;; Copyright (C) 2015-2019 Matthew R. Wette
 ;;
 ;; This library is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU Lesser General Public
@@ -35,9 +35,11 @@
 
 (use-modules (nyacc lang sx-util))
 (use-modules (nyacc lang util))
-(use-modules ((srfi srfi-1) #:select (fold-right)))
+(use-modules ((srfi srfi-1) #:select (fold-right append-reverse)))
 (use-modules ((srfi srfi-9) #:select (define-record-type)))
 (use-modules (ice-9 pretty-print))	; for debugging
+(define (sf fmt . args) (apply simple-format #t fmt args))
+(define pp pretty-print)
 
 ;; C parser info (?)
 (define-record-type cpi
@@ -91,12 +93,12 @@
 
   (define (split-helper helper)
     (let ((file (car helper)))
-      (let iter ((tyns '()) (defs '()) (ents (cdr helper)))
+      (let loop ((tyns '()) (defs '()) (ents (cdr helper)))
 	(cond
 	 ((null? ents) (values (cons file tyns) (cons file defs)))
 	 ((split-cppdef (car ents)) =>
-	  (lambda (def) (iter tyns (cons def defs) (cdr ents))))
-	 (else (iter (cons (car ents) tyns) defs (cdr ents)))))))
+	  (lambda (def) (loop tyns (cons def defs) (cdr ents))))
+	 (else (loop (cons (car ents) tyns) defs (cdr ents)))))))
 
   (define (split-if-needed def)
     (if (pair? def) def (split-cppdef def)))
@@ -110,7 +112,7 @@
     (set-cpi-ctl! cpi '())		; list of current typenames
     (set-cpi-blev! cpi 0)		; brace/block level
     ;; Break up the helpers into typenames and defines.
-    (let iter ((itynd '()) (idefd '()) (helpers inchelp))
+    (let loop ((itynd '()) (idefd '()) (helpers inchelp))
       (cond ((null? helpers)
 	     (set-cpi-itynd! cpi itynd)
 	     (set-cpi-idefd! cpi idefd))
@@ -118,7 +120,7 @@
 	     (call-with-values
 		 (lambda () (split-helper (car helpers)))
 	       (lambda (ityns idefs)
-		 (iter (cons ityns itynd) (cons idefs idefd) (cdr helpers)))))))
+		 (loop (cons ityns itynd) (cons idefs idefd) (cdr helpers)))))))
     ;; Assign builtins.
     (and=> (assoc-ref (cpi-itynd cpi) "__builtin")
 	   (lambda (tl) (set-cpi-ctl! cpi (append tl (cpi-ctl cpi)))))
@@ -128,18 +130,6 @@
 
 (define *info* (make-fluid))
 	  
-;; @deffn {Procedure} typename? name
-;; Called by lexer to determine if symbol is a typename.
-;; Check current sibling for each generation.
-;; @end deffn
-(define (typename? name)
-  (let ((cpi (fluid-ref *info*)))
-    (if (member name (cpi-ctl cpi)) #t
-        (let iter ((ptl (cpi-ptl cpi)))
-	  (if (null? ptl) #f
-	      (if (member name (car ptl)) #t
-		  (iter (cdr ptl))))))))
-
 (define cpi-inc-blev!
   (case-lambda
     ((info) (set-cpi-blev! info (1+ (cpi-blev info))))
@@ -153,6 +143,50 @@
     ((info) (zero? (cpi-blev info)))
     (() (cpi-top-blev? (fluid-ref *info*)))))
 
+(define cpi-push
+  (case-lambda
+    ((info) 
+     (set-cpi-ptl! info (cons (cpi-ctl info) (cpi-ptl info)))
+     (set-cpi-ctl! info '())
+     #t)
+    (() (cpi-push (fluid-ref *info*)))))
+
+(define cpi-pop
+  (case-lambda
+    ((info)
+     (set-cpi-ctl! info (car (cpi-ptl info)))
+     (set-cpi-ptl! info (cdr (cpi-ptl info)))
+     #t)
+    (() (cpi-pop (fluid-ref *info*)))))
+
+(define (cpi-push-x)	;; on #if
+  ;;(sf "\ncpi-push-x:\n") (pp (fluid-ref *info*))
+  (let ((cpi (fluid-ref *info*)))
+    (set-cpi-ptl! cpi (cons (cpi-ctl cpi) (cpi-ptl cpi)))
+    (set-cpi-ctl! cpi '())))
+
+(define (cpi-shift-x)	;; on #elif #else
+  ;;(sf "\ncpi-shift-x:\n") (pp (fluid-ref *info*))
+  (set-cpi-ctl! (fluid-ref *info*) '()))
+
+(define (cpi-pop-x)	;; on #endif
+  ;;(sf "\ncpi-pop-x:\n") (pp (fluid-ref *info*))
+  (let ((cpi (fluid-ref *info*)))
+    (set-cpi-ctl! cpi (append (cpi-ctl cpi) (car (cpi-ptl cpi))))
+    (set-cpi-ptl! cpi (cdr (cpi-ptl cpi)))))
+
+;; @deffn {Procedure} typename? name
+;; Called by lexer to determine if symbol is a typename.
+;; Check current sibling for each generation.
+;; @end deffn
+(define (typename? name)
+  (let ((cpi (fluid-ref *info*)))
+    (if (member name (cpi-ctl cpi)) #t
+        (let loop ((ptl (cpi-ptl cpi)))
+	  (if (null? ptl) #f
+	      (if (member name (car ptl)) #t
+		  (loop (cdr ptl))))))))
+
 ;; @deffn {Procedure} add-typename name
 ;; Helper for @code{save-typenames}.
 ;; @end deffn
@@ -160,25 +194,11 @@
   (let ((cpi (fluid-ref *info*)))
     (set-cpi-ctl! cpi (cons name (cpi-ctl cpi)))))
 
-(define (cpi-push)	;; on #if
-  (let ((cpi (fluid-ref *info*)))
-    (set-cpi-ptl! cpi (cons (cpi-ctl cpi) (cpi-ptl cpi)))
-    (set-cpi-ctl! cpi '())))
-
-(define (cpi-shift)	;; on #elif #else
-  (set-cpi-ctl! (fluid-ref *info*) '()))
-
-(define (cpi-pop)	;; on #endif
-  (let ((cpi (fluid-ref *info*)))
-    (set-cpi-ctl! cpi (append (cpi-ctl cpi) (car (cpi-ptl cpi))))
-    (set-cpi-ptl! cpi (cdr (cpi-ptl cpi)))))
-
 ;; @deffn {Procedure} find-new-typenames decl
 ;; Helper for @code{save-typenames}.
 ;; Given declaration return a list of new typenames (via @code{typedef}).
 ;; @end deffn
 (define (find-new-typenames decl)
-
   ;; like declr-id in util2.scm
   (define (declr->id-name declr)
     (case (car declr)
@@ -191,13 +211,15 @@
       ((scope) (declr->id-name (sx-ref declr 1)))
       (else (error "coding bug: " declr))))
        
+  ;;(sf "\ndecl:\n") (pp decl)
+
   (let* ((spec (sx-ref decl 1))
 	 (stor (sx-find 'stor-spec spec))
 	 (id-l (sx-ref decl 2)))
     (if (and stor (eqv? 'typedef (caadr stor)))
-	(let iter ((res '()) (idl (cdr id-l)))
+	(let loop ((res '()) (idl (cdr id-l)))
 	  (if (null? idl) res
-	      (iter (cons (declr->id-name (sx-ref (car idl) 1)) res)
+	      (loop (cons (declr->id-name (sx-ref (car idl) 1)) res)
 		    (cdr idl))))
 	'())))
 
@@ -210,9 +232,17 @@
   (for-each add-typename (find-new-typenames decl))
   decl)
 
-;; used in c99-spec actions for attribute-specifiers
-(define (attr-expr-list->string attr-expr-list)
-  (string-append "(" (string-join (cdr attr-expr-list) ",") ")"))
+;; (string "abc" "def") -> (string "abcdef")
+;; In the case that declaration-specifiers only returns a list of
+;; attribute-specifiers then this has to be an empty-statemnet with
+;; attributes.  See:
+;;   https://gcc.gnu.org/onlinedocs/gcc-8.2.0/gcc/Statement-Attributes.html
+(define (XXX-only-attr-specs? specs)
+  (let loop ((specs specs))
+    (cond
+     ((null? specs) #t)
+     ((not (eqv? 'attributes (sx-tag (car specs)))) #f)
+     (else (loop (cdr specs))))))
 
 ;; ------------------------------------------------------------------------
 
@@ -226,32 +256,32 @@
 ;; @end deffn
 (define (read-cpp-line ch)
   (if (not (eq? ch #\#)) #f
-      (let iter ((cl '()) (ch (read-char)))
+      (let loop ((cl '()) (ch (read-char)))
 	(cond
 	 ;;((eof-object? ch) (throw 'cpp-error "CPP lines must end in newline"))
-	 ((eof-object? ch) (list->string (reverse cl)))
-	 ((eq? ch #\newline) (unread-char ch) (list->string (reverse cl)))
+	 ((eof-object? ch) (reverse-list->string cl))
+	 ((eq? ch #\newline) (unread-char ch) (reverse-list->string cl))
 	 ((eq? ch #\\)
 	  (let ((c2 (read-char)))
 	    (if (eq? c2 #\newline)
-		(iter cl (read-char))
-		(iter (cons* c2 ch cl) (read-char)))))
+		(loop cl (read-char))
+		(loop (cons* c2 ch cl) (read-char)))))
 	 ((eq? ch #\/) ;; swallow comments, even w/ newlines
 	  (let ((c2 (read-char)))
 	    (cond
 	     ((eqv? c2 #\*)
-	      (let iter2 ((cl2 (cons* #\* #\/ cl)) (ch (read-char)))
+	      (let loop2 ((cl2 (cons* #\* #\/ cl)) (ch (read-char)))
 		(cond
 		 ((eq? ch #\*)
 		  (let ((c2 (read-char)))
 		    (if (eqv? c2 #\/)
-			(iter (cons* #\/ #\* cl2) (read-char)) ;; keep comment
-			(iter2 (cons #\* cl2) c2))))
+			(loop (cons* #\/ #\* cl2) (read-char)) ;; keep comment
+			(loop2 (cons #\* cl2) c2))))
 		 (else
-		  (iter2 (cons ch cl2) (read-char))))))
+		  (loop2 (cons ch cl2) (read-char))))))
 	     (else
-	      (iter (cons #\/ cl) c2)))))
-	 (else (iter (cons ch cl) (read-char)))))))
+	      (loop (cons #\/ cl) c2)))))
+	 (else (loop (cons ch cl) (read-char)))))))
 
 (define (def-xdef? name mode)
   (not (eqv? mode 'file)))
@@ -422,10 +452,11 @@
 		   (path (inc-file-spec->path spec next)))
 	      (if show-incs (sferr "include ~A => ~S\n" spec path))
 	      (cond
-	       ((apply-helper file))
-	       ((not path) (c99-err "not found: ~S" file)) ; file not found
-	       (else (set! bol #t) (push-input (open-input-file path))))
-	      (sx-attr-add stmt 'path path)))
+	       ((apply-helper file) stmt)
+	       ((not path) (c99-err "not found: ~S" file))
+	       (else (set! bol #t)
+		     (push-input (open-input-file path))
+		     (if path (sx-attr-add stmt 'path path) stmt)))))
 
 	  (define* (eval-cpp-incl/tree stmt #:optional next) ;; => stmt
 	    ;; include file as a new tree
@@ -434,12 +465,13 @@
 		   (path (inc-file-spec->path spec next)))
 	      (if show-incs (sferr "include ~A => ~S\n" spec path))
 	      (cond
-	       ((apply-helper file) stmt)		 ; use helper
-	       ((not path) (c99-err "not found: ~S" file)) ; file not found
-	       ((with-input-from-file path run-parse) => ; add tree
-	       (lambda (tree)
-		 (for-each add-define (getdefs tree))
-		 (append (sx-attr-add stmt 'path path) (list tree)))))))
+	       ((apply-helper file) stmt)
+	       ((not path) (c99-err "not found: ~S" file))
+	       ((with-input-from-file path run-parse) =>
+		(lambda (tree) ;; add tree
+		  (for-each add-define (getdefs tree))
+		  (append (if path (sx-attr-add stmt 'path path) stmt)
+			  (list tree)))))))
 
 	  (define (eval-cpp-stmt/code stmt) ;; => stmt
 	    (case (car stmt)
@@ -456,11 +488,12 @@
 		     ((undef) (rem-define (cadr stmt)) stmt)
 		     ((error) (c99-err "error: #error ~A" (cadr stmt)))
 		     ((warning) (report-error "warning: ~A" (cdr stmt)))
-		     ((pragma) stmt) ;; ignore for now
+		     ((pragma) stmt)
 		     ((line) stmt)
 		     (else
 		      (sferr "stmt: ~S\n" stmt)
-		      (error "1: bad cpp flow stmt")))))))
+		      (error "nyacc eval-cpp-stmt/code: bad cpp flow stmt")))
+		   stmt))))
 	
 	  (define (eval-cpp-stmt/decl stmt) ;; => stmt
 	    (case (car stmt)
@@ -487,24 +520,24 @@
 		     ((line) stmt)
 		     (else
 		      (sferr "stmt: ~S\n" stmt)
-		      (error "2: bad cpp flow stmt")))
+		      (error "eval-cpp-stmt/decl: bad cpp flow stmt")))
 		   stmt))))
-
+	  
 	  (define (eval-cpp-stmt/file stmt) ;; => stmt
 	    (case (car stmt)
-	      ((if) (cpi-push) stmt)
-	      ((elif else) (cpi-shift) stmt)
-	      ((endif) (cpi-pop) stmt)
+	      ((if) (cpi-push-x) stmt)
+	      ((elif else) (cpi-shift-x) stmt)
+	      ((endif) (cpi-pop-x) stmt)
 	      ((include) (eval-cpp-incl/tree stmt))
 	      ((define) (add-define stmt) stmt)
 	      ((undef) (rem-define (cadr stmt)) stmt)
 	      ((error) stmt)
 	      ((warning) stmt)
-	      ((pragma) stmt) ;; need to work this
+	      ((pragma) stmt)
 	      ((line) stmt)
 	      (else
 	       (sferr "stmt: ~S\n" stmt)
-	       (error "3: bad cpp flow stmt"))))
+	       (error "eval-cpp-stmt/file: bad cpp flow stmt"))))
 
 	  ;; Maybe evaluate the CPP statement.
 	  (define (eval-cpp-stmt stmt)
@@ -515,7 +548,7 @@
 		  ((code) (eval-cpp-stmt/code stmt))
 		  ((decl) (eval-cpp-stmt/decl stmt))
 		  ((file) (eval-cpp-stmt/file stmt))
-		  (else (error "lang/c99 coding error"))))
+		  (else (error "nyacc eval-cpp-stmt: coding error"))))
 	      (lambda (key fmt . rest)
 		(report-error fmt rest)
 		(throw 'c99-error "CPP error"))))
@@ -526,40 +559,45 @@
 	  ;; If file mode, all except includes between { }
 	  ;; If decl mode, only defines and includes outside {}
 	  ;; @end itemize
-	  (define (pass-cpp-stmt? stmt)
-	    (case mode
-	      ((code) #f)
-	      ((decl) (and (cpi-top-blev? info)
-			   (memq (car stmt) '(include define include-next))))
-	      ((file) (or (cpi-top-blev? info)
-			  (not (memq (car stmt) '(include include-next)))))
-	      (else (error "lang/c99 coding error"))))
+	  (define (pass-cpp-stmt stmt)
+	    (if (eq? 'pragma (car stmt))
+		(if (eq? mode 'file)
+		    `(cpp-stmt ,stmt)
+		    `($pragma . ,(cadr stmt)))
+		(case mode
+		  ((code) #f)
+		  ((decl) (and (cpi-top-blev? info)
+			       (memq (car stmt) '(include define include-next))
+			       `(cpp-stmt . ,stmt)))
+		  ((file) (and
+			   (or (cpi-top-blev? info)
+			       (not (memq (car stmt) '(include include-next))))
+			   `(cpp-stmt . ,stmt)))
+		  (else (error "nyacc pass-cpp-stmt: coding error")))))
 
 	  ;; Composition of @code{read-cpp-line} and @code{eval-cpp-line}.
 	  (define (read-cpp-stmt ch)
 	    (and=> (read-cpp-line ch) cpp-line->stmt))
 
 	  (define (read-token)
-	    (let iter ((ch (read-char)))
+	    (let loop ((ch (read-char)))
 	      (cond
 	       ((eof-object? ch)
 		(set! suppress #f)
 		(if (pop-input)
-		    (iter (read-char))
+		    (loop (read-char))
 		    (assc-$ '($end . "#<eof>"))))
-	       ((eq? ch #\newline) (set! bol #t) (iter (read-char)))
-	       ((char-set-contains? c:ws ch) (iter (read-char)))
+	       ((eq? ch #\newline) (set! bol #t) (loop (read-char)))
+	       ((char-set-contains? c:ws ch) (loop (read-char)))
 	       (bol
 		(set! bol #f)
-		(cond ;; things that depend on bol only
+		(cond ;; things that require bol
  		 ((read-c-comm ch #t #:skip-prefix #t) => assc-$)
 		 ((read-cpp-stmt ch) =>
 		  (lambda (stmt)
-		    (let ((stmt (eval-cpp-stmt stmt))) ; eval can add tree
-		      (if (pass-cpp-stmt? stmt)
-			  (assc-$ `(cpp-stmt . ,stmt))
-			  (iter (read-char))))))
-		 (else (iter ch))))
+		    (cond ((pass-cpp-stmt (eval-cpp-stmt stmt)) => assc-$)
+			  (else (loop (read-char))))))
+		 (else (loop ch))))
 	       ((read-c-chlit ch) => assc-$) ; before ident for [ULl]'c'
 	       ((read-c-ident ch) =>
 		(lambda (name)
@@ -572,40 +610,43 @@
 		      => (lambda (repl)
 			   (set! suppress #t) ; don't rescan
 			   (push-input (open-input-string repl))
-			   (iter (read-char))))
+			   (loop (read-char))))
 		     ((assq-ref keytab symb)
 		      ;;^minor bug: won't work on #define keyword xxx
 		      ;; try (and (not (assoc-ref name defs))
 		      ;;          (assq-ref keytab symb))
 		      => (lambda (t) (cons t name)))
 		     ((typename? name)
-		      (cons (assq-ref symtab 'typename) name))
+		      (cons t-typename name))
 		     (else
-		      (cons (assq-ref symtab '$ident) name))))))
+		      (cons t-ident name))))))
 	       ((read-c-num ch) => assc-$)
 	       ((read-c-string ch) => assc-$)
 	       ((read-c-comm ch #f #:skip-prefix #t) => assc-$)
-	       ((and (char=? ch #\{)	; ugly tracking of block-lev in lexer
-		     (eqv? 'keep (car ppxs)) (cpi-inc-blev! info) #f) #f)
-	       ((and (char=? ch #\})	; ugly tracking of block-lev in lexer
-		     (eqv? 'keep (car ppxs)) (cpi-dec-blev! info) #f) #f)
+	       ;; Keep track of brace level and scope for typedefs.
+	       ((and (char=? ch #\{)
+		     (eqv? 'keep (car ppxs)) (cpi-inc-blev! info)
+		     #f) #f)
+	       ((and (char=? ch #\})
+		     (eqv? 'keep (car ppxs)) (cpi-dec-blev! info)
+		     #f) #f)
 	       ((read-chseq ch) => identity)
 	       ((assq-ref chrtab ch) => (lambda (t) (cons t (string ch))))
 	       ((eqv? ch #\\) ;; C allows \ at end of line to continue
 		(let ((ch (read-char)))
-		  (cond ((eqv? #\newline ch) (iter (read-char))) ;; extend line
+		  (cond ((eqv? #\newline ch) (loop (read-char))) ;; extend line
 			(else (unread-char ch) (cons #\\ "\\"))))) ;; parse err
 	       (else (cons ch (string ch))))))
 
 	  ;; Loop between reading tokens and skipping tokens via CPP logic.
-	  (let iter ((pair (read-token)))
-	    ;;(report-error "lx iter=>~S" (list pair))
+	  (let loop ((pair (read-token)))
+	    ;;(report-error "lx loop=>~S" (list pair))
 	    (case (car ppxs)
 	      ((keep)
 	       pair)
 	      ((skip-done skip-look skip)
-	       (iter (read-token)))
-	      (else (error "coding error")))))))
+	       (loop (read-token)))
+	      (else (error "make-c99-lexer-generator: coding error")))))))
 
     lexer))
 

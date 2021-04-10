@@ -1,6 +1,6 @@
 ;;; lang/c/cpp.scm - C preprocessor
 
-;; Copyright (C) 2015-2018 Matthew R. Wette
+;; Copyright (C) 2015-2019 Matthew R. Wette
 ;;
 ;; This library is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU Lesser General Public
@@ -34,14 +34,10 @@
   #:use-module (nyacc parse)
   #:use-module (nyacc lex)
   #:use-module (nyacc lang sx-util)
-  #:use-module ((nyacc lang util) #:select (report-error))
-  )
-(cond-expand ;; for MES
+  #:use-module ((nyacc lang util) #:select (report-error)))
+(cond-expand
   (guile-2
    (use-modules (rnrs arithmetic bitwise))
-   (use-modules (ice-9 pretty-print))
-   (define pp pretty-print)
-   (define (sf fmt . args) (apply simple-format #t fmt args))
    (use-modules (system base pmatch)))
   (else
    (use-modules (ice-9 optargs))
@@ -52,11 +48,11 @@
     "__STDC_VERSION__" "__TIME__"))
 
 (define (c99-std-def? str)
-  (let iter ((defs c99-std-defs))
+  (let loop ((defs c99-std-defs))
     (cond
      ((null? defs) #f)
      ((string=? (car defs) str) #t)
-     (else (iter (cdr defs))))))
+     (else (loop (cdr defs))))))
 
 (define (c99-std-val str)
   (cond
@@ -83,9 +79,9 @@
 ;; This reads the rest of the input, with ch and returns a string;
 ;; Replaces get-string-all from (ice-9 textual-ports).
 (define (read-rest ch)
-  (list->string (let iter ((ch ch))
+  (list->string (let loop ((ch ch))
 		  (if (eof-object? ch) '()
-		      (cons ch (iter (read-char)))))))
+		      (cons ch (loop (read-char)))))))
 
 ;; Not sure about this. We want to turn a list of tokens into a string
 ;; with proper escapes.
@@ -109,27 +105,28 @@
    ((char=? ch #\.) (read-char) (read-char) "...") ; assumes correct syntax
    (else #f)))
 
-;; @deffn {Procedure} find-incl-in-dirl file dirl next => path
+;; @deffn {Procedure} find-incl-in-dirl file dirl [next] => path
 ;; Find path to include file expression, (i.e., @code{<foo.h>} or
 ;; @code{"foo.h"}.  If @code{"foo.h"} form look in current directory first.
-;; If @var{next} is true then remove current directory from search path.
+;; If @var{next} (default false) is true then remove current directory from 
+;; search path.
 ;; @*Refs:
 ;; @itemize
 ;; @item https://gcc.gnu.org/onlinedocs/cpp/Search-Path.html
 ;; @item https://gcc.gnu.org/onlinedocs/cpp/Wrapper-Headers.html
 ;; @end itemize
 ;; @end deffn
-(define (find-incl-in-dirl file dirl next)
+(define* (find-incl-in-dirl file dirl #:optional (next #f))
   (let* ((cid (and=> (port-filename (current-input-port)) dirname))
 	 (file-type (string-ref file 0)) ;; #\< or #\"
 	 (file-name (substring file 1 (1- (string-length file))))
 	 (dirl (if (and cid (char=? #\" file-type)) (cons cid dirl) dirl)))
-    (let iter ((dirl dirl))
+    (let loop ((dirl dirl))
       (if (null? dirl) #f
 	  (if (and next (string=? (car dirl) cid))
-	      (iter (cdr dirl))
+	      (loop (cdr dirl))
 	      (let ((p (string-append (car dirl) "/" file-name)))
-		(if (access? p R_OK) p (iter (cdr dirl)))))))))
+		(if (access? p R_OK) p (loop (cdr dirl)))))))))
 
 ;; @deffn {Procedure} cpp-define
 ;; Reads CPP define from current input and generates a cooresponding sxml
@@ -144,19 +141,24 @@
 
   (define (p-args la) ;; parse args
     (if (eq? la #\()
-	(let iter ((args '()) (la (skip-il-ws (read-char))))
+	(let loop ((args '()) (la (skip-il-ws (read-char))))
 	  (cond
 	   ((eq? la #\)) (reverse args))
 	   ((read-c-ident la) =>
-	    (lambda (arg) (iter (cons arg args) (skip-il-ws (read-char)))))
+	    (lambda (arg) (loop (cons arg args) (skip-il-ws (read-char)))))
 	   ((read-ellipsis la) =>
-	    (lambda (arg) (iter (cons arg args) (skip-il-ws (read-char)))))
-	   ((eq? la #\,) (iter args (skip-il-ws (read-char))))))
+	    (lambda (arg) (loop (cons arg args) (skip-il-ws (read-char)))))
+	   ((eq? la #\,) (loop args (skip-il-ws (read-char))))))
 	(begin (if (char? la) (unread-char la)) #f)))
 
   (define (p-rest la) (read-rest la))
 
-  (let* ((name (read-c-ident (skip-il-ws (read-char))))
+  (let* ((name (let loop ((ch (skip-il-ws (read-char))))
+		 (cond
+		  ((eof-object? ch) (throw 'cpp-error "bad #define"))
+		  ((read-c-ident ch))
+		  ((cpp-comm-skipper ch) (loop (skip-il-ws (read-char))))
+		  (else (throw 'cpp-error "bad #define")))))
 	 (args (or (p-args (read-char)) '()))
 	 (repl (p-rest (skip-il-ws (read-char)))))
     (if (pair? args)
@@ -167,13 +169,13 @@
 ;; @deffn {Procedure} cpp-include
 ;; Parse CPP include statement.
 (define (cpp-include)
-  (define (iter cl ch end-ch)
-    (if (eq? ch end-ch)  (list->string (reverse (cons ch cl)))
-	(iter (cons ch cl) (read-char) end-ch)))
+  (define (loop cl ch end-ch)
+    (if (eq? ch end-ch)  (reverse-list->string (cons ch cl))
+	(loop (cons ch cl) (read-char) end-ch)))
    (let ((ch (skip-il-ws (read-char))))
      (cond
-      ((char=? ch #\<) (iter (list #\<) (read-char) #\>))
-      ((char=? ch #\") (iter (list #\") (read-char) #\"))
+      ((char=? ch #\<) (loop (list #\<) (read-char) #\>))
+      ((char=? ch #\") (loop (list #\") (read-char) #\"))
       ((read-c-ident ch))
       (else (throw 'cpp-error "bad include")))))
 
@@ -212,11 +214,11 @@
 		(else
 		 (list 'warning (simple-format #f "unknown CPP: ~S" line)))))))
 	 ((read-c-num ch) => (lambda (num) `(line ,num ,(rd-rest))))
-	 (else (error "missing code")))))))
+	 (else (error "nyacc cpp-line->stmt: missing code")))))))
 	    
 
-(include-from-path "nyacc/lang/c99/mach.d/cpptab.scm")
-(include-from-path "nyacc/lang/c99/mach.d/cppact.scm")
+(include-from-path "nyacc/lang/c99/mach.d/cpp-tab.scm")
+(include-from-path "nyacc/lang/c99/mach.d/cpp-act.scm")
 
 (define cpp-raw-parser
   (make-lalr-parser (acons 'act-v cpp-act-v cpp-tables)))
@@ -303,13 +305,11 @@
 	    ((or) (if (and (zero? (ev1 tree)) (zero? (ev2 tree))) 0 1))
 	    ((and) (if (or (zero? (ev1 tree)) (zero? (ev2 tree))) 0 1))
 	    ((cond-expr) (if (zero? (ev1 tree)) (ev3 tree) (ev2 tree)))
-	    ;; hacks for use in util2.scm:canize-enum-def-list:
-	    ;; If ident is defined then it should have already been expanded.
-	    ;; So then only enum defs remain which should be valid expressions.
+	    ;; in CPP if ident is not defined it should be zero
 	    ((ident) (or (and=> (assoc-ref dict (tx1 tree)) string->number) 0))
 	    ((p-expr) (ev1 tree))
 	    ((cast) (ev2 tree))
-	    (else (error "incomplete eval-cpp-expr implementation"))))))
+	    (else (error "nyacc eval-cpp-expr: incomplete implementation"))))))
     (eval-expr tree)))
 
 ;;.@deffn {Procedure} rtokl->string reverse-token-list => string
@@ -321,65 +321,67 @@
   (define (add-chl chl stl)
     (if (null? chl) stl (cons (list->string chl) stl)))
 
-  ;;(sferr "\nrtokl->string=~S\n" tokl)
   ;; Works like this: Scan through the list of tokens (key-val pairs or
   ;; lone characters).  Lone characters are collected in a list (@code{chl});
   ;; pairs are converted into strings and combined with list of characters
   ;; into a list of strings.  When done the list of strings is combined to
   ;; one string.  (The token 'argval is expansion of argument.)
-  (let iter ((stl '())		   ; list of strings to reverse-append
+  (let loop ((stl '())		   ; list of strings to reverse-append
 	     (chl '())		   ; char list
 	     (nxt #f)		   ; next string to add after chl
 	     (tkl tokl))	   ; input token list
     (cond
      (nxt
-      (iter (cons nxt (add-chl chl stl)) '() #f tkl))
+      (loop (cons nxt (add-chl chl stl)) '() #f tkl))
      ((null? tkl)
       (apply string-append (add-chl chl stl)))
      ((char? (car tkl))
-      (iter stl (cons (car tkl) chl) nxt (cdr tkl)))
+      (loop stl (cons (car tkl) chl) nxt (cdr tkl)))
      (else
       (pmatch tkl
 	((($ident . ,rval) $dhash ($ident . ,lval) . ,rest)
-	 (iter stl chl nxt
+	 (loop stl chl nxt
 	       (acons '$ident (string-append lval rval) (list-tail tkl 3))))
 	((($ident . ,arg) $hash . ,rest)
-	 (iter stl chl (string-append "\"" arg "\"") (list-tail tkl 2)))
+	 (loop stl chl (string-append "\"" arg "\"") (list-tail tkl 2)))
 	((($ident . ,iden) ($ident . ,lval) . ,rest)
-	 (iter stl chl iden rest))
+	 (loop stl chl iden rest))
 	((($ident . ,iden) . ,rest)
-	 (iter stl chl iden rest))
+	 (loop stl chl iden rest))
 	((($string . ,val) . ,rest)
-	 (iter stl (cons #\" chl) (esc-c-str val) (cons #\" rest)))
+	 (loop stl (cons #\" chl) (esc-c-str val) (cons #\" rest)))
 	((($echo . ,val) . ,rest)
-	 (iter stl chl val rest))
+	 (loop stl chl val rest))
 	(($space $space . ,rest)
-	 (iter stl chl nxt rest))
+	 (loop stl chl nxt rest))
 	(($space . ,rest)
-	 (iter stl (cons #\space chl) nxt rest))
+	 (loop stl (cons #\space chl) nxt rest))
+	((($comm . ,val) . ,rest)
+	 ;; replace comment with extra trailing space
+	 (loop stl chl (string-append "/*" val "*/ ") rest))
 	((,asis . ,rest)
-	 (iter stl chl asis rest))
+	 (loop stl chl asis rest))
 	(,otherwise
-	 (error "no match" tkl)))))))
+	 (error "nyacc cpp rtokl->string, no match" tkl)))))))
 
 ;; We just scanned "defined", now need to scan the arg to inhibit expansion.
 ;; For example, we have scanned "defined"; we now scan "(FOO)" or "FOO", and
 ;; return "defined(FOO)" or "defined FOO".
 (define (scan-defined-arg)
   (let* ((ch (skip-il-ws (read-char))) (no-ec (not (char=? ch #\())))
-    (let iter ((chl (list ch)) (ch (skip-il-ws (read-char))))
+    (let loop ((chl (list ch)) (ch (skip-il-ws (read-char))))
       (cond
        ((eof-object? ch)
 	(if no-ec
 	    (list->string (cons #\space (reverse chl)))
 	    (cpp-err "illegal argument to `defined'")))
        ((char-set-contains? c:ir ch)
-	(iter (cons ch chl) (read-char)))
+	(loop (cons ch chl) (read-char)))
        (no-ec
 	(unread-char ch)
 	(list->string (cons #\space (reverse chl))))
        ((char=? #\) (skip-il-ws ch))
-	(list->string (reverse (cons #\) chl))))
+	(reverse-list->string (cons #\) chl)))
        (else
 	(cpp-err "illegal argument to  `defined'"))))))
 
@@ -387,20 +389,21 @@
 (define (scan-arg-literal)
   (let ((ch (read-char)))
     ;; if exit, then did not defined __has_include(X)=__has_include__(X)
-    (if (or (eof-object? ch) (not (char=? #\( ch))) (error "expedcting `('")))
-  (let iter ((chl '()) (ch (skip-il-ws (read-char))))
+    (if (or (eof-object? ch) (not (char=? #\( ch)))
+	(throw 'cpp-error "expedcting `('")))
+  (let loop ((chl '()) (ch (skip-il-ws (read-char))))
     (cond
      ((eof-object? ch) (cpp-err "illegal argument"))
      ((char=? #\) ch)
-      (let iter2 ((res '()) (chl chl))
+      (let loop2 ((res '()) (chl chl))
 	(cond
 	 ((null? chl)
 	  (string-append "(\"" (esc-c-str (list->string res)) "\")"))
-	 ((and (null? res) (char-whitespace? (car chl))) (iter2 res (cdr chl)))
-	 (else (iter2 (cons (car chl) res) (cdr chl))))))
-     (else (iter (cons ch chl) (read-char))))))
+	 ((and (null? res) (char-whitespace? (car chl))) (loop2 res (cdr chl)))
+	 (else (loop2 (cons (car chl) res) (cdr chl))))))
+     (else (loop (cons ch chl) (read-char))))))
 
-(define (scan-cpp-input defs used end-tok)
+(define* (scan-cpp-input defs used end-tok #:key (keep-comments #t))
   ;; Works like this: scan for tokens (comments, parens, strings, char's, etc).
   ;; Tokens are collected in a (reverse ordered) list (tkl) and merged together
   ;; to a string on return using @code{rtokl->string}.  Keep track of expanded
@@ -414,54 +417,57 @@
 	  tkl))
 
   (define (finish rr tkl)
-    ;;(sferr "finish ~S ~S\n" rr tkl)
     (let* ((tkl (if end-tok (trim-spaces tkl) tkl))
 	   (repl (rtokl->string tkl)))
       (if (pair? rr)
 	  (cpp-expand-text repl defs (append rr used)) ;; re-run
 	  repl)))
      
-  ;;(sferr "scan-cpp-input end-tok=~S\n" end-tok)
-  (let iter ((rr '())			; list symbols resolved
+  (let loop ((rr '())			; list symbols resolved
 	     (tkl '())			; token list of
 	     (lv 0)			; level
 	     (ch (skip-il-ws (read-char)))) ; next character
-    ;;(unless end-tok (sferr "tkl=~S ch=~S\n" tkl ch))
     (cond
      ((eof-object? ch) (finish rr tkl))
      ((and (eqv? end-tok ch) (zero? lv))
       (unread-char ch) (finish rr tkl))
      ((and end-tok (char=? #\) ch) (zero? lv))
       (unread-char ch) (finish rr tkl))
-     ((or (char-set-contains? c:ws ch)	; whitespace
-	  (read-c-comm ch #f))		; comment
-      (iter rr (cons '$space tkl) lv (skip-il-ws (read-char))))
+     ((char-set-contains? c:ws ch)	; whitespace
+      (loop rr (cons '$space tkl) lv (skip-il-ws (read-char))))
+     ((read-c-comm ch #f) =>		; comment
+      (lambda (comm)
+	;; Normally comments in CPP def's are replaced by a space.  We allow
+	;; comments to get passed through, hoping this does not break code.
+	(if keep-comments
+	    (loop rr (acons '$comm (cdr comm) tkl) lv (skip-il-ws (read-char)))
+	    (loop rr (cons '$space tkl) lv (skip-il-ws (read-char))))))
      ((read-c-ident ch) =>
       (lambda (iden)
 	(cond
 	 ((string=? iden "defined")
-	  (iter rr
+	  (loop rr
 		(acons '$echo (string-append iden (scan-defined-arg)) tkl)
 		lv (read-char)))
 	 ((member iden '("__has_include__" "__has_include_next__"))
 	  (cond
 	   ((scan-arg-literal) =>
 	    (lambda (arg)
-	      (iter rr (acons '$echo (string-append iden arg) tkl)
+	      (loop rr (acons '$echo (string-append iden arg) tkl)
 		    lv (read-char))))
 	   (else 
-	    (iter rr (acons '$ident iden tkl) lv (read-char)))))
+	    (loop rr (acons '$ident iden tkl) lv (read-char)))))
 	 (else
 	  (let ((rval (expand-cpp-macro-ref iden defs used)))
 	    (if rval
-		(iter #t (cons rval tkl) lv (read-char))
-		(iter rr (acons '$ident iden tkl) lv (read-char))))))))
+		(loop #t (cons rval tkl) lv (read-char))
+		(loop rr (acons '$ident iden tkl) lv (read-char))))))))
      ((read-c-string ch) =>
-      (lambda (pair) (iter rr (cons pair tkl) lv (read-char))))
-     ((char=? #\( ch) (iter rr (cons ch tkl) (1+ lv) (read-char)))
-     ((char=? #\) ch) (iter rr (cons ch tkl) (1- lv) (read-char)))
+      (lambda (pair) (loop rr (cons pair tkl) lv (read-char))))
+     ((char=? #\( ch) (loop rr (cons ch tkl) (1+ lv) (read-char)))
+     ((char=? #\) ch) (loop rr (cons ch tkl) (1- lv) (read-char)))
      (else
-      (iter rr (cons ch tkl) lv (read-char))))))
+      (loop rr (cons ch tkl) lv (read-char))))))
 
 ;; @deffn {Procedure} collect-args argl defs used => argd
 ;; Collect arguments to a macro which appears in C code.  If not looking at
@@ -470,25 +476,23 @@
 ;; one @code{#\space} is re-inserted.
 ;; @end deffn
 (define (collect-args argl defs used)
-  ;;(sferr "collect-args\n")
-  (let iter1 ((sp #f) (ch (read-char)))
-    ;;(sferr "collect-args iter: ch=~S\n" ch)
+  (let loop1 ((sp #f) (ch (read-char)))
     (cond
      ((eof-object? ch) (if sp (unread-char #\space)) #f)
-     ((char-set-contains? inline-whitespace ch) (iter1 #t (read-char)))
+     ((char-set-contains? inline-whitespace ch) (loop1 #t (read-char)))
      ((char=? #\( ch)
-      (let iter2 ((argl argl) (argv '()) (ch ch))
+      (let loop2 ((argl argl) (argv '()) (ch ch))
 	(cond
 	 ((eqv? ch #\)) (reverse argv))
 	 ((null? argl) (cpp-err "arg count"))
 	 ((and (null? (cdr argl)) (string=? (car argl) "..."))
 	  (let ((val (scan-cpp-input defs used #\))))
-	    (iter2 (cdr argl) (acons "__VA_ARGS__" val argv) (read-char))))
+	    (loop2 (cdr argl) (acons "__VA_ARGS__" val argv) (read-char))))
 	 ((or (char=? ch #\() (char=? ch #\,))
 	  (let* ((val (scan-cpp-input defs used #\,)))
-	    (iter2 (cdr argl) (acons (car argl) val argv) (read-char))))
+	    (loop2 (cdr argl) (acons (car argl) val argv) (read-char))))
 	 (else
-	  (error "cpp.scm, collect-args: coding error")))))
+	  (error "nyacc cpp.scm: collect-args coding error")))))
      (else (unread-char ch) (if sp (unread-char #\space)) #f))))
 
 ;; @deffn {Procedure} px-cpp-ftn-repl argd repl => string
@@ -504,53 +508,51 @@
 (define (px-cpp-ftn argd repl)
   (with-input-from-string repl
     (lambda ()
-      ;;(sferr "px-cpp-ftn argd=~S repl=~S\n" argd repl)
       (px-cpp-ftn-1 argd))))
 
 (define (px-cpp-ftn-1 argd)
 
   ;; Turn reverse chl into a string and insert it into the token stream.
   (define (ins-chl chl stl)
-    (if (null? chl) stl (cons (list->string (reverse chl)) stl)))
+    (if (null? chl) stl (cons (reverse-list->string chl) stl)))
 
   (define (rem-space chl)
-    (let iter ((chl chl))
+    (let loop ((chl chl))
       (cond
        ((null? chl) chl)
-       ((char-set-contains? c:ws (car chl)) (iter (cdr chl)))
+       ((char-set-contains? c:ws (car chl)) (loop (cdr chl)))
        (else chl))))
 
   (define (mk-string str) (string-append "\"" (esc-c-str str) "\""))
 
-  (let iter ((stl '())			; string list
+  (let loop ((stl '())			; string list
 	     (chl '())			; character list
 	     (nxt #f)			; next string after char list
 	     (ch (read-char)))		; next character
-    ;;(sferr "px-1: stl=~S chl=~S nxt=~S ch=~S\n" stl chl nxt ch)
     (cond
-     (nxt (iter (cons nxt (ins-chl chl stl)) '() #f ch))
+     (nxt (loop (cons nxt (ins-chl chl stl)) '() #f ch))
      ((eof-object? ch)
       (apply string-append (reverse (ins-chl chl stl))))
      ((char-set-contains? c:ws ch)
-      (iter stl (cons #\space chl) nxt (skip-il-ws (read-char))))
-     ((read-c-comm ch #f) (iter stl (cons #\space chl) nxt (read-char)))
+      (loop stl (cons #\space chl) nxt (skip-il-ws (read-char))))
+     ((read-c-comm ch #f) (loop stl (cons #\space chl) nxt (read-char)))
      ((read-c-string ch) =>
-      (lambda (st) (iter stl chl (mk-string (cdr st)) (read-char))))
-     ((char=? #\( ch) (iter stl (cons ch chl) nxt (read-char)))
-     ((char=? #\) ch) (iter stl (cons ch chl) nxt (read-char)))
+      (lambda (st) (loop stl chl (mk-string (cdr st)) (read-char))))
+     ((char=? #\( ch) (loop stl (cons ch chl) nxt (read-char)))
+     ((char=? #\) ch) (loop stl (cons ch chl) nxt (read-char)))
      ((read-c-ident ch) =>		; replace if aval
       (lambda (iden)
-	(iter stl chl (or (assoc-ref argd iden) iden) (read-char))))
+	(loop stl chl (or (assoc-ref argd iden) iden) (read-char))))
      ((char=? #\# ch)
       (let ((ch (read-char)))
 	(if (eqv? ch #\#)
-	    (iter stl (rem-space chl) nxt (skip-il-ws (read-char)))
+	    (loop stl (rem-space chl) nxt (skip-il-ws (read-char)))
 	    (let* ((aref (read-c-ident (skip-il-ws ch)))
 		   (aval (assoc-ref argd aref)))
 	      (if (not aref) (cpp-err "expecting arg-ref"))
 	      (if (not aval) (cpp-err "expecting arg-val"))
-	      (iter stl chl (mk-string aval) (read-char))))))
-     (else (iter stl (cons ch chl) nxt (read-char))))))
+	      (loop stl chl (mk-string aval) (read-char))))))
+     (else (loop stl (cons ch chl) nxt (read-char))))))
   
 ;; @deffn {Procedure} cpp-expand-text text defs [used] => string
 ;; Expand the string @var{text} using the provided CPP @var{defs} a-list.

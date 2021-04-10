@@ -1,4 +1,4 @@
-;; ./mach.d/c99cxtab.scm
+;; c99cx-tab.scm
 
 ;; Copyright (C) 2018 Matthew R. Wette
 ;; 
@@ -6,11 +6,36 @@
 ;; modify it under the terms of the GNU Lesser General Public
 ;; License as published by the Free Software Foundation; either
 ;; version 3 of the License, or (at your option) any later version.
-;; See the file COPYING.LESSER included with the this distribution.
+;; See the file COPYING included with the this distribution.
+
+(define c99cx-mtab
+  '(($start . 63) ($string . 3) ($chlit/U . 4) ($chlit/u . 5) ($chlit/L . 6) 
+    ($chlit . 7) ($float . 8) ($fixed . 9) ($ident . 10) (":" . 11) ("?" . 12)
+    ("||" . 13) ("&&" . 14) ("|" . 15) ("^" . 16) ("!=" . 17) ("==" . 18) 
+    (">=" . 19) ("<=" . 20) (">" . 21) ("<" . 22) (">>" . 23) ("<<" . 24) 
+    ("%" . 25) ("/" . 26) ("!" . 27) ("~" . 28) ("-" . 29) ("+" . 30) ("*" . 
+    31) ("&" . 32) ("sizeof" . 33) ("--" . 34) ("++" . 35) ("->" . 36) 
+    ("." . 37) ("]" . 38) ("[" . 39) (")" . 40) ("(" . 41) ($error . 2) 
+    ($end . 43)))
+
+(define c99cx-ntab
+  '((44 . conditional-expression) (45 . logical-or-expression) (46 . 
+    logical-and-expression) (47 . bitwise-or-expression) (48 . 
+    bitwise-xor-expression) (49 . bitwise-and-expression) (50 . 
+    equality-expression) (51 . relational-expression) (52 . shift-expression) 
+    (53 . additive-expression) (54 . multiplicative-expression) (55 . 
+    cast-expression) (56 . unary-operator) (57 . unary-expression) (58 . 
+    postfix-expression) (59 . primary-expression) (60 . string-literal) 
+    (61 . constant) (62 . identifier) (63 . constant-expression)))
 
 (define c99cx-len-v
   #(1 1 1 1 3 1 4 3 3 2 2 1 2 2 2 2 1 1 1 1 1 1 1 1 3 3 3 1 3 3 1 3 3 1 3 3 3
     3 1 3 3 1 3 1 3 1 3 1 3 1 3 1 5 1 1 1 1 1 1 1 1 1 2))
+
+(define c99cx-rto-v
+  #(#f 59 59 59 59 58 58 58 58 58 58 57 57 57 57 57 56 56 56 56 56 56 55 54 
+    54 54 54 53 53 53 52 52 52 51 51 51 51 51 50 50 50 49 49 48 48 47 47 46 46
+    45 45 44 44 63 62 61 61 61 61 61 61 60 60))
 
 (define c99cx-pat-v
   #(((3 . 1) (4 . 2) (5 . 3) (6 . 4) (7 . 5) (8 . 6) (9 . 7) (10 . 8) 
@@ -144,26 +169,13 @@
     (54 . 27) (53 . 28) (52 . 29) (51 . 30) (50 . 31) (49 . 32) (48 . 33) 
     (47 . 34) (46 . 35) (45 . 36) (44 . 94)) ((1 . -6)) ((1 . -52))))
 
-(define c99cx-rto-v
-  #(#f 59 59 59 59 58 58 58 58 58 58 57 57 57 57 57 56 56 56 56 56 56 55 54 
-    54 54 54 53 53 53 52 52 52 51 51 51 51 51 50 50 50 49 49 48 48 47 47 46 46
-    45 45 44 44 63 62 61 61 61 61 61 61 60 60))
-
-(define c99cx-mtab
-  '(($start . 63) ($string . 3) ($chlit/U . 4) ($chlit/u . 5) ($chlit/L . 6) 
-    ($chlit . 7) ($float . 8) ($fixed . 9) ($ident . 10) (":" . 11) ("?" . 12)
-    ("||" . 13) ("&&" . 14) ("|" . 15) ("^" . 16) ("!=" . 17) ("==" . 18) 
-    (">=" . 19) ("<=" . 20) (">" . 21) ("<" . 22) (">>" . 23) ("<<" . 24) 
-    ("%" . 25) ("/" . 26) ("!" . 27) ("~" . 28) ("-" . 29) ("+" . 30) ("*" . 
-    31) ("&" . 32) ("sizeof" . 33) ("--" . 34) ("++" . 35) ("->" . 36) 
-    ("." . 37) ("]" . 38) ("[" . 39) (")" . 40) ("(" . 41) ($error . 2) 
-    ($end . 43)))
-
 (define c99cx-tables
   (list
+   (cons 'mtab c99cx-mtab)
+   (cons 'ntab c99cx-ntab)
    (cons 'len-v c99cx-len-v)
-   (cons 'pat-v c99cx-pat-v)
    (cons 'rto-v c99cx-rto-v)
-   (cons 'mtab c99cx-mtab)))
+   (cons 'pat-v c99cx-pat-v)
+   ))
 
 ;;; end tables

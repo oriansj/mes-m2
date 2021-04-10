@@ -1,4 +1,4 @@
-;; ./mach.d/cpptab.scm
+;; cpp-tab.scm
 
 ;; Copyright (C) 2016,2017 Matthew R. Wette
 ;; 
@@ -6,11 +6,35 @@
 ;; modify it under the terms of the GNU Lesser General Public
 ;; License as published by the Free Software Foundation; either
 ;; version 3 of the License, or (at your option) any later version.
-;; See the file COPYING.LESSER included with the this distribution.
+;; See the file COPYING included with the this distribution.
+
+(define cpp-mtab
+  '(($start . 56) ("," . 3) ("__has_include_next__" . 4) ($string . 5) 
+    ("__has_include__" . 6) (")" . 7) ("(" . 8) ("defined" . 9) ($chlit/U . 10
+    ) ($chlit/u . 11) ($chlit/L . 12) ($chlit . 13) ($fixed . 14) ($ident . 15
+    ) ("--" . 16) ("++" . 17) ("~" . 18) ("!" . 19) ("%" . 20) ("/" . 21) 
+    ("*" . 22) ("-" . 23) ("+" . 24) (">>" . 25) ("<<" . 26) (">=" . 27) 
+    (">" . 28) ("<=" . 29) ("<" . 30) ("!=" . 31) ("==" . 32) ("&" . 33) 
+    ("^" . 34) ("|" . 35) ("&&" . 36) ("||" . 37) (":" . 38) ("?" . 39) 
+    ($error . 2) ($end . 41)))
+
+(define cpp-ntab
+  '((42 . expression-list) (43 . primary-expression) (44 . postfix-expression)
+    (45 . unary-expression) (46 . multiplicative-expression) (47 . 
+    additive-expression) (48 . shift-expression) (49 . relational-expression) 
+    (50 . equality-expression) (51 . bitwise-and-expression) (52 . 
+    bitwise-xor-expression) (53 . bitwise-or-expression) (54 . 
+    logical-and-expression) (55 . logical-or-expression) (56 . 
+    conditional-expression)))
 
 (define cpp-len-v
   #(1 1 5 1 3 1 3 1 3 1 3 1 3 1 3 3 1 3 3 3 3 1 3 3 1 3 3 1 3 3 3 1 2 2 2 2 2
     2 1 2 2 1 1 1 1 1 1 4 2 4 4 3 1 3))
+
+(define cpp-rto-v
+  #(#f 56 56 55 55 54 54 53 53 52 52 51 51 50 50 50 49 49 49 49 49 48 48 48 
+    47 47 47 46 46 46 46 45 45 45 45 45 45 45 44 44 44 43 43 43 43 43 43 43 43
+    43 43 43 42 42))
 
 (define cpp-pat-v
   #(((8 . 1) (4 . 2) (6 . 3) (9 . 4) (10 . 5) (11 . 6) (12 . 7) (13 . 8) 
@@ -123,26 +147,13 @@
     (54 . 28) (55 . 29) (56 . 93)) ((1 . -47)) ((1 . -49)) ((1 . -50)) 
     ((1 . -53)) ((1 . -2))))
 
-(define cpp-rto-v
-  #(#f 56 56 55 55 54 54 53 53 52 52 51 51 50 50 50 49 49 49 49 49 48 48 48 
-    47 47 47 46 46 46 46 45 45 45 45 45 45 45 44 44 44 43 43 43 43 43 43 43 43
-    43 43 43 42 42))
-
-(define cpp-mtab
-  '(($start . 56) ("," . 3) ("__has_include_next__" . 4) ($string . 5) 
-    ("__has_include__" . 6) (")" . 7) ("(" . 8) ("defined" . 9) ($chlit/U . 10
-    ) ($chlit/u . 11) ($chlit/L . 12) ($chlit . 13) ($fixed . 14) ($ident . 15
-    ) ("--" . 16) ("++" . 17) ("~" . 18) ("!" . 19) ("%" . 20) ("/" . 21) 
-    ("*" . 22) ("-" . 23) ("+" . 24) (">>" . 25) ("<<" . 26) (">=" . 27) 
-    (">" . 28) ("<=" . 29) ("<" . 30) ("!=" . 31) ("==" . 32) ("&" . 33) 
-    ("^" . 34) ("|" . 35) ("&&" . 36) ("||" . 37) (":" . 38) ("?" . 39) 
-    ($error . 2) ($end . 41)))
-
 (define cpp-tables
   (list
+   (cons 'mtab cpp-mtab)
+   (cons 'ntab cpp-ntab)
    (cons 'len-v cpp-len-v)
-   (cons 'pat-v cpp-pat-v)
    (cons 'rto-v cpp-rto-v)
-   (cons 'mtab cpp-mtab)))
+   (cons 'pat-v cpp-pat-v)
+   ))
 
 ;;; end tables

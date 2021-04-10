@@ -54,13 +54,13 @@ build with M2-Planet, you can debug with `gdb`/`cgdb`).
 Once you got the full MES REPL working, you can try running mescc like this
 
 ```ShellSession
-$ MES_PREFIX=mes bin/mes-m2 -s scripts/mescc.scm -- -I include -S scaffold/exit-42.c -o foo.S
+$ ./bin/mes --no-auto-compile -L module -e main scripts/mescc.scm -I include -v -S scaffold/exit-42.c -o foo.S
 ```
 
 You can also compare the execution with guile's:
 
 ```ShellSession
-$guile --no-auto-compile -L module -e main scripts/mescc.scm -I include -S scaffold/exit-42.c -o foo.S
+$ guile --no-auto-compile -L module -e main scripts/mescc.scm -I include -v -S scaffold/exit-42.c -o foo.S
 ```
 
 to compile using the MesCC and nyacc included here.

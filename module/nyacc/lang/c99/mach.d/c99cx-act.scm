@@ -1,4 +1,4 @@
-;; ./mach.d/c99cxact.scm
+;; c99cx-act.scm
 
 ;; Copyright (C) 2018 Matthew R. Wette
 ;; 
@@ -6,7 +6,7 @@
 ;; modify it under the terms of the GNU Lesser General Public
 ;; License as published by the Free Software Foundation; either
 ;; version 3 of the License, or (at your option) any later version.
-;; See the file COPYING.LESSER included with the this distribution.
+;; See the file COPYING included with the this distribution.
 
 (define c99cx-act-v
   (vector

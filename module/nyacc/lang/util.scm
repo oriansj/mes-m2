@@ -20,7 +20,8 @@
 (define-module (nyacc lang util)
   #:export (license-lgpl3+
 	    report-error
-	    *input-stack* push-input pop-input reset-input-stack
+	    *input-stack* push-input pop-input
+	    reset-input-stack input-stack-portinfo
 	    make-tl tl->list ;; rename?? to tl->sx for sxml-expr
 	    tl-append tl-insert tl-extend tl+attr tl+attr*
 	    ;; for pretty-printing
@@ -31,16 +32,13 @@
 	    sferr pperr
 	    mach-dir
 	    ;; deprecated
-	    sx-set-attr! sx-set-attr*
-	    lang-crn-lic
-	    )
-  #:use-module ((srfi srfi-1) #:select (find fold))
-  ;; #:use-module ((sxml xpath) #:select (sxpath)) ;; see sx-find below
-  #:use-module (ice-9 pretty-print)
-  )
+	    lang-crn-lic)
+  #:use-module ((srfi srfi-1) #:select (find fold fold-right))
+  #:use-module (ice-9 pretty-print))
 (cond-expand
   (mes)
   (guile-2)
+  (guile-3)
   (guile
    (use-modules (ice-9 optargs))
    (use-modules (srfi srfi-16)))
@@ -54,7 +52,7 @@ This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
 License as published by the Free Software Foundation; either
 version 3 of the License, or (at your option) any later version.
-See the file COPYING.LESSER included with the this distribution.")
+See the file COPYING included with the this distribution.")
 (define lang-crn-lic license-lgpl3+)
 
 (define (sferr fmt . args)
@@ -63,12 +61,18 @@ See the file COPYING.LESSER included with the this distribution.")
   (apply pretty-print exp (current-error-port) kw-args))
 
 ;; @deffn {Procedure} report-error fmt args
-;; Report an error: to stderr, providing file and line num info, and add nl.
+;; Report an error, to stderr, providing file and line num info, and add
+;; newline.  This also reports context of parent files.
+;; @end deffn
 (define (report-error fmt args)
   (let ((fn (or (port-filename (current-input-port)) "(unknown)"))
 	(ln (1+ (port-line (current-input-port)))))
     (apply simple-format (current-error-port)
-	   (string-append "~A:~A: " fmt "\n") fn ln args)))
+	   (string-append "~A:~A: " fmt "\n") fn ln args)
+    (for-each
+     (lambda (pair)
+       (simple-format (current-error-port) "  at ~A:~A\n" (car pair) (cdr pair)))
+     (input-stack-portinfo))))
 
 ;; === input stack =====================
 
@@ -89,9 +93,20 @@ See the file COPYING.LESSER included with the this distribution.")
   (let ((ipstk (fluid-ref *input-stack*)))
     (if (null? ipstk) #f
 	(begin
-	  ;;(sferr "~S <=po\n" (length ipstk))
+	  (close-port (current-input-port))
 	  (set-current-input-port (car ipstk))
 	  (fluid-set! *input-stack* (cdr ipstk))))))
+
+;; @deffn {Procedure} input-stack-portinfo
+;; Return a list of pairs of input stack filename and line number.
+;; @end deffn
+(define (input-stack-portinfo)
+  "- Procedure: input-stack-portinfo
+     Return a list of pairs of input stack filename and line number."
+  (define (port-info port)
+    (cons (or (port-filename port) "(unknown)") (1+ (port-line port))))
+  (fold-right (lambda (port info) (cons (port-info port) info)) '()
+	      (fluid-ref *input-stack*)))
 
 ;; === tl ==============================
 
@@ -108,9 +123,11 @@ See the file COPYING.LESSER included with the this distribution.")
 ;; Create a tagged-list structure.
 ;; @end deffn
 (define (make-tl tag . rest)
-  (let iter ((tail tag) (l rest))
+  "- Procedure: make-tl tag [item item ...]
+     Create a tagged-list structure."
+  (let loop ((tail tag) (l rest))
     (if (null? l) (cons '() tail)
-	(iter (cons (car l) tail) (cdr l)))))
+	(loop (cons (car l) tail) (cdr l)))))
 
 ;; @deffn {Procedure} tl->list tl
 ;; Convert a tagged list structure to a list.  This collects added attributes
@@ -120,45 +137,58 @@ See the file COPYING.LESSER included with the this distribution.")
 ;; @end example
 ;; @end deffn
 (define (tl->list tl)
+  "- Procedure: tl->list tl
+     Convert a tagged list structure to a list.  This collects added
+     attributes and puts them right after the (leading) tag, resulting
+     in something like
+          (<tag> ( <attr>) <rest>)"
   (let ((heda (car tl))
-	(head (let iter ((head '()) (attr '()) (tl-head (car tl)))
+	(head (let loop ((head '()) (attr '()) (tl-head (car tl)))
 		(if (null? tl-head)
 		    (if (pair? attr)
 			(cons (cons '@ attr) (reverse head))
 			(reverse head))
 		    (if (and (pair? (car tl-head)) (eq? '@ (caar tl-head)))
-			(iter head (cons (cdar tl-head) attr) (cdr tl-head))
-			(iter (cons (car tl-head) head) attr (cdr tl-head)))))))
-    (let iter ((tail '()) (tl-tail (cdr tl)))
+			(loop head (cons (cdar tl-head) attr) (cdr tl-head))
+			(loop (cons (car tl-head) head) attr (cdr tl-head)))))))
+    (let loop ((tail '()) (tl-tail (cdr tl)))
       (if (pair? tl-tail)
-	  (iter (cons (car tl-tail) tail) (cdr tl-tail))
+	  (loop (cons (car tl-tail) tail) (cdr tl-tail))
 	  (cons tl-tail (append head tail))))))
 
 ;; @deffn {Procedure} tl-insert tl item
 ;; Insert item at front of tagged list (but after tag).
 ;; @end deffn
 (define (tl-insert tl item)
+  "- Procedure: tl-insert tl item
+     Insert item at front of tagged list (but after tag)."
   (cons (cons item (car tl)) (cdr tl)))
 
 ;; @deffn {Procedure} tl-append tl item ...
 ;; Append items at end of tagged list.
 ;; @end deffn
 (define (tl-append tl . rest)
+  "- Procedure: tl-append tl item ...
+     Append items at end of tagged list."
   (cons (car tl)
-	(let iter ((tail (cdr tl)) (items rest))
+	(let loop ((tail (cdr tl)) (items rest))
 	  (if (null? items) tail
-	      (iter (cons (car items) tail) (cdr items))))))
+	      (loop (cons (car items) tail) (cdr items))))))
 
 ;; @deffn {Procedure} tl-extend tl item-l
 ;; Extend with a list of items.
 ;; @end deffn
 (define (tl-extend tl item-l)
+  "- Procedure: tl-extend tl item-l
+     Extend with a list of items."
   (apply tl-append tl item-l))
 
 ;; @deffn {Procedure} tl-extend! tl item-l
 ;; Extend with a list of items.  Uses @code{set-cdr!}.
 ;; @end deffn
 (define (tl-extend! tl item-l)
+  "- Procedure: tl-extend! tl item-l
+     Extend with a list of items.  Uses 'set-cdr!'."
   (set-cdr! (last-pair tl) item-l)
   tl)
 
@@ -169,6 +199,9 @@ See the file COPYING.LESSER included with the this distribution.")
 ;; @end example
 ;; @end deffn
 (define (tl+attr tl key val)
+  "- Procedure: tl+attr tl key val)
+     Add an attribute to a tagged list.  Return a new tl.
+          (tl+attr tl 'type \"int\")"
   (tl-insert tl (cons '@ (list key val))))
 
 ;; @deffn {Procedure} tl+attr tl key val [key val [@dots{} ...]]) => tl
@@ -178,6 +211,9 @@ See the file COPYING.LESSER included with the this distribution.")
 ;; @end example
 ;; @end deffn
 (define (tl+attr* tl . rest)
+  "- Procedure: tl+attr tl key val [key val [... ...]]) => tl
+     Add multiple attributes to a tagged list.  Return a new tl.
+          (tl+attr tl 'type \"int\")"
   (if (null? rest) tl
       (tl+attr* (tl+attr tl (car rest) (cadr rest)) (cddr rest))))
 
@@ -185,8 +221,7 @@ See the file COPYING.LESSER included with the this distribution.")
 ;; Merge guts of phony-tl @code{tl1} into @code{tl}.
 ;; @end deffn
 (define (tl-merge tl tl1)
-  (error "not implemented (yet)")
-  )
+  (error "tl-merge: not implemented (yet)"))
 
 ;;; === misc ========================
 
@@ -221,19 +256,19 @@ See the file COPYING.LESSER included with the this distribution.")
   ;; @code{<}, @code{>}, @code{=} or @code{#f} (no relation).
   ;; @end deffn
   (define (prec a b)
-    (let iter ((ag #f) (bg #f) (opg op-prec)) ;; a-group, b-group
+    (let loop ((ag #f) (bg #f) (opg op-prec)) ;; a-group, b-group
       (cond
        ((null? opg) #f)			; indeterminate
        ((memq a (car opg))
 	(if bg '<
 	    (if (memq b (car opg)) '=
-		(iter #t bg (cdr opg)))))
+		(loop #t bg (cdr opg)))))
        ((memq b (car opg))
 	(if ag '>
 	    (if (memq a (car opg)) '=
-		(iter ag #t (cdr opg)))))
+		(loop ag #t (cdr opg)))))
        (else
-	(iter ag bg (cdr opg))))))
+	(loop ag bg (cdr opg))))))
 
   (lambda (side op expr)
     (let ((assc? (case side
@@ -253,26 +288,26 @@ See the file COPYING.LESSER included with the this distribution.")
 (define* (expand-tabs str #:optional (col 0))
 
   (define (fill-tab col chl)
-    (let iter ((chl (if (zero? col) (cons #\space chl) chl))
+    (let loop ((chl (if (zero? col) (cons #\space chl) chl))
 	       (col (if (zero? col) (1+ col) col)))
       (if (zero? (modulo col 8)) chl
-	  (iter (cons #\space chl) (1+ col)))))
+	  (loop (cons #\space chl) (1+ col)))))
 
   (define (next-tab-col col) ;; TEST THIS !!!
     ;;(* 8 (quotient (+ 9 col) 8))) ???
     (* 8 (quotient col 8)))
 
   (let ((strlen (string-length str)))
-    (let iter ((chl '()) (col col) (ix 0))
+    (let loop ((chl '()) (col col) (ix 0))
       (if (= ix strlen) (list->string (reverse chl))
 	  (let ((ch (string-ref str ix)))
 	    (case ch
 	      ((#\newline)
-	       (iter (cons ch chl) 0 (1+ ix)))
+	       (loop (cons ch chl) 0 (1+ ix)))
 	      ((#\tab)
-	       (iter (fill-tab col chl) (next-tab-col col) (1+ ix)))
+	       (loop (fill-tab col chl) (next-tab-col col) (1+ ix)))
 	      (else
-	       (iter (cons ch chl) (1+ col) (1+ ix)))))))))
+	       (loop (cons ch chl) (1+ col) (1+ ix)))))))))
 
 ;; @deffn {Procedure} make-pp-formatter [port] <[options> => fmtr
 ;; Options
@@ -290,7 +325,7 @@ See the file COPYING.LESSER included with the this distribution.")
 ;; @end deffn
 (define* (make-pp-formatter #:optional (port (current-output-port))
 			    #:key per-line-prefix (width 79) (basic-offset 2))
-  (letrec*
+  (let*
       ((pfxlen (string-length (expand-tabs (or per-line-prefix ""))))
        (maxcol (- width (if per-line-prefix pfxlen 0)))
        (maxind 36)
@@ -329,10 +364,8 @@ See the file COPYING.LESSER included with the this distribution.")
 			      (sferr "expand-tabs (pfxlen=~S)\n" pfxlen)
 			      (sferr "~A\n" str)
 			      (sferr "~A~A\n\n" per-line-prefix
-				     (expand-tabs str pfxlen))
-			      )
-			    (expand-tabs str pfxlen)
-			    )
+				     (expand-tabs str pfxlen)))
+			    (expand-tabs str pfxlen))
 			  str))
 		 (len (string-length str)))
 	    (cond
@@ -359,8 +392,7 @@ See the file COPYING.LESSER included with the this distribution.")
        ((eqv? 'pop arg0) (pop-il))
        ((eqv? 'nlin arg0) ;; newline if needed
         (cond ((positive? column) (newline) (set! column 0))))
-       (else (error "pp-formatter: bad args"))
-       ))))
+       (else (throw 'nyacc-error "pp-formatter: bad args"))))))
 
 ;; @deffn {Procedure} make-pp-formatter/ugly => fmtr
 ;; Makes a @code{fmtr} like @code{make-pp-formatter} but no indentation
@@ -403,7 +435,7 @@ See the file COPYING.LESSER included with the this distribution.")
         (cond ((positive? column) (newline) (set! column 0))))
        ((eqv? 'push arg0) #f)
        ((eqv? 'pop arg0) #f)
-       (else (error "pp-formatter/ugly: bad args"))))))
+       (else (throw 'nyacc-error "pp-formatter/ugly: bad args"))))))
   
 ;; @deffn {Procedure} move-if-changed src-file dst-file [sav-file]
 ;; Return @code{#t} if changed.
@@ -454,20 +486,20 @@ See the file COPYING.LESSER included with the this distribution.")
   ;; 2: "0"-"9"->(cons ch dl), else->3:
   ;; 3: "L","l","U","u"->3, eof->(cleanup) else->#f
   (let ((ln (string-length str)))
-    (let iter ((dl '()) (bx "") (cs cs:dig) (st 0) (ix 0))
+    (let loop ((dl '()) (bx "") (cs cs:dig) (st 0) (ix 0))
       (if (= ix ln)
 	  (if (null? dl) #f (string-append bx (list->string (reverse dl))))
 	  (case st
-	    ((0) (iter (cons (string-ref str ix) dl) bx cs
+	    ((0) (loop (cons (string-ref str ix) dl) bx cs
 		       (if (char=? #\0 (string-ref str ix)) 1 2)
 		       (1+ ix)))
 	    ((1) (if (char=? #\x (string-ref str ix))
-		     (iter '() "#x" cs:hex 2 (1+ ix))
-		     (iter '() "#o" cs:oct 2 ix)))
+		     (loop '() "#x" cs:hex 2 (1+ ix))
+		     (loop '() "#o" cs:oct 2 ix)))
 	    ((2) (if (char-set-contains? cs (string-ref str ix))
-		     (iter (cons (string-ref str ix) dl) bx cs st (1+ ix))
+		     (loop (cons (string-ref str ix) dl) bx cs st (1+ ix))
 		     (if (char-set-contains? cs:long (string-ref str ix))
-			 (iter dl bx cs 3 (1+ ix))
+			 (loop dl bx cs 3 (1+ ix))
 			 #f)))
 	    ((3) #f))))))
 

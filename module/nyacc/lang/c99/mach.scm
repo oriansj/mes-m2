@@ -17,9 +17,15 @@
 
 ;;; Notes:
 
-;; C parser generator: based on ISO-C99; with comments and CPP statements
+;; This is a C parser, based on ISO-C99, with comments and CPP statements.
 
-;; but check this:
+;; Currentl K&R function definitions are not supported:
+;;   int f(x) int x; { ... } => syntax error
+;; because they lead to an ambiguous grammar, I believe:
+;;   int f(x) __attribute__((__static__)) int x; { ... }
+
+;; See also:
+;;   http://www.quut.com/c/ANSI-C-grammar-y.html - C11 grammar
 ;;   https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html#C-Extensions
 
 ;;; Code:
@@ -32,8 +38,7 @@
   #:use-module (nyacc parse)
   #:use-module (nyacc lex)
   #:use-module (nyacc util)
-  #:use-module ((srfi srfi-43) #:select (vector-map))
-  )
+  #:use-module ((srfi srfi-43) #:select (vector-map)))
 
 ;; @deffn {Variable} c99-spec
 ;; This variable is the specification a-list for the hacked ISO C99 language.
@@ -48,22 +53,29 @@
   (lalr-spec
    (notice (string-append "Copyright (C) 2016-2018 Matthew R. Wette"
 			  license-lgpl3+))
+
    (prec< 'then "else")	       ; "then/else" SR-conflict resolution
    (prec< 'imp		       ; "implied type" SR-conflict resolution
-	  "char" "short" "int" "long"
-	  "float" "double" "_Complex")
+	  (nonassoc "char" "short" "int" "long" "_Fract" "_Accum" "_Sat")
+	  (nonassoc "float" "double" "_Complex"))
+   (prec< 'shift-on-attr		; living on the edge ...
+	  (nonassoc "__attribute__" "__packed__" "__aligned__" "__alignof__")
+	  'reduce-on-attr
+	  'reduce-on-semi
+	  (nonassoc "*" "(" '$ident))
+
    (start translation-unit)
    (grammar
 
-    ;; expressions
+    ;; === expressions ========================================================
+
     (primary-expression			; S 6.5.1
      (identifier ($$ `(p-expr ,$1)))
      (constant ($$ `(p-expr ,$1)))
-     (string-literal ($$ `(p-expr ,(tl->list $1))))
+     (string-literal ($$ `(p-expr ,$1)))
      ("(" expression ")" ($$ $2))
-     ("(" "{" block-item-list "}" ")"
-      ($$ `(stmt-expr (@ (extension "GNUC")) ,$3)))
-     )
+     ("(" "{" ($$ (cpi-push)) block-item-list ($$ (cpi-pop)) "}" ")"
+      ($$ `(stmt-expr (@ (extension "GNUC")) ,$4))))
 
     (postfix-expression			; S 6.5.2
      (primary-expression)
@@ -78,17 +90,15 @@
      ("(" type-name ")" "{" initializer-list "}"
       ($$ `(comp-lit ,$2 ,(tl->list $5))))
      ("(" type-name ")" "{" initializer-list "," "}"
-      ($$ `(comp-lit ,$2 ,(tl->list $5))))
-     )
+      ($$ `(comp-lit ,$2 ,(tl->list $5)))))
 
     (argument-expression-list
      (assignment-expression ($$ (make-tl 'expr-list $1)))
      (argument-expression-list "," assignment-expression ($$ (tl-append $1 $3)))
-     ;; The following is a modification to deal with using abstract declarations
+     ;; The following is a hack to deal with using abstract declarations
      ;; as arguments to CPP macros (e.g., see offsetof in <stddef.h>).
      (arg-expr-hack ($$ (make-tl 'expr-list $1)))
-     (argument-expression-list "," arg-expr-hack ($$ (tl-append $1 $3)))
-     )
+     (argument-expression-list "," arg-expr-hack ($$ (tl-append $1 $3))))
     (arg-expr-hack
      (declaration-specifiers
       abstract-declarator ($$ `(param-decl ,(tl->list $1) $2)))
@@ -108,86 +118,73 @@
 
     (cast-expression			; S 6.5.4
      (unary-expression)
-     ("(" type-name ")" cast-expression ($$ `(cast ,$2 ,$4)))
-     )
+     ("(" type-name ")" cast-expression ($$ `(cast ,$2 ,$4))))
 
     (multiplicative-expression		; S 6.5.5
      (cast-expression)
      (multiplicative-expression "*" cast-expression ($$ `(mul ,$1 ,$3)))
      (multiplicative-expression "/" cast-expression ($$ `(div ,$1 ,$3)))
-     (multiplicative-expression "%" cast-expression ($$ `(mod ,$1 ,$3)))
-     )
+     (multiplicative-expression "%" cast-expression ($$ `(mod ,$1 ,$3))))
 
     (additive-expression		; S 6.5.6
      (multiplicative-expression)
      (additive-expression "+" multiplicative-expression ($$ `(add ,$1 ,$3)))
-     (additive-expression "-" multiplicative-expression ($$ `(sub ,$1 ,$3)))
-     )
+     (additive-expression "-" multiplicative-expression ($$ `(sub ,$1 ,$3))))
 
     (shift-expression			; S 6.5.7
      (additive-expression)
      (shift-expression "<<" additive-expression ($$ `(lshift ,$1 ,$3)))
-     (shift-expression ">>" additive-expression ($$ `(rshift ,$1 ,$3)))
-     )
+     (shift-expression ">>" additive-expression ($$ `(rshift ,$1 ,$3))))
 
     (relational-expression		; S 6.5.8
      (shift-expression)
      (relational-expression "<" shift-expression ($$ `(lt ,$1 ,$3)))
      (relational-expression ">" shift-expression ($$ `(gt ,$1 ,$3)))
      (relational-expression "<=" shift-expression ($$ `(le ,$1 ,$3)))
-     (relational-expression ">=" shift-expression ($$ `(ge ,$1 ,$3)))
-     )
+     (relational-expression ">=" shift-expression ($$ `(ge ,$1 ,$3))))
     
     (equality-expression		; S 6.5.9
      (relational-expression)
      (equality-expression "==" relational-expression ($$ `(eq ,$1 ,$3)))
-     (equality-expression "!=" relational-expression ($$ `(ne ,$1 ,$3)))
-     )
+     (equality-expression "!=" relational-expression ($$ `(ne ,$1 ,$3))))
 
     ;; called AND-expression
     (bitwise-and-expression		; S 6.5.10
      (equality-expression)
      (bitwise-and-expression "&" equality-expression
-			     ($$ `(bitwise-and ,$1 ,$3)))
-     )
+			     ($$ `(bitwise-and ,$1 ,$3))))
 
     ;; called exclusive-OR-expression
     (bitwise-xor-expression		; S 6.5.11
      (bitwise-and-expression)
      (bitwise-xor-expression "^" bitwise-and-expression
-			     ($$ `(bitwise-xor ,$1 ,$3)))
-     )
+			     ($$ `(bitwise-xor ,$1 ,$3))))
 
     ;; called inclusive-OR-expression
     (bitwise-or-expression		; S 6.5.12
      (bitwise-xor-expression)
      (bitwise-or-expression "|" bitwise-xor-expression
-			    ($$ `(bitwise-or ,$1 ,$3)))
-     )
+			    ($$ `(bitwise-or ,$1 ,$3))))
 
     (logical-and-expression		; S 6.5.13
      (bitwise-or-expression)
      (logical-and-expression "&&" bitwise-or-expression
-			     ($$ `(and ,$1 ,$3)))
-     )
+			     ($$ `(and ,$1 ,$3))))
 
     (logical-or-expression		; 6.5.14
      (logical-and-expression)
      (logical-or-expression "||" logical-and-expression
-			    ($$ `(or ,$1 ,$3)))
-     )
+			    ($$ `(or ,$1 ,$3))))
     
     (conditional-expression
      (logical-or-expression)
      (logical-or-expression "?" expression ":" conditional-expression
-			    ($$ `(cond-expr ,$1 ,$3 ,$5)))
-     )
+			    ($$ `(cond-expr ,$1 ,$3 ,$5))))
 
     (assignment-expression		; S 6.5.16
      (conditional-expression)
      (unary-expression assignment-operator assignment-expression
-		       ($$ `(assn-expr ,$1 (op ,$2) ,$3)))
-     )
+		       ($$ `(assn-expr ,$1 (op ,$2) ,$3))))
     (assignment-operator
      ("=") ("+=") ("-=") ("*=") ("/=") ("%=")
      ("<<=") (">>=") ("&=") ("^=") ("|="))
@@ -197,81 +194,70 @@
      (expression "," assignment-expression
 		 ($$ (if (eqv? 'comma-expr (sx-tag $1))
 			 (append $1 (list $3))
-			 `(comma-expr ,$1 ,$3))))
-     )
+			 `(comma-expr ,$1 ,$3)))))
 
     (constant-expression		; S 6.6
-     (conditional-expression)
-     )
+     (conditional-expression))
 
-    ;; declarations
+    ;; === declarations
+
+    ;; TODO: check if we should move attributes or trap attribute-only spec's
     (declaration			; S 6.7
+     (declaration-no-comment ";")
+     (declaration-no-comment ";" code-comment ($$ (sx-attr-add $1 $3))))
+
+    (declaration-no-comment
      (declaration-specifiers
       init-declarator-list
-      opt-attribute-specifier
-      ($$ (save-typenames `(decl ,(tl->list $1) ,(tl->list $2))))
-      ";" opt-code-comment
-      ($$ (if (pair? $3)
-	      (if (pair? $6)
-		  `(decl ,$3 ,(sx-ref $4 1) ,(sx-ref $4 2) ,$6)
-		  `(decl ,$3 ,(sx-ref $4 1) ,(sx-ref $4 2)))
-	      (if (pair? $6)
-		  `(decl ,(sx-ref $4 1) ,(sx-ref $4 2) ,$6)
-		  $4))))
+      ($$ (save-typenames `(decl ,$1 ,$2))))
      (declaration-specifiers
-      ";" opt-code-comment
-      ($$ (if (pair? $3)
-	      `(decl ,(tl->list $1) ,(list $3))
-	      `(decl ,(tl->list $1)))))
-     ;; macOS has decl's like `int bar(int) __asm("bar");' :
-     ;;(declaration-specifiers darwin-asm ";")
-     )
+      ($$ `(decl ,$1))))
+
+    ;; --- declaration specifiers
 
     (declaration-specifiers		; S 6.7
-     ;; storage-class-specifier declaration-specifiers_opt
-     (storage-class-specifier ($$ (make-tl 'decl-spec-list $1)))
-     (storage-class-specifier declaration-specifiers ($$ (tl-insert $2 $1)))
-     ;; type-specifier declaration-specifiers_opt
-     (type-specifier ($$ (make-tl 'decl-spec-list $1)))
-     (type-specifier declaration-specifiers ($$ (tl-insert $2 $1)))
-     ;; type-qualifier declaration-specifiers_opt
-     (type-qualifier ($$ (make-tl 'decl-spec-list $1)))
-     (type-qualifier declaration-specifiers ($$ (tl-insert $2 $1)))
-     ;; function-specifier declaration-specifiers_opt
-     (function-specifier ($$ (make-tl 'decl-spec-list $1)))
-     (function-specifier declaration-specifiers ($$ (tl-insert $2 $1)))
-     )
-
-    (init-declarator-list		; S 6.7
-     (init-declarator ($$ (make-tl 'init-declr-list $1)))
-     (init-declarator-list "," init-declarator ($$ (tl-append $1 $3)))
-     )
-
-    (init-declarator			; S 6.7
-     (declarator ($$ `(init-declr ,$1)))
-     (declarator asm-expression ($$ `(init-declr ,$1)))
-     (declarator "=" initializer ($$ `(init-declr ,$1 ,$3)))
-     (declarator asm-expression "=" initializer ($$ `(init-declr ,$1 ,$4)))
-     )
+     (declaration-specifiers-1 ($$ (process-specs (tl->list $1)))))
+    (declaration-specifiers-1
+     ;; storage-class-specifiers
+     (storage-class-specifier
+      ($prec 'shift-on-attr) ($$ (make-tl 'decl-spec-list $1)))
+     (storage-class-specifier declaration-specifiers-1 ($$ (tl-insert $2 $1)))
+     ;; type-specifiers
+     (type-specifier
+      ($prec 'reduce-on-attr) ($$ (make-tl 'decl-spec-list $1)))
+     (type-specifier declaration-specifiers-1 ($$ (tl-insert $2 $1)))
+     ;; type-qualifiers
+     (type-qualifier
+      ($prec 'shift-on-attr) ($$ (make-tl 'decl-spec-list $1)))
+     (type-qualifier declaration-specifiers-1 ($$ (tl-insert $2 $1)))
+     ;; function-specifiers
+     (function-specifier
+      ($prec 'reduce-on-attr) ($$ (make-tl 'decl-spec-list $1)))
+     (function-specifier declaration-specifiers-1 ($$ (tl-insert $2 $1)))
+     ;; attribute-specifiers
+     (attribute-specifier
+      ($prec 'reduce-on-semi) ($$ (make-tl 'decl-spec-list $1)))
+     (attribute-specifier declaration-specifiers-1 ($$ (tl-insert $2 $1))))
 
     (storage-class-specifier		; S 6.7.1
      ("auto" ($$ '(stor-spec (auto))))
      ("extern" ($$ '(stor-spec (extern))))
      ("register" ($$ '(stor-spec (register))))
      ("static" ($$ '(stor-spec (static))))
-     ("typedef" ($$ '(stor-spec (typedef))))
-     )
+     ("typedef" ($$ '(stor-spec (typedef)))))
 
+    ;; I have created fixed-, float- and complex- type specifiers to capture
+    ;; combinations like "short int" "long long" etc.
     (type-specifier			; S 6.7.2
      ("void" ($$ '(type-spec (void))))
-     (fixed-type-specifier ($$ `(type-spec ,$1))) ; I made this up
-     (float-type-specifier ($$ `(type-spec ,$1))) ; I made this up
+     (fixed-type-specifier ($$ `(type-spec ,$1)))
+     (float-type-specifier ($$ `(type-spec ,$1)))
+     (fixpt-type-specifier ($$ `(type-spec ,$1)))
      ("_Bool" ($$/ref 's5.1.5-01 '(type-spec (fixed-type "_Bool"))))
-     (complex-type-specifier ($$ `(type-spec ,$1))) ; I made this up
+     (complex-type-specifier ($$ `(type-spec ,$1)))
      (struct-or-union-specifier ($$ `(type-spec ,$1)))
      (enum-specifier ($$ `(type-spec ,$1)))
-     (typedef-name ($$ `(type-spec ,$1)))
-     )
+     (typedef-name ($$ `(type-spec ,$1))))
 
     (fixed-type-specifier
      ("short" ($prec 'imp) ($$ '(fixed-type "short")))
@@ -303,91 +289,86 @@
      ("char" ($$ '(fixed-type "char")))
      ("signed" "char" ($$ '(fixed-type "signed char")))
      ("unsigned" "char" ($$ '(fixed-type "unsigned char"))))
+
     (float-type-specifier
      ("float" ($prec 'imp) ($$ '(float-type "float")))
      ("double" ($prec 'imp) ($$ '(float-type "double")))
      ("long" "double" ($$ '(float-type "long double"))))
+
     (complex-type-specifier
      ("_Complex" ($$ '(complex-type "_Complex")))
      ("float" "_Complex" ($$ '(complex-type "float _Complex")))
      ("double" "_Complex" ($$ '(complex-type "double _Complex")))
-     ("long" "double" "_Complex" ($$ '(complex-type "long double _Complex")))
-     )
+     ("long" "double" "_Complex" ($$ '(complex-type "long double _Complex"))))
 
-    ;; Support for __attributes__(( ... )).  See the gcc documentation.
-    ;; The documentation is not rigourous about defining where the
-    ;; attribute specifier can appear.  This is my best attempt.  MW 04/07/18
-    ;; https://gcc.gnu.org/onlinedocs/gcc-4.7.0/gcc/Attribute-Syntax.html
-    (attribute-specifier
-     (attribute-specifier-single)
-     (attribute-specifier attribute-specifier-single
-			  ($$ (append $1 (cdr $2)))))
-    (attribute-specifier-single
-     ("__attribute__" "(" "(" attribute-list ")" ")" ($$ (tl->list $4)))
-     (attr-name ($$ `(attributes $1))))
-    (attr-name
-     ("__packed__") ("__aligned__") ("__alignof__"))
-    (attr-ident
-     (attr-name) ($ident))
-    (attribute-list
-     ($empty ($$ '(@)))
-     (attribute ($$ (make-tl '@ $1)))
-     (attribute-list "," ($$ $1))
-     (attribute-list "," attribute ($$ (tl-append $1 $3))))
-    (attribute
-     (attr-ident ($$ (list (string->symbol $1) "")))
-     (attr-ident
-      "(" attr-expr-list ")"
-      ($$ (list (string->symbol $1) (attr-expr-list->string (tl->list $3))))))
-    (attr-expr-list
-     (attribute-expr ($$ (make-tl 'attr-expr-list $1)))
-     (attr-expr-list "," attribute-expr ($$ (tl-append $1 $3))))
-    (attr-call-name ($ident) (attr-name))
-    (attribute-expr
-     (type-name ($$ (sx-ref* $1 1 1 1 1))) ;; check this
-     ($fixed) ($string)			   ; <= EXPAND THIS
-     (attr-call-name)
-     (attr-call-name
-      "(" attr-expr-list ")"
-      ($$ (string-append $1 (attr-expr-list->string (tl->list $3))))))
-    (opt-attribute-specifier
-     ($empty)
-     (attribute-specifier)
-     )
+    (fixpt-type-specifier
+     ;; http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2001/n1290.pdf
+     ("short" "_Fract" ($$ '(fixpt-type "short _Fract")))
+     ("_Fract" ($$ '(fixpt-type "_Fract")))
+     ("long" "_Fract" ($$ '(fixpt-type "long _Fract")))
+     ("signed" "short" "_Fract" ($$ '(fixpt-type "signd short _Fract")))
+     ("signed" "_Fract" ($$ '(fixpt-type "signed _Fract")))
+     ("signed" "long _Fract" ($$ '(fixpt-type "signed long _Fract")))
+     ("unsigned" "short" "_Fract" ($$ '(fixpt-type "unsigned short _Fract")))
+     ("unsigned" "_Fract" ($$ '(fixpt-type "unsigned _Fract")))
+     ("unsigned" "long _Fract" ($$ '(fixpt-type "unsigned long _Fract")))
+     ("short" "_Accum" ($$ '(fixpt-type "short _Accum")))
+     ("_Accum" ($$ '(fixpt-type "_Accum")))
+     ("long _Accum" ($$ '(fixpt-type "long _Accum")))
+     ("signed" "short" "_Accum" ($$ '(fixpt-type "signd short _Accum")))
+     ("signed" "_Accum" ($$ '(fixpt-type "signed _Accum")))
+     ("signed" "long" "_Accum" ($$ '(fixpt-type "signed long _Accum")))
+     ("unsigned" "short" "_Accum" ($$ '(fixpt-type "unsigned short _Accum")))
+     ("unsigned" "_Accum" ($$ '(fixpt-type "unsigned _Accum")))
+     ("unsigned" "long" "_Accum" ($$ '(fixpt-type "unsigned long _Accum")))
+     ("_Sat" "short" "_Fract" ($$ '(fixpt-type "_Sat short _Fract")))
+     ("_Sat" "_Fract" ($$ '(fixpt-type "_Sat _Fract")))
+     ("_Sat" "long" "_Fract" ($$ '(fixpt-type "_Sat long _Fract")))
+     ("_Sat" "signed" "short" "_Fract"
+      ($$ '(fixpt-type "_Sat signd short _Fract")))
+     ("_Sat" "signed" "_Fract" ($$ '(fixpt-type "_Sat signed _Fract")))
+     ("_Sat" "signed" "long _Fract"
+      ($$ '(fixpt-type "_Sat signed long _Fract")))
+     ("_Sat" "unsigned" "short" "_Fract"
+      ($$ '(fixpt-type "_Sat unsigned short _Fract")))
+     ("_Sat" "unsigned" "_Fract" ($$ '(fixpt-type "_Sat unsigned _Fract")))
+     ("_Sat" "unsigned" "long" "_Fract"
+      ($$ '(fixpt-type "_Sat unsigned long _Fract")))
+     ("_Sat" "short" "_Accum" ($$ '(fixpt-type "_Sat short _Accum")))
+     ("_Sat" "_Accum" ($$ '(fixpt-type "_Sat _Accum")))
+     ("_Sat" "long" "_Accum" ($$ '(fixpt-type "_Sat long _Accum")))
+     ("_Sat" "signed" "short" "_Accum"
+      ($$ '(fixpt-type "_Sat signd short _Accum")))
+     ("_Sat" "signed" "_Accum" ($$ '(fixpt-type "_Sat signed _Accum")))
+     ("_Sat" "signed" "long" "_Accum"
+      ($$ '(fixpt-type "_Sat signed long _Accum")))
+     ("_Sat" "unsigned" "short" "_Accum"
+      ($$ '(fixpt-type "_Sat unsigned short _Accum")))
+     ("_Sat" "unsigned" "_Accum" ($$ '(fixpt-type "_Sat unsigned _Accum")))
+     ("_Sat" "unsigned" "long" "_Accum"
+      ($$ '(fixpt-type "_Sat unsigned long _Accum"))))
 
     ;; This one modified: split out struct-or-union = "struct"|"union"
-    (struct-or-union-specifier		; S 6.7.2.1
-     ("struct" ident-like "{" struct-declaration-list "}" opt-attribute-specifier
-      ($$ (if (pair? $6)
-	      `(struct-def ,$6 ,$2 ,(tl->list $4))
-	      `(struct-def ,$2 ,(tl->list $4)))))
-     ("struct" "{" struct-declaration-list "}" opt-attribute-specifier
-      ($$ (if (pair? $5)
-	      `(struct-def ,$5 ,(tl->list $3))
-	      `(struct-def ,(tl->list $3)))))
-     ("struct" ident-like ($$ `(struct-ref ,$2)))
-     ("union" ident-like "{" struct-declaration-list "}" opt-attribute-specifier
-      ($$ (if (pair? $6)
-	      `(union-def ,$6 ,$2 ,(tl->list $4))
-	      `(union-def ,$2 ,(tl->list $4)))))
-     ("union" "{" struct-declaration-list "}" opt-attribute-specifier
-      ($$ (if (pair? $5)
-	      `(union-def ,$5 ,(tl->list $3))
-	      `(union-def ,(tl->list $3)))))
-     ("union" ident-like ($$ `(union-ref ,$2)))
+    (struct-or-union-specifier
+     ("struct" opt-attr-specs ident-like "{" struct-declaration-list "}"
+      ($$ (sx-join* 'struct-def $2 $3 (tl->list $5))))
+     ("struct" opt-attr-specs "{" struct-declaration-list "}"
+      ($$ (sx-join* 'struct-def $2 (tl->list $4))))
+     ("struct" opt-attr-specs ident-like ($$ (sx-join* 'struct-ref $1 $3)))
+     ("union" opt-attr-specs ident-like "{" struct-declaration-list "}"
+      ($$ (sx-join* 'union-def $2 $3 (tl->list $5))))
+     ("union" opt-attr-specs "{" struct-declaration-list "}"
+      ($$ (sx-join* 'union-def $2 (tl->list $4))))
+     ("union" opt-attr-specs ident-like ($$ (sx-join* 'union-ref $2 $3))))
 
-     ;; with attribute specifier by keyword:
-     ("struct" attribute-specifier ident-like "{" struct-declaration-list "}"
-      ($$ `(struct-def ,$2 ,(tl->list $4))))
-     ("struct" attribute-specifier "{" struct-declaration-list "}"
-      ($$ `(struct-def ,(tl->list $3))))
-     ("union" attribute-specifier ident-like "{" struct-declaration-list "}"
-      ($$ `(union-def ,$2 ,(tl->list $4))))
-     ("union" attribute-specifier "{" struct-declaration-list "}"
-      ($$ `(union-def ,(tl->list $3))))
-     )
-    ;; because name following struct/union can be indentifier or typeref
-    (ident-like (identifier) (typedef-name ($$ `(ident ,(sx-ref $1 1)))))
+    ;; because name following struct/union can be identifier or typeref:
+    (ident-like
+     (identifier)
+     (typedef-name ($$ `(ident ,(sx-ref $1 1)))))
+
+    (opt-attr-specs
+     ($empty)
+     (attribute-specifiers ($$ `(@ ,(attrl->attrs $1)))))
 
     ;; Calling this field-list in the parse tree.
     (struct-declaration-list		; S 6.7.2.1
@@ -395,48 +376,50 @@
      (lone-comment ($$ (make-tl 'field-list $1)))
      (struct-declaration-list struct-declaration ($$ (tl-append $1 $2)))
      (struct-declaration-list lone-comment ($$ (tl-append $1 $2)))
-     ;; the following added 13 Nov 2017
+     ;; Not in C99, but allowed by GNU, I believe:
      (";" ($$ (make-tl 'field-list)))
-     (struct-declaration-list ";" ($$ $1))
-     )
+     (struct-declaration-list ";" ($$ $1)))
 
     (struct-declaration			; S 6.7.2.1
+     (struct-declaration-no-comment ";")
+     (struct-declaration-no-comment ";" code-comment ($$ (sx-attr-add $1 $3))))
+    (struct-declaration-no-comment
      (specifier-qualifier-list
-      struct-declarator-list
-      opt-attribute-specifier
-      ";" opt-code-comment
-      ($$ (if (pair? $3)
-	      (if (pair? $5)
-		  `(comp-decl ,$3 ,(tl->list $1) ,(tl->list $2) ,$5)
-		  `(comp-decl ,$3 ,(tl->list $1) ,(tl->list $2)))
-	      (if (pair? $5)
-		  `(comp-decl ,(tl->list $1) ,(tl->list $2) ,$5)
-		  `(comp-decl ,(tl->list $1) ,(tl->list $2))))
-	  ))
-     (specifier-qualifier-list		; anon' struct or union
-      ";" opt-code-comment
-      ($$ (if (pair? $3)
-	      `(comp-decl ,(tl->list $1) ,$3)
-	      `(comp-decl ,(tl->list $1)))))
-     )
-     
+      struct-declarator-list ($$ `(comp-decl ,$1 ,(tl->list $2))))
+     (specifier-qualifier-list ($$ `(comp-decl ,$1)))) ;; <= anonymous
+    
     (specifier-qualifier-list		; S 6.7.2.1
-     (type-specifier specifier-qualifier-list ($$ (tl-insert $2 $1)))
+     (specifier-qualifier-list-1 ($$ (process-specs (tl->list $1)))))
+    (specifier-qualifier-list-1
      (type-specifier ($$ (make-tl 'decl-spec-list $1)))
-     (type-qualifier specifier-qualifier-list ($$ (tl-insert $2 $1)))
+     (type-specifier specifier-qualifier-list-1 ($$ (tl-insert $2 $1)))
      (type-qualifier ($$ (make-tl 'decl-spec-list $1)))
-     )
+     (type-qualifier specifier-qualifier-list-1 ($$ (tl-insert $2 $1)))
+     (attribute-specifier ($$ (make-tl 'decl-spec-list $1)))
+     (attribute-specifier specifier-qualifier-list-1 ($$ (tl-insert $2 $1))))
+
+    (specifier-qualifier-list/no-attr
+     (specifier-qualifier-list/no-attr-1 ($$ (tl->list $1))))
+    (specifier-qualifier-list/no-attr-1
+     (type-specifier ($$ (make-tl 'decl-spec-list $1)))
+     (type-specifier specifier-qualifier-list/no-attr-1 ($$ (tl-insert $2 $1)))
+     (type-qualifier ($$ (make-tl 'decl-spec-list $1)))
+     (type-qualifier specifier-qualifier-list/no-attr-1 ($$ (tl-insert $2 $1))))
 
     (struct-declarator-list		; S 6.7.2.1
      (struct-declarator ($$ (make-tl 'comp-declr-list $1)))
      (struct-declarator-list "," struct-declarator ($$ (tl-append $1 $3)))
-     )
+     (struct-declarator-list "," attribute-specifiers
+			     struct-declarator ($$ (tl-append $1 $3 $4))))
 
     (struct-declarator			; S 6.7.2.1
+     (struct-declarator-1 ($$ (process-declr $1))))
+    (struct-declarator-1
      (declarator ($$ `(comp-declr ,$1)))
-     (declarator ":" constant-expression ($$ `(comp-declr (bit-field ,$1 ,$3))))
-     (":" constant-expression ($$ `(comp-declr (bit-field ,$2))))
-     )
+     (declarator attribute-specifiers ($$ `(comp-declr ,$1 ,$2)))
+     (declarator ":" constant-expression
+		 ($$ `(comp-declr (bit-field ,$1 ,$3))))
+     (":" constant-expression ($$ `(comp-declr (bit-field ,$2)))))
 
     (enum-specifier			; S 6.7.2.2
      ("enum" ident-like "{" enumerator-list "}"
@@ -445,119 +428,184 @@
       ($$ `(enum-def ,$2 ,(tl->list $4))))
      ("enum" "{" enumerator-list "}" ($$ `(enum-def ,(tl->list $3))))
      ("enum" "{" enumerator-list "," "}" ($$ `(enum-def ,(tl->list $3))))
-     ("enum" ident-like ($$ `(enum-ref ,$2)))
-     )
+     ("enum" ident-like ($$ `(enum-ref ,$2))))
 
     ;; keeping old enum-def-list in parse tree
     (enumerator-list			; S 6.7.2.2
      (enumerator ($$ (make-tl 'enum-def-list $1)))
-     (enumerator-list "," enumerator ($$ (tl-append $1 $3)))
-     )
+     (enumerator-list "," enumerator ($$ (tl-append $1 $3))))
 
-    ;; Had to change enumeration-constant => identifier
+    ;; had to change enumeration-constant => identifier
     (enumerator				; S 6.7.2.2
      (identifier ($$ `(enum-defn ,$1)))
-     (identifier "=" constant-expression ($$ `(enum-defn ,$1 ,$3)))
-     )
+     (identifier attribute-specifiers ($$ `(enum-defn ,$1 ,$2)))
+     (identifier "=" constant-expression ($$ `(enum-defn ,$1 ,$3))))
 
     (type-qualifier
      ("const" ($$ `(type-qual ,$1)))
      ("volatile" ($$ `(type-qual ,$1)))
-     ("restrict" ($$ `(type-qual ,$1)))
-     )
+     ("restrict" ($$ `(type-qual ,$1))))
 
     (function-specifier
      ("inline" ($$ `(fctn-spec ,$1)))
-     ("_Noreturn" ($$ `(fctn-spec ,$1)))
-     )
+     ("_Noreturn" ($$ `(fctn-spec ,$1))))
     
+    ;; Support for __attribute__(( ... )).  See the gcc documentation.
+    ;; The documentation does not seem rigourous about defining where the
+    ;; attribute specifier can appear.  This is my best attempt.  MW 2018
+    ;; https://gcc.gnu.org/onlinedocs/gcc-8.2.0/gcc/Attribute-Syntax.html
+    ;; https://gcc.gnu.org/onlinedocs/gcc-8.2.0/gcc/Type-Attributes.html
+    ;; https://gcc.gnu.org/onlinedocs/gcc-8.2.0/gcc/Variable-Attributes.html
+    ;; https://gcc.gnu.org/onlinedocs/gcc-8.2.0/gcc/Function-Attributes.html
+    
+    (attribute-specifiers
+     (attribute-specifier ($prec 'reduce-on-attr))
+     (attribute-specifiers attribute-specifier ($$ (append $1 (cdr $2)))))
+
+    ;; (attributes (attribute "__static__") (attribute aligned(8)" ...)
+    (attribute-specifier
+     ("__attribute__" "(" "(" attribute-list ")" ")" ($$ $4))
+     (attr-name ($$ `(attribute-list (attribute ,$1)))))
+    (attr-name
+     ("__packed__" ($$ '(ident "__packed__")))
+     ("__aligned__" ($$ '(ident "__aligned__")))
+     ("__alignof__" ($$ '(ident "__alignof__"))))
+
+    (attribute-list (attribute-list-1 ($$ (tl->list $1))))
+    (attribute-list-1
+     (attribute ($$ (make-tl 'attribute-list $1)))
+     (attribute-list-1 "," attribute ($$ (tl-append $1 $3)))
+     (attribute-list-1 "," ($$ $1)))
+
+    (attribute
+     (attr-word ($$ `(attribute ,$1)))
+     (attr-word "(" attr-expr-list ")" ($$ `(attribute ,$1 ,$3)))
+     ("const" ($$ `(attribute (ident "const")))))
+
+    (attr-word
+     (attr-name)
+     (identifier))
+
+    (attr-expr-list
+     (attr-expr-list-1 ($$ (tl->list $1))))
+
+    (attr-expr-list-1
+     (attribute-expr ($$ (make-tl 'attr-expr-list $1)))
+     (attr-expr-list-1 "," attribute-expr ($$ (tl-append $1 $3))))
+
+    (attribute-expr
+     (type-name)
+     ($fixed ($$ `(fixed ,$1)))
+     (string-literal)
+     (identifier)
+     (attr-word "(" attr-expr-list ")" ($$ `(attribute ,$1 ,$3)))) ;; ???
+
+    ;; --- declarators
+
+    (init-declarator-list		; S 6.7
+     (init-declarator-list-1 ($$ (tl->list $1))))
+    (init-declarator-list-1
+     (init-declarator ($$ (make-tl 'init-declr-list $1)))
+     (init-declarator-list-1 "," init-declarator ($$ (tl-append $1 $3)))
+     (init-declarator-list-1 "," attribute-specifiers
+			     init-declarator ($$ (tl-append $1 $3 $4))))
+
+    (init-declarator			; S 6.7
+     (init-declarator-1 ($$ (process-declr $1))))
+    (init-declarator-1
+     (declarator ($$ `(init-declr ,$1)))
+     (declarator "=" initializer ($$ `(init-declr ,$1 ,$3)))
+     (declarator asm-expression ($$ `(init-declr ,$1 ,$2)))
+     (declarator asm-expression "=" initializer ($$ `(init-declr ,$1 ,$2 ,$4)))
+     (declarator attribute-specifiers ($$ `(init-declr ,$1 ,$2)))
+     (declarator attribute-specifiers "=" initializer
+		 ($$ `(init-declr ,$1 ,$2 ,$4)))
+     (declarator asm-expression attribute-specifiers
+		 ($$ `(init-declr ,$1 ,$2 ,$3))))
+
     (declarator
      (pointer direct-declarator ($$ `(ptr-declr ,$1 ,$2)))
-     (direct-declarator)
-     )
+     (direct-declarator))
+
+    (pointer				; S 6.7.6
+     ("*" type-qualifier-list pointer ($$ `(pointer ,$2 ,$3)))
+     ("*" type-qualifier-list ($$ `(pointer ,$2)))
+     ("*" pointer ($$ `(pointer ,$2)))
+     ("*" attribute-specifiers pointer ($$ `(pointer ,$3)))
+     ("*" ($$ '(pointer))))
 
     (direct-declarator			; S 6.7.6
      (identifier ($$ $1))
+     ;;(ident-like ($$ $1))
      ("(" declarator ")" ($$ `(scope ,$2)))
+     ("(" attribute-specifier declarator ")" ($$ `(scope ,$2)))
      (direct-declarator
       "[" type-qualifier-list assignment-expression "]"
       ($$ `(array-of ,$1 ,$3 ,$4)))
-     (direct-declarator "[" type-qualifier-list "]" ($$ `(array-of ,$1 ,$3)))
-     (direct-declarator "[" assignment-expression "]" ($$ `(array-of ,$1 ,$3)))
-     (direct-declarator "[" "]" ($$ `(array-of ,$1)))
+     (direct-declarator
+      "[" type-qualifier-list "]" ($$ `(array-of ,$1 ,$3)))
+     (direct-declarator
+      "[" assignment-expression "]" ($$ `(array-of ,$1 ,$3)))
+     (direct-declarator
+      "[" "]" ($$ `(array-of ,$1)))
      (direct-declarator
       "[" "static" type-qualifier-list assignment-expression "]"
-      ($$ `(array-of ,$1 ,(tl->list (tl-insert '(stor-spec "static") $4)) ,$5)))
+      ($$ `(array-of ,$1 ,$4 ,$5))) ;; FIXME $4 needs "static" added
      (direct-declarator
       "[" type-qualifier-list "static" assignment-expression "]"
-      ($$ `(array-of ,$1 ,(tl->list (tl-insert '(stor-spec "static") $3)) ,$5)))
+      ($$ `(array-of ,$1 ,4 ,$5))) ;; FIXME $4 needs "static" added
      (direct-declarator
       "[" type-qualifier-list "*" "]"	; variable length array
       ($$ `(array-of ,$1 ,$3 (var-len))))
      (direct-declarator
       "[" "*" "]"			; variable length array
       ($$ `(array-of ,$1 (var-len))))
-     (direct-declarator "(" parameter-type-list ")"
-			($$ `(ftn-declr ,$1 ,(tl->list $3))))
-     (direct-declarator "(" identifier-list ")"
-			($$ `(ftn-declr ,$1 ,(tl->list $3))))
-     (direct-declarator "(" ")" ($$ `(ftn-declr ,$1 (param-list))))
-     )
-
-    (pointer				; S 6.7.6
-     ("*" type-qualifier-list pointer ($$ `(pointer ,(tl->list $2) ,$3)))
-     ("*" type-qualifier-list ($$ `(pointer ,(tl->list $2))))
-     ("*" pointer ($$ `(pointer ,$2)))
-     ("*" ($$ '(pointer)))
-     )
+     (direct-declarator
+      "(" parameter-type-list ")" ($$ `(ftn-declr ,$1 ,$3)))
+     (direct-declarator
+      "(" identifier-list ")" ($$ `(ftn-declr ,$1 ,$3)))
+     (direct-declarator
+      "(" ")" ($$ `(ftn-declr ,$1 (param-list)))))
 
     (type-qualifier-list
+     (type-qualifier-list-1 ($$ (tl->list $1))))
+    (type-qualifier-list-1
      (type-qualifier ($$ (make-tl 'type-qual-list $1)))
-     (type-qualifier-list type-qualifier ($$ (tl-append $1 $2)))
-     )
-    ;; WAS: But put in tree as decl-spec-list
-    #;(type-qualifier-list
-     (type-qualifier ($$ (make-tl 'decl-spec-list $1)))
-     (type-qualifier-list type-qualifier ($$ (tl-append $1 $2)))
-     )
+     (type-qualifier-list-1 type-qualifier ($$ (tl-append $1 $2))))
 
     (parameter-type-list
-     (parameter-list ($$ $1))
-     (parameter-list "," "..." ($$ (tl-append $1 '(ellipsis))))
-     )
+     (parameter-list ($$ (tl->list $1)))
+     (parameter-list "," "..." ($$ (tl->list (tl-append $1 '(ellipsis))))))
 
     (parameter-list
      (parameter-declaration ($$ (make-tl 'param-list $1)))
-     (parameter-list "," parameter-declaration ($$ (tl-append $1 $3)))
-     )
+     (parameter-list "," parameter-declaration ($$ (tl-append $1 $3))))
 
     (parameter-declaration
      (declaration-specifiers
-      declarator ($$ `(param-decl ,(tl->list $1) (param-declr ,$2))))
+      declarator ($$ `(param-decl ,$1 (param-declr ,$2))))
      (declaration-specifiers
-      abstract-declarator ($$ `(param-decl ,(tl->list $1) (param-declr ,$2))))
+      abstract-declarator ($$ `(param-decl ,$1 (param-declr ,$2))))
      (declaration-specifiers
-      ($$ `(param-decl ,(tl->list $1))))
-     )
+      ($$ `(param-decl ,$1))))
 
     (identifier-list
+     (identifier-list-1 ($$ (tl->list $1))))
+    (identifier-list-1
      (identifier ($$ (make-tl 'ident-list $1)))
-     (identifier-list "," identifier ($$ (tl-append $1 $3)))
-     )
+     (identifier-list-1 "," identifier ($$ (tl-append $1 $3))))
 
     (type-name				; S 6.7.6
      ;; e.g., (foo_t *)
-     (specifier-qualifier-list abstract-declarator
-			       ($$ `(type-name ,(tl->list $1) ,$2)))
+     (specifier-qualifier-list/no-attr abstract-declarator
+				       ($$ `(type-name ,$1 ,$2)))
      ;; e.g., (int)
-     (declaration-specifiers ($$ `(type-name ,(tl->list $1)))) 
-     )
+     (declaration-specifiers ($$ `(type-name ,$1))))
 
     (abstract-declarator		; S 6.7.6
      (pointer direct-abstract-declarator ($$ `(abs-declr ,$1 ,$2)))
      (pointer ($$ `(abs-declr ,$1)))
-     (direct-abstract-declarator ($$ `(abs-declr ,$1)))
-     )
+     (direct-abstract-declarator ($$ `(abs-declr ,$1))))
 
     (direct-abstract-declarator
      ("(" abstract-declarator ")" ($$ `(declr-scope ,$2)))
@@ -575,14 +623,14 @@
      (direct-abstract-declarator
       "[" "static" type-qualifier-list assignment-expression "]"
       ($$ `(declr-array
-	    ,$1 ,(tl->list (tl-insert '(stor-spec "static") $4)) ,$5)))
+	    ,$1 ,(tl->list (tl-insert $4 '(stor-spec "static"))) ,$5)))
      (direct-abstract-declarator
       "[" "static" type-qualifier-list "]"
-      ($$ `(declr-array ,$1 ,(tl->list (tl-insert '(stor-spec "static") $4)))))
+      ($$ `(declr-array ,$1 ,(tl->list (tl-insert $4 '(stor-spec "static"))))))
      (direct-abstract-declarator
       "[" type-qualifier-list "static" assignment-expression "]"
       ($$ `(declr-array
-	    ,$1 ,(tl->list (tl-insert '(stor-spec "static") $3)) ,$5)))
+	    ,$1 ,(tl->list (tl-insert $3 '(stor-spec "static"))) ,$5)))
      ;;
      ("[" type-qualifier-list assignment-expression "]"
       ($$ `(declr-anon-array ,$2 ,$3)))
@@ -591,53 +639,50 @@
      ("[" "]" ($$ `(declr-anon-array)))
      ("[" "static" type-qualifier-list assignment-expression "]"
       ($$ `(declr-anon-array
-	    ,(tl->list (tl-insert '(stor-spec "static") $3)) ,$4)))
+	    ,(tl->list (tl-insert $3 '(stor-spec "static"))) ,$4)))
      ("[" "static" type-qualifier-list "]"
-      ($$ `(declr-anon-array ,(tl->list (tl-insert '(stor-spec "static") $3)))))
+      ($$ `(declr-anon-array ,(tl->list (tl-insert $3 '(stor-spec "static"))))))
      ("[" type-qualifier-list "static" assignment-expression "]"
       ($$ `(declr-anon-array
-	    ,(tl->list (tl-insert '(stor-spec "static") $2)) ,$4)))
+	    ,(tl->list (tl-insert $2 '(stor-spec "static"))) ,$4)))
      (direct-abstract-declarator "[" "*" "]" ($$ `(declr-star ,$1)))
      ("[" "*" "]" ($$ '(declr-star)))
      (direct-abstract-declarator "(" parameter-type-list ")"
-				 ($$ `(abs-ftn-declr ,$1 ,(tl->list $3))))
+				 ($$ `(abs-ftn-declr ,$1 ,$3)))
      (direct-abstract-declarator "(" ")" ($$ `(abs-ftn-declr ,$1)))
-     ("(" parameter-type-list ")" ($$ `(anon-ftn-declr ,(tl->list $2))))
-     ("(" ")" ($$ '(anon-ftn-declr)))
-     )
+     ("(" parameter-type-list ")" ($$ `(anon-ftn-declr ,$2)))
+     ("(" ")" ($$ '(anon-ftn-declr))))
 
-    ;;typedef-name must be hacked w/ the lexical analyzer
+    ;; typedef-name is generated by the lexical analyzer
     (typedef-name ('typename ($$ `(typename ,$1))))
+
+    ;; --------------------------------
 
     (initializer			; S 6.7.9
      (assignment-expression ($$ `(initzer ,$1)))
      ("{" initializer-list "}" ($$ `(initzer ,(tl->list $2))))
-     ("{" initializer-list "," "}" ($$ `(initzer ,(tl->list $2))))
-     )
+     ("{" initializer-list "," "}" ($$ `(initzer ,(tl->list $2)))))
 
     ;; The designation productions are from C99.
     (initializer-list
      (designation initializer ($$ (make-tl 'initzer-list $1 $2)))
      (initializer ($$ (make-tl 'initzer-list $1)))
      (initializer-list "," designation initializer ($$ (tl-append $1 $3 $4)))
-     (initializer-list "," initializer ($$ (tl-append $1 $3)))
-     )
+     (initializer-list "," initializer ($$ (tl-append $1 $3))))
 
     (designation			; S 6.7.8
-     (designator-list "=" ($$ `(desig ,$1)))
-     )
+     (designator-list "=" ($$ `(desig ,$1))))
 
     (designator-list
      (designator ($$ (make-tl 'desgr-list $1)))
-     (designator-list designator ($$ (tl-append $1 $2)))
-     )
+     (designator-list designator ($$ (tl-append $1 $2))))
 
     (designator
      ("[" constant-expression "]" ($$ `(array-dsgr ,$2)))
-     ("." identifier ($$ `(sel-dsgr ,$2)))
-     )
+     ("." identifier ($$ `(sel-dsgr ,$2))))
 
-    ;; statements
+    ;; === statements =========================================================
+
     (statement
      (labeled-statement)
      (compound-statement)
@@ -646,51 +691,46 @@
      (iteration-statement)
      (jump-statement)
      (asm-statement)
-     (cpp-statement)
-     )
+     (pragma)
+     (cpp-statement))
 
     (labeled-statement
      (identifier ":" statement ($$ `(labeled-stmt ,$1 ,$3)))
+     (identifier ":" attribute-specifier statement
+		 ($$ `(labeled-stmt ,$1 ,$4)))
      ("case" constant-expression ":" statement ($$ `(case ,$2 ,$4)))
-     ("default" ":" statement ($$ `(default ,$3)))
-     )
+     ("default" ":" statement ($$ `(default ,$3))))
 
     (compound-statement
-     ("{" block-item-list "}" 
-      ($$ `(compd-stmt ,(tl->list $2))))
+     ("{" ($$ (cpi-push)) block-item-list ($$ (cpi-pop)) "}" 
+      ($$ `(compd-stmt ,(tl->list $3))))
      ("{" "}"
-      ($$ `(compd-stmt (block-item-list))))
-     )
+      ($$ `(compd-stmt (block-item-list)))))
 
     (block-item-list
      (block-item ($$ (make-tl 'block-item-list $1)))
-     (block-item-list block-item ($$ (tl-append $1 $2)))
-     )
+     (block-item-list block-item ($$ (tl-append $1 $2))))
 
     (block-item
      (declaration)
-     (statement)
-     )
+     (statement))
     
     (expression-statement
      (expression ";" ($$ `(expr-stmt ,$1)))
-     (";" ($$ '(expr-stmt)))
-     )
+     (";" ($$ '(expr-stmt))))
 
     (selection-statement
      ("if" "(" expression ")" statement ($prec 'then)
       ($$ `(if ,$3 ,$5)))
      ("if" "(" expression ")" statement "else" statement
       ($$ `(if ,$3 ,$5 ,$7)))
-     ("switch" "(" expression ")" statement ($$ `(switch ,$3 ,$5)))
-     )
+     ("switch" "(" expression ")" statement ($$ `(switch ,$3 ,$5))))
 
     (iteration-statement
      ("while" "(" expression ")" statement ($$ `(while ,$3 ,$5)))
      ("do" statement "while" "(" expression ")" ";" ($$ `(do-while ,$2 ,$5)))
      ("for" "(" initial-clause opt-expression ";" opt-expression ")" statement
-      ($$ `(for ,$3 ,$4 ,$6 ,$8)))
-     )
+      ($$ `(for ,$3 ,$4 ,$6 ,$8))))
     (initial-clause			; <= added for convenience
      (expression ";")
      (";" ($$ '(expr)))
@@ -704,21 +744,24 @@
      ("continue" ";" ($$ '(continue)))
      ("break" ";" ($$ '(break)))
      ("return" expression ";" ($$ `(return ,$2)))
-     ("return" ";" ($$ `(return (expr))))
-     )
+     ("return" ";" ($$ `(return (expr)))))
 
-    (asm-statement			; NOT part of C99
+    (asm-statement
      (asm-expression ";"))
-    (asm-expression			; NOT part of C99
-     ("asm" "(" string-literal ")"
-      ($$ `(asm-expr (@ (extension "GNUC")) ,$3)))
-     ("asm" "(" string-literal asm-outputs ")"
-      ($$ `(asm-expr (@ (extension "GNUC")) ,$3 ,(tl->list $4))))
-     ("asm" "(" string-literal asm-outputs asm-inputs ")"
-      ($$ `(asm-expr (@ (extension "GNUC")) ,$3 ,(tl->list $4) ,(tl->list $5))))
-     ("asm" "(" string-literal asm-outputs asm-inputs asm-clobbers ")"
+    (asm-expression
+     ("__asm__" opt-asm-specifiers "(" string-literal ")"
+      ($$ `(asm-expr (@ (extension "GNUC")) ,$4)))
+     ("__asm__" opt-asm-specifiers "(" string-literal asm-outputs ")"
+      ($$ `(asm-expr (@ (extension "GNUC")) ,$4 ,(tl->list $5))))
+     ("__asm__" opt-asm-specifiers "(" string-literal asm-outputs asm-inputs ")"
+      ($$ `(asm-expr (@ (extension "GNUC")) ,$4 ,(tl->list $5) ,(tl->list $6))))
+     ("__asm__" opt-asm-specifiers "(" string-literal asm-outputs
+      asm-inputs asm-clobbers ")"
       ($$ `(asm-expr (@ (extension "GNUC"))
-		     ,$3 ,(tl->list $4) ,(tl->list $5) ,(tl->list $6)))))
+		     ,$4 ,(tl->list $5) ,(tl->list $6) ,(tl->list $7)))))
+    (opt-asm-specifiers
+     ($empty)
+     ("volatile"))
     (asm-outputs
      (":" ($$ (make-tl 'asm-outputs)))
      (":" asm-output ($$ (make-tl 'asm-outputs $2)))
@@ -737,76 +780,71 @@
       ($$ `(asm-operand ,$2 ,$4 ,$6))))
     (asm-clobbers
      (":" ($$ (make-tl 'asm-clobbers)))
-     (":" string-literal ($$ (make-tl 'asm-clobbers $2)))
-     (asm-clobbers "," string-literal ($$ (tl-append $1 $3)))
-     )
+     (":" string-literal ($$ (tl-extend (make-tl 'asm-clobbers) $2)))
+     (asm-clobbers "," string-literal ($$ (tl-extend $1 (cdr $3)))))
 
-    ;; external definitions
+    ;; === top-level forms ====================================================
+
     (translation-unit			; S 6.9
-     (external-declaration-list ($$ (tl->list $1)))
-     )
+     (external-declaration-list ($$ (tl->list $1))))
+
     (external-declaration-list
-     ;;(external-declaration ($$ (make-tl 'trans-unit $1)))
      ($empty ($$ (make-tl 'trans-unit)))
      (external-declaration-list
       external-declaration
       ;; A ``kludge'' to deal with @code{extern "C" ...}:
       ($$ (if (eqv? (sx-tag $2) 'extern-block)
 	      (tl-extend $1 (sx-tail $2 1))
-	      (tl-append $1 $2))))
-     )
+	      (tl-append $1 $2)))))
 
     (external-declaration		; S 6.9
      (function-definition)
      (declaration)
-     (attribute-specifier declaration ($$ $2)) ;; ignore __attribute__ for now
      (lone-comment)
      (cpp-statement)
      (pragma)
      ("extern" $string "{"
       ($$ (cpi-dec-blev!)) external-declaration-list ($$ (cpi-inc-blev!)) "}"
-      ($$ `(extern-block (extern-begin ,$2)
-			 ,@(sx-tail (tl->list $5) 1)
-			 (extern-end))))
-     (";" ($$ `(decl (@ (extension "GNUC")))))
-     )
+      ($$ `(extern-block
+	    (extern-begin ,$2) ,@(sx-tail (tl->list $5) 1) (extern-end))))
+     (";" ($$ `(decl (@ (extension "GNUC"))))))
     
     (function-definition
      (declaration-specifiers
-      declarator declaration-list compound-statement
-      ($$ `(knr-fctn-defn ,(tl->list $1) ,$2 ,(tl->list $3) ,$4)))
-     (declaration-specifiers
       declarator compound-statement
-      ($$ `(fctn-defn ,(tl->list $1) ,$2 ,$3)))
-     )
-    
-    (declaration-list
-     (declaration ($$ (make-tl $1)))
-     (declaration-list declaration ($$ (tl-append $1 $2)))
+      ($$ `(fctn-defn ,$1 ,$2 ,$3)))
+     ;; K&R function definitions are not compatible with attribute-specifiers.
+     ;;(declaration-specifiers
+     ;; declarator declaration-list compound-statement
+     ;; ($$ `(knr-fctn-defn ,$1 ,$2 ,$3 ,$4)))
      )
 
-    (opt-code-comment ($empty) (code-comment))
+    ;; K&R function-definition parameter list
+    ;;(declaration-list (declaration-list-1 ($$ (tl->list $1))))
+    ;;(declaration-list-1
+    ;; (declaration ($$ (make-tl 'decl-list $1)))
+    ;; (declaration-list-1 declaration ($$ (tl-append $1 $2))))
 
     ;; non-terminal leaves
-    (identifier
-     ($ident ($$ `(ident ,$1)))
-     ('cpp-ident ($$ `(ident ,$1)))
-     )
+    (identifier ($ident ($$ `(ident ,$1))))
     (constant
      ($fixed ($$ `(fixed ,$1)))		; integer literal
      ($float ($$ `(float ,$1)))		; floating literal
      ($chlit ($$ `(char ,$1)))		; char literal
      ($chlit/L ($$ `(char (@ (type "wchar_t")) ,$1)))
      ($chlit/u ($$ `(char (@ (type "char16_t")) ,$1)))
-     ($chlit/U ($$ `(char (@ (type "char32_t")) ,$1)))
-     )
-    (string-literal
+     ($chlit/U ($$ `(char (@ (type "char32_t")) ,$1))))
+    (string-literal (string-literal-1 ($$ (tl->list $1))))
+    (string-literal-1
      ($string ($$ (make-tl 'string $1))) ; string-constant
-     (string-literal $string ($$ (tl-append $1 $2))))
+     (string-literal-1 $string ($$ (tl-append $1 $2))))
     (code-comment ($code-comm ($$ `(comment ,$1))))
     (lone-comment ($lone-comm ($$ `(comment ,$1))))
     (cpp-statement ('cpp-stmt ($$ `(cpp-stmt ,$1))))
-    (pragma ("_Pragma" "(" string-literal ")" ($$ `(pragma ,(tl->list $3)))))
+    (pragma
+     ($pragma ($$ `(pragma ,$1)))
+     ("_Pragma" "(" string-literal ")" ($$ `(pragma ,$3))))
+
     )))
 
 ;;; === parsers =========================
@@ -820,17 +858,16 @@
    (hashify-machine
     (make-lalr-machine c99-spec))
    #:keep 2
-   #:keepers '($code-comm $lone-comm)))
+   #:keepers '($code-comm $lone-comm $pragma)))
 
-(define c99x-spec (restart-spec c99-mach 'expression))
+(define c99x-spec (restart-spec c99-spec 'expression))
 
-;; does the c expression parser need to handle comments?
 (define c99x-mach
   (compact-machine
    (hashify-machine
     (make-lalr-machine c99x-spec))
    #:keep 2
-   #:keepers '($code-comm $lone-comm)))
+   #:keepers '($code-comm $lone-comm $pragma)))
 
 ;;; =====================================
 
@@ -841,21 +878,14 @@
 ;; @end deffn
 (define* (gen-c99-files #:optional (path "."))
   (define (mdir file) (mach-dir path file))
-  (write-lalr-actions c99-mach (mdir "c99act.scm.new") #:prefix "c99-")
-  (write-lalr-tables c99-mach (mdir "c99tab.scm.new") #:prefix "c99-")
-  (write-lalr-actions c99x-mach (mdir "c99xact.scm.new") #:prefix "c99x-")
-  (write-lalr-tables c99x-mach (mdir "c99xtab.scm.new") #:prefix "c99x-")
-  (let ((a (move-if-changed (mdir "c99act.scm.new") (mdir "c99act.scm")))
-	(b (move-if-changed (mdir "c99tab.scm.new") (mdir "c99tab.scm")))
-	(c (move-if-changed (mdir "c99xact.scm.new") (mdir "c99xact.scm")))
-	(d (move-if-changed (mdir "c99xtab.scm.new") (mdir "c99xtab.scm"))))
+  (write-lalr-actions c99-mach (mdir "c99-act.scm.new") #:prefix "c99-")
+  (write-lalr-tables c99-mach (mdir "c99-tab.scm.new") #:prefix "c99-")
+  (write-lalr-actions c99x-mach (mdir "c99x-act.scm.new") #:prefix "c99x-")
+  (write-lalr-tables c99x-mach (mdir "c99x-tab.scm.new") #:prefix "c99x-")
+  (let ((a (move-if-changed (mdir "c99-act.scm.new") (mdir "c99-act.scm")))
+	(b (move-if-changed (mdir "c99-tab.scm.new") (mdir "c99-tab.scm")))
+	(c (move-if-changed (mdir "c99x-act.scm.new") (mdir "c99x-act.scm")))
+	(d (move-if-changed (mdir "c99x-tab.scm.new") (mdir "c99x-tab.scm"))))
     (or a b c d)))
-
-;; === deprecated ==================
-
-;; should use define-deprecated from ice-9/deprecated.scm
-;;(define gen-c99x-files gen-c99-files)
-
-;;(define dev-parse-c dev-parse-c99)
 
 ;; --- last line ---

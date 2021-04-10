@@ -19,7 +19,7 @@
 
 (define-module (nyacc lang c99 pprint)
   #:export (pretty-print-c99)
-  #:use-module ((srfi srfi-1) #:select (pair-for-each))
+  #:use-module ((srfi srfi-1) #:select (pair-for-each fold-right))
   #:use-module (nyacc lang util)
   #:use-module (nyacc lang sx-util)
   #:use-module (ice-9 pretty-print)
@@ -82,12 +82,12 @@
 ;; @end deffn
 (define (char->hex-list ch seed)
   (define (itox ival) (string-ref "0123456789ABCDEF" ival))
-  (let iter ((res seed) (ix 8) (val (char->integer ch)))
+  (let loop ((res seed) (ix 8) (val (char->integer ch)))
     (cond
      ((zero? ix) (cons* #\\ #\U res))
      ((and (zero? val) (= ix 4)) (cons* #\\ #\u res))
      (else
-      (iter (cons (itox (remainder val 16)) res) (1- ix) (quotient val 16))))))
+      (loop (cons (itox (remainder val 16)) res) (1- ix) (quotient val 16))))))
 
 (define (esc->ch ch)
   (case ch ((#\nul) #\0) ((#\bel) #\a) ((#\bs) #\b) ((#\ht) #\t)
@@ -152,7 +152,7 @@
       ((else) (sf "#else\n"))
       ((endif ,text) (sf "#endif ~A\n" text))
       ((endif) (sf "#endif\n"))
-      ((include ,file . *) (sf "#include ~A\n" file))
+      ((include ,file . ,rest) (sf "#include ~A\n" file))
       ((error ,text) (sf "#error ~A\n" text))
       ((pragma ,text) (sf "#pragma ~A\n" text))
       (else (simple-format #t "\n*** pprint/cpp-ppx: NO MATCH: ~S\n" tree)))
@@ -181,15 +181,16 @@
 	(ppx/p rval)
 	(ppx rval)))
 
-  (define (pp-attr attr) ;; attributes
+  ;; now ((comment xxx) (attributes "aaa;yyy;zzz"))
+  (define (pp-attr attr)
     (string-join
-     (map
-      (lambda (val)
-	;;(simple-format #t "a: ~S\n" val)
-	(cond
-	 ((eq? (car val) 'packed) "__packed__")
-	 (else (symbol->string (car val)))))
-      attr)
+     (fold-right
+      (lambda (pair seed)
+	(if (eqv? 'attributes (car pair))
+	    ;; FIXME: should really parse-attributes, then ppx
+	    (append (string-split (cadr pair) #\;) seed)
+	    seed))
+      '() attr)
      " "))
 
   (define (struct-union-def struct-or-union attr name fields)
@@ -205,10 +206,15 @@
     (pop-il)
     (sf "}"))
 
+  (define (comm+nl attr)
+    (cond
+     ((assq 'comment attr) => (lambda (comm) (sf " ") (ppx comm)))
+     (else (sf "\n"))))
+  
   (define (ppx/p tree) (sf "(") (ppx tree) (sf ")"))
 
   ;; TODO: comp-lit
-  (define (ppx-1 tree)
+  (define (ppx tree)
     (sx-match tree
 
       ((p-expr ,expr) (ppx expr))
@@ -232,28 +238,11 @@
 	value-l))
 
       ((comment ,text)
-       ;; Comments will look funny when indent for input and output
-       ;; are different since multi-line comments will get hosed.
-       (for-each (lambda (l) (sf (scmstr->c l)) (sf "\n"))
-		 (string-split (string-append "/*" text "*/") #\newline))
-       ;; TODO: Since parser now removes prefix, I need to add it back in here.
-       ;; needed:
-       ;; 1) (get-col) to get column
-       ;; 2) (indent-to-col col) to do indents for each line
-       #!
-       (let ((col (get-col))
-	     (lines (string-split text #\newline))
-	     (ind (mk-ind-to-col col)))
-	 (sf "/*") (sf (car lines))
-	 (pair-for-each
-	  (lambda (pair)
-	    (sf "\n")
-	    (if (pair? (cdr pair)) (sf ind))
-	    (sf (cdr pair)))
-	  (cdr lines))
-	 (sf "*/"))
-       !#
-       )
+       (cond
+	((or (string-any #\newline text) (string-suffix? " " text))
+	 (for-each (lambda (l) (sf (scmstr->c l)) (sf "\n"))
+		   (string-split (string-append "/*" text "*/") #\newline)))
+	(else (sf (string-append "//" text "\n")))))
       
       ((scope ,expr) (sf "(") (ppx expr) (sf ")"))
       
@@ -273,6 +262,10 @@
       ((not ,expr) (unary/l 'not "!" expr))
       ((sizeof-expr ,expr) (sf "sizeof(") (ppx expr) (sf ")"))
       ((sizeof-type ,type) (sf "sizeof(") (ppx type) (sf ")"))
+
+      ((pragma ,text)
+       (fmtr 'nlin)
+       (sf "#pragma ~A\n" text))
 
       ((cast ,tn ,ex)
        (sf "(") (ppx tn) (sf ")")
@@ -345,25 +338,20 @@
 
       ((udecl . ,rest)
        (ppx `(decl . ,rest)))
-      ((decl ,decl-spec-list)
-       (ppx decl-spec-list) (sf ";\n"))
-      ((decl ,decl-spec-list ,init-declr-list)
-       (ppx decl-spec-list) (sf " ") (ppx init-declr-list) (sf ";\n"))
-      ((decl ,decl-spec-list ,init-declr-list ,comment)
-       (ppx decl-spec-list) (sf " ")
-       (ppx init-declr-list) (sf "; ") (ppx comment))
+      ((decl (@ . ,attr) ,decl-spec-list)
+       (ppx decl-spec-list) (sf ";") (comm+nl attr))
+      ((decl (@ . ,attr) ,decl-spec-list ,init-declr-list)
+       (ppx decl-spec-list) (sf " ") (ppx init-declr-list) (sf ";")
+       (comm+nl attr))
       ((decl-no-newline ,decl-spec-list ,init-declr-list) ; for (int i = 0;
        (ppx decl-spec-list) (sf " ") (ppx init-declr-list) (sf ";"))
 
-      ((comp-decl ,spec-qual-list (comp-declr-list . ,rest2))
-       (ppx spec-qual-list) (sf " ") (ppx (sx-ref tree 2)) (sf ";\n"))
-      ((comp-decl ,spec-qual-list ,declr-list (comment ,comment))
-       (ppx spec-qual-list) (sf " ") (ppx declr-list) (sf "; ")
-       (ppx (sx-ref tree 3)))
+      ((comp-decl (@ . ,attr) ,spec-qual-list (comp-declr-list . ,rest2))
+       (ppx spec-qual-list) (sf " ") (ppx (sx-ref tree 2)) (sf ";")
+       (comm+nl attr))
       ;; anon struct or union
-      ((comp-decl ,spec-qual-list) (ppx spec-qual-list) (sf ";\n"))
-      ((comp-decl ,spec-qual-list (comment ,comment))
-       (ppx spec-qual-list) (sf "; ") (ppx (sx-ref tree 2)))
+      ((comp-decl (@ . ,attr) ,spec-qual-list)
+       (ppx spec-qual-list) (sf ";") (comm+nl attr))
 
       ((decl-spec-list . ,dsl)
        (pair-for-each
@@ -390,12 +378,13 @@
 	  (if (pair? (cdr pair)) (sf ", ")))
 	rest))
 
-      ((init-declr ,declr ,initr) (ppx declr) (ppx initr))
+      ((init-declr ,declr ,item2 ,item3) (ppx declr) (ppx item2) (ppx item3))
+      ((init-declr ,declr ,item2) (ppx declr) (ppx item2))
       ((init-declr ,declr) (ppx declr))
+      ((comp-declr ,declr ,item2) (ppx declr) (ppx item2))
       ((comp-declr ,declr) (ppx declr))
+      ((param-declr ,declr ,item2) (ppx declr) (ppx item2))
       ((param-declr ,declr) (ppx declr))
-      ;; This should work with sx-match, to replace above three.
-      ;;(((init-declr comp-declr param-declr) ,declr) (ppx declr))
 
       ((bit-field ,ident ,expr)
        (ppx ident) (sf " : ") (ppx expr))
@@ -441,18 +430,35 @@
        (for-each ppx defns)
        (pop-il) (sf "}"))
 
-      ((enum-defn (ident ,name) (comment ,comment))
-       (sf "~A, " name) (ppx `(comment ,comment)) (sf "\n"))
-      ((enum-defn (ident ,name) ,expr ,comment)
-       (sf "~A = " name) (ppx expr) (sf ", ") (ppx comment) (sf "\n"))
-      ((enum-defn (ident ,name) ,expr)
-       (sf "~A = " name) (ppx expr) (sf ",\n"))
-      ((enum-defn (ident ,name))
-       (sf "~A,\n" name))
+      ((enum-defn (@ . ,attr) (ident ,name) ,expr)
+       (sf "~A = " name) (ppx expr) (sf ",") (comm+nl attr))
+      ((enum-defn (@ . ,attr) (ident ,name))
+       (sf "~A," name) (comm+nl attr))
 
       ;;((fctn-spec "inline")
       ((fctn-spec ,spec)
        (sf "~S " spec))			; SPACE ???
+
+      ((attribute-list . ,attrs)
+       (sf " __attribute__((")
+       (pair-for-each
+	(lambda (pair)
+	  (ppx (car pair))
+	  (if (pair? (cdr pair)) (sf ",")))
+	attrs)
+       (sf "))"))
+
+      ((attribute (ident ,name))
+       (sf "~A" name))
+      ((attribute (ident ,name) ,attr-expr-list)
+       (sf "~A(" name) (ppx attr-expr-list) (sf ")"))
+
+      ((attr-expr-list . ,items)
+       (pair-for-each
+	(lambda (pair)
+	  (ppx (car pair))
+	  (if (pair? (cdr pair)) (sf ",")))
+	items))
 
       ((ptr-declr ,ptr ,dir-declr)
        (ppx ptr) (ppx dir-declr))
@@ -525,14 +531,24 @@
        (sf "}")) ;; or " }"
 
       ((compd-stmt (block-item-list . ,items))
-       (sf "{\n") (push-il) (for-each ppx items) (pop-il) (sf "}\n"))
+       (sf "{\n") (push-il)
+       (pair-for-each
+	(lambda (pair)
+	  (let ((this (car pair)) (next (and (pair? (cdr pair)) (cadr pair))))
+	    (ppx this)
+	    (cond ;; add blank line if next is different or fctn defn
+	     ((not next))
+	     ((eqv? (sx-tag this) (sx-tag next)))
+	     ((eqv? (sx-tag this) 'comment))
+	     ((eqv? (sx-tag next) 'comment) (sf "\n")))))
+	items)
+       (pop-il) (sf "}\n"))
       ((compd-stmt-no-newline (block-item-list . ,items))
        (sf "{\n") (push-il) (for-each ppx items) (pop-il) (sf "} "))
       
       ;; expression-statement
-      ((expr-stmt) (sf ";\n"))
-      ((expr-stmt ,expr) (ppx expr) (sf ";\n"))
-      ((expr-stmt ,expr ,comm) (ppx expr) (sf "; ") (ppx comm))
+      ((expr-stmt) (sf ";\n")) ;; add comment?
+      ((expr-stmt (@ . ,attr) ,expr) (ppx expr) (sf ";") (comm+nl attr))
       
       ((expr) (sf ""))		; for lone expr-stmt and return-stmt
 
@@ -542,13 +558,13 @@
 	     (then-part (sx-ref tree 2)))
 	 (sf "if (") (ppx cond-part) (sf ") ")
 	 (ppx then-part)
-	 (let iter ((else-l (sx-tail tree 3)))
+	 (let loop ((else-l (sx-tail tree 3)))
 	   (cond
 	    ((null? else-l) #t)
 	    ((eqv? 'else-if (caar else-l))
 	     (sf "else if (") (ppx (sx-ref (car else-l) 1)) (sf ") ")
 	     (ppx (sx-ref (car else-l) 2))
-	     (iter (cdr else-l)))
+	     (loop (cdr else-l)))
 	    (else
 	     (sf "else ")
 	     (ppx (car else-l)))))))
@@ -616,11 +632,13 @@
       ((trans-unit . ,items)
        (pair-for-each
 	(lambda (pair)
-	  (let ((this (car pair))
-		(next (and (pair? (cdr pair)) (cadr pair))))
+	  (let ((this (car pair)) (next (and (pair? (cdr pair)) (cadr pair))))
 	    (ppx this)
 	    (cond ;; add blank line if next is different or fctn defn
 	     ((not next))
+	     ((eqv? (sx-tag this) (sx-tag next)))
+	     ((eqv? (sx-tag this) 'comment))
+	     ((eqv? (sx-tag next) 'comment) (sf "\n"))
 	     ((not (eqv? (sx-tag this) (sx-tag next))) (sf "\n"))
 	     ((eqv? (sx-tag next) 'fctn-defn) (sf "\n")))))
 	items))
@@ -662,9 +680,10 @@
       ((extern-begin ,lang) (sf "extern \"~A\" {\n" lang))
       ((extern-end) (sf "}\n"))
 
-      (else (simple-format #t "\n*** pprint/ppx: NO MATCH: ~S\n" (car tree)))))
-
-  (define ppx ppx-1)
+      (,_
+       (simple-format #t "\n*** pprint/ppx: NO MATCH: ~S\n" (car tree))
+       (pretty-print tree #:per-line-prefix "  ")
+       )))
 
   (if (not (pair? tree)) (error "expecing sxml tree"))
   (ppx tree)

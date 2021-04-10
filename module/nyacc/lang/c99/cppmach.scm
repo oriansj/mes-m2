@@ -24,13 +24,12 @@
   #:use-module (nyacc lex)
   #:use-module (nyacc lang util)
   #:use-module ((srfi srfi-43) #:select (vector-map))
-  #:use-module (rnrs arithmetic bitwise)
-  )
+  #:use-module (rnrs arithmetic bitwise))
 
 (define cpp-spec
   (lalr-spec
    (notice (string-append "Copyright (C) 2016,2017 Matthew R. Wette"
-			  lang-crn-lic))
+			  license-lgpl3+))
    (expect 0)
    (start conditional-expression)
    (grammar
@@ -124,13 +123,12 @@
   (define (xtra-dir path)
     (lang-dir (string-append "mach.d/" path)))
 
-  (write-lalr-actions cpp-mach (xtra-dir "cppact.scm.new") #:prefix "cpp-")
-  (write-lalr-tables cpp-mach (xtra-dir "cpptab.scm.new") #:prefix "cpp-")
-  (let ((a (move-if-changed (xtra-dir "cppact.scm.new")
-			    (xtra-dir "cppact.scm")))
-	(b (move-if-changed (xtra-dir "cpptab.scm.new")
-			    (xtra-dir "cpptab.scm"))))
-    (when #f ;; (or a b) 
-      (system (string-append "touch " (lang-dir "cpp.scm"))))))
+  (write-lalr-actions cpp-mach (xtra-dir "cpp-act.scm.new") #:prefix "cpp-")
+  (write-lalr-tables cpp-mach (xtra-dir "cpp-tab.scm.new") #:prefix "cpp-")
+  (let ((a (move-if-changed (xtra-dir "cpp-act.scm.new")
+			    (xtra-dir "cpp-act.scm")))
+	(b (move-if-changed (xtra-dir "cpp-tab.scm.new")
+			    (xtra-dir "cpp-tab.scm"))))
+    (or a b)))
 
 ;; --- last line ---

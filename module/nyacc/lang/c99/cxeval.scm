@@ -1,6 +1,6 @@
 ;;; nyacc/lang/c99/c99eval.scm - evaluate constant expressions
 
-;; Copyright (C) 2018 Matthew R. Wette
+;; Copyright (C) 2018-2020 Matthew R. Wette
 ;;
 ;; This library is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,7 @@
 ;;; Code:
 
 (define-module (nyacc lang c99 cxeval)
-  #:export (parse-c99-cx
-	    eval-c99-cx
-	    )
+  #:export (parse-c99-cx eval-c99-cx)
   #:use-module (nyacc lalr)
   #:use-module (nyacc parse)
   #:use-module (nyacc lex)
@@ -28,13 +26,15 @@
   #:use-module ((nyacc lang util) #:select (make-tl tl-append tl->list))
   #:use-module (nyacc lang sx-util)
   #:use-module (nyacc lang c99 cpp)
+  #:use-module (nyacc lang c99 munge)
   #:use-module (rnrs arithmetic bitwise)
   #:use-module ((srfi srfi-43) #:select (vector-map vector-for-each))
-  #:use-module (system foreign)
-  ;;#:use-module (system base pmatch)
-  )
+  #:use-module (system foreign))
+
 (use-modules (ice-9 pretty-print))
-(define pp pretty-print)
+(define (sferr fmt . args) (apply simple-format (current-error-port) fmt args))
+(define (pperr exp)
+  (pretty-print exp (current-error-port) #:per-line-prefix "  "))
 
 (define ffi-type-map
   `(("void" . ,void) ("float" . ,float) ("double" . ,double) ("short" . ,short)
@@ -51,26 +51,25 @@
     ("long long" . ,long) ("long long int" . ,long)
     ("signed long long" . ,long) ("signed long long int" . ,long)
     ("unsigned long long" . ,unsigned-long)
-    ("unsigned long long int" . ,unsigned-long) ("_Bool" . ,int8)))
+    ("unsigned long long int" . ,unsigned-long) ("_Bool" . ,int8)
+    ("size_t" . ,size_t)))
 
 (define (sizeof-type name)
   (or (and=> (assoc-ref ffi-type-map name) sizeof)
       (throw 'nyacc-error "bad type")))
 
-(define (sizeof-string-const name)
+;; (string "abc" "dev")
+(define (sizeof-string-const value)
   #f)
 
-(include-from-path "nyacc/lang/c99/mach.d/c99cxtab.scm")
-(include-from-path "nyacc/lang/c99/mach.d/c99cxact.scm")
+(include-from-path "nyacc/lang/c99/mach.d/c99cx-act.scm")
+(include-from-path "nyacc/lang/c99/mach.d/c99cx-tab.scm")
 
 (define c99cx-raw-parser
   (make-lalr-parser
-   (list (cons 'len-v c99cx-len-v) (cons 'pat-v c99cx-pat-v)
-	 (cons 'rto-v c99cx-rto-v) (cons 'mtab c99cx-mtab)
-	 (cons 'act-v c99cx-act-v))))
+   (acons 'act-v c99cx-act-v c99cx-tables)))
 
 (define gen-c99cx-lexer
-  ;;(make-c99-lexer-generator c99x-mtab c99cx-raw-parser))
   (let* ((reader (make-comm-reader '(("/*" . "*/"))))
 	 (comm-skipper (lambda (ch) (reader ch #f))))
     (make-lexer-generator c99cx-mtab
@@ -87,27 +86,37 @@
    (lambda (key fmt . args)
      (apply throw 'cpp-error fmt args))))
 
+(define (expand-typename typename udict)
+  (let* ((decl `(udecl (decl-spec-list
+			(type-spec (typename ,typename)))
+		       (declr (ident "_"))))
+	 (xdecl (expand-typerefs decl udict))
+	 (xname (and xdecl (sx-ref* xdecl 1 1 1 1))))
+    xname))
+
 ;; (sizeof type-name)
 ;; (type-name specificer-qualifier-list abstract-declarator)
 ;; (decl-spec-list 
 ;; (abs-decl
 (define (eval-sizeof-type tree udict)
-  (let* ((type-name (sx-ref tree 1))
-	 (spec-list (sx-ref type-name 1))
-	 (type-spec (assq 'type-spec (sx-tail spec-list 1)))
-	 )
-    ;;(pp type-spec)
-    (sx-match (sx-ref type-spec 1)
-      ((fixed-type ,name)
-       (let* ((ffi-type (assoc-ref ffi-type-map name)))
-	 (sizeof ffi-type)))
-      ((float-type ,name)
-       (let* ((ffi-type (assoc-ref ffi-type-map name)))
-	 (sizeof ffi-type)))
-      (else (pp type-spec))
-      )
-  #t))
-
+  (sx-match (sx-ref tree 1)
+    ((type-name (decl-spec-list (type-spec (typename ,name))))
+     (let* ((xname (expand-typename name udict))
+	    (ffi-type (assoc-ref ffi-type-map xname)))
+       (unless ffi-type ;; work to go
+	 (throw 'c99-error "cxeval: failed to expand \"sizeof(~A)\"" name))
+       (sizeof ffi-type)))
+    ((type-name (decl-spec-list (type-spec (fixed-type ,name))))
+     (let* ((ffi-type (assoc-ref ffi-type-map name)))
+       (sizeof ffi-type)))
+    ((type-name (decl-spec-list (type-spec (float-type ,name))))
+     (let* ((ffi-type (assoc-ref ffi-type-map name)))
+       (sizeof ffi-type)))
+    ((type-name (decl-spec-list (type-spec . ,_1)) (abs-declr (pointer)))
+     (sizeof '*))
+    (else
+     (throw 'c99-error "failed to expand sizeof type ~S" (sx-ref tree 1)))))
+  
 ;; (sizeof unary-expr)
 ;;    (primary-expression			; S 6.5.1
 ;;     (identifier ($$ `(p-expr ,$1)))
@@ -117,18 +126,14 @@
 ;;     ("(" "{" block-item-list "}" ")"
 ;;      ($$ `(stmt-expr (@ (extension "GNUC")) ,$3)))
 ;;     )
-;;
 (define (eval-sizeof-expr tree udict)
-  (let* ((expr (sx-ref tree 1))
-	 )
-    (pp expr)
+  (let* ((expr (sx-ref tree 1)))
     (sx-match expr
-      ((p-expr (string ,str))
-       (string-length str))
-      (else #f))))
-
-;;(define (expand-c99x-defs tree defs)
-;;  (let ((
+      ((p-expr (string . ,strl))
+       (let loop ((l 0) (sl strl))
+	 (if (pair? sl) (loop (+ l (string-length (car sl))) (cdr sl)) l)))
+      (else
+       (throw 'c99-error "failed to expand sizeof expr ~S" expr)))))
 
 (define (eval-ident name udict ddict)
   (cond
@@ -142,20 +147,18 @@
     ;;(error "missed" name)
     #f)))
 
-#|
-(define (typedef? name udict)
-  (let ((decl (assoc-ref udict name)))
-    (and decl (eq? 'typedef (sx-tag (sx-ref* decl 1 1 1))))))
-|#
-
+;; @deffn {Procedure} eval-c99-cx tree [udict [ddict]]
+;; Evaluate the constant expression or return #f
+;; @end deffn
 (define* (eval-c99-cx tree #:optional udict ddict)
+  (define (fail) #f)
   (letrec
       ((ev (lambda (ex ix) (eval-expr (sx-ref ex ix))))
        (ev1 (lambda (ex) (ev ex 1)))	; eval expr in arg 1
        (ev2 (lambda (ex) (ev ex 2)))	; eval expr in arg 2
        (ev3 (lambda (ex) (ev ex 3)))	; eval expr in arg 3
-       (uop (lambda (op ex) (and ex (op ex))))
-       (bop (lambda (op lt rt) (and lt rt (op lt rt))))
+       (uop (lambda (op ex) (and op ex (op ex))))
+       (bop (lambda (op lt rt) (and op lt rt (op lt rt))))
        (eval-expr
 	(lambda (tree)
 	  (case (car tree)
@@ -185,23 +188,42 @@
 	    ((bitwise-or) (bop logior (ev1 tree) (ev2 tree)))
 	    ((bitwise-xor) (bop logxor (ev1 tree) (ev2 tree)))
 	    ((bitwise-and) (bop logand (ev1 tree) (ev2 tree)))
-	    ((or) (if (and (zero? (ev1 tree)) (zero? (ev2 tree))) 0 1))
-	    ((and) (if (or (zero? (ev1 tree)) (zero? (ev2 tree))) 0 1))
 	    ;;
-	    ((cond-expr) (if (zero? (ev1 tree)) (ev3 tree) (ev2 tree)))
-	    ((sizeof-type) (eval-sizeof-type tree udict))
-	    ((sizeof-expr) (eval-sizeof-expr tree udict))
+	    ((or)
+	     (let ((e1 (ev1 tree)) (e2 (ev2 tree)))
+	       (if (and e1 e2) (if (and (zero? e1) (zero? e2)) 0 1) #f)))
+	    ((and)
+	     (let ((e1 (ev1 tree)) (e2 (ev2 tree)))
+	       (if (and e1 e2) (if (or (zero? e1) (zero? e2)) 0 1) #f)))
+	    ((cond-expr)
+	     (let ((e1 (ev1 tree)) (e2 (ev2 tree)) (e3 (ev3 tree)))
+	       (if (and e1 e2 e3) (if (zero? e1) e3 e2) #f)))
+	    ;;
+	    ((sizeof-type)
+	     (catch 'c99-error
+	       (lambda () (eval-sizeof-type tree udict))
+	       (lambda (key fmt . args)
+		 (sferr "eval-c99-cx: ") (apply sferr fmt args)
+		 (newline (current-error-port)) #f)))
+	    ((sizeof-expr)
+	     (catch 'c99-error
+	       (lambda () (eval-sizeof-expr tree udict))
+	       (lambda (key fmt . args)
+		 (sferr "eval-c99-cx: ") (apply sferr fmt args)
+		 (newline (current-error-port)) #f)))
 	    ((ident) (eval-ident (sx-ref tree 1) udict ddict))
 	    ((p-expr) (ev1 tree))
 	    ((cast) (ev2 tree))
 	    ((fctn-call) #f)		; assume not constant
 	    ;;
 	    ;; TODO 
-	    ((i-sel) #f)
-	    ((d-sel) #f)
-	    ((array-ref) #f)
-	    ;;
-	    (else (error "eval-c99-cx: missed" (car tree)))))))
+	    ((comp-lit) (fail))		; return a bytearray
+	    ((comma-expr) (fail))
+	    ((i-sel) (fail))
+	    ((d-sel) (fail))
+	    ((array-ref) (fail))
+	    ;; 
+	    (else (fail))))))
     (eval-expr tree)))
 
 ;; --- last line ---
