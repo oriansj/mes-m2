@@ -285,7 +285,9 @@ General help using GNU software: <http://gnu.org/gethelp/>
 
            (mes-use-module (mes repl))
            (set-current-input-port 0)
-           (repl))
+           (repl)
+           (exit 0))
           (else #t))))
 (primitive-load 0)
 (primitive-load (open-input-string %main))
+(exit 0)
