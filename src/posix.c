@@ -24,7 +24,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
+#include <sys/types.h>
+#include <sys/wait.h>
 
 char*
 cast_intp_to_charp (int const *i)
@@ -144,7 +145,8 @@ set_current_input_port (struct scm *port)
 struct scm *
 open_input_file (struct scm *file_name)
 {
-  FILE* f = fopen(cell_bytes (file_name->string), "r");
+  char* s = cell_bytes (file_name->string);
+  FILE* f = fopen(s, "r");
   if (NULL == f)
     error (cell_symbol_system_error, cons (make_string0 ("No such file or directory"), file_name));
   return make_file (f);
@@ -305,19 +307,25 @@ open_output_file (struct scm *x)        /*:((arity . n)) */
   struct scm *file_name = car (x);
   x = cdr (x);
   char* mode = "w";
+  FILE* f;
 //  if (x->type == TPAIR)
 //    {
 //      struct scm *i = car (x);
 //      if (i->type == TNUMBER)
 //        mode = i->value;
 //    }
-  return make_file (fopen (cell_bytes (file_name->string), mode));
+  char* s = cell_bytes (file_name->string);
+  f = fopen (s, mode);
+  if(NULL == f)
+    error (cell_symbol_system_error, cons (make_string0 ("unable to create such file"), file_name));
+
+  return make_file (f);
 }
 
 struct scm *
 set_current_output_port (struct scm *port)
 {
-  if (port->value != 0)
+  if (NULL != port->name_cdr)
     __stdout = port->name_cdr;
   else
     __stdout = stdout;
@@ -327,7 +335,7 @@ set_current_output_port (struct scm *port)
 struct scm *
 set_current_error_port (struct scm *port)
 {
-  if (port->value != 0)
+  if (NULL != port->name_cdr)
     __stderr = port->name_cdr;
   else
     __stderr = stderr;
@@ -337,7 +345,8 @@ set_current_error_port (struct scm *port)
 struct scm *
 chmod_ (struct scm *file_name, struct scm *mode)        /*:((name . "chmod")) */
 {
-  chmod (cell_bytes (file_name->string), mode->value);
+  char* s = cell_bytes (file_name->string);
+  chmod (s, mode->value);
   return cell_unspecified;
 }
 

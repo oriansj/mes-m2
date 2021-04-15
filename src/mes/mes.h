@@ -152,6 +152,7 @@ struct scm *make_string0 (char const *s);
 struct scm *make_string_port (struct scm *x);
 struct scm *make_vector_ (long k, struct scm *e);
 struct scm *mes_builtins (struct scm *a);
+int in_set(int c, char* s);
 int peek(FILE* f);
 struct scm *push_cc (struct scm *p1, struct scm *p2, struct scm *a, struct scm *c);
 struct scm *struct_ref_ (struct scm *x, long i);

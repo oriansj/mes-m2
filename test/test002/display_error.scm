@@ -16,5 +16,5 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>
 
-(display-error "Hello, failure!!!\n")
+(core:display-error "Hello, failure!!!\n")
 (exit 42)

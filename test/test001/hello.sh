@@ -16,7 +16,7 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -x
-out=$(MES_CORE=0 ./bin/mes-m2 --file test/test001/display.scm)
+out=$(MES_BOOT=test/test001/display.scm ./bin/mes-m2)
 r=$?
 [ $r = 42 ] || exit 1
 [ "$out" = "Hello, Mes!!!" ] || exit 2

@@ -20,18 +20,18 @@
 (set-current-output-port (open-output-file "test/results/test009.answer"))
 
 ;; Demonstrate using 'S-expression
-(display "making a quote with ' character\n")
-(write '(display (string-append "Hello " "Guix" "\n")))
-(display #\newline)
-(write '(a b c (d e)))
+(core:display "making a quote with ' character\n")
+(core:write '(display (string-append "Hello " "Guix" "\n")))
+(core:display #\newline)
+(core:write '(a b c (d e)))
 
 ;; Demonstrate using (quote S-expression)
-(display "\nmake a quote with quote\n")
-(write (quote (display (string-append "Hello " "Guix" "\n"))))
-(display #\newline)
-(write (quote (a b c (d e))))
+(core:display "\nmake a quote with quote\n")
+(core:write (quote (display (string-append "Hello " "Guix" "\n"))))
+(core:display #\newline)
+(core:write (quote (a b c (d e))))
 
 ;; Demonstrate 'block
-(display 'foo)
-(display #\newline)
+(core:display 'foo)
+(core:display #\newline)
 (exit 0)

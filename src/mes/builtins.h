@@ -90,6 +90,8 @@ struct scm *minus (struct scm *x);
 struct scm *plus (struct scm *x);
 struct scm *divide (struct scm *x);
 struct scm *modulo (struct scm *a, struct scm *b);
+struct scm *quotient (struct scm* a, struct scm *b);
+struct scm *arith_remainder(struct scm* a, struct scm* b);
 struct scm *multiply (struct scm *x);
 struct scm *logand (struct scm *x);
 struct scm *logior (struct scm *x);

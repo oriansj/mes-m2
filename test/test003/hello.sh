@@ -16,6 +16,6 @@
 ## along with Gnu Mes.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-out=$(MES_CORE=0 ./bin/mes-m2 --file test/test003/display_number.scm 2>&1)
+out=$(MES_BOOT=test/test003/display_number.scm ./bin/mes-m2 2>&1)
 [ "$out" = "42" ] || exit 1
 exit 0

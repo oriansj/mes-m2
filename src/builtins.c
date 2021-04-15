@@ -136,6 +136,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "builtin-arity", 1, &builtin_arity, a);
   a = init_builtin (builtin_type, "builtin?", 1, &builtin_p, a);
   a = init_builtin (builtin_type, "builtin-printer", 1, &builtin_printer, a);
+
   /* src/core.c */
   a = init_builtin (builtin_type, "car", 1, &car, a);
   a = init_builtin (builtin_type, "cdr", 1, &cdr, a);
@@ -151,6 +152,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "core:reverse!", 2, &reverse_x_, a);
   a = init_builtin (builtin_type, "assq", 2, &assq, a);
   a = init_builtin (builtin_type, "assoc", 2, &assoc, a);
+
   /* src/display.c */
   a = init_builtin (builtin_type, "core:display", 1, &display_, a);
   a = init_builtin (builtin_type, "core:display-error", 1, &display_error_, a);
@@ -158,6 +160,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "core:write", 1, &write_, a);
   a = init_builtin (builtin_type, "core:write-error", 1, &write_error_, a);
   a = init_builtin (builtin_type, "core:write-port", 2, &write_port_, a);
+
   /* src/eval-apply.c */
   a = init_builtin (builtin_type, "pairlis", 3, &pairlis, a);
   a = init_builtin (builtin_type, "set-car!", 2, &set_car_x, a);
@@ -165,11 +168,13 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "set-env!", 3, &set_env_x, a);
   a = init_builtin (builtin_type, "add-formals", 2, &add_formals, a);
   a = init_builtin (builtin_type, "eval-apply", 0, &eval_apply, a);
+
   /* src/gc.c */
   a = init_builtin (builtin_type, "gc-stats", 0, &gc_stats, a);
   a = init_builtin (builtin_type, "cons", 2, &cons, a);
   a = init_builtin (builtin_type, "gc-check", 0, &gc_check, a);
   a = init_builtin (builtin_type, "gc", 0, &gc, a);
+
   /* src/hash.c */
   a = init_builtin (builtin_type, "hashq", 2, &hashq, a);
   a = init_builtin (builtin_type, "hash", 2, &hash, a);
@@ -180,6 +185,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "hash-set!", 3, &hash_set_x, a);
   a = init_builtin (builtin_type, "hash-table-printer", 1, &hash_table_printer, a);
   a = init_builtin (builtin_type, "make-hash-table", 1, &make_hash_table, a);
+
   /* src/lib.c */
   a = init_builtin (builtin_type, "core:type", 1, &type_, a);
   a = init_builtin (builtin_type, "core:car", 1, &car_, a);
@@ -191,6 +197,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "pair?", 1, &pair_p, a);
   a = init_builtin (builtin_type, "char->integer", 1, &char_to_integer, a);
   a = init_builtin (builtin_type, "integer->char", 1, &integer_to_char, a);
+
   /* src/math.c */
   a = init_builtin (builtin_type, ">", -1, &greater_p, a);
   a = init_builtin (builtin_type, "<", -1, &less_p, a);
@@ -199,20 +206,23 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "+", -1, &plus, a);
   a = init_builtin (builtin_type, "/", -1, &divide, a);
   a = init_builtin (builtin_type, "modulo", 2, &modulo, a);
+  a = init_builtin (builtin_type, "quotient", 2, &quotient, a);
+  a = init_builtin (builtin_type, "remainder", 2, &arith_remainder, a);
   a = init_builtin (builtin_type, "*", -1, &multiply, a);
   a = init_builtin (builtin_type, "logand", -1, &logand, a);
   a = init_builtin (builtin_type, "logior", -1, &logior, a);
   a = init_builtin (builtin_type, "lognot", 1, &lognot, a);
   a = init_builtin (builtin_type, "logxor", -1, &logxor, a);
   a = init_builtin (builtin_type, "ash", 2, &ash, a);
+
   /* src/module.c */
   a = init_builtin (builtin_type, "make-module-type", 0, &make_module_type, a);
   a = init_builtin (builtin_type, "module-printer", 1, &module_printer, a);
   a = init_builtin (builtin_type, "module-variable", 2, &module_variable, a);
   a = init_builtin (builtin_type, "module-ref", 2, &module_ref, a);
   a = init_builtin (builtin_type, "module-define!", 3, &module_define_x, a);
-  /* src/posix.c */
 
+  /* src/posix.c */
   a = init_builtin (builtin_type, "exit", 1, &exit_, a);
   a = init_builtin (builtin_type, "peek-byte", 0, &peek_byte, a);
   a = init_builtin (builtin_type, "read-byte", 0, &read_byte, a);
@@ -257,11 +267,13 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "reader-read-octal", 0, &reader_read_octal, a);
   a = init_builtin (builtin_type, "reader-read-hex", 0, &reader_read_hex, a);
   a = init_builtin (builtin_type, "reader-read-string", 0, &reader_read_string, a);
+
   /* src/stack.c */
   a = init_builtin (builtin_type, "frame-printer", 1, &frame_printer, a);
   a = init_builtin (builtin_type, "make-stack", -1, &make_stack, a);
   a = init_builtin (builtin_type, "stack-length", 1, &stack_length, a);
   a = init_builtin (builtin_type, "stack-ref", 2, &stack_ref, a);
+
   /* src/string.c */
   a = init_builtin (builtin_type, "string=?", 2, &string_equal_p, a);
   a = init_builtin (builtin_type, "symbol->string", 1, &symbol_to_string, a);
@@ -275,11 +287,13 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "string-append", -1, &string_append, a);
   a = init_builtin (builtin_type, "string-length", 1, &string_length, a);
   a = init_builtin (builtin_type, "string-ref", 2, &string_ref, a);
+
   /* src/struct.c */
   a = init_builtin (builtin_type, "make-struct", 3, &make_struct, a);
   a = init_builtin (builtin_type, "struct-length", 1, &struct_length, a);
   a = init_builtin (builtin_type, "struct-ref", 2, &struct_ref, a);
   a = init_builtin (builtin_type, "struct-set!", 3, &struct_set_x, a);
+
   /* src/vector.c */
   a = init_builtin (builtin_type, "make-vector", -1, &make_vector, a);
   a = init_builtin (builtin_type, "vector-length", 1, &vector_length, a);

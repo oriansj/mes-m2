@@ -191,23 +191,42 @@ modulo (struct scm *a, struct scm *b)
   assert_number ("modulo", b);
   long n = a->value;
   long v = b->value;
+  long x;
   if (v == 0)
     error (cstring_to_symbol ("divide-by-zero"), a);
-  int sign_p = 0;
-  size_t w = v;
-  if (v < 0)
-    {
-      sign_p = 1;
-      w = -v;
-    }
-  while (n < 0)
-    n = n + w;
-  size_t u = n;
-  if (u != 0)
-    u = u % w;
-  n = u;
-  if (sign_p)
-    n = -n;
+
+  x = n % v;
+  if((0 > n) ^ (0 > v))
+    x = x + v;
+
+  return make_number (x);
+}
+
+struct scm *
+quotient (struct scm *a, struct scm *b)
+{
+  assert_number ("quotient", a);
+  assert_number ("quotient", b);
+  long n = a->value;
+  long v = b->value;
+  if (v == 0)
+    error (cstring_to_symbol ("quotient-by-zero"), a);
+
+  n = n/v;
+  return make_number (n);
+}
+
+struct scm *
+arith_remainder (struct scm *a, struct scm *b)
+{
+  assert_number ("remainder", a);
+  assert_number ("remainder", b);
+  long n = a->value;
+  long v = b->value;
+  if (v == 0)
+    error (cstring_to_symbol ("remainder-by-zero"), a);
+
+  n = n%v;
   return make_number (n);
 }
 
@@ -231,13 +250,16 @@ multiply (struct scm *x)                /*:((name . "*") (arity . n)) */
 struct scm *
 logand (struct scm *x)                  /*:((arity . n)) */
 {
-  long n = 0;
-  struct scm *i;
+  struct scm *i = car (x);
+  assert_number ("logand", i);
+  long n = i->value;
   long v;
+  x = cdr (x);
+
   while (x != cell_nil)
     {
       i = car (x);
-      assert_number ("multiply", i);
+      assert_number ("logand", i);
       v = i->value;
       n = n & v;
       x = cdr (x);

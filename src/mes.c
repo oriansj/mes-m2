@@ -40,6 +40,17 @@ int peek(FILE* f)
 	return c;
 }
 
+int in_set(int c, char* s)
+{
+  while(0 != s[0])
+  {
+    if(c == s[0]) return TRUE;
+    s = s + 1;
+  }
+  return FALSE;
+}
+
+
 int eputs (char const *s)
 {
 	fputs(s, stderr);

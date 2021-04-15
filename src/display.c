@@ -25,36 +25,31 @@
 
 int g_depth;
 
-void
-fdwrite_char (char v, FILE* fd)
+char char_lookup(int c)
 {
-  if (v == '\0')
-    fputs ("\\nul", fd);
-  else if (v == '\a')
-    fputs ("\\alarm", fd);
-  else if (v == '\b')
-    fputs ("\\backspace", fd);
-  else if (v == '\t')
-    fputs ("\\tab", fd);
-  else if (v == '\n')
-    fputs ("\\newline", fd);
-  else if (v == '\v')
-    fputs ("\\vtab", fd);
-  else if (v == '\f')
-    fputs ("\\page", fd);
-  /* Nyacc bug
-     else if (v == '\r') fdputs ("return", fd);
-  */
-  else if (v == 13)
-    fputs ("\\return", fd);
-  else if (v == ' ')
-    fputs ("\\space", fd);
-  else
-    {
-      if (v >= 32 && v <= 127)
-        fputc ('\\', fd);
-      fputc (v, fd);
-    }
+  if(c == '\a') return 'a';
+  else if(c == '\b') return 'b';
+  else if(c == '\t') return 't';
+  else if(c == '\v') return 'v';
+  else if(c == '\n') return 'n';
+  else if(c == '\f') return 'f';
+  else if(c == '\r') return 'r';
+  else if(c == '\033') return 'e';
+  else if(c == '\\') return '\\';
+  else if(c == '"') return '"';
+  return c;
+}
+
+void
+fdwrite_char (char c, FILE* fd)
+{
+  if(in_set(c, "\a\b\t\b\v\f\n\r\033\"\\"))
+  {
+    fputc('\\', fd);
+    c = char_lookup(c);
+  }
+
+  fputc(c, fd);
 }
 
 void
@@ -95,14 +90,24 @@ fdwrite_string (char *s, int length, FILE* fd)
 {
   int i;
   for (i = 0; i < length; i = i + 1)
-    fputc (s[i], fd);
+    fdwrite_char(s[i], fd);
 }
+
+void
+fddisplay_string (char *s, int length, FILE* fd)
+{
+  int i;
+  for (i = 0; i < length; i = i + 1)
+    fputc(s[i], fd);
+}
+
 
 struct scm *display_helper (struct scm *x, int cont, char *sep, FILE* fd, int write_p);
 
 struct scm *
 display_helper (struct scm *x, int cont, char *sep, FILE* fd, int write_p)
 {
+  char* s;
   fputs (sep, fd);
   if (g_depth == 0)
     return cell_unspecified;
@@ -198,17 +203,23 @@ display_helper (struct scm *x, int cont, char *sep, FILE* fd, int write_p)
     }
   else if (t == TSTRING)
     {
+      s = cell_bytes (x->string);
       if (write_p == 1)
         {
           fputc ('"', fd);
-          fdwrite_string (cell_bytes (x->string), x->length, fd);
+          fdwrite_string (s, x->length, fd);
           fputc ('"', fd);
         }
       else
-        fputs (cell_bytes (x->string), fd);
+        fddisplay_string (s, x->length, fd);
     }
   else if (t == TSPECIAL || t == TSYMBOL)
-    fdwrite_string (cell_bytes (x->string), x->length, fd);
+  {
+    if(x == cell_unspecified)
+      fputs("#<unspecified>", fd);
+    else
+      fdwrite_string (cell_bytes (x->string), x->length, fd);
+  }
   else if (t == TREF)
     fdisplay_ (x->ref, fd, write_p);
   else if (t == TSTRUCT)
