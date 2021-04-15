@@ -47,7 +47,7 @@ reader_read_line_comment (int c)
     {
       if (c == '\n')
         return c;
-      c = readchar ();
+      c = fgetc(__stdin);
     }
   error (cell_symbol_system_error, make_string0 ("reader_read_line_comment"));
 }
@@ -75,13 +75,13 @@ reader_read_identifier_or_number (int c)
   long n = 0;
   int negative_p = 0;
   if (c == '+')
-    if (isdigit (peekchar ()) != 0)
-      c = readchar ();
+    if (isdigit (peek(__stdin)) != 0)
+      c = fgetc(__stdin);
   if (c == '-')
-    if (isdigit (peekchar ()) != 0)
+    if (isdigit (peek(__stdin)) != 0)
       {
         negative_p = 1;
-        c = readchar ();
+        c = fgetc(__stdin);
       }
   while (isdigit (c) != 0)
     {
@@ -89,11 +89,11 @@ reader_read_identifier_or_number (int c)
       i = i + 1;
       n = n * 10;
       n = n + c - '0';
-      c = readchar ();
+      c = fgetc(__stdin);
     }
   if (reader_end_of_word_p (c) != 0)
     {
-      unreadchar (c);
+      ungetc(c, __stdin);
       if (negative_p != 0)
         n = 0 - n;
       return make_number (n);
@@ -103,9 +103,9 @@ reader_read_identifier_or_number (int c)
     {
       g_buf[i] = c;
       i = i + 1;
-      c = readchar ();
+      c = fgetc(__stdin);
     }
-  unreadchar (c);
+  ungetc(c, __stdin);
   g_buf[i] = 0;
   return cstring_to_symbol (g_buf);
 }
@@ -123,32 +123,32 @@ reset_reader:
     }
   if ((c == ' ') || (c == '\t') || (c == '\n') || (c == '\f'))
     {
-      c = readchar ();
+      c = fgetc(__stdin);
       goto reset_reader;
     }
   if (c == '(')
-    return reader_read_list (readchar (), a);
+    return reader_read_list (fgetc(__stdin), a);
   if (c == ')')
     return cell_nil;
   if (c == '#')
-    return reader_read_hash (readchar (), a);
+    return reader_read_hash (fgetc(__stdin), a);
   if (c == '`')
-    return cons (cell_symbol_quasiquote, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+    return cons (cell_symbol_quasiquote, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
   if (c == ',')
     {
-      if (peekchar () == '@')
+      if (peek(__stdin) == '@')
         {
-          readchar ();
-          return cons (cell_symbol_unquote_splicing, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+          fgetc(__stdin);
+          return cons (cell_symbol_unquote_splicing, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
         }
-      return cons (cell_symbol_unquote, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+      return cons (cell_symbol_unquote, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
     }
   if (c == '\'')
-    return cons (cell_symbol_quote, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+    return cons (cell_symbol_quote, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
   if (c == '"')
     return reader_read_string ();
   if (c == '.')
-    if (reader_identifier_p (peekchar ()) == 0)
+    if (reader_identifier_p (peek(__stdin)) == 0)
       return cell_dot;
   return reader_read_identifier_or_number (c);
 }
@@ -157,17 +157,17 @@ int
 reader_eat_whitespace (int c)
 {
   while (isspace (c) != 0)
-    c = readchar ();
+    c = fgetc(__stdin);
   if (c == ';')
     return reader_eat_whitespace (reader_read_line_comment (c));
   if (c == '#')
     {
-      int p = peekchar ();
+      int p = peek(__stdin);
       if (p == '!' || p == '|')
         {
-          c = readchar ();
-          reader_read_block_comment (c, readchar ());
-          return reader_eat_whitespace (readchar ());
+          c = fgetc(__stdin);
+          reader_read_block_comment (c, fgetc(__stdin));
+          return reader_eat_whitespace (fgetc(__stdin));
         }
     }
   return c;
@@ -184,28 +184,28 @@ reader_read_list (int c, struct scm *a)
   struct scm *s = reader_read_sexp_ (c, a);
   if (s == cell_dot)
     {
-      s = reader_read_list (readchar (), a);
+      s = reader_read_list (fgetc(__stdin), a);
       return s->car;
     }
-  return cons (s, reader_read_list (readchar (), a));
+  return cons (s, reader_read_list (fgetc(__stdin), a));
 }
 
 struct scm *
 read_env (struct scm *a)
 {
-  return reader_read_sexp_ (readchar (), a);
+  return reader_read_sexp_ (fgetc(__stdin), a);
 }
 
 struct scm *
 reader_read_block_comment (int s, int c)
 {
   if (c == s)
-    if (peekchar () == '#')
+    if (peek(__stdin) == '#')
       {
-        readchar ();
+        fgetc(__stdin);
         return cell_unspecified;
       }
-  return reader_read_block_comment (s, readchar ());
+  return reader_read_block_comment (s, fgetc(__stdin));
 }
 
 struct scm *
@@ -213,13 +213,13 @@ reader_read_hash (int c, struct scm *a)
 {
   if (c == '!')
     {
-      reader_read_block_comment (c, readchar ());
-      return reader_read_sexp_ (readchar (), a);
+      reader_read_block_comment (c, fgetc(__stdin));
+      return reader_read_sexp_ (fgetc(__stdin), a);
     }
   if (c == '|')
     {
-      reader_read_block_comment (c, readchar ());
-      return reader_read_sexp_ (readchar (), a);
+      reader_read_block_comment (c, fgetc(__stdin));
+      return reader_read_sexp_ (fgetc(__stdin), a);
     }
   if (c == 'f')
     return cell_f;
@@ -227,21 +227,21 @@ reader_read_hash (int c, struct scm *a)
     return cell_t;
   if (c == ',')
     {
-      if (peekchar () == '@')
+      if (peek(__stdin) == '@')
         {
-          readchar ();
-          return cons (cell_symbol_unsyntax_splicing, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+          fgetc(__stdin);
+          return cons (cell_symbol_unsyntax_splicing, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
         }
 
-      return cons (cell_symbol_unsyntax, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+      return cons (cell_symbol_unsyntax, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
     }
   if (c == '\'')
-    return cons (cell_symbol_syntax, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+    return cons (cell_symbol_syntax, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
   if (c == '`')
-    return cons (cell_symbol_quasisyntax, cons (reader_read_sexp_ (readchar (), a), cell_nil));
+    return cons (cell_symbol_quasisyntax, cons (reader_read_sexp_ (fgetc(__stdin), a), cell_nil));
   if (c == ':')
     {
-      struct scm *x = reader_read_identifier_or_number (readchar ());
+      struct scm *x = reader_read_identifier_or_number (fgetc(__stdin));
       struct scm *msg = make_string0 ("keyword perifx ':' not followed by a symbol: ");
       if (x->type == TNUMBER)
         error (cell_symbol_system_error, cons (msg, x));
@@ -256,13 +256,13 @@ reader_read_hash (int c, struct scm *a)
   if (c == '\\')
     return reader_read_character ();
   if (c == '(')
-    return list_to_vector (reader_read_list (readchar (), a));
+    return list_to_vector (reader_read_list (fgetc(__stdin), a));
   if (c == ';')
     {
-      reader_read_sexp_ (readchar (), a);
-      return reader_read_sexp_ (readchar (), a);
+      reader_read_sexp_ (fgetc(__stdin), a);
+      return reader_read_sexp_ (fgetc(__stdin), a);
     }
-  return reader_read_sexp_ (readchar (), a);
+  return reader_read_sexp_ (fgetc(__stdin), a);
 }
 
 struct scm *
@@ -274,8 +274,8 @@ reader_read_sexp (struct scm *c, struct scm *s, struct scm *a)
 struct scm *
 reader_read_character ()
 {
-  int c = readchar ();
-  int p = peekchar ();
+  int c = fgetc(__stdin);
+  int p = peek(__stdin);
   int i = 0;
   if (c >= '0' && c <= '7' && p >= '0' && p <= '7')
     {
@@ -283,8 +283,8 @@ reader_read_character ()
       while (p >= '0' && p <= '7')
         {
           c = c << 3;
-          c = c + readchar () - '0';
-          p = peekchar ();
+          c = c + fgetc(__stdin) - '0';
+          p = peek(__stdin);
         }
     }
   else if (c == 'x' && ((p >= '0' && p <= '9') || (p >= 'a' && p <= 'f') || (p >= 'F' && p <= 'F')))
@@ -302,9 +302,9 @@ reader_read_character ()
       i = i + 1;
       while ((p >= 'a' && p <= 'z') || p == '*')
         {
-          buf[i] = readchar ();
+          buf[i] = fgetc(__stdin);
           i = i + 1;
-          p = peekchar ();
+          p = peek(__stdin);
         }
       buf[i] = 0;
       if (strcmp (buf, "*eof*") == 0)
@@ -361,20 +361,20 @@ struct scm *
 reader_read_binary ()
 {
   long n = 0;
-  int c = peekchar ();
+  int c = peek(__stdin);
   int negative_p = 0;
   if (c == '-')
     {
       negative_p = 1;
-      readchar ();
-      c = peekchar ();
+      fgetc(__stdin);
+      c = peek(__stdin);
     }
   while (c == '0' || c == '1')
     {
       n = n << 1;
       n = n + c - '0';
-      readchar ();
-      c = peekchar ();
+      fgetc(__stdin);
+      c = peek(__stdin);
     }
   if (negative_p != 0)
     n = 0 - n;
@@ -385,20 +385,20 @@ struct scm *
 reader_read_octal ()
 {
   long n = 0;
-  int c = peekchar ();
+  int c = peek(__stdin);
   int negative_p = 0;
   if (c == '-')
     {
       negative_p = 1;
-      readchar ();
-      c = peekchar ();
+      fgetc(__stdin);
+      c = peek(__stdin);
     }
   while (c >= '0' && c <= '7')
     {
       n = n << 3;
       n = n + c - '0';
-      readchar ();
-      c = peekchar ();
+      fgetc(__stdin);
+      c = peek(__stdin);
     }
   if (negative_p != 0)
     n = 0 - n;
@@ -409,13 +409,13 @@ struct scm *
 reader_read_hex ()
 {
   long n = 0;
-  int c = peekchar ();
+  int c = peek(__stdin);
   int negative_p = 0;
   if (c == '-')
     {
       negative_p = 1;
-      readchar ();
-      c = peekchar ();
+      fgetc(__stdin);
+      c = peek(__stdin);
     }
   while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
     {
@@ -426,8 +426,8 @@ reader_read_hex ()
         n = n + c - 'A' + 10;
       else
         n = n + c - '0';
-      readchar ();
-      c = peekchar ();
+      fgetc(__stdin);
+      c = peek(__stdin);
     }
   if (negative_p != 0)
     n = 0 - n;
@@ -444,12 +444,12 @@ reader_read_string ()
     {
       if (i > MAX_STRING)
         assert_max_string (i, "reader_read_string", g_buf);
-      c = readchar ();
+      c = fgetc(__stdin);
       if (c == '"')
         break;
       if (c == '\\')
         {
-          c = readchar ();
+          c = fgetc(__stdin);
           if (c == '\\' || c == '"')
             0;
           else if (c == '0')

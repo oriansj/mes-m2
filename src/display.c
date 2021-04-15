@@ -26,84 +26,84 @@
 int g_depth;
 
 void
-fdwrite_char (char v, int fd)
+fdwrite_char (char v, FILE* fd)
 {
   if (v == '\0')
-    fdputs ("\\nul", fd);
+    fputs ("\\nul", fd);
   else if (v == '\a')
-    fdputs ("\\alarm", fd);
+    fputs ("\\alarm", fd);
   else if (v == '\b')
-    fdputs ("\\backspace", fd);
+    fputs ("\\backspace", fd);
   else if (v == '\t')
-    fdputs ("\\tab", fd);
+    fputs ("\\tab", fd);
   else if (v == '\n')
-    fdputs ("\\newline", fd);
+    fputs ("\\newline", fd);
   else if (v == '\v')
-    fdputs ("\\vtab", fd);
+    fputs ("\\vtab", fd);
   else if (v == '\f')
-    fdputs ("\\page", fd);
+    fputs ("\\page", fd);
   /* Nyacc bug
      else if (v == '\r') fdputs ("return", fd);
   */
   else if (v == 13)
-    fdputs ("\\return", fd);
+    fputs ("\\return", fd);
   else if (v == ' ')
-    fdputs ("\\space", fd);
+    fputs ("\\space", fd);
   else
     {
       if (v >= 32 && v <= 127)
-        fdputc ('\\', fd);
-      fdputc (v, fd);
+        fputc ('\\', fd);
+      fputc (v, fd);
     }
 }
 
 void
-fdwrite_string_char (char v, int fd)
+fdwrite_string_char (char v, FILE* fd)
 {
   if (v == '\0')
-    fdputs ("\\0", fd);
+    fputs ("\\0", fd);
   else if (v == '\a')
-    fdputs ("\\a", fd);
+    fputs ("\\a", fd);
   else if (v == '\b')
-    fdputs ("\\b", fd);
+    fputs ("\\b", fd);
   else if (v == '\t')
-    fdputs ("\\t", fd);
+    fputs ("\\t", fd);
   else if (v == '\v')
-    fdputs ("\\v", fd);
+    fputs ("\\v", fd);
   else if (v == '\n')
-    fdputs ("\\n", fd);
+    fputs ("\\n", fd);
   else if (v == '\f')
-    fdputs ("\\f", fd);
+    fputs ("\\f", fd);
   /* Nyacc bug
      else if (v == '\r') fdputs ("\\r", fd);
      else if (v == '\e') fdputs ("\\e", fd);
   */
   else if (v == 13)
-    fdputs ("\\r", fd);
+    fputs ("\\r", fd);
   else if (v == 27)
-    fdputs ("\\e", fd);
+    fputs ("\\e", fd);
   else if (v == '\\')
-    fdputs ("\\\\", fd);
+    fputs ("\\\\", fd);
   else if (v == '"')
-    fdputs ("\\\"", fd);
+    fputs ("\\\"", fd);
   else
-    fdputc (v, fd);
+    fputc (v, fd);
 }
 
 void
-fdwrite_string (char *s, int length, int fd)
+fdwrite_string (char *s, int length, FILE* fd)
 {
   int i;
   for (i = 0; i < length; i = i + 1)
-    fdwrite_string_char (s[i], fd);
+    fputc (s[i], fd);
 }
 
-struct scm *display_helper (struct scm *x, int cont, char *sep, int fd, int write_p);
+struct scm *display_helper (struct scm *x, int cont, char *sep, FILE* fd, int write_p);
 
 struct scm *
-display_helper (struct scm *x, int cont, char *sep, int fd, int write_p)
+display_helper (struct scm *x, int cont, char *sep, FILE* fd, int write_p)
 {
-  fdputs (sep, fd);
+  fputs (sep, fd);
   if (g_depth == 0)
     return cell_unspecified;
   g_depth = g_depth - 1;
@@ -112,57 +112,57 @@ display_helper (struct scm *x, int cont, char *sep, int fd, int write_p)
   if (t == TCHAR)
     {
       if (write_p == 0)
-        fdputc (x->value, fd);
+        fputc (x->value, fd);
       else
         {
-          fdputs ("#", fd);
-          fdwrite_char (x->value, fd);
+          fputs ("#", fd);
+          fputc (x->value, fd);
         }
     }
   else if (t == TCLOSURE)
     {
-      fdputs ("#<closure ", fd);
+      fputs ("#<closure ", fd);
       struct scm *circ = x->cdr->car;
       struct scm *name = circ->cdr->car;
       struct scm *args = x->cdr->cdr->car;
       display_helper (name->car, 0, "", fd, 0);
-      fdputc (' ', fd);
+      fputc (' ', fd);
       display_helper (args, 0, "", fd, 0);
-      fdputs (">", fd);
+      fputs (">", fd);
     }
   else if (t == TMACRO)
     {
-      fdputs ("#<macro ", fd);
+      fputs ("#<macro ", fd);
       display_helper (x->cdr, cont, "", fd, 0);
-      fdputs (">", fd);
+      fputs (">", fd);
     }
   else if (t == TVARIABLE)
     {
-      fdputs ("#<variable ", fd);
+      fputs ("#<variable ", fd);
       display_helper (x->variable->car, cont, "", fd, 0);
-      fdputs (">", fd);
+      fputs (">", fd);
     }
   else if (t == TNUMBER)
     {
-      fdputs (itoa (x->value), fd);
+      fputs (itoa (x->value), fd);
     }
   else if (t == TPAIR)
     {
       if (cont == 0)
-        fdputs ("(", fd);
+        fputs ("(", fd);
       if (x->car == cell_circular && x->cdr->car != cell_closure)
         {
-          fdputs ("(*circ* . ", fd);
+          fputs ("(*circ* . ", fd);
           int i = 0;
           x = x->cdr;
           while (x != cell_nil && i < 10)
             {
               i = i + 1;
               fdisplay_ (x->car->car, fd, write_p);
-              fdputs (" ", fd);
+              fputs (" ", fd);
               x = x->cdr;
             }
-          fdputs (" ...)", fd);
+          fputs (" ...)", fd);
         }
       else
         {
@@ -173,39 +173,39 @@ display_helper (struct scm *x, int cont, char *sep, int fd, int write_p)
           else if (x->cdr != 0 && x->cdr != cell_nil)
             {
               if (x->cdr->type != TPAIR)
-                fdputs (" . ", fd);
+                fputs (" . ", fd);
               fdisplay_ (x->cdr, fd, write_p);
             }
         }
       if (cont == 0)
-        fdputs (")", fd);
+        fputs (")", fd);
     }
   else if (t == TPORT)
     {
-      fdputs ("#<port ", fd);
-      fdputs (itoa (x->port), fd);
-      fdputs (" ", fd);
+      fputs ("#<port ", fd);
+      fputs (itoa (x->port), fd);
+      fputs (" ", fd);
       x = x->string;
-      fdputc ('"', fd);
+      fputc ('"', fd);
       fdwrite_string (cell_bytes (x->string), x->length, fd);
-      fdputc ('"', fd);
-      fdputs (">", fd);
+      fputc ('"', fd);
+      fputs (">", fd);
     }
   else if (t == TKEYWORD)
     {
-      fdputs ("#:", fd);
+      fputs ("#:", fd);
       fdwrite_string (cell_bytes (x->string), x->length, fd);
     }
   else if (t == TSTRING)
     {
       if (write_p == 1)
         {
-          fdputc ('"', fd);
+          fputc ('"', fd);
           fdwrite_string (cell_bytes (x->string), x->length, fd);
-          fdputc ('"', fd);
+          fputc ('"', fd);
         }
       else
-        fdputs (cell_bytes (x->string), fd);
+        fputs (cell_bytes (x->string), fd);
     }
   else if (t == TSPECIAL || t == TSYMBOL)
     fdwrite_string (cell_bytes (x->string), x->length, fd);
@@ -220,39 +220,39 @@ display_helper (struct scm *x, int cont, char *sep, int fd, int write_p)
         apply (printer, cons (x, cell_nil), R0);
       else
         {
-          fdputs ("#<", fd);
+          fputs ("#<", fd);
           fdisplay_ (x->structure, fd, write_p);
           struct scm *t = x->car;
           long size = x->length;
           long i;
           for (i = 2; i < size; i = i + 1)
             {
-              fdputc (' ', fd);
+              fputc (' ', fd);
               fdisplay_ (cell_ref (x->structure, i), fd, write_p);
             }
-          fdputc ('>', fd);
+          fputc ('>', fd);
         }
     }
   else if (t == TVECTOR)
     {
-      fdputs ("#(", fd);
+      fputs ("#(", fd);
       struct scm *t = x->car;
       long i;
       for (i = 0; i < x->length; i = i + 1)
         {
           if (i != 0)
-            fdputc (' ', fd);
+            fputc (' ', fd);
           fdisplay_ (cell_ref (x->vector, i), fd, write_p);
         }
-      fdputc (')', fd);
+      fputc (')', fd);
     }
   else
     {
-      fdputs ("<", fd);
-      fdputs (itoa (t), fd);
-      fdputs (":", fd);
-      fdputs (ltoa (cast_voidp_to_long (x)), fd);
-      fdputs (">", fd);
+      fputs ("<", fd);
+      fputs (itoa (t), fd);
+      fputs (":", fd);
+      fputs (ltoa (cast_voidp_to_long (x)), fd);
+      fputs (">", fd);
     }
   return cell_unspecified;
 }
@@ -275,7 +275,7 @@ struct scm *
 display_port_ (struct scm *x, struct scm *p)
 {
   assert_msg (p->type == TNUMBER, "p->type == TNUMBER");
-  return fdisplay_ (x, p->value, 0);
+  return fdisplay_ (x, p->name_cdr, 0);
 }
 
 struct scm *
@@ -296,11 +296,11 @@ struct scm *
 write_port_ (struct scm *x, struct scm *p)
 {
   assert_msg (p->type == TNUMBER, "p->type == TNUMBER");
-  return fdisplay_ (x, p->value, 1);
+  return fdisplay_ (x, p->name_cdr, 1);
 }
 
 struct scm *
-fdisplay_ (struct scm *x, int fd, int write_p)  /*:((internal)) */
+fdisplay_ (struct scm *x, FILE* fd, int write_p)  /*:((internal)) */
 {
   g_depth = 5;
   return display_helper (x, 0, "", fd, write_p);

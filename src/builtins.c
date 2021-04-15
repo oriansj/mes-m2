@@ -18,8 +18,8 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mes/lib.h"
 #include "mes/mes.h"
+#include <unistd.h>
 
 struct scm *
 make_builtin_type ()            /*:((internal)) */
@@ -76,35 +76,34 @@ builtin_p (struct scm *x)
 struct scm *
 builtin_printer (struct scm *builtin)
 {
-  fdputs ("#<procedure ", __stdout);
+  fputs ("#<procedure ", __stdout);
   display_ (builtin_name (builtin));
-  fdputc (' ', __stdout);
+  fputc (' ', __stdout);
   struct scm *x = builtin_arity (builtin);
   int arity = x->value;
   if (arity == -1)
-    fdputc ('_', __stdout);
+    fputc ('_', __stdout);
   else
     {
-      fdputc ('(', __stdout);
+      fputc ('(', __stdout);
       int i;
       for (i = 0; i < arity; i = i + 1)
         {
           if (i != 0)
-            fdputc (' ', __stdout);
-          fdputc ('_', __stdout);
+            fputc (' ', __stdout);
+          fputc ('_', __stdout);
         }
     }
-  fdputc ('>', __stdout);
+  fputc ('>', __stdout);
 }
 
 struct scm *
 init_builtin (struct scm *builtin_type, char const *name, int arity, void* function, struct scm *a)
 {
   struct scm *s = cstring_to_symbol (name);
-  long n = cast_voidp_to_long (function);
   return acons (s,
                 make_builtin (builtin_type, symbol_to_string (s), make_number (arity),
-                              make_number (n)), a);
+                              make_function (function)), a);
 }
 
 struct scm *
@@ -123,7 +122,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
       a = init_builtin (builtin_type, "core:display", 1, &display_, a);
       a = init_builtin (builtin_type, "core:write", 1, &write_, a);
       a = init_builtin (builtin_type, "core:display-error", 1, &display_error_, a);
-      a = init_builtin (builtin_type, "getenv", 1, &getenv_, a);
+//      a = init_builtin (builtin_type, "getenv", 1, &getenv_, a);
       a = init_builtin (builtin_type, "gc", 0, &gc, a);
       a = init_builtin (builtin_type, ">", -1, &greater_p, a);
       a = init_builtin (builtin_type, "<", -1, &less_p, a);
@@ -213,6 +212,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "module-ref", 2, &module_ref, a);
   a = init_builtin (builtin_type, "module-define!", 3, &module_define_x, a);
   /* src/posix.c */
+
   a = init_builtin (builtin_type, "exit", 1, &exit_, a);
   a = init_builtin (builtin_type, "peek-byte", 0, &peek_byte, a);
   a = init_builtin (builtin_type, "read-byte", 0, &read_byte, a);
@@ -246,6 +246,7 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "dup", 1, &dup_, a);
   a = init_builtin (builtin_type, "dup2", 2, &dup2_, a);
   a = init_builtin (builtin_type, "delete-file", 1, &delete_file, a);
+
   /* src/reader.c */
   a = init_builtin (builtin_type, "core:read-input-file-env", 2, &read_input_file_env_, a);
   a = init_builtin (builtin_type, "read-input-file-env", 1, &read_input_file_env, a);

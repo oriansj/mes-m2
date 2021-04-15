@@ -172,14 +172,14 @@ list_to_string (struct scm *list)
 struct scm *
 read_string (struct scm *port)          /*:((arity . n)) */
 {
-  int fd = __stdin;
+  FILE* fd = __stdin;
   if (port->type == TPAIR)
     {
       struct scm *p = car (port);
       if (p->type == TNUMBER)
-        __stdin = p->value;
+        __stdin = p->name_cdr;
     }
-  int c = readchar ();
+  int c = fgetc(__stdin);
   size_t i = 0;
   while (c != -1)
     {
@@ -187,7 +187,7 @@ read_string (struct scm *port)          /*:((arity . n)) */
         assert_max_string (i, "read_string", g_buf);
       g_buf[i] = c;
       i = i + 1;
-      c = readchar ();
+      c = fgetc(__stdin);
     }
   g_buf[i] = 0;
   __stdin = fd;

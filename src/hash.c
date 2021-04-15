@@ -147,14 +147,14 @@ hash_set_x (struct scm *table, struct scm *key, struct scm *value)
 struct scm *
 hash_table_printer (struct scm *table)
 {
-  fdputs ("#<", __stdout);
+  fputs ("#<", __stdout);
   display_ (struct_ref_ (table, 2));
-  fdputc (' ', __stdout);
-  fdputs ("size: ", __stdout);
+  fputc (' ', __stdout);
+  fputs ("size: ", __stdout);
   display_ (struct_ref_ (table, 3));
-  fdputc (' ', __stdout);
+  fputc (' ', __stdout);
   struct scm *buckets = struct_ref_ (table, 4);
-  fdputs ("buckets: ", __stdout);
+  fputs ("buckets: ", __stdout);
   int i;
   struct scm *e;
   for (i = 0; i < buckets->length; i = i + 1)
@@ -162,18 +162,18 @@ hash_table_printer (struct scm *table)
       e = vector_ref_ (buckets, i);
       if (e != cell_unspecified)
         {
-          fdputc ('[', __stdout);
+          fputc ('[', __stdout);
           while (e->type == TPAIR)
             {
               write_ (e->car->car);
               e = e->cdr;
               if (e->type == TPAIR)
-                fdputc (' ', __stdout);
+                fputc (' ', __stdout);
             }
-          fdputs ("]\n  ", __stdout);
+          fputs ("]\n  ", __stdout);
         }
     }
-  fdputc ('>', __stdout);
+  fputc ('>', __stdout);
 }
 
 struct scm *

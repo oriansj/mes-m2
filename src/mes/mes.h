@@ -21,8 +21,10 @@
 #ifndef __MES_MES_H
 #define __MES_MES_H
 
-#include <sys/types.h>
 #include "cc.h"
+#include "globals.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 struct scm
 {
@@ -37,6 +39,7 @@ struct scm
     struct scm *variable;
     struct scm *macro;
     long port;
+    FILE* name_car;
   };
   union
   {
@@ -50,6 +53,7 @@ struct scm
     long value;
     FUNCTION function;
     struct scm *vector;
+    FILE* name_cdr;
   };
 };
 
@@ -125,7 +129,7 @@ struct scm *builtin_name (struct scm *builtin);
 struct scm *cstring_to_list (char const *s);
 struct scm *cstring_to_symbol (char const *s);
 struct scm *cell_ref (struct scm *cell, long index);
-struct scm *fdisplay_ (struct scm *, int, int);
+struct scm *fdisplay_ (struct scm *, FILE*, int);
 struct scm *init_symbols ();
 struct scm *init_time (struct scm *a);
 struct scm *make_builtin_type ();
@@ -135,6 +139,8 @@ struct scm *make_pointer_cell (long type, long car, void *cdr);
 struct scm *make_value_cell (long type, long car, long cdr);
 struct scm *make_char (int n);
 struct scm *make_continuation (long n);
+struct scm *make_file (FILE* f);
+struct scm *make_function (void* n);
 struct scm *make_hash_table_ (long size);
 struct scm *make_hashq_type ();
 struct scm *make_initial_module (struct scm *a);
@@ -146,6 +152,7 @@ struct scm *make_string0 (char const *s);
 struct scm *make_string_port (struct scm *x);
 struct scm *make_vector_ (long k, struct scm *e);
 struct scm *mes_builtins (struct scm *a);
+int peek(FILE* f);
 struct scm *push_cc (struct scm *p1, struct scm *p2, struct scm *a, struct scm *c);
 struct scm *struct_ref_ (struct scm *x, long i);
 struct scm *struct_set_x_ (struct scm *x, long i, struct scm *e);
@@ -154,9 +161,6 @@ struct scm *vector_set_x_ (struct scm *x, long i, struct scm *e);
 FUNCTION builtin_function (struct scm *builtin);
 char *cell_bytes (struct scm *x);
 char *news_bytes (struct scm *x);
-int peekchar ();
-int readchar ();
-int unreadchar ();
 long gc_free ();
 long length__ (struct scm *x);
 size_t bytes_cells (size_t length);

@@ -48,6 +48,7 @@ mes-m2: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c apply.c 
 	src/struct.c        \
 	src/symbol.c        \
 	src/vector.c        \
+	src/posix.c         \
 	-o bin/mes-m2
 
 mes: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c m2.c math.c mes.c module.c posix.c reader.c stack.c string.c struct.c symbol.c vector.c | bin
@@ -61,7 +62,7 @@ mes-m2-boot:
 # Clean up after ourselves
 .PHONY: clean
 clean:
-	rm -rf bin/ test/results/
+	rm -rf bin/ test/results/ m2/
 #	./test/test000/cleanup.sh
 
 # Directories

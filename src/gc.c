@@ -28,7 +28,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-int g_dump_filedes;
+FILE* g_dump_filedes;
 
 #define M2_CELL_SIZE 1U
 // CONSTANT M2_CELL_SIZE 12
@@ -292,6 +292,22 @@ make_number (long n)
 }
 
 struct scm *
+make_function (void* n)
+{
+  struct scm* r = make_value_cell (TNUMBER, 0, 0);
+  r->function = n;
+  return r;
+}
+
+struct scm *
+make_file (FILE* f)
+{
+  struct scm* r = make_value_cell (TNUMBER, 0, 0);
+  r->name_cdr = f;
+  return r;
+}
+
+struct scm *
 make_ref (struct scm *x)                /*:((internal)) */
 {
   return make_cell (TREF, x, 0);
@@ -311,6 +327,7 @@ make_string (char const *s, size_t length)
 struct scm *
 make_string0 (char const *s)
 {
+  if(NULL == s) return make_string("", 0);
   return make_string (s, strlen (s));
 }
 
@@ -667,15 +684,9 @@ gc ()
       write_error_ (R0);
       eputs ("\n");
     }
-  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, gc_start_time);
   gc_push_frame ();
   gc_ ();
   gc_pop_frame ();
-  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, gc_end_time);
-  long time = seconds_and_nanoseconds_to_long
-    (gc_end_time->tv_sec - gc_start_time->tv_sec,
-     gc_end_time->tv_nsec - gc_start_time->tv_nsec);
-  gc_time = gc_time + time;
   gc_count = gc_count + 1;
   if (g_debug > 5)
     {
@@ -724,13 +735,13 @@ gc_pop_frame ()
 void
 dumpc (char c)
 {
-  fdputc (c, g_dump_filedes);
+  fputc (c, g_dump_filedes);
 }
 
 void
 dumps (char const *s)
 {
-  fdputs (s, g_dump_filedes);
+  fputs (s, g_dump_filedes);
 }
 
 void
@@ -784,7 +795,7 @@ gc_dump_arena (struct scm *cells, long size)
   int c;
   char* p;
   if (g_dump_filedes == 0)
-    g_dump_filedes = mes_open ("dump.mo", O_CREAT|O_WRONLY, 0644);
+    g_dump_filedes = fopen ("dump.mo", "w");
   dumps ("stack="); dumps (ltoa (g_stack)); dumpc ('\n');
   dumps ("size="); dumps (ltoa (size)); dumpc ('\n');
   gc_dump_state ();

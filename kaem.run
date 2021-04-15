@@ -104,7 +104,7 @@ M2-Planet                                       \
     -f src/math.c                               \
     -f src/mes.c                                \
     -f src/module.c                             \
-    -f src/posix.c                              \
+    -f src/posix-m2.c                           \
     -f src/reader.c                             \
     -f src/stack.c                              \
     -f src/string.c                             \

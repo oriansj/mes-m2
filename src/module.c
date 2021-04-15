@@ -68,19 +68,19 @@ make_initial_module (struct scm *a)     /*:((internal)) */
 struct scm *
 module_printer (struct scm *module)
 {
-  fdputs ("#<", __stdout);
+  fputs ("#<", __stdout);
   display_ (struct_ref_ (module, 2));
-  fdputc (' ', __stdout);
-  fdputs ("name: ", __stdout);
+  fputc (' ', __stdout);
+  fputs ("name: ", __stdout);
   display_ (struct_ref_ (module, 3));
-  fdputc (' ', __stdout);
-  fdputs ("locals: ", __stdout);
+  fputc (' ', __stdout);
+  fputs ("locals: ", __stdout);
   display_ (struct_ref_ (module, 4));
-  fdputc (' ', __stdout);
+  fputc (' ', __stdout);
   struct scm *table = struct_ref_ (module, 5);
-  fdputs ("globals:\n  ", __stdout);
+  fputs ("globals:\n  ", __stdout);
   display_ (table);
-  fdputc ('>', __stdout);
+  fputc ('>', __stdout);
 }
 
 struct scm *

@@ -26,12 +26,12 @@
 struct scm *
 frame_printer (struct scm *frame)
 {
-  fdputs ("#<", __stdout);
+  fputs ("#<", __stdout);
   display_ (struct_ref_ (frame, 2));
-  fdputc (' ', __stdout);
-  fdputs ("procedure: ", __stdout);
+  fputc (' ', __stdout);
+  fputs ("procedure: ", __stdout);
   display_ (struct_ref_ (frame, 3));
-  fdputc ('>', __stdout);
+  fputc ('>', __stdout);
 }
 
 struct scm *

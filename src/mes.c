@@ -28,6 +28,24 @@
 #include <sys/time.h>
 #include <time.h>
 
+FILE* __stdin;
+FILE* __stdout;
+FILE* __stderr;
+
+
+int peek(FILE* f)
+{
+	int c = fgetc(f);
+	ungetc(c, f);
+	return c;
+}
+
+int eputs (char const *s)
+{
+	fputs(s, stderr);
+	return 0;
+}
+
 struct scm *
 mes_g_stack (struct scm *a)             /*:((internal)) */
 {
@@ -75,7 +93,7 @@ mes_environment (int argc, char **argv)
   return mes_g_stack (a);
 }
 
-int
+FILE* 
 try_open_boot (char *file_name, char const *boot, char const *location)
 {
   strcpy (file_name + strlen (file_name), boot);
@@ -87,8 +105,8 @@ try_open_boot (char *file_name, char const *boot, char const *location)
       eputs (file_name);
       eputs ("\n");
     }
-  int fd = mes_open (file_name, O_RDONLY, 0);
-  if (g_debug != 0 && fd > 0)
+  FILE* fd = fopen (file_name, "r");
+  if (g_debug != 0 && NULL != fd)
     {
       eputs ("mes: read boot-0: ");
       eputs (file_name);
@@ -100,7 +118,7 @@ try_open_boot (char *file_name, char const *boot, char const *location)
 void
 open_boot ()
 {
-  __stdin = -1;
+  __stdin = NULL;
   char *boot = __open_boot_buf;
   char *file_name = __open_boot_file_name;
   strcpy (g_datadir, ".");
@@ -115,7 +133,7 @@ open_boot ()
       strcpy (file_name, g_datadir);
       strcpy (file_name + strlen (file_name), "/module/mes/");
       __stdin = try_open_boot (file_name, boot, "MES_PREFIX");
-      if (__stdin < 0)
+      if (NULL == __stdin)
         {
           strcpy (g_datadir, getenv ("MES_PREFIX"));
           strcpy (g_datadir + strlen (g_datadir), "/share/mes");
@@ -124,7 +142,7 @@ open_boot ()
           __stdin = try_open_boot (file_name, boot, "MES_PREFIX/share/mes");
         }
     }
-  if (__stdin < 0)
+  if (NULL == __stdin)
     {
       g_datadir[0] = 0;
       if (getenv ("srcdest") != 0)
@@ -134,12 +152,12 @@ open_boot ()
       strcpy (file_name + strlen (file_name), "/module/mes/");
       __stdin = try_open_boot (file_name, boot, "${srcdest}mes");
     }
-  if (__stdin < 0)
+  if (NULL == __stdin)
     {
       file_name[0] = 0;
       __stdin = try_open_boot (file_name, boot, "<boot>");
     }
-  if (__stdin < 0)
+  if (NULL == __stdin)
     {
       eputs ("mes: boot failed: no such file: ");
       eputs (boot);
@@ -152,7 +170,7 @@ struct scm *
 read_boot ()                    /*:((internal)) */
 {
   R2 = read_input_file_env (R0);
-  __stdin = STDIN;
+  __stdin = stdin;
   return R2;
 }
 
@@ -184,6 +202,10 @@ init (char **envp)
 int
 main (int argc, char **argv, char **envp)
 {
+  __stdin = stdin;
+  __stdout = stdout;
+  __stderr = stderr;
+
   init (envp);
 
   struct scm *a = mes_environment (argc, argv);

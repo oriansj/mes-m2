@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018,2019,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -20,11 +20,6 @@
 
 #include <stdio.h>
 
-extern char **environ;
 extern FILE* __stdin;
-extern FILE* __stdout;
-extern FILE* __stderr;
-
-int eputs (char const *s);
-int puts (char const *s);
-int oputs (char const *s);
+extern FILE*  __stdout;
+extern FILE*  __stderr;

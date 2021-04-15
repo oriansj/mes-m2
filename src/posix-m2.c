@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018,2019,2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2016,2017,2018,2019,2020,2021 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -18,168 +18,104 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mes/lib.h"
 #include "mes/mes.h"
+
+#include <fcntl.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <sys/stat.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-
-char*
-cast_intp_to_charp (int const *i)
+struct scm *
+exit_ (struct scm *x)                   /*:((name . "exit")) */
 {
-  return i;
+  assert_msg (x->type == TNUMBER, "x->type == TNUMBER");
+  exit (x->value);
 }
 
-char*
-cast_long_to_charp (long i)
+int
+peekchar ()
 {
-  return i;
+  if (__stdin >= 0)
+    {
+      int c = readchar ();
+      unreadchar (c);
+      return c;
+    }
+  struct scm *port = current_input_port ();
+  struct scm *string = port->string;
+  size_t length = string->length;
+  if (length == 0)
+    return -1;
+  char const *p = cell_bytes (string->string);
+  return p[0];
 }
 
-long
-cast_charp_to_long (char const *i)
+int
+readchar ()
 {
-  return i;
+  if (__stdin >= 0)
+    return fgetc (__stdin);
+  struct scm *port = current_input_port ();
+  struct scm *string = port->string;
+  size_t length = string->length;
+  if (length == 0)
+    return -1;
+  char const *p = cell_bytes (string->string);
+  int c = p[0];
+  p = p + 1;
+  port->string = make_string (p, length - 1);
+  return c;
 }
 
-long
-cast_int_to_long (int i)
+int
+unreadchar (int c)
 {
-  return i;
-}
-
-long
-cast_voidp_to_long (void const *i)
-{
-  return i;
-}
-
-void
-assert_msg (int bool, char *msg)
-{
-  if (bool == 0)
-    __assert_fail (msg);
-}
-
-
-size_t
-__mesabi_uldiv (size_t a, size_t b, size_t *remainder)
-{
-  remainder[0] = a % b;
-  return a / b;
-}
-
-char *__itoa_buf;
-
-
-char *
-ntoab (long x, unsigned base, int signed_p)
-{
-  if (__itoa_buf == 0)
-    __itoa_buf = malloc (20);
-  char *p = __itoa_buf + 11;
-
-  p[0] = 0;
+  if (__stdin >= 0)
+    return ungetc (c, __stdin);
+  if (c == EOF) /* can't unread EOF */
+    return c;
+  struct scm *port = current_input_port ();
+  struct scm *string = port->string;
+  size_t length = string->length;
+  char *p = cell_bytes (string->string);
   p = p - 1;
-  assert_msg (base > 0, "base > 0");
-
-  int sign_p = 0;
-  size_t i;
-  size_t u;
-  size_t b = base;
-  if (signed_p != 0 && x < 0)
-    {
-      sign_p = 1;
-      /* Avoid LONG_MIN */
-      u = (-(x + 1));
-      u = u + 1;
-    }
-  else
-    u = x;
-
-  do
-    {
-      u = __mesabi_uldiv (u, b, &i);
-      if (i > 9)
-        p[0] = 'a' + i - 10;
-      else
-        p[0] = '0' + i;
-      p = p - 1;
-    }
-  while (u != 0);
-
-  if (sign_p && p[1] != '0')
-    {
-      p[0] = '-';
-      p = p - 1;
-    }
-
-  return p + 1;
-}
-
-
-char *
-ltoa (long x)
-{
-  return ntoab (x, 10, 1);
-}
-
-char *
-itoa (int x)
-{
-  return ntoab (x, 10, 1);
-}
-
-struct scm *
-set_current_input_port (struct scm *port)
-{
-//  struct scm *prev = __stdin;
-  __stdin = port->name_cdr;
-// return prev;
-  return port;
-}
-
-struct scm *
-open_input_file (struct scm *file_name)
-{
-  FILE* f = fopen(cell_bytes (file_name->string), "r");
-  if (NULL == f)
-    error (cell_symbol_system_error, cons (make_string0 ("No such file or directory"), file_name));
-  return make_file (f);
-}
-
-struct scm *
-init_time (struct scm *a)               /*:((internal)) */
-{
-  a = acons (cell_symbol_internal_time_units_per_second, make_number (1000), a);
-  return a;
+  string = make_string (p, length + 1);
+  p = cell_bytes (string->string);
+  p[0] = c;
+  port->string = string;
+  return c;
 }
 
 struct scm *
 peek_byte ()
 {
-  return make_number (peek(__stdin));
+  return make_number (peekchar ());
 }
 
 struct scm *
 read_byte ()
 {
-  return make_number (fgetc(__stdin));
+  return make_number (readchar ());
 }
 
 struct scm *
 unread_byte (struct scm *i)
 {
-  ungetc(i->value, __stdin);
+  unreadchar (i->value);
   return i;
 }
 
 struct scm *
 peek_char ()
 {
-  return make_char (peek(__stdin));
+  return make_char (peekchar ());
 }
 
 struct scm *
@@ -189,7 +125,7 @@ read_char (struct scm *port)            /*:((arity . n)) */
   if (port->type == TPAIR)
     if (port->car->type == TNUMBER)
       __stdin = port->car->name_cdr;
-  struct scm *c = make_char (fgetc(__stdin));
+  struct scm *c = make_char (readchar ());
   __stdin = fd;
   return c;
 }
@@ -197,7 +133,7 @@ read_char (struct scm *port)            /*:((arity . n)) */
 struct scm *
 unread_char (struct scm *i)
 {
-  ungetc(i->value, __stdin);
+  unreadchar (i->value);
   return i;
 }
 
@@ -227,7 +163,7 @@ write_byte (struct scm *x)              /*:((arity . n)) */
         }
     }
   char cc = c->value;
-  fputc(cc, __stdout);
+  write (fd, &cc, 1);
 #if !__MESC__
   assert_msg (c->type == TNUMBER || c->type == TCHAR, "c->type == TNUMBER || c->type == TCHAR");
 #endif
@@ -265,8 +201,8 @@ access_p (struct scm *file_name, struct scm *mode)
 struct scm *
 current_input_port ()
 {
-  if (NULL != __stdin)
-    return make_file (__stdin);
+  if (__stdin >= 0)
+    return make_number (__stdin->_fileno);
   struct scm *x = g_ports;
   struct scm *a;
   while (x != 0)
@@ -280,15 +216,12 @@ current_input_port ()
 }
 
 struct scm *
-current_output_port ()
+open_input_file (struct scm *file_name)
 {
-  return make_file (__stdout);
-}
-
-struct scm *
-current_error_port ()
-{
-  return make_file (__stderr);
+  int filedes = mes_open (cell_bytes (file_name->string), O_RDONLY, 0);
+  if (filedes == -1)
+    error (cell_symbol_system_error, cons (make_string0 ("No such file or directory"), file_name));
+  return make_number (filedes);
 }
 
 struct scm *
@@ -300,18 +233,47 @@ open_input_string (struct scm *string)
 }
 
 struct scm *
+set_current_input_port (struct scm *port)
+{
+  struct scm *prev = current_input_port ();
+  if (port->type == TNUMBER)
+    {
+      FILE* p = port->name_cdr;
+      if (p != 0)
+        __stdin = p;
+      else
+        __stdin = stdin;
+    }
+  else if (port->type == TPORT)
+    __stdin = port->name_car;
+  return prev;
+}
+
+struct scm *
+current_output_port ()
+{
+  return make_number (__stdout->_fileno);
+}
+
+struct scm *
+current_error_port ()
+{
+  return make_number (__stderr->_fileno);
+}
+
+struct scm *
 open_output_file (struct scm *x)        /*:((arity . n)) */
 {
   struct scm *file_name = car (x);
   x = cdr (x);
-  char* mode = "w";
-//  if (x->type == TPAIR)
-//    {
-//      struct scm *i = car (x);
-//      if (i->type == TNUMBER)
-//        mode = i->value;
-//    }
-  return make_file (fopen (cell_bytes (file_name->string), mode));
+  int mode = S_IRUSR | S_IWUSR;
+  if (x->type == TPAIR)
+    {
+      struct scm *i = car (x);
+      if (i->type == TNUMBER)
+        mode = i->value;
+    }
+  return make_number (mes_open (cell_bytes (file_name->string), O_WRONLY | O_CREAT | O_TRUNC, mode));
 }
 
 struct scm *
@@ -395,35 +357,65 @@ waitpid_ (struct scm *pid, struct scm *options)
   return cons (make_number (child), make_number (status));
 }
 
+#if __x86_64__
+/* Nanoseconds on 64-bit systems with POSIX timers.  */
+// CONSTANT TIME_UNITS_PER_SECOND 1000000000
+#define TIME_UNITS_PER_SECOND 1000000000U
+#else
+/* Milliseconds for everyone else.  */
+// CONSTANT TIME_UNITS_PER_SECOND 1000
+#define TIME_UNITS_PER_SECOND 1000U
+#endif
+
+struct scm *
+init_time (struct scm *a)               /*:((internal)) */
+{
+  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, g_start_time);
+  a = acons (cell_symbol_internal_time_units_per_second, make_number (TIME_UNITS_PER_SECOND), a);
+}
 
 struct scm *
 current_time ()
 {
-  return make_number (0);
+  return make_number (time (0));
 }
 
 struct scm *
-gettimeofday_ ()
+gettimeofday_ ()                /*:((name . "gettimeofday")) */
 {
-  return cons (make_number (0), make_number (0));
+  struct timeval *time = __gettimeofday_time;
+  gettimeofday (time, 0);
+  return cons (make_number (time->tv_sec), make_number (time->tv_usec));
 }
 
+#define UL1000000000 1000000000UL
+// CONSTANT UL1000000000 1000000000
 long
 seconds_and_nanoseconds_to_long (long s, long ns)
 {
-  return 0;
+  size_t uns = ns;
+  if (ns < 0)
+    {
+      uns = - ns;
+      return s * TIME_UNITS_PER_SECOND - uns / (UL1000000000 / TIME_UNITS_PER_SECOND);
+    }
+  return s * TIME_UNITS_PER_SECOND + uns / (UL1000000000 / TIME_UNITS_PER_SECOND);
 }
 
 struct scm *
 get_internal_run_time ()
 {
-  return make_number (0);
+  struct timespec *ts = __get_internal_run_time_ts;
+  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, ts);
+  long time = seconds_and_nanoseconds_to_long (ts->tv_sec - g_start_time->tv_sec,
+                                               ts->tv_nsec - g_start_time->tv_nsec);
+  return make_number (time);
 }
 
 struct scm *
 getcwd_ ()                      /*:((name . "getcwd")) */
 {
-  return make_string0 (getcwd (0, 4096));
+  return make_string0 (getcwd (0, PATH_MAX));
 }
 
 struct scm *
@@ -444,11 +436,4 @@ delete_file (struct scm *file_name)
 {
   unlink (cell_bytes (file_name->string));
   return cell_unspecified;
-}
-
-struct scm *
-exit_ (struct scm *x)                   /*:((name . "exit")) */
-{
-  assert_msg (x->type == TNUMBER, "x->type == TNUMBER");
-  exit (x->value);
 }
