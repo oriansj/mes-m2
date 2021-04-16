@@ -234,6 +234,9 @@ main (int argc, char **argv, char **envp)
   __stdout = stdout;
   __stderr = stderr;
 
+  FUZZING = FALSE;
+  if(0 != getenv ("MES_FUZZING")) FUZZING = TRUE;
+
   init (envp);
 
   struct scm *a = mes_environment (argc, argv);

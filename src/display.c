@@ -271,6 +271,7 @@ display_helper (struct scm *x, int cont, char *sep, FILE* fd, int write_p)
 struct scm *
 display_ (struct scm *x)
 {
+  if(FUZZING) return cell_unspecified;
   g_depth = 5;
   return display_helper (x, 0, "", __stdout, 0);
 }
@@ -278,6 +279,7 @@ display_ (struct scm *x)
 struct scm *
 display_error_ (struct scm *x)
 {
+  if(FUZZING) return cell_unspecified;
   g_depth = 5;
   return display_helper (x, 0, "", __stderr, 0);
 }
@@ -285,6 +287,7 @@ display_error_ (struct scm *x)
 struct scm *
 display_port_ (struct scm *x, struct scm *p)
 {
+  if(FUZZING) return cell_unspecified;
   assert_msg (p->type == TNUMBER, "p->type == TNUMBER");
   return fdisplay_ (x, p->name_cdr, 0);
 }
@@ -292,6 +295,7 @@ display_port_ (struct scm *x, struct scm *p)
 struct scm *
 write_ (struct scm *x)
 {
+  if(FUZZING) return cell_unspecified;
   g_depth = 5;
   return display_helper (x, 0, "", __stdout, 1);
 }
@@ -299,6 +303,7 @@ write_ (struct scm *x)
 struct scm *
 write_error_ (struct scm *x)
 {
+  if(FUZZING) return cell_unspecified;
   g_depth = 5;
   return display_helper (x, 0, "", __stderr, 1);
 }
@@ -306,6 +311,7 @@ write_error_ (struct scm *x)
 struct scm *
 write_port_ (struct scm *x, struct scm *p)
 {
+  if(FUZZING) return cell_unspecified;
   assert_msg (p->type == TNUMBER, "p->type == TNUMBER");
   return fdisplay_ (x, p->name_cdr, 1);
 }
@@ -313,6 +319,7 @@ write_port_ (struct scm *x, struct scm *p)
 struct scm *
 fdisplay_ (struct scm *x, FILE* fd, int write_p)  /*:((internal)) */
 {
+  if(FUZZING) return cell_unspecified;
   g_depth = 5;
   return display_helper (x, 0, "", fd, write_p);
 }

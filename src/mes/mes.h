@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int FUZZING;
+
 struct scm
 {
   long type;

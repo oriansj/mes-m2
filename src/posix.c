@@ -145,6 +145,7 @@ set_current_input_port (struct scm *port)
 struct scm *
 open_input_file (struct scm *file_name)
 {
+  if(FUZZING) return make_file(stdin);
   char* s = cell_bytes (file_name->string);
   FILE* f = fopen(s, "r");
   if (NULL == f)
@@ -229,7 +230,7 @@ write_byte (struct scm *x)              /*:((arity . n)) */
         }
     }
   char cc = c->value;
-  fputc(cc, __stdout);
+  if(!FUZZING) fputc(cc, __stdout);
 #if !__MESC__
   assert_msg (c->type == TNUMBER || c->type == TCHAR, "c->type == TNUMBER || c->type == TCHAR");
 #endif
@@ -249,6 +250,7 @@ getenv_ (struct scm *s)                 /*:((name . "getenv")) */
 struct scm *
 setenv_ (struct scm *s, struct scm *v)          /*:((name . "setenv")) */
 {
+  if(FUZZING) return cell_unspecified;
   char *buf = __setenv_buf;
   strcpy (buf, cell_bytes (s->string));
   setenv (buf, cell_bytes (v->string), 1);
@@ -304,6 +306,7 @@ open_input_string (struct scm *string)
 struct scm *
 open_output_file (struct scm *x)        /*:((arity . n)) */
 {
+  if(FUZZING) return make_file(stdin);
   struct scm *file_name = car (x);
   x = cdr (x);
   char* mode = "w";
@@ -345,6 +348,7 @@ set_current_error_port (struct scm *port)
 struct scm *
 chmod_ (struct scm *file_name, struct scm *mode)        /*:((name . "chmod")) */
 {
+  if(FUZZING) return cell_unspecified;
   char* s = cell_bytes (file_name->string);
   chmod (s, mode->value);
   return cell_unspecified;
@@ -361,6 +365,7 @@ isatty_p (struct scm *port)
 struct scm *
 primitive_fork ()
 {
+  if(FUZZING) return make_number(0);
   return make_number (fork ());
 }
 
@@ -393,6 +398,7 @@ execl_ (struct scm *file_name, struct scm *args)        /*:((name . "execl")) */
         }
     }
   c_argv[i] = 0;
+  if(FUZZING) return make_number (0);
   return make_number (execv (c_argv[0], c_argv));
 }
 
@@ -438,12 +444,14 @@ getcwd_ ()                      /*:((name . "getcwd")) */
 struct scm *
 dup_ (struct scm *port)                 /*:((name . "dup")) */
 {
+  if(FUZZING) return cell_unspecified;
   return make_number (dup (port->value));
 }
 
 struct scm *
 dup2_ (struct scm *old, struct scm *new)        /*:((name . "dup2")) */
 {
+  if(FUZZING) return cell_unspecified;
   dup2 (old->value, new->value);
   return cell_unspecified;
 }
@@ -451,6 +459,7 @@ dup2_ (struct scm *old, struct scm *new)        /*:((name . "dup2")) */
 struct scm *
 delete_file (struct scm *file_name)
 {
+  if(FUZZING) return cell_unspecified;
   unlink (cell_bytes (file_name->string));
   return cell_unspecified;
 }
