@@ -200,7 +200,9 @@ mes_builtins (struct scm *a)            /*:((internal)) */
 
   /* src/math.c */
   a = init_builtin (builtin_type, ">", -1, &greater_p, a);
+  a = init_builtin (builtin_type, ">=", -1, &greater_equal_p, a);
   a = init_builtin (builtin_type, "<", -1, &less_p, a);
+  a = init_builtin (builtin_type, "<=", -1, &less_equal_p, a);
   a = init_builtin (builtin_type, "=", -1, &is_p, a);
   a = init_builtin (builtin_type, "-", -1, &minus, a);
   a = init_builtin (builtin_type, "+", -1, &plus, a);
@@ -275,7 +277,8 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "stack-ref", 2, &stack_ref, a);
 
   /* src/string.c */
-  a = init_builtin (builtin_type, "string=?", 2, &string_equal_p, a);
+  a = init_builtin (builtin_type, "string?", 1, &string_p, a);
+  a = init_builtin (builtin_type, "string=?", -1, &string_equal_p, a);
   a = init_builtin (builtin_type, "symbol->string", 1, &symbol_to_string, a);
   a = init_builtin (builtin_type, "symbol->keyword", 1, &symbol_to_keyword, a);
   a = init_builtin (builtin_type, "keyword->string", 1, &keyword_to_string, a);
@@ -294,7 +297,17 @@ mes_builtins (struct scm *a)            /*:((internal)) */
   a = init_builtin (builtin_type, "struct-ref", 2, &struct_ref, a);
   a = init_builtin (builtin_type, "struct-set!", 3, &struct_set_x, a);
 
+  /* src/types.c */
+  a = init_builtin (builtin_type, "char?", 1, &char_p, a);
+  a = init_builtin (builtin_type, "char=?", -1, &char_equal_p, a);
+  a = init_builtin (builtin_type, "list?", 1, &list_p, a);
+  a = init_builtin (builtin_type, "symbol?", 1, &symbol_p, a);
+  a = init_builtin (builtin_type, "number?", 1, &number_p, a);
+  a = init_builtin (builtin_type, "procedure?", 1, &procedure_p, a);
+  a = init_builtin (builtin_type, "defined?", 1, &defined_p, a);
+
   /* src/vector.c */
+  a = init_builtin (builtin_type, "vector?", 1, &vector_p, a);
   a = init_builtin (builtin_type, "make-vector", -1, &make_vector, a);
   a = init_builtin (builtin_type, "vector-length", 1, &vector_length, a);
   a = init_builtin (builtin_type, "vector-ref", 2, &vector_ref, a);

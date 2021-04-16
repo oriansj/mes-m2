@@ -30,6 +30,13 @@
 #endif
 
 struct scm *
+vector_p (struct scm *n)
+{
+  if(TVECTOR == n->type) return cell_t;
+  return cell_f;
+}
+
+struct scm *
 make_vector_ (long k, struct scm *e)
 {
   struct scm *x = alloc (1);

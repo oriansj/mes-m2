@@ -128,7 +128,10 @@ init_symbols_ ()                  /*:((internal)) */
   cell_symbol_car = init_symbol (g_symbol, TSYMBOL, "car");
   cell_symbol_cdr = init_symbol (g_symbol, TSYMBOL, "cdr");
   cell_symbol_not_a_number = init_symbol (g_symbol, TSYMBOL, "not-a-number");
+  cell_symbol_not_a_char = init_symbol (g_symbol, TSYMBOL, "not-a-char");
+  cell_symbol_not_a_string = init_symbol (g_symbol, TSYMBOL, "not-a-string");
   cell_symbol_not_a_pair = init_symbol (g_symbol, TSYMBOL, "not-a-pair");
+  cell_symbol_null_list = init_symbol (g_symbol, TSYMBOL, "not-a-pair");
   cell_symbol_system_error = init_symbol (g_symbol, TSYMBOL, "system-error");
   cell_symbol_throw = init_symbol (g_symbol, TSYMBOL, "throw");
   cell_symbol_unbound_variable = init_symbol (g_symbol, TSYMBOL, "unbound-variable");

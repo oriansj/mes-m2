@@ -40,6 +40,23 @@ assert_max_string (size_t i, char const *msg, char const *string)
     }
 }
 
+struct scm *
+string_p (struct scm *n)
+{
+  if(TSTRING == n->type) return cell_t;
+  return cell_f;
+}
+
+void
+assert_string (char const *name, struct scm *x)
+{
+  if (x->type != TSTRING)
+    {
+      eputs (name);
+      error (cell_symbol_not_a_string, x);
+    }
+}
+
 char const *
 list_to_cstring (struct scm *list, size_t *size)
 {
@@ -61,8 +78,32 @@ list_to_cstring (struct scm *list, size_t *size)
   return g_buf;
 }
 
+
 struct scm *
-string_equal_p (struct scm *a, struct scm *b)   /*:((name . "string=?")) */
+string_equal_p (struct scm *x)               /*:((name . "string=?") (arity . n)) */
+{
+  if (x == cell_nil)
+    return cell_t;
+  assert_string ("string_equal_p", x->car);
+  struct scm* n = x->car;
+  long l = n->length;
+  char* s1 = cell_bytes (n->string);
+  x = x->cdr;
+  struct scm *i;
+  char* s2;
+  while (x != cell_nil)
+    {
+      assert_string ("string_equal_p", x->car);
+      i = car (x);
+      s2 = cell_bytes (i->string);
+      if (!matchn(s1, s2, l, i->length))
+        return cell_f;
+      x = cdr (x);
+    }
+  return cell_t;
+}
+struct scm *
+string_equal2_p (struct scm *a, struct scm *b)   /*:((name . "string=?")) */
 {
   if (!((a->type == TSTRING && b->type == TSTRING) || (a->type == TKEYWORD || b->type == TKEYWORD)))
     {

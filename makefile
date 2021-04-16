@@ -47,6 +47,7 @@ mes-m2: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c apply.c 
 	src/string.c        \
 	src/struct.c        \
 	src/symbol.c        \
+	src/types.c         \
 	src/vector.c        \
 	src/posix.c         \
 	-o bin/mes-m2

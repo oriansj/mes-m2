@@ -85,7 +85,7 @@ memq (struct scm *x, struct scm *a)
       while (a != cell_nil)
         {
           if (a->car->type == TKEYWORD)
-            if (string_equal_p (x, a->car) == cell_t)
+            if (string_equal2_p (x, a->car) == cell_t)
               return a;
           a = a->cdr;
         }
@@ -121,7 +121,7 @@ equal2:
       return cell_f;
     }
   if (a->type == TSTRING && b->type == TSTRING)
-    return string_equal_p (a, b);
+    return string_equal2_p (a, b);
   if (a->type == TVECTOR && b->type == TVECTOR)
     {
       if (a->length != b->length)

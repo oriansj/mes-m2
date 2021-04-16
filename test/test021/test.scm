@@ -19,25 +19,5 @@
 (define (display x) (core:display x))
 (define (write x) (core:write x))
 
-(define (not a) (if a #f #t))
-
-(define (append a b) (append2 a b))
-
-(define-macro (cond . clauses)
-  (list 'if (pair? clauses)
-        (list (cons
-               'lambda
-               (cons
-                '(test)
-                (list (list 'if 'test
-                            (if (pair? (cdr (car clauses)))
-                                (if (eq? (car (cdr (car clauses))) '=>)
-                                    (append2 (cdr (cdr (car clauses))) '(test))
-                                    (list (cons 'lambda (cons '() (cons 'test (cdr (car clauses)))))))
-                                (list (cons 'lambda (cons '() (cons 'test (cdr (car clauses)))))))
-                            (if (pair? (cdr clauses))
-                                (cons 'cond (cdr clauses)))))))
-              (car (car clauses)))))
-
-(primitive-load "test/test017/varargs.scm")
+(primitive-load "test/test021/defined.scm")
 (exit 69)

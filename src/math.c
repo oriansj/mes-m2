@@ -21,11 +21,6 @@
 #include "mes/lib.h"
 #include "mes/mes.h"
 
-#include <ctype.h>
-#include <limits.h>
-#include <stdio.h>
-#include <string.h>
-
 void
 assert_number (char const *name, struct scm *x)
 {
@@ -60,6 +55,29 @@ greater_p (struct scm *x)               /*:((name . ">") (arity . n)) */
 }
 
 struct scm *
+greater_equal_p (struct scm *x)               /*:((name . ">=") (arity . n)) */
+{
+  if (x == cell_nil)
+    return cell_t;
+  assert_number ("greater_equal_p", x->car);
+  long n = x->car->value;
+  x = x->cdr;
+  struct scm *i;
+  long v;
+  while (x != cell_nil)
+    {
+      assert_number ("greater_equal_p", x->car);
+      i = car (x);
+      v = i->value;
+      if (v > n)
+        return cell_f;
+      n = v;
+      x = cdr (x);
+    }
+  return cell_t;
+}
+
+struct scm *
 less_p (struct scm *x)                  /*:((name . "<") (arity . n)) */
 {
   if (x == cell_nil)
@@ -75,6 +93,29 @@ less_p (struct scm *x)                  /*:((name . "<") (arity . n)) */
       i = car (x);
       v = i->value;
       if (v <= n)
+        return cell_f;
+      n = v;
+      x = cdr (x);
+    }
+  return cell_t;
+}
+
+struct scm *
+less_equal_p (struct scm *x)                  /*:((name . "<=") (arity . n)) */
+{
+  if (x == cell_nil)
+    return cell_t;
+  assert_number ("less_equal_p", x->car);
+  long n = x->car->value;
+  x = x->cdr;
+  struct scm *i;
+  long v;
+  while (x != cell_nil)
+    {
+      assert_number ("less_equal_p", x->car);
+      i = car (x);
+      v = i->value;
+      if (v < n)
         return cell_f;
       n = v;
       x = cdr (x);

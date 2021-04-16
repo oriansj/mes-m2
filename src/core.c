@@ -37,7 +37,7 @@ assoc_string (struct scm *x, struct scm *a)     /*:((internal)) */
     {
       b = a->car;
       if (b->car->type == TSTRING)
-        if (string_equal_p (x, b->car) == cell_t)
+        if (string_equal2_p (x, b->car) == cell_t)
           return b;
       a = a->cdr;
     }
@@ -89,7 +89,7 @@ eq_p (struct scm *x, struct scm *y)
   if (t == TKEYWORD)
     {
       if (y->type == TKEYWORD)
-        return string_equal_p (x, y);
+        return string_equal2_p (x, y);
       return cell_f;
     }
   if (t == TCHAR)
@@ -236,7 +236,7 @@ assq (struct scm *x, struct scm *a)
     {
       while (a != cell_nil)
         {
-          if (string_equal_p (x, a->car->car) == cell_t)
+          if (string_equal2_p (x, a->car->car) == cell_t)
             return a->car;
           a = a->cdr;
         }

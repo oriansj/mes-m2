@@ -50,11 +50,28 @@ int in_set(int c, char* s)
   return FALSE;
 }
 
+int matchn(char* a, char* b, int n, int m)
+{
+  if(n != m) return FALSE;
+  if(a == b) return TRUE;
+
+  int i = -1;
+  do
+  {
+    i = i + 1;
+    if(a[i] != b[i])
+    {
+      return FALSE;
+    }
+  } while(i < n);
+  return TRUE;
+}
+
 
 int eputs (char const *s)
 {
-	fputs(s, stderr);
-	return 0;
+  fputs(s, stderr);
+  return 0;
 }
 
 struct scm *

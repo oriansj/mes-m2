@@ -84,7 +84,9 @@ struct scm *char_to_integer (struct scm *x);
 struct scm *integer_to_char (struct scm *x);
 /* src/math.c */
 struct scm *greater_p (struct scm *x);
+struct scm *greater_equal_p (struct scm *x);
 struct scm *less_p (struct scm *x);
+struct scm *less_equal_p (struct scm *x);
 struct scm *is_p (struct scm *x);
 struct scm *minus (struct scm *x);
 struct scm *plus (struct scm *x);
@@ -154,7 +156,9 @@ struct scm *make_stack (struct scm *stack);
 struct scm *stack_length (struct scm *stack);
 struct scm *stack_ref (struct scm *stack, struct scm *index);
 /* src/string.c */
-struct scm *string_equal_p (struct scm *a, struct scm *b);
+struct scm *string_p (struct scm *a);
+struct scm *string_equal_p (struct scm *a);
+struct scm *string_equal2_p (struct scm *a, struct scm *b);
 struct scm *symbol_to_string (struct scm *symbol);
 struct scm *symbol_to_keyword (struct scm *symbol);
 struct scm *keyword_to_string (struct scm *keyword);
@@ -171,7 +175,16 @@ struct scm *make_struct (struct scm *type, struct scm *fields, struct scm *print
 struct scm *struct_length (struct scm *x);
 struct scm *struct_ref (struct scm *x, struct scm *i);
 struct scm *struct_set_x (struct scm *x, struct scm *i, struct scm *e);
+/* src/types.c */
+struct scm *char_p (struct scm *x);
+struct scm *char_equal_p (struct scm *x);
+struct scm *list_p (struct scm *x);
+struct scm *symbol_p (struct scm *x);
+struct scm *number_p (struct scm *x);
+struct scm *procedure_p (struct scm *x);
+struct scm *defined_p (struct scm *x);
 /* src/vector.c */
+struct scm *vector_p (struct scm *x);
 struct scm *make_vector (struct scm *x);
 struct scm *vector_length (struct scm *x);
 struct scm *vector_ref (struct scm *x, struct scm *i);
