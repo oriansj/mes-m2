@@ -126,7 +126,7 @@ display_helper (struct scm *x, int cont, char *sep, FILE* fd, int write_p)
     }
   else if (t == TCLOSURE)
     {
-      fputs ("#<closure ", fd);
+      fputs ("#<procedure ", fd);
       struct scm *circ = x->cdr->car;
       struct scm *name = circ->cdr->car;
       struct scm *args = x->cdr->cdr->car;

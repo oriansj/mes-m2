@@ -102,4 +102,4 @@
 
 ;; end boot-02.scm
 
-(primitive-load 0)
+(primitive-load "/dev/stdin")

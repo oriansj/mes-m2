@@ -302,7 +302,7 @@ make_function (void* n)
 struct scm *
 make_file (FILE* f)
 {
-  struct scm* r = make_value_cell (TNUMBER, 0, 0);
+  struct scm* r = make_value_cell (TPORT, 0, 0);
   r->name_cdr = f;
   return r;
 }

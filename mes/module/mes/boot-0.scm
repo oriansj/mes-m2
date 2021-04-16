@@ -205,7 +205,7 @@
 (mes-use-module (mes getopt-long))
 
 (define %main #f)
-(primitive-load 0)
+(primitive-load "/dev/stdin")
 (let ((tty? (isatty? 0)))
   (define (parse-opts args)
     (let* ((option-spec
@@ -288,6 +288,6 @@ General help using GNU software: <http://gnu.org/gethelp/>
            (repl)
            (exit 0))
           (else #t))))
-(primitive-load 0)
+(primitive-load "/dev/stdin")
 (primitive-load (open-input-string %main))
 (exit 0)
