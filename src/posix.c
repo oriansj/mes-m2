@@ -60,8 +60,11 @@ cast_voidp_to_long (void const *i)
 void
 assert_msg (int bool, char *msg)
 {
-  if (bool == 0)
-    __assert_fail (msg);
+  if (bool)
+  {
+    fputs(msg, stderr);
+    exit(EXIT_FAILURE);
+  }
 }
 
 

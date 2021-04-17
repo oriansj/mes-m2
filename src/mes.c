@@ -143,6 +143,8 @@ try_open_boot (char *file_name, char const *boot, char const *location)
   return fd;
 }
 
+char* MES_BOOT;
+
 void
 open_boot ()
 {
@@ -150,8 +152,8 @@ open_boot ()
   char *boot = __open_boot_buf;
   char *file_name = __open_boot_file_name;
   strcpy (g_datadir, ".");
-  if (getenv ("MES_BOOT") != 0)
-    strcpy (boot, getenv ("MES_BOOT"));
+  if (NULL != MES_BOOT)
+    strcpy (boot, MES_BOOT);
   else
     strcpy (boot, "boot-0.scm");
   if (getenv ("MES_PREFIX") != 0)
@@ -234,8 +236,14 @@ main (int argc, char **argv, char **envp)
   __stdout = stdout;
   __stderr = stderr;
 
+  MES_BOOT = getenv("MES_BOOT");
   FUZZING = FALSE;
-  if(0 != getenv ("MES_FUZZING")) FUZZING = TRUE;
+  if(0 != getenv ("MES_FUZZING"))
+  {
+    FUZZING = TRUE;
+    if(2 == argc) MES_BOOT = argv[1];
+//    fputs(MES_BOOT, stdout);
+  }
 
   init (envp);
 
