@@ -17,55 +17,33 @@
  * You should have received a copy of the GNU General Public License
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __MES_LINUX_X86_SYSCALL_H
+
+#if defined(__MES_LINUX_X86_SYSCALL_H)
+#else
 #define __MES_LINUX_X86_SYSCALL_H 1
 
 /* libc-mini */
-#ifndef SYS_exit
-// CONSTANT SYS_exit 0x01
 #define SYS_exit    0x01
-#endif
-#ifndef SYS_write
-// CONSTANT SYS_write 0x04
 #define SYS_write   0x04
-#endif
 
 /* libc */
-// CONSTANT SYS_fork 0x02
 #define SYS_fork    0x02
-// CONSTANT SYS_read 0x03
 #define SYS_read    0x03
-// CONSTANT SYS_open 0x05
 #define SYS_open    0x05
-// CONSTANT SYS_waitpid 0x07
 #define SYS_waitpid 0x07
-// CONSTANT SYS_wait4 0x72
 #define SYS_wait4   0x72
-// CONSTANT SYS_execve 0x0b
 #define SYS_execve  0x0b
-// CONSTANT SYS_chmod 0x0f
 #define SYS_chmod   0x0f
-// CONSTANT SYS_access 0x21
 #define SYS_access  0x21
-// CONSTANT SYS_brk 0x2d
 #define SYS_brk     0x2d
-// CONSTANT SYS_ioctl 0x36
 #define SYS_ioctl   0x36
-// CONSTANT SYS_fsync 0x76
 #define SYS_fsync   0x76
-// CONSTANT SYS_getcwd 0xb7
 #define SYS_getcwd 0xb7
-// CONSTANT SYS_dup 0x29
 #define SYS_dup       0x29
-// CONSTANT SYS_dup2 0x3f
 #define SYS_dup2      0x3f
-// CONSTANT SYS_unlink 0x0a
 #define SYS_unlink 0x0a
-// CONSTANT SYS_gettimeofday 0x4e
 #define SYS_gettimeofday 0x4e
-// CONSTANT SYS_clock_gettime 0x109
 #define SYS_clock_gettime 0x109
-// CONSTANT SYS_time 0x0d
 #define SYS_time   0x0d
 
 /* libc+tcc */
@@ -75,7 +53,6 @@
 #define SYS_stat   0x6a
 
 /* libc+gnu */
-
 #define SYS_chdir     0x0c
 #define SYS_link      0x09
 #define SYS_getpid    0x14

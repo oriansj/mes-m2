@@ -18,8 +18,9 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __M2_LIB_H
-#define __M2_LIB_H
+#if defined(__M2_LIB_H)
+#else
+#define __M2_LIB_H 1
 
 char **environ;
 int __stdin;
@@ -27,8 +28,13 @@ int __stdout;
 int __stderr;
 int errno;
 
-// CONSTANT EOF 0xffffffff
-// CONSTANT __FILEDES_MAX 512
+typedef SCM ulong;
+typedef ulong size_t;
+typedef long ssize_t;
+
+#define EOF 0xffffffff
+#define __FILEDES_MAX 512
+#define AT_FDCWD            -100
 
 char* cast_intp_to_charp (int *i);
 char* cast_long_to_charp (long i);

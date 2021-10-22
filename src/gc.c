@@ -30,8 +30,11 @@
 
 int g_dump_filedes;
 
-#define M2_CELL_SIZE 1U
-// CONSTANT M2_CELL_SIZE 12
+#if defined(__M2__)
+#define M2_CELL_SIZE (3 * sizeof(long))
+#else
+#define M2_CELL_SIZE 1
+#endif
 
 char *
 cell_bytes (struct scm *x)
@@ -47,10 +50,9 @@ news_bytes (struct scm *x)
   return p + (2 * sizeof (long));
 }
 
-#define U10 10U
-// CONSTANT U10 10
-#define U100 100U
-// CONSTANT U100 100
+#define U10 10
+#define U100 100
+
 void
 gc_init ()
 {

@@ -26,5 +26,9 @@ int
 unlink (char const *file_name)
 {
   long long_file_name = cast_charp_to_long (file_name);
+#if defined(SYS_unlinkat)
+  return _sys_call2 (SYS_unlinkat, AT_FDCWD, long_file_name);
+#else
   return _sys_call1 (SYS_unlink, long_file_name);
+#endif
 }

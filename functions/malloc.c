@@ -15,8 +15,6 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// CONSTANT NULL 0
-
 void* malloc(int size)
 {
 	asm("STORE_eax_into_ESP_IMMEDIATE8 !4"

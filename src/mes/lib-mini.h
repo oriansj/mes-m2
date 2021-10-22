@@ -25,17 +25,14 @@
 #include <mes/config.h>
 #endif
 
-// CONSTANT STDIN 0
 #ifndef STDIN
 #define STDIN 0
 #endif
 
-// CONSTANT STDOUT 1
 #ifndef STDOUT
 #define STDOUT 1
 #endif
 
-// CONSTANT STDERR 2
 #ifndef STDERR
 #define STDERR 2
 #endif

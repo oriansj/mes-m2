@@ -21,12 +21,10 @@
 #include "mes/lib.h"
 #include "mes/mes.h"
 
-#if __M2_PLANET__
-#define M2_CELL_SIZE 12
-// CONSTANT M2_CELL_SIZE 12
+#if defined(__M2__)
+#define M2_CELL_SIZE (3 * sizeof(long))
 #else
 #define M2_CELL_SIZE 1
-// CONSTANT M2_CELL_SIZE 12
 #endif
 
 struct scm *

@@ -17,9 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 // void fputc(char s, FILE* f);
-// CONSTANT TRUE 1
 #define TRUE 1
-// CONSTANT FALSE 0
 #define FALSE 0
 
 int in_set(int c, char* s);

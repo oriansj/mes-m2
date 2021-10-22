@@ -23,14 +23,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if __M2_PLANET__ || !(__MESC__ && __arm__)
 size_t
 __mesabi_uldiv (size_t a, size_t b, size_t *remainder)
 {
   remainder[0] = a % b;
   return a / b;
 }
-#endif
 
 char *__itoa_buf;
 

@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-// CONSTANT PATH_MAX 1024
+#define PATH_MAX 1024
 
 char *__getcwd_buf;
 

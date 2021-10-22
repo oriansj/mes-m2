@@ -23,16 +23,16 @@ mkdir m2
 
 M2-Planet                                       \
     --debug                                     \
-    --architecture x86                          \
+    --architecture riscv64                      \
     -f include/m2/lib.h                         \
-    -f lib/linux/x86-mes-m2/crt1.c              \
-    -f lib/linux/x86-mes-m2/mini.c              \
+    -f lib/linux/riscv64-mes-m2/crt1.c          \
+    -f lib/linux/riscv64-mes-m2/mini.c          \
     -f lib/mes/globals.c                        \
     -f lib/m2/cast.c                            \
     -f lib/m2/exit.c                            \
     -f lib/mes/mini-write.c                     \
-    -f lib/linux/x86-mes-m2/syscall.c           \
-    -f include/linux/x86/syscall.h              \
+    -f lib/linux/riscv64-mes-m2/syscall.c       \
+    -f include/linux/riscv64/syscall.h          \
     -f lib/linux/brk.c                          \
     -f lib/stdlib/malloc.c                      \
     -f lib/string/memset.c                      \
@@ -114,14 +114,14 @@ M2-Planet                                       \
     -D MES_VERSION=\"0.22\"                     \
     -o m2/mes.M1
 
-blood-elf -f m2/mes.M1 --little-endian -o m2/mes.blood-elf-M1
+blood-elf --64 -f m2/mes.M1 --little-endian -o m2/mes.blood-elf-M1
 
 M1                                              \
     --little-endian                             \
-    --architecture x86                          \
-    -f lib/m2/x86/x86_defs.M1                   \
-    -f lib/x86-mes/x86.M1                       \
-    -f lib/linux/x86-mes-m2/crt1.M1             \
+    --architecture riscv64                      \
+    -f lib/m2/riscv64/riscv64_defs.M1           \
+    -f lib/riscv64-mes/riscv64.M1               \
+    -f lib/linux/riscv64-mes-m2/crt1.M1         \
     -f m2/mes.M1                                \
     -f m2/mes.blood-elf-M1                      \
     -o m2/mes.hex2
@@ -129,9 +129,9 @@ M1                                              \
 mkdir bin
 hex2                                            \
     --little-endian                             \
-    --architecture x86                          \
+    --architecture riscv64                      \
     --base-address 0x1000000                    \
-    -f lib/m2/x86/ELF-i386-debug.hex2           \
+    -f lib/m2/riscv64/ELF-riscv64-debug.hex2    \
     -f m2/mes.hex2                              \
     -o bin/mes-m2
 

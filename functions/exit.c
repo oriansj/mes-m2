@@ -15,9 +15,6 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// CONSTANT EXIT_FAILURE 1
-// CONSTANT EXIT_SUCCESS 0
-
 void exit(int value)
 {
 	asm("POP_ebx"

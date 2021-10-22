@@ -25,5 +25,5 @@
 long
 time (long *result)
 {
-  return _sys_call1 (SYS_time, result);
+  return _sys_call1 (SYS_clock_gettime, result);
 }

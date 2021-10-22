@@ -16,9 +16,7 @@
  */
 
 #define FALSE 0
-// CONSTANT FALSE 0
 #define TRUE 1
-// CONSTANT TRUE 1
 
 int match(char* a, char* b)
 {

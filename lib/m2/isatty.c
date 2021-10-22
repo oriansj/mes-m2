@@ -24,7 +24,6 @@
 #include <string.h>
 #include <termio.h>
 
-// CONSTANT TCGETS 0x5401
 #define TCGETS 0x5401
 
 struct ktermios

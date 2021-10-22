@@ -22,8 +22,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-// CONSTANT M2_PTR_SIZE 4
+#if defined(__M2__)
+#define M2_PTR_SIZE sizeof(char *)
+#else
 #define M2_PTR_SIZE 1
+#endif
 
 int
 setenv (char const *s, char const *v, int overwrite_p)

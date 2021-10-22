@@ -18,9 +18,6 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MES_MES_H
-#define __MES_MES_H
-
 #include <sys/types.h>
 #include "mes/cc.h"
 
@@ -178,4 +175,3 @@ long seconds_and_nanoseconds_to_long (long s, long ns);
 #include "mes/constants.h"
 #include "mes/symbols.h"
 
-#endif /* __MES_MES_H */

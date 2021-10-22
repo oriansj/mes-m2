@@ -18,9 +18,6 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MES_BUILTINS_H
-#define __MES_BUILTINS_H
-
 /* src/builtins.c */
 struct scm *make_builtin (struct scm *builtin_type, struct scm *name, struct scm *arity, struct scm *function);
 struct scm *builtin_name (struct scm *builtin);
@@ -178,4 +175,3 @@ struct scm *vector_set_x (struct scm *x, struct scm *i, struct scm *e);
 struct scm *list_to_vector (struct scm *x);
 struct scm *vector_to_list (struct scm *v);
 
-#endif /* __MES_BUILTINS_H */

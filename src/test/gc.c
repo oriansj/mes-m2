@@ -24,8 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__M2__)
+#define M2_CELL_SIZE (3 * sizeof(long))
+#else
 #define M2_CELL_SIZE 1
-// CONSTANT M2_CELL_SIZE 12
+#endif
 
 int g_debug;
 

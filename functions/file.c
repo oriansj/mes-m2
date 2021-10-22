@@ -15,11 +15,6 @@
  * along with M2-Planet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// CONSTANT stdin 0
-// CONSTANT stdout 1
-// CONSTANT stderr 2
-// CONSTANT EOF 0xFFFFFFFF
-
 int fgetc(FILE* f)
 {
 	asm("LOAD_IMMEDIATE_eax %3"

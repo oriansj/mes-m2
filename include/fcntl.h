@@ -46,6 +46,10 @@
 #define O_DIRECTORY 0x10000
 #endif
 
+#define AT_FDCWD            -100
+#define AT_SYMLINK_NOFOLLOW  0x100
+#define AT_REMOVEDIR         0x200
+
 #elif __GNU__
 #define	O_RDONLY	  1
 #define	O_WRONLY	  2

@@ -19,9 +19,7 @@
 #include<string.h>
 // void* calloc(int count, int size);
 #define TRUE 1
-//CONSTANT TRUE 1
 #define FALSE 0
-//CONSTANT FALSE 0
 
 char* numerate_number(int a)
 {

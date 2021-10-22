@@ -359,12 +359,10 @@ waitpid_ (struct scm *pid, struct scm *options)
 
 #if __x86_64__
 /* Nanoseconds on 64-bit systems with POSIX timers.  */
-// CONSTANT TIME_UNITS_PER_SECOND 1000000000
-#define TIME_UNITS_PER_SECOND 1000000000U
+#define TIME_UNITS_PER_SECOND 1000000000
 #else
 /* Milliseconds for everyone else.  */
-// CONSTANT TIME_UNITS_PER_SECOND 1000
-#define TIME_UNITS_PER_SECOND 1000U
+#define TIME_UNITS_PER_SECOND 1000
 #endif
 
 struct scm *
@@ -388,8 +386,7 @@ gettimeofday_ ()                /*:((name . "gettimeofday")) */
   return cons (make_number (time->tv_sec), make_number (time->tv_usec));
 }
 
-#define UL1000000000 1000000000UL
-// CONSTANT UL1000000000 1000000000
+#define UL1000000000 1000000000
 long
 seconds_and_nanoseconds_to_long (long s, long ns)
 {

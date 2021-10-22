@@ -1,6 +1,6 @@
 /* -*-comment-start: "//";comment-end:""-*-
  * GNU Mes --- Maxwell Equations of Software
- * Copyright © 2016,2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+ * Copyright © 2017,2018,2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  *
  * This file is part of GNU Mes.
  *
@@ -18,17 +18,10 @@
  * along with GNU Mes.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <linux/syscall.h>
-#include <syscall.h>
-#define SIGCHLD 17
-#define NULL 0
+#include "mes/lib-mini.h"
 
-int
-fork ()
-{
-#if defined(SYS_clone)
-  return _sys_call4 (SYS_clone, SIGCHLD, 0, NULL, 0);
-#else
-  return _sys_call (SYS_fork);
-#endif
-}
+int __stdin;
+int __stdout;
+int __stderr;
+char **environ;
+int main (int argc, char **argv, char **envp);
