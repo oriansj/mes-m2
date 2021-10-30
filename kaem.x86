@@ -19,6 +19,6 @@
 # Usage:
 # kaem --verbose --strict
 
-ARCH=riscv64
-ELF_HEADER=riscv64
+ARCH=x86
+ELF_HEADER=i386
 kaem --verbose --strict --file kaem.run
