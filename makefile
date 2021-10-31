@@ -24,6 +24,7 @@ CC?=gcc
 CFLAGS:=$(CFLAGS) -D_GNU_SOURCE -std=c99 -ggdb -D WITH_GLIBC=1 -O0
 KAEM = kaem
 GUILD = guild
+ARCH := x86
 
 default: mes-m2-boot
 
@@ -56,7 +57,7 @@ mes: builtins.c cc.c core.c display.c eval-apply.c gc.c hash.c lib.c m2.c math.c
 mes-m2-boot:
 	rm -rf m2
 	mkdir -p m2
-	$(KAEM) --strict --verbose
+	$(KAEM) --strict --verbose --file kaem.${ARCH}
 
 # Clean up after ourselves
 .PHONY: clean
