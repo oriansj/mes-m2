@@ -20,7 +20,7 @@
 # Usage:
 # kaem --verbose --strict --file kaem.${ARCH}
 
-mkdir m2
+mkdir -p m2
 
 M2-Planet                                       \
     --debug                                     \
@@ -120,14 +120,14 @@ blood-elf -f m2/mes.M1 --little-endian -o m2/mes.blood-elf-M1
 M1                                              \
     --little-endian                             \
     --architecture ${ARCH}                      \
-    -f lib/m2/${ARCH}/${ARCH}_defs.M1           \
+    -f ${M1_definitions}                        \
     -f lib/${ARCH}-mes/${ARCH}.M1               \
     -f lib/linux/${ARCH}-mes-m2/crt1.M1         \
     -f m2/mes.M1                                \
     -f m2/mes.blood-elf-M1                      \
     -o m2/mes.hex2
 
-mkdir bin
+mkdir -p bin
 hex2                                            \
     --little-endian                             \
     --architecture ${ARCH}                      \
