@@ -21,4 +21,5 @@
 
 ARCH=x86
 ELF_HEADER=i386
+M1_definitions=lib/m2/${ARCH}/${ARCH}_defs.M1
 kaem --verbose --strict --file kaem.run

@@ -21,4 +21,5 @@
 
 ARCH=riscv64
 ELF_HEADER=riscv64
+M1_definitions=lib/riscv64-mes/riscv64.M1
 kaem --verbose --strict --file kaem.run
