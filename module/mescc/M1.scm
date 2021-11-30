@@ -28,7 +28,6 @@
   #:use-module (system base pmatch)
   #:use-module (mes misc)
   #:use-module (mes guile)
-
   #:use-module (mescc as)
   #:use-module (mescc info)
   #:export (info->M1

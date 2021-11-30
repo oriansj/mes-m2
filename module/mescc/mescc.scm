@@ -136,8 +136,6 @@
 (define (mescc:link options)
   (let* ((files (option-ref options '() '("a.c")))
          (source-files (filter (disjoin .c? .E?) files))
-         (s-files (filter .s? files))
-         (o-files (filter .o? files))
          (input-file-name (car files))
          (hex2-file-name (if (or (string-suffix? ".hex2" input-file-name)
                                  (string-suffix? ".o" input-file-name)) input-file-name
