@@ -140,7 +140,7 @@
 
 (define* (make o #:key (types '()) (constants '()) (functions '()) (globals '()) (locals '()) (statics '()) (function #f) (text '()) (post '()) (break '()) (continue '()) (allocated '()) (pushed 0) (registers '()) (instructions '()))
   (cond ((eq? o <info>)
-         (make-<info> types constants functions globals locals statics function text post break continue allocated  pushed registers instructions))))
+         (make-<info> types constants functions globals locals statics function text post break continue allocated pushed registers instructions))))
 
 (define (clone o . rest)
   (cond ((info? o)
