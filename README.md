@@ -21,13 +21,17 @@ $ make mes-m2-boot
 You can try running mescc like this
 
 ```ShellSession
-$ ./bin/mes --no-auto-compile -L module -e main scripts/mescc.scm -I include -v -S scaffold/exit-42.c -o foo.S
+MES_ARENA=20000000
+MES_MAX_ARENA=20000000
+MES_STACK=6000000
+export MES_ARENA  MES_MAX_ARENA MES_STACK
+$ ./bin/mes --no-auto-compile -L ../nyacc-1.00.2/module/  -e main scripts/mescc.scm -I include -v -S scaffold/exit-42.c -o foo.S
 ```
 
-You can also compare the execution with guile's:
+You can also compare the execution with guile:
 
 ```ShellSession
-$ guile --no-auto-compile -L module -e main scripts/mescc.scm -I include -v -S scaffold/exit-42.c -o foo.S
+$ guile --no-auto-compile -L ../nyacc-1.00.2/module/ -L module -e main scripts/mescc.scm -I include -v -S scaffold/exit-42.c -o foo2.S
 ```
 
 to compile using the MesCC and nyacc included here.
